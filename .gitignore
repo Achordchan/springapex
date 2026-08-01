@@ -1,0 +1,20 @@
+node_modules/
+
+# Local tooling and review artifacts
+.claude/
+.codex_work/
+.playwright-cli/
+design-qa-assets/
+evidence/
+qa-artifacts/
+output/
+
+# Patch leftovers and machine files
+*.rej
+*.orig
+.DS_Store
+
+# Local environment files
+.env
+.env.*
+!.env.example
