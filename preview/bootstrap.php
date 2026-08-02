@@ -15,7 +15,7 @@ if (!in_array(PHP_SAPI, ['cli', 'cli-server'], true)) {
 
 defined('ABSPATH') || define('ABSPATH', __DIR__ . '/');
 defined('SPRINGAPEX_PREVIEW') || define('SPRINGAPEX_PREVIEW', true);
-defined('SPRINGAPEX_VERSION') || define('SPRINGAPEX_VERSION', '2.5.15');
+defined('SPRINGAPEX_VERSION') || define('SPRINGAPEX_VERSION', '2.5.34');
 defined('SPRINGAPEX_DIR') || define('SPRINGAPEX_DIR', dirname(__DIR__));
 defined('SPRINGAPEX_URI') || define('SPRINGAPEX_URI', '');
 
@@ -307,6 +307,10 @@ function wp_head(): void
     echo '<link rel="stylesheet" href="/assets/css/content-dedup.css?v=' . $version . '">' . "\n";
     echo '<link rel="stylesheet" href="/assets/css/visual-upgrade.css?v=' . $version . '">' . "\n";
     echo '<link rel="stylesheet" href="/assets/css/news.css?v=' . $version . '">' . "\n";
+    echo '<link rel="stylesheet" href="/assets/css/capabilities-page.css?v=' . $version . '">' . "\n";
+    echo '<link rel="stylesheet" href="/assets/css/about-page.css?v=' . $version . '">' . "\n";
+    echo '<link rel="stylesheet" href="/assets/css/search-page.css?v=' . $version . '">' . "\n";
+    echo '<link rel="stylesheet" href="/assets/css/products-page.css?v=' . $version . '">' . "\n";
     echo '<meta name="description" content="SpringApex precision spring products and engineering solutions.">' . "\n";
     echo '<meta name="robots" content="noindex,nofollow">' . "\n";
     echo '<title>' . esc_html($titles[$route] ?? $titles['home']) . '</title>' . "\n";

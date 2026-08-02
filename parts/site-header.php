@@ -32,23 +32,60 @@ $brand = springapex_brand();
     </nav>
 
     <div class="header-actions">
-      <details class="site-search" data-site-search>
-        <summary class="icon-btn site-search__toggle" aria-label="<?php esc_attr_e('Search the site', 'springapex'); ?>">
-          <?php echo springapex_icon('search', 'icon'); ?>
+      <button class="icon-btn site-search__toggle" type="button" data-search-toggle aria-label="<?php esc_attr_e('Search the site', 'springapex'); ?>">
+        <?php echo springapex_icon('search', 'icon'); ?>
+      </button>
+      <div class="site-search-overlay" data-search-overlay role="dialog" aria-modal="true" aria-labelledby="site-search-title" hidden>
+        <div class="site-search-overlay__backdrop" data-search-backdrop></div>
+        <div class="site-search-overlay__content">
+          <div class="site-search-overlay__head">
+            <div>
+              <p class="site-search-overlay__kicker"><?php esc_html_e('SITE SEARCH', 'springapex'); ?></p>
+              <h2 id="site-search-title"><?php esc_html_e('Find the right starting point.', 'springapex'); ?></h2>
+            </div>
+            <button class="site-search-overlay__close" type="button" data-search-close aria-label="<?php esc_attr_e('Close search', 'springapex'); ?>">
+              <?php echo springapex_icon('close', 'icon'); ?>
+            </button>
+          </div>
+          <form class="site-search-overlay__form" action="<?php echo esc_url(springapex_url('/search/')); ?>" method="get" role="search">
+            <span class="site-search-overlay__icon"><?php echo springapex_icon('search', 'icon'); ?></span>
+            <label class="sr-only" for="overlay-search-input"><?php esc_html_e('Search products, industries and resources', 'springapex'); ?></label>
+            <input id="overlay-search-input" class="site-search-overlay__input" type="search" name="s" placeholder="<?php esc_attr_e('Search products, industries, resources...', 'springapex'); ?>" autocomplete="off">
+            <button class="site-search-overlay__submit" type="submit" aria-label="<?php esc_attr_e('Submit search', 'springapex'); ?>">
+              <span><?php esc_html_e('Search', 'springapex'); ?></span><?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+            </button>
+          </form>
+          <div class="site-search-overlay__hints">
+            <span class="site-search-overlay__hints-label"><?php esc_html_e('Popular:', 'springapex'); ?></span>
+            <a href="<?php echo esc_url(springapex_url('/search/?sa_page=search&s=compression')); ?>" class="site-search-overlay__tag">Compression</a>
+            <a href="<?php echo esc_url(springapex_url('/search/?sa_page=search&s=automotive')); ?>" class="site-search-overlay__tag">Automotive</a>
+            <a href="<?php echo esc_url(springapex_url('/search/?sa_page=search&s=material')); ?>" class="site-search-overlay__tag">Material</a>
+            <a href="<?php echo esc_url(springapex_url('/search/?sa_page=search&s=quality')); ?>" class="site-search-overlay__tag">Quality</a>
+          </div>
+        </div>
+      </div>
+      <details class="language-switcher" data-language-switcher>
+        <summary aria-label="<?php esc_attr_e('Choose language', 'springapex'); ?>">
+          <?php echo springapex_icon('globe', 'icon icon-sm'); ?>
+          <span>EN</span>
+          <?php echo springapex_icon('arrow-right', 'icon icon-sm language-switcher__arrow'); ?>
         </summary>
-        <form class="site-search__form" action="<?php echo esc_url(springapex_url('/search/')); ?>" method="get" role="search">
-          <input type="hidden" name="sa_page" value="search">
-          <label class="sr-only" for="site-search-input"><?php esc_html_e('Search products, industries and resources', 'springapex'); ?></label>
-          <input id="site-search-input" type="search" name="s" placeholder="<?php esc_attr_e('Search products, industries and resources', 'springapex'); ?>" autocomplete="off">
-          <button class="icon-btn" type="submit" aria-label="<?php esc_attr_e('Submit search', 'springapex'); ?>">
-            <?php echo springapex_icon('arrow-right', 'icon'); ?>
-          </button>
-        </form>
+        <div class="language-switcher__menu">
+          <div class="language-switcher__head">
+            <strong><?php esc_html_e('Languages', 'springapex'); ?></strong>
+            <small><?php esc_html_e('Display preview', 'springapex'); ?></small>
+          </div>
+          <div class="language-switcher__grid" aria-label="<?php esc_attr_e('Available language placeholders', 'springapex'); ?>">
+            <span class="is-current"><img class="language-switcher__flag" src="<?php echo esc_url(springapex_asset('assets/icons/flags/gb.svg')); ?>" alt="" aria-hidden="true">English</span>
+            <span aria-disabled="true"><img class="language-switcher__flag" src="<?php echo esc_url(springapex_asset('assets/icons/flags/de.svg')); ?>" alt="" aria-hidden="true">Deutsch</span>
+            <span aria-disabled="true"><img class="language-switcher__flag" src="<?php echo esc_url(springapex_asset('assets/icons/flags/fr.svg')); ?>" alt="" aria-hidden="true">Français</span>
+            <span aria-disabled="true"><img class="language-switcher__flag" src="<?php echo esc_url(springapex_asset('assets/icons/flags/es.svg')); ?>" alt="" aria-hidden="true">Español</span>
+            <span aria-disabled="true"><img class="language-switcher__flag" src="<?php echo esc_url(springapex_asset('assets/icons/flags/jp.svg')); ?>" alt="" aria-hidden="true">日本語</span>
+            <span aria-disabled="true"><img class="language-switcher__flag" src="<?php echo esc_url(springapex_asset('assets/icons/flags/kr.svg')); ?>" alt="" aria-hidden="true">한국어</span>
+            <span aria-disabled="true"><img class="language-switcher__flag" src="<?php echo esc_url(springapex_asset('assets/icons/flags/cn.svg')); ?>" alt="" aria-hidden="true">中文</span>
+          </div>
+        </div>
       </details>
-      <a class="btn btn-primary btn-sm quote-btn" href="<?php echo esc_url(springapex_url('/contact/?intent=quote')); ?>">
-        <?php esc_html_e('Get a Quote', 'springapex'); ?>
-        <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
-      </a>
       <button class="icon-btn menu-toggle" type="button" data-menu-toggle aria-label="<?php esc_attr_e('Open menu', 'springapex'); ?>" aria-expanded="false" aria-controls="mobile-navigation">
         <?php echo springapex_icon('menu', 'icon menu-icon-open'); ?>
         <?php echo springapex_icon('close', 'icon menu-icon-close'); ?>

@@ -78,6 +78,30 @@ add_action('wp_enqueue_scripts', static function (): void {
         ['springapex-content-dedup'],
         SPRINGAPEX_VERSION
     );
+    wp_enqueue_style(
+        'springapex-capabilities-page',
+        SPRINGAPEX_URI . '/assets/css/capabilities-page.css',
+        ['springapex-news'],
+        SPRINGAPEX_VERSION
+    );
+    wp_enqueue_style(
+        'springapex-about-page',
+        SPRINGAPEX_URI . '/assets/css/about-page.css',
+        ['springapex-capabilities-page'],
+        SPRINGAPEX_VERSION
+    );
+    wp_enqueue_style(
+        'springapex-search-page',
+        SPRINGAPEX_URI . '/assets/css/search-page.css',
+        ['springapex-about-page'],
+        SPRINGAPEX_VERSION
+    );
+    wp_enqueue_style(
+        'springapex-products-page',
+        SPRINGAPEX_URI . '/assets/css/products-page.css',
+        ['springapex-search-page'],
+        SPRINGAPEX_VERSION
+    );
 
     wp_enqueue_script(
         'springapex-main',

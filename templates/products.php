@@ -21,6 +21,13 @@ get_template_part('parts/inner-hero', null, [
 
 <section class="section sa-product-entry-paths">
   <div class="container container-wide">
+    <div class="sa-products-intro" data-reveal="up">
+      <div>
+        <p class="section-kicker"><?php esc_html_e('START HERE', 'springapex'); ?></p>
+        <h2><?php esc_html_e('Choose the route that matches what you already know.', 'springapex'); ?></h2>
+      </div>
+      <p><?php esc_html_e('Browse directly by spring type, describe the application or send an existing drawing for engineering review.', 'springapex'); ?></p>
+    </div>
     <div class="sa-product-entry-paths__grid" data-reveal-group>
       <a class="sa-entry-path-card" href="#product-families">
         <div class="sa-entry-path-card__icon"><?php echo springapex_icon('spring', 'icon'); ?></div>
@@ -52,9 +59,12 @@ get_template_part('parts/inner-hero', null, [
 
 <section class="section featured-section sa-product-families" id="product-families">
   <div class="container container-wide">
-    <div class="section-head sa-section-intro">
-      <p class="section-kicker"><?php esc_html_e('PRODUCT RANGE', 'springapex'); ?></p>
-      <h2><?php esc_html_e('Product families for different load and motion requirements.', 'springapex'); ?></h2>
+    <div class="sa-products-intro" data-reveal="up">
+      <div>
+        <p class="section-kicker"><?php esc_html_e('PRODUCT RANGE', 'springapex'); ?></p>
+        <h2><?php esc_html_e('Product families for different load and motion requirements.', 'springapex'); ?></h2>
+      </div>
+      <p><?php esc_html_e('Start with the direction of force and available installation space, then review dimensions, material and operating conditions on the product page.', 'springapex'); ?></p>
     </div>
     <div class="product-grid product-grid--all" data-reveal-group>
       <?php foreach ($products as $product) : ?>
@@ -80,52 +90,17 @@ get_template_part('parts/inner-hero', null, [
 <?php $selection = springapex_get('product_selection', []); ?>
 <section class="section sa-selection-guide">
   <div class="container container-wide sa-selection-guide__layout">
-    <div class="sa-section-intro" data-reveal="up">
-      <p class="section-kicker"><?php esc_html_e('SELECTION GUIDE', 'springapex'); ?></p>
-      <h2><?php echo esc_html((string) ($selection['title'] ?? '')); ?></h2>
-      <p class="sa-section-lede"><?php echo esc_html((string) ($selection['text'] ?? '')); ?></p>
+    <div class="sa-selection-guide__intro" data-reveal="up">
+      <div>
+        <p class="section-kicker"><?php esc_html_e('SELECTION GUIDE', 'springapex'); ?></p>
+        <h2><?php echo esc_html((string) ($selection['title'] ?? '')); ?></h2>
+      </div>
+      <p><?php echo esc_html((string) ($selection['text'] ?? '')); ?></p>
     </div>
     <div class="sa-selection-guide__grid" data-reveal-group>
       <?php foreach (($selection['items'] ?? []) as $item) : ?>
         <article>
           <span><?php echo springapex_icon((string) ($item['icon'] ?? 'spring')); ?></span>
-          <h3><?php echo esc_html((string) ($item['title'] ?? '')); ?></h3>
-          <p><?php echo esc_html((string) ($item['text'] ?? '')); ?></p>
-        </article>
-      <?php endforeach; ?>
-    </div>
-  </div>
-</section>
-
-<section class="section help-band">
-  <div class="container container-wide help-band-inner" data-reveal="up">
-    <div class="help-copy">
-      <h2><?php esc_html_e('Need help choosing the right spring family?', 'springapex'); ?></h2>
-      <p><?php esc_html_e('Share the load, movement and operating conditions for a focused recommendation.', 'springapex'); ?></p>
-      <a class="btn btn-primary" href="<?php echo esc_url(springapex_url('/contact/?intent=engineer')); ?>">
-        <?php esc_html_e('Talk to an Engineer', 'springapex'); ?> <?php echo springapex_icon('chat', 'icon icon-sm'); ?>
-      </a>
-    </div>
-    <div class="help-media">
-      <?php echo springapex_image('spring-assortment-v3.png', 'Assorted precision springs', [
-          'width' => 1600,
-          'height' => 560,
-          'sizes' => '(max-width: 760px) 100vw, 50vw',
-      ]); ?>
-    </div>
-  </div>
-</section>
-
-<section class="section sa-specialty-products">
-  <div class="container container-wide">
-    <div class="section-head sa-section-intro">
-      <p class="section-kicker"><?php esc_html_e('SPECIALTY COMPONENTS', 'springapex'); ?></p>
-      <h2><?php esc_html_e('More spring forms for specific mechanisms.', 'springapex'); ?></h2>
-    </div>
-    <div class="sa-specialty-products__grid" data-reveal-group>
-      <?php foreach (springapex_get('specialty_products', []) as $item) : ?>
-        <article>
-          <span class="sa-specialty-products__icon"><?php echo springapex_icon((string) ($item['icon'] ?? 'spring')); ?></span>
           <h3><?php echo esc_html((string) ($item['title'] ?? '')); ?></h3>
           <p><?php echo esc_html((string) ($item['text'] ?? '')); ?></p>
         </article>

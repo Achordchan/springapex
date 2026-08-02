@@ -61,50 +61,76 @@ if ($needle !== '') {
 }
 ?>
 
-<section class="inner-hero inner-hero--search">
-  <div class="container container-wide inner-hero-inner">
-    <div class="inner-hero-copy">
-      <p class="section-kicker">SEARCH</p>
-      <h1 class="display">Find the right starting point.</h1>
-      <p class="lede">Search product families, industry solutions and engineering resources before you contact our team.</p>
+<section class="sa-search-hero">
+  <div class="container container-wide sa-search-hero__inner">
+    <div class="sa-search-hero__intro">
+      <p class="sa-search-hero__kicker"><?php echo $query === '' ? 'SITE DIRECTORY' : 'SEARCH RESULTS'; ?></p>
+      <?php if ($query === '') : ?>
+        <h1 class="sa-search-hero__title">Explore SpringApex.</h1>
+        <p class="sa-search-hero__subtitle">Use the search button in the header or browse the main product, industry and custom manufacturing routes below.</p>
+      <?php elseif ($matches) : ?>
+        <h1 class="sa-search-hero__title">Results for “<?php echo esc_html($query); ?>”</h1>
+        <p class="sa-search-hero__subtitle"><?php echo esc_html((string) count($matches)); ?> matching pages across products, industries, resources and company information.</p>
+      <?php else : ?>
+        <h1 class="sa-search-hero__title">No results for “<?php echo esc_html($query); ?>”</h1>
+        <p class="sa-search-hero__subtitle">Try a broader term from the header search or send the application requirements directly to our team.</p>
+      <?php endif; ?>
     </div>
   </div>
 </section>
 
 <section class="section sa-search-results">
   <div class="container container-wide">
-    <form class="sa-search-results__form" action="<?php echo esc_url(springapex_url('/search/')); ?>" method="get" role="search">
-      <input type="hidden" name="sa_page" value="search">
-      <label class="sr-only" for="search-page-input">Search products, industries and resources</label>
-      <input id="search-page-input" type="search" name="s" value="<?php echo esc_attr($query); ?>" placeholder="Search products, industries and resources" autocomplete="off">
-      <button class="btn btn-primary" type="submit">Search <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></button>
-    </form>
-
     <?php if ($query === '') : ?>
-      <div class="sa-search-empty">
-        <p class="section-kicker">START HERE</p>
-        <h2>Search by spring type, industry or engineering topic.</h2>
-        <p>Try “compression”, “automotive”, “material” or “quality”.</p>
+      <div class="sa-search-start" data-reveal>
+        <div class="sa-search-start__intro">
+          <p class="sa-search-results__kicker">START HERE</p>
+          <h2>Browse the main routes into SpringApex.</h2>
+          <p>Choose a product family, an industry application or the custom manufacturing path.</p>
+        </div>
+        <div class="sa-search-start__grid" data-reveal-group>
+          <a href="<?php echo esc_url(springapex_url('/products/')); ?>">
+            <span><?php echo springapex_icon('spring'); ?></span>
+            <div><h3>Product Families</h3><p>Browse springs by type and load direction.</p></div>
+            <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+          </a>
+          <a href="<?php echo esc_url(springapex_url('/solutions/')); ?>">
+            <span><?php echo springapex_icon('factory'); ?></span>
+            <div><h3>Industry Solutions</h3><p>Start from your application and operating environment.</p></div>
+            <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+          </a>
+          <a href="<?php echo esc_url(springapex_url('/capabilities/')); ?>">
+            <span><?php echo springapex_icon('pen'); ?></span>
+            <div><h3>Custom Springs</h3><p>Prepare a drawing, load requirement or project brief.</p></div>
+            <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+          </a>
+        </div>
       </div>
     <?php elseif (!$matches) : ?>
-      <div class="sa-search-empty">
-        <p class="section-kicker">NO MATCHES</p>
-        <h2>We could not find “<?php echo esc_html($query); ?>”.</h2>
-        <p>Describe your application or send a drawing and our engineers can help identify the right path.</p>
-        <a class="btn btn-primary" href="<?php echo esc_url(springapex_url('/contact/?intent=engineer')); ?>">Talk to an Engineer <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></a>
+      <div class="sa-search-empty sa-search-empty--no-results" data-reveal>
+        <div class="sa-search-empty__icon-wrap sa-search-empty__icon-wrap--alert" aria-hidden="true">
+          <?php echo springapex_icon('target', 'icon'); ?>
+        </div>
+        <p class="sa-search-empty__kicker">NO MATCHES</p>
+        <h2 class="sa-search-empty__title">We could not find "<?php echo esc_html($query); ?>".</h2>
+        <p class="sa-search-empty__desc">Describe your application or send a drawing and our engineers can help identify the right path.</p>
+        <a class="btn btn-primary sa-search-empty__cta" href="<?php echo esc_url(springapex_url('/contact/?intent=engineer')); ?>">Talk to an Engineer <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></a>
       </div>
     <?php else : ?>
-      <div class="section-head sa-section-intro">
-        <p class="section-kicker">SEARCH RESULTS</p>
-        <h2><?php echo esc_html((string) count($matches)); ?> results for “<?php echo esc_html($query); ?>”.</h2>
-      </div>
       <div class="sa-search-results__grid" data-reveal-group>
-        <?php foreach ($matches as $item) : ?>
-          <a class="sa-search-result" href="<?php echo esc_url((string) $item['href']); ?>">
-            <span class="sa-search-result__type"><?php echo esc_html((string) $item['type']); ?></span>
-            <h3><?php echo esc_html((string) $item['title']); ?></h3>
-            <p><?php echo esc_html((string) $item['summary']); ?></p>
-            <span class="text-link">Open result <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></span>
+        <?php foreach ($matches as $item) :
+          $type_slug = sanitize_key((string) $item['type']);
+        ?>
+          <a class="sa-search-card" href="<?php echo esc_url((string) $item['href']); ?>" data-type="<?php echo esc_attr($type_slug); ?>">
+            <div class="sa-search-card__head">
+              <span class="sa-search-card__badge" data-type="<?php echo esc_attr($type_slug); ?>"><?php echo esc_html((string) $item['type']); ?></span>
+            </div>
+            <h3 class="sa-search-card__title"><?php echo esc_html((string) $item['title']); ?></h3>
+            <p class="sa-search-card__desc"><?php echo esc_html((string) $item['summary']); ?></p>
+            <span class="sa-search-card__link">
+              View details
+              <span class="sa-search-card__arrow"><?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></span>
+            </span>
           </a>
         <?php endforeach; ?>
       </div>

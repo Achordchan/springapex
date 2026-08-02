@@ -140,25 +140,25 @@ $hero_lines = preg_split('/\R/', (string) ($hero['title'] ?? '')) ?: [];
 <?php get_template_part('parts/home-faq'); ?>
 
 <section class="section process-section">
-  <div class="container container-wide process-layout" data-reveal="up">
-    <p class="section-kicker"><?php esc_html_e('HOW WE WORK', 'springapex'); ?></p>
-    <h2 class="process-title"><?php echo nl2br(esc_html("From Wire to\nPerformance")); ?></h2>
-    <p class="sa-section-bridge"><?php esc_html_e('Every order follows the same disciplined sequence — so quality is built in, not inspected in.', 'springapex'); ?></p>
-    <div class="process-content">
-      <div class="process-track" data-reveal-group>
-        <?php foreach (($home['process'] ?? []) as $step) : ?>
-          <div class="process-step">
-            <div class="icon-circle soft"><?php echo springapex_icon((string) $step['icon']); ?></div>
-            <span><?php echo esc_html((string) $step['label']); ?></span>
-          </div>
-        <?php endforeach; ?>
-      </div>
-      <p class="process-note"><?php esc_html_e('A proven process. Precision quality. Reliable delivery.', 'springapex'); ?></p>
+  <div class="container container-wide" data-reveal="up">
+    <div class="process-header">
+      <p class="section-kicker"><?php esc_html_e('HOW WE WORK', 'springapex'); ?></p>
+      <h2 class="process-title"><?php esc_html_e('From Wire to Performance', 'springapex'); ?></h2>
+      <p class="process-intro"><?php esc_html_e('Every order follows the same disciplined sequence — so quality is built in, not inspected in.', 'springapex'); ?></p>
     </div>
+    <div class="process-track" data-reveal-group>
+      <?php foreach (($home['process'] ?? []) as $step) : ?>
+        <div class="process-step">
+          <div class="icon-circle soft"><?php echo springapex_icon((string) $step['icon']); ?></div>
+          <span><?php echo esc_html((string) $step['label']); ?></span>
+        </div>
+      <?php endforeach; ?>
+    </div>
+    <p class="process-note"><?php esc_html_e('A proven process. Precision quality. Reliable delivery.', 'springapex'); ?></p>
   </div>
 </section>
 
-<?php get_template_part('parts/quality-credentials', null, ['variant' => 'compact']); ?>
+<?php get_template_part('parts/quality-summary'); ?>
 
 <section class="section sa-resources-preview">
   <div class="container container-wide">

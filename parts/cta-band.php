@@ -5,8 +5,9 @@ if (!defined('ABSPATH')) {
 $title = $args['title'] ?? "Let's Build What's Next.\nTogether.";
 $text  = $args['text'] ?? 'Have a challenge in mind? Our team is ready to help you find the right spring solution.';
 $cta   = $args['cta'] ?? ['label' => 'Get a Quote', 'href' => '/contact/?intent=quote'];
+$class = trim((string) ($args['class'] ?? ''));
 ?>
-<section class="section cta-band">
+<section class="section cta-band<?php echo $class !== '' ? ' ' . esc_attr($class) : ''; ?>">
   <div class="container container-wide cta-band-inner" data-reveal="up">
     <h2 class="cta-title"><?php echo nl2br(esc_html($title)); ?></h2>
     <div class="cta-copy">

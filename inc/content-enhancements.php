@@ -75,14 +75,6 @@ function springapex_content_enhancements(): array
                 ['icon' => 'form', 'title' => 'Custom Motion', 'text' => 'Wire forms, pins and specialty geometries transfer force through application-specific shapes.'],
             ],
         ],
-        'specialty_products' => [
-            ['title' => 'Conical Springs', 'text' => 'Nested compression and reduced solid-height designs.', 'icon' => 'spring'],
-            ['title' => 'Continuous-Length Springs', 'text' => 'Long coils prepared for cutting or downstream assembly.', 'icon' => 'spring'],
-            ['title' => 'Die Springs', 'text' => 'High-force springs for tooling and repetitive industrial duty.', 'icon' => 'factory'],
-            ['title' => 'Vibration & Isolation Springs', 'text' => 'Spring elements selected for shock and vibration control.', 'icon' => 'gear'],
-            ['title' => 'Wave Springs', 'text' => 'Compact axial preload where installation space is limited.', 'icon' => 'disc'],
-            ['title' => 'Pins & Retaining Parts', 'text' => 'Formed retaining components and application-specific wire parts.', 'icon' => 'extension'],
-        ],
         'resources' => [
             'hero' => [
                 'title' => 'Engineering Resources',

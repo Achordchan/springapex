@@ -86,6 +86,11 @@
     display: none;
   }
 
+  .language-switcher summary {
+    min-width: 76px;
+    padding-inline: 10px;
+  }
+
   .nav-desktop {
     display: none;
   }
@@ -290,12 +295,17 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .process-layout {
-    grid-template-columns: 1fr;
+  .process-title {
+    font-size: 36px;
   }
 
   .process-title br {
     display: none;
+  }
+
+  .process-track {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px 20px;
   }
 
   .solutions-grid {
@@ -306,8 +316,14 @@
     grid-template-columns: 1fr;
   }
 
+  .capabilities-intro {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 14px;
+  }
+
   .capabilities-intro p {
-    max-width: 46ch;
+    max-width: 62ch;
   }
 
   .story-grid {
@@ -399,10 +415,20 @@
 
   .sa-route-home .hero-grid-home {
     padding: 32px 16px 0;
+    min-height: 0;
+    align-items: flex-start;
+  }
+
+  .sa-route-home .hero-grid-home .hero-copy {
+    max-width: none;
   }
 
   .sa-route-home .display-home {
     font-size: clamp(38px, 9.6vw, 44px);
+  }
+
+  .sa-route-home .lede-home {
+    max-width: none;
   }
 
   .sa-route-home .hero-media-home {
@@ -527,42 +553,43 @@
     min-height: 180px;
   }
 
+  .process-section {
+    padding-block: 48px;
+  }
+
+  .process-header {
+    margin-bottom: 40px;
+  }
+
+  .process-title {
+    font-size: 32px;
+  }
+
+  .process-title br {
+    display: none;
+  }
+
+  .process-intro {
+    font-size: 15px;
+  }
+
   .process-track {
     grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
+    gap: 24px 16px;
   }
 
   .process-track::before {
     display: none;
   }
 
+  .process-step {
+    gap: 12px;
+    font-size: 14px;
+  }
+
   .process-note {
-    text-align: left;
-  }
-
-  .sa-route-home .process-layout {
-    gap: 26px;
-  }
-
-  .sa-route-home .process-track {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    column-gap: 8px;
-    row-gap: 24px;
-  }
-
-  .sa-route-home .process-step {
-    grid-column: span 2;
-    gap: 10px;
-    font-size: 13px;
-  }
-
-  .sa-route-home .process-step:nth-child(4) {
-    grid-column: 2 / span 2;
-  }
-
-  .sa-route-home .process-note {
-    margin-top: 24px;
-    text-align: center;
+    margin-top: 32px;
+    font-size: 15px;
   }
 
   .help-band-inner,
@@ -954,7 +981,8 @@
   }
 
   .support-launcher,
-  .support-panel {
+  .support-panel,
+  .support-contact-dock {
     display: none;
   }
 
@@ -987,6 +1015,24 @@
     min-width: 0;
     padding-inline: 10px;
     font-size: 11px;
+  }
+
+  .language-switcher summary {
+    min-width: 68px;
+    gap: 6px;
+    padding-inline: 8px;
+  }
+
+  .language-switcher summary > .icon:first-child {
+    display: none;
+  }
+
+  .language-switcher__menu {
+    position: fixed;
+    top: calc(var(--sa-header-height) + 8px);
+    right: 12px;
+    left: 12px;
+    width: auto;
   }
 
   .header-actions {

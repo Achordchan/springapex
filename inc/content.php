@@ -282,20 +282,32 @@ function springapex_content(): array
         ],
         'capabilities' => [
             'hero' => [
-                'title' => 'Capabilities',
-                'subtitle' => 'Engineering and manufacturing built around repeatable performance.',
+                'title' => 'Custom Spring Manufacturing',
+                'subtitle' => 'From application requirements and drawing review to controlled repeat production.',
                 'cta' => ['label' => 'Upload Your Drawing', 'href' => '/contact/?intent=drawing', 'icon' => 'upload'],
                 'image' => 'generated/springapex-capabilities-hero-v2.webp',
             ],
             'intro' => [
-                'title' => 'Our Capabilities',
-                'text' => 'Engineered to meet demanding applications with consistency, care and traceable quality.',
+                'title' => 'Built around your application.',
+                'text' => 'Engineering review, forming, finishing and verification are aligned to the spring geometry, load and operating conditions you provide.',
             ],
             'items' => [
                 ['icon' => 'cnc', 'title' => 'Precision Engineering', 'text' => 'Parameter analysis and manufacturable designs built to application requirements.'],
                 ['icon' => 'qc', 'title' => 'CNC Coiling', 'text' => 'Controlled forming processes for repeatable dimensions and force.'],
                 ['icon' => 'heat', 'title' => 'Heat Treatment & Surface', 'text' => 'Material and finishing options selected for durability and corrosion resistance.'],
                 ['icon' => 'search', 'title' => 'Testing & Quality', 'text' => 'Inspection and validation throughout production and shipment.'],
+            ],
+            'project_brief' => [
+                'eyebrow' => 'PROJECT INPUTS',
+                'title' => 'Start with the information that drives spring performance.',
+                'text' => 'A drawing is helpful, but an effective review also considers working load, movement, environment, quantity and required production records.',
+                'image' => 'generated/springapex-engineering-desk-v1.webp',
+                'items' => [
+                    ['icon' => 'pen', 'title' => 'Geometry or Drawing', 'text' => 'Dimensions, available space, end details and installation constraints.'],
+                    ['icon' => 'spring', 'title' => 'Load & Movement', 'text' => 'Required force or torque at the working position and expected travel.'],
+                    ['icon' => 'heat', 'title' => 'Material & Environment', 'text' => 'Temperature, corrosion exposure, cleanliness and service-life expectations.'],
+                    ['icon' => 'form', 'title' => 'Quantity & Records', 'text' => 'Prototype and production volume, inspection reports and traceability needs.'],
+                ],
             ],
         ],
         'contact' => [

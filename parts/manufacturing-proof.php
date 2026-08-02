@@ -29,10 +29,11 @@ if (!$manufacturing || !$facts) {
           $fact_label = (string) ($fact['label'] ?? '');
           $fact_value = (string) ($fact['value'] ?? '');
           $fact_compact = mb_strlen($fact_label) > 15 || mb_strlen($fact_value) > 10;
+          $fact_target = preg_replace('/[^0-9.]/', '', $fact_value) ?: '';
           ?>
           <div class="sa-fact<?php echo $fact_compact ? ' sa-fact--compact' : ''; ?>">
             <dt><?php echo esc_html($fact_label); ?></dt>
-            <dd><?php echo esc_html($fact_value); ?></dd>
+            <dd<?php echo $fact_target !== '' ? ' data-count-target="' . esc_attr($fact_target) . '" data-count-display="' . esc_attr($fact_value) . '" aria-label="' . esc_attr($fact_value) . '"' : ''; ?>><?php echo esc_html($fact_value); ?></dd>
           </div>
         <?php endforeach; ?>
       </dl>

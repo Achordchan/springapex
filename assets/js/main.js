@@ -231,38 +231,40 @@
     sections.forEach((section) => observer.observe(section));
   }
 
-  function initContactForm() {
-    const form = document.querySelector('[data-contact-form]');
-    if (!form) return;
+  function initContactForms() {
+    const forms = Array.from(document.querySelectorAll('[data-contact-form]'));
+    if (!forms.length) return;
 
-    const status = form.querySelector('[data-form-status]');
-    const submit = form.querySelector('[data-submit-button]');
-    const startedAt = form.querySelector('[data-form-started-at]');
-    const fileInput = form.querySelector('input[type="file"]');
-    const inquiryType = form.querySelector('[data-inquiry-type]');
-    const drawingField = form.querySelector('[data-drawing-field]');
-    const config = window.SpringApex || {};
-    if (startedAt) startedAt.value = String(Math.floor(Date.now() / 1000));
+    forms.forEach((form) => {
 
-    const syncDrawingField = () => {
-      if (!inquiryType || !drawingField) return;
-      const visible = inquiryType.value === 'Upload a Drawing';
-      drawingField.classList.toggle('is-collapsed', !visible);
-      if (!visible && fileInput && fileInput.files.length) fileInput.value = '';
-    };
+      const status = form.querySelector('[data-form-status]');
+      const submit = form.querySelector('[data-submit-button]');
+      const startedAt = form.querySelector('[data-form-started-at]');
+      const fileInput = form.querySelector('input[type="file"]');
+      const inquiryType = form.querySelector('[data-inquiry-type]');
+      const drawingField = form.querySelector('[data-drawing-field]');
+      const config = window.SpringApex || {};
+      if (startedAt) startedAt.value = String(Math.floor(Date.now() / 1000));
 
-    if (inquiryType) inquiryType.addEventListener('change', syncDrawingField);
-    syncDrawingField();
+      const syncDrawingField = () => {
+        if (!inquiryType || !drawingField) return;
+        const visible = inquiryType.value === 'Upload a Drawing';
+        drawingField.classList.toggle('is-collapsed', !visible);
+        if (!visible && fileInput && fileInput.files.length) fileInput.value = '';
+      };
 
-    const showStatus = (message, type) => {
-      if (!status) return;
-      status.hidden = false;
-      status.textContent = message;
-      status.classList.toggle('is-error', type === 'error');
-      status.classList.toggle('is-success', type === 'success');
-    };
+      if (inquiryType) inquiryType.addEventListener('change', syncDrawingField);
+      syncDrawingField();
 
-    form.addEventListener('submit', async (event) => {
+      const showStatus = (message, type) => {
+        if (!status) return;
+        status.hidden = false;
+        status.textContent = message;
+        status.classList.toggle('is-error', type === 'error');
+        status.classList.toggle('is-success', type === 'success');
+      };
+
+      form.addEventListener('submit', async (event) => {
       event.preventDefault();
 
       if (!form.checkValidity()) {
@@ -317,6 +319,7 @@
           submit.removeAttribute('aria-busy');
         }
       }
+      });
     });
   }
 
@@ -335,10 +338,12 @@
 
     const setOpen = (open, restoreFocus = true) => {
       panel.hidden = !open;
+      document.body.classList.toggle('support-panel-open', open);
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-      toggle.setAttribute('aria-label', open ? 'Close customer support' : 'Open customer support');
+      toggle.setAttribute('aria-label', open ? 'Close quick inquiry form' : 'Open quick inquiry form');
       if (open) {
-        close.focus({ preventScroll: true });
+        const firstField = panel.querySelector('[data-support-first-field]');
+        (firstField || close).focus({ preventScroll: true });
       } else if (restoreFocus) {
         toggle.focus({ preventScroll: true });
       }
@@ -348,7 +353,7 @@
       const shouldSuppress = mobileQuery.matches
         && (document.body.classList.contains('menu-open') || isEditingField(document.activeElement));
       widget.classList.toggle('is-suppressed', shouldSuppress);
-      if (shouldSuppress && !panel.hidden) setOpen(false, false);
+      if ((mobileQuery.matches || shouldSuppress) && !panel.hidden) setOpen(false, false);
     };
 
     toggle.addEventListener('click', () => {
@@ -375,12 +380,66 @@
     syncSuppressedState();
   }
 
+  function initSearchOverlay() {
+    const toggle = document.querySelector('[data-search-toggle]');
+    const overlay = document.querySelector('[data-search-overlay]');
+    const backdrop = document.querySelector('[data-search-backdrop]');
+    const closeBtn = document.querySelector('[data-search-close]');
+    const input = overlay ? overlay.querySelector('input[type="search"]') : null;
+    if (!toggle || !overlay) return;
+
+    document.body.appendChild(overlay);
+
+    const setOverlay = (open) => {
+      overlay.hidden = !open;
+      document.body.classList.toggle('search-overlay-open', open);
+      if (open && input) {
+        requestAnimationFrame(() => input.focus());
+      }
+    };
+
+    toggle.addEventListener('click', () => setOverlay(true));
+    if (closeBtn) closeBtn.addEventListener('click', () => {
+      setOverlay(false);
+      toggle.focus();
+    });
+    if (backdrop) backdrop.addEventListener('click', () => {
+      setOverlay(false);
+      toggle.focus();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !overlay.hidden) {
+        setOverlay(false);
+        toggle.focus();
+      }
+    });
+  }
+
+  function initLanguageSwitcher() {
+    const switcher = document.querySelector('[data-language-switcher]');
+    if (!(switcher instanceof HTMLDetailsElement)) return;
+
+    document.addEventListener('click', (event) => {
+      if (switcher.open && !switcher.contains(event.target)) switcher.open = false;
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && switcher.open) {
+        switcher.open = false;
+        switcher.querySelector('summary')?.focus();
+      }
+    });
+  }
+
   onReady(() => {
     initHeader();
     initReveal();
     initCounters();
     initProductTabs();
-    initContactForm();
+    initContactForms();
     initSupportWidget();
+    initSearchOverlay();
+    initLanguageSwitcher();
   });
 })();
