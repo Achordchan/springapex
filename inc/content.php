@@ -68,7 +68,7 @@ function springapex_content(): array
                 'title' => 'Products',
                 'subtitle' => 'Precision springs for every need. Built to perform, built to last.',
                 'primary_cta' => ['label' => 'Explore Product Range', 'href' => '#product-categories', 'icon' => 'arrow-right'],
-                'image' => 'generated/springapex-product-assortment-v1.webp',
+                'image' => 'products-hero-v3.png',
             ],
             'categories' => [
                 ['slug' => 'compression-springs', 'title' => 'Compression Springs', 'icon' => 'spring', 'image' => 'product-compression-detail-v4.png', 'category_image' => 'product-compression-detail-v4.png', 'featured_image' => 'product-compression-card-v3.png', 'desc' => 'Designed for dependable axial load and return force.'],
@@ -114,7 +114,7 @@ function springapex_content(): array
             'hero' => [
                 'title' => 'Solutions',
                 'subtitle' => 'Tailored spring solutions for your industry.',
-                'image' => 'solutions-hero-v3.png',
+                'image' => 'solutions-hero-v2.png',
             ],
             'items' => [
                 ['slug' => 'automotive', 'title' => 'Automotive', 'tagline' => 'Built for performance', 'image' => 'solution-automotive-v2.png'],
@@ -129,7 +129,7 @@ function springapex_content(): array
             'hero' => [
                 'title' => 'News',
                 'subtitle' => 'Company updates, engineering insights and manufacturing news from SpringApex.',
-                'image' => 'generated/springapex-factory-floor-v1.webp',
+                'image' => 'generated/springapex-news-hero-v3.webp',
             ],
             'items' => [
                 [
@@ -138,7 +138,7 @@ function springapex_content(): array
                     'date' => '2026-07-18',
                     'category' => 'Manufacturing',
                     'summary' => 'A fully automatic CNC coiling line is now in operation, supporting tighter dimensional tolerances and shorter lead times for custom compression and torsion springs.',
-                    'image' => 'generated/springapex-factory-floor-v1.webp',
+                    'image' => 'generated/springapex-news-cnc-coiling-v1.webp',
                     'products' => ['compression-springs', 'torsion-springs'],
                     'content' => [
                         ['type' => 'p', 'text' => 'A new fully automatic CNC coiling line has been commissioned at the SpringApex plant. The line combines servo-driven wire feeding, high-speed coiling and in-process length measurement so dimensional results stay consistent across the full production batch.'],
@@ -158,7 +158,7 @@ function springapex_content(): array
                     'date' => '2026-06-25',
                     'category' => 'Engineering Guide',
                     'summary' => 'Music wire, stainless steel, carbon steel or alloy material: a practical checklist to shortlist the right spring material from the application requirements.',
-                    'image' => 'generated/springapex-engineering-desk-v1.webp',
+                    'image' => 'generated/springapex-news-material-selection-v1.webp',
                     'products' => ['compression-springs', 'extension-springs', 'torsion-springs'],
                     'content' => [
                         ['type' => 'p', 'text' => 'Material selection decides how a spring behaves in service: how much force it can deliver, how it responds to temperature and corrosion, and how long it keeps its original dimensions.'],
@@ -179,7 +179,7 @@ function springapex_content(): array
                     'date' => '2026-05-30',
                     'category' => 'Quality',
                     'summary' => 'The annual quality management system audit covered incoming material control, in-process inspection, final load testing and batch documentation.',
-                    'image' => 'generated/springapex-quality-lab-v1.webp',
+                    'image' => 'generated/springapex-news-quality-audit-v1.webp',
                     'products' => ['disc-springs', 'die-springs'],
                     'content' => [
                         ['type' => 'p', 'text' => 'SpringApex completed a scheduled quality management system audit covering incoming material control, in-process inspection, final load testing and batch documentation.'],
@@ -199,7 +199,7 @@ function springapex_content(): array
                     'date' => '2026-05-08',
                     'category' => 'Engineering',
                     'summary' => 'What happens after you send a spring drawing: design review, prototype confirmation and controlled release to production.',
-                    'image' => 'generated/springapex-product-assortment-v1.webp',
+                    'image' => 'generated/springapex-news-prototype-v1.webp',
                     'products' => ['compression-springs', 'wire-forms'],
                     'content' => [
                         ['type' => 'p', 'text' => 'Every custom spring starts with the same exchange: the customer sends a drawing or sample, and engineering confirms the design before any wire is cut.'],
@@ -219,7 +219,7 @@ function springapex_content(): array
                     'date' => '2026-04-16',
                     'category' => 'Logistics',
                     'summary' => 'Corrosion protection, sturdy packing and carton-level traceability are applied to every export shipment leaving the SpringApex plant.',
-                    'image' => 'facility-aerial-original.jpg',
+                    'image' => 'generated/springapex-news-export-packaging-v1.webp',
                     'products' => ['disc-springs', 'die-springs'],
                     'content' => [
                         ['type' => 'p', 'text' => 'Springs can arrive at their destination in perfect technical condition yet be rejected because of rust, damaged packaging or unclear labeling. Export packing at SpringApex is treated as part of the quality process, not an afterthought.'],
@@ -239,7 +239,7 @@ function springapex_content(): array
                     'date' => '2026-03-27',
                     'category' => 'Service',
                     'summary' => 'Every engineering inquiry receives an initial response within one business day, with the information needed to move the project forward.',
-                    'image' => 'hero-spring-v2.png',
+                    'image' => 'generated/springapex-news-engineering-support-v1.webp',
                     'products' => ['compression-springs', 'extension-springs'],
                     'content' => [
                         ['type' => 'p', 'text' => 'A slow first reply is often what stalls a spring project. SpringApex commits to an initial engineering response within 24 hours on business days, even when the final quotation needs more review time.'],
@@ -285,7 +285,7 @@ function springapex_content(): array
                 'title' => 'Capabilities',
                 'subtitle' => 'Engineering and manufacturing built around repeatable performance.',
                 'cta' => ['label' => 'Upload Your Drawing', 'href' => '/contact/?intent=drawing', 'icon' => 'upload'],
-                'image' => 'capabilities-hero-v4.png',
+                'image' => 'generated/springapex-capabilities-hero-v2.webp',
             ],
             'intro' => [
                 'title' => 'Our Capabilities',

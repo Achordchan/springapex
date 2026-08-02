@@ -434,6 +434,32 @@
     transform: none;
   }
 
+  .certification-strip {
+    padding-block: 24px;
+  }
+
+  .certification-row {
+    display: flex;
+    margin-right: -16px;
+    margin-left: -16px;
+    padding: 0 16px 4px;
+    overflow-x: auto;
+    justify-content: flex-start;
+    gap: 8px;
+    scrollbar-width: none;
+  }
+
+  .certification-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .certification-card {
+    min-width: 164px;
+    min-height: 50px;
+    padding-inline: 12px;
+    font-size: 13px;
+  }
+
   .row-between {
     align-items: flex-start;
   }

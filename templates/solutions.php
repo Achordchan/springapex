@@ -10,10 +10,10 @@ get_template_part('parts/inner-hero', null, [
     'variant' => 'solutions',
     'title' => $hero['title'] ?? 'Solutions',
     'subtitle' => $hero['subtitle'] ?? '',
-    'image' => $hero['image'] ?? 'solutions-hero-v3.png',
+    'image' => $hero['image'] ?? 'solutions-hero-v2.png',
     'mobile_image' => 'solutions-hero-v2.png',
-    'image_width' => 3840,
-    'image_height' => 480,
+    'image_width' => 1890,
+    'image_height' => 830,
     'ctas' => [[
         'label' => 'Explore Industries',
         'href' => '#solutions-grid',

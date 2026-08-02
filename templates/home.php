@@ -39,12 +39,21 @@ $hero_lines = preg_split('/\R/', (string) ($hero['title'] ?? '')) ?: [];
   </div>
 </section>
 
-<section class="industry-strip" aria-labelledby="industry-strip-title">
+<?php $certifications = springapex_get('company.quality.standards', []); ?>
+<section class="certification-strip" aria-labelledby="certification-strip-title">
   <div class="container container-wide">
-    <p class="section-kicker" id="industry-strip-title"><?php esc_html_e('Trusted by leading industries', 'springapex'); ?></p>
-    <div class="industry-row" data-reveal-group>
-      <?php foreach (($home['industries'] ?? []) as $industry) : ?>
-        <span><?php echo esc_html($industry); ?></span>
+    <p class="section-kicker" id="certification-strip-title"><?php esc_html_e('Quality Certifications', 'springapex'); ?></p>
+    <div class="certification-row" data-reveal-group>
+      <?php foreach ($certifications as $certification) : ?>
+        <?php
+        $certification_name = (string) ($certification['name'] ?? '');
+        $certification_url = trim((string) ($certification['url'] ?? ''));
+        $certification_tag = $certification_url !== '' ? 'a' : 'span';
+        ?>
+        <<?php echo $certification_tag; ?> class="certification-card"<?php echo $certification_url !== '' ? ' href="' . esc_url($certification_url) . '" target="_blank" rel="noopener noreferrer"' : ''; ?> aria-label="<?php echo esc_attr($certification_name); ?>">
+          <span class="certification-card__icon" aria-hidden="true"><?php echo springapex_icon('check-shield', 'icon icon-sm'); ?></span>
+          <span class="certification-card__name"><?php echo esc_html($certification_name); ?></span>
+        </<?php echo $certification_tag; ?>>
       <?php endforeach; ?>
     </div>
   </div>

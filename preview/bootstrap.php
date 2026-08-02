@@ -15,7 +15,7 @@ if (!in_array(PHP_SAPI, ['cli', 'cli-server'], true)) {
 
 defined('ABSPATH') || define('ABSPATH', __DIR__ . '/');
 defined('SPRINGAPEX_PREVIEW') || define('SPRINGAPEX_PREVIEW', true);
-defined('SPRINGAPEX_VERSION') || define('SPRINGAPEX_VERSION', '2.5.5');
+defined('SPRINGAPEX_VERSION') || define('SPRINGAPEX_VERSION', '2.5.15');
 defined('SPRINGAPEX_DIR') || define('SPRINGAPEX_DIR', dirname(__DIR__));
 defined('SPRINGAPEX_URI') || define('SPRINGAPEX_URI', '');
 
@@ -226,12 +226,15 @@ function wp_head(): void
     $hero_images = [
         'home' => 'hero-spring-v2.png',
         'products' => 'products-hero-v3.png',
+        'solutions' => 'solutions-hero-v2.png',
         'product' => 'product-compression-detail-v4.png',
-        'solution' => 'solutions-hero-v3.png',
-        'news' => 'generated/springapex-factory-floor-v1.webp',
-        'news-single' => 'generated/springapex-factory-floor-v1.webp',
+        'solution' => 'solutions-hero-v2.png',
+        'news' => 'generated/springapex-news-hero-v3.webp',
+        'news-single' => 'generated/springapex-news-hero-v3.webp',
         'about' => 'about-building-v3.png',
         'contact' => 'contact-springs-v2.png',
+        'capabilities' => 'generated/springapex-capabilities-hero-v2.webp',
+        'resources' => 'generated/springapex-resources-hero-v2.webp',
     ];
 
     if ($route === 'product' && function_exists('springapex_product')) {

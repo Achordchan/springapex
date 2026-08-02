@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 
 $company = springapex_get('company', []);
 $manufacturing = $company['manufacturing'] ?? [];
-$facts = array_slice($company['facts'] ?? [], 0, 5);
+$facts = array_slice($company['facts'] ?? [], 0, 4);
 if (!$manufacturing || !$facts) {
     return;
 }
@@ -25,9 +25,14 @@ if (!$manufacturing || !$facts) {
       <p class="sa-section-lede"><?php echo esc_html((string) ($manufacturing['text'] ?? '')); ?></p>
       <dl class="sa-fact-grid">
         <?php foreach ($facts as $fact) : ?>
-          <div class="sa-fact">
-            <dt><?php echo esc_html((string) ($fact['label'] ?? '')); ?></dt>
-            <dd><?php echo esc_html((string) ($fact['value'] ?? '')); ?></dd>
+          <?php
+          $fact_label = (string) ($fact['label'] ?? '');
+          $fact_value = (string) ($fact['value'] ?? '');
+          $fact_compact = mb_strlen($fact_label) > 15 || mb_strlen($fact_value) > 10;
+          ?>
+          <div class="sa-fact<?php echo $fact_compact ? ' sa-fact--compact' : ''; ?>">
+            <dt><?php echo esc_html($fact_label); ?></dt>
+            <dd><?php echo esc_html($fact_value); ?></dd>
           </div>
         <?php endforeach; ?>
       </dl>

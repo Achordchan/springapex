@@ -6,6 +6,7 @@ if (!defined('ABSPATH')) {
 $quality = springapex_get('company.quality', []);
 $standards = is_array($quality['standards'] ?? null) ? $quality['standards'] : [];
 $variant = sanitize_key((string) ($args['variant'] ?? 'full')) ?: 'full';
+$display_standards = $variant === 'compact' ? array_slice($standards, 0, 3) : $standards;
 if (!$quality || !$standards) {
     return;
 }
@@ -16,11 +17,11 @@ if (!$quality || !$standards) {
       <p class="section-kicker"><?php echo esc_html((string) ($quality['eyebrow'] ?? 'QUALITY')); ?></p>
       <h2><?php echo esc_html((string) ($quality['title'] ?? '')); ?></h2>
       <p class="sa-section-lede"><?php echo esc_html((string) ($quality['text'] ?? '')); ?></p>
-      <?php if (!empty($quality['detail'])) : ?>
+      <?php if ($variant !== 'compact' && !empty($quality['detail'])) : ?>
         <p class="sa-section-detail"><?php echo esc_html((string) $quality['detail']); ?></p>
       <?php endif; ?>
       <div class="sa-standard-list" data-reveal-group>
-        <?php foreach ($standards as $standard) : ?>
+        <?php foreach ($display_standards as $standard) : ?>
           <?php
           $standard_name = (string) ($standard['name'] ?? '');
           $standard_slug = sanitize_title($standard_name);

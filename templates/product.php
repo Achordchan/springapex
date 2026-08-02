@@ -80,51 +80,14 @@ get_template_part('parts/inner-hero', null, [
             'icon' => 'arrow-right',
             'style' => 'primary',
         ],
-        [
-            'label' => 'Download Spec Sheet',
-            'href' => $catalog_url ?: '/contact/?intent=catalog&product=' . $slug,
-            'icon' => 'download',
-            'style' => 'ghost',
-        ],
     ],
 ]);
 ?>
 
-<section class="section sa-product-params" id="specifications" data-product-section>
-  <div class="container container-wide">
-    <div class="sa-product-params__grid">
-      <div class="sa-product-params__specs">
-        <h2 class="sa-product-params__title"><?php esc_html_e('Key Parameters', 'springapex'); ?></h2>
-        <table class="spec-table spec-table--compact">
-          <tbody>
-            <?php foreach ($specs as $row) : ?>
-              <tr>
-                <th scope="row"><?php echo esc_html((string) $row['label']); ?></th>
-                <td><?php echo esc_html((string) $row['value']); ?></td>
-              </tr>
-            <?php endforeach; ?>
-          </tbody>
-        </table>
-      </div>
-      <div class="sa-product-params__cta-card">
-        <h3><?php esc_html_e('Need this spring?', 'springapex'); ?></h3>
-        <p><?php esc_html_e('Send your drawing or describe your application. We respond within 24 hours with engineering feedback or a quotation.', 'springapex'); ?></p>
-        <a class="btn btn-primary btn-full" href="<?php echo esc_url(springapex_url('/contact/?intent=quote&product=' . $slug)); ?>">
-          <?php esc_html_e('Get a Quote for This Product', 'springapex'); ?>
-          <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
-        </a>
-        <a class="btn btn-outline btn-full" href="<?php echo esc_url(springapex_url('/contact/?intent=drawing')); ?>">
-          <?php esc_html_e('Upload Drawing', 'springapex'); ?>
-          <?php echo springapex_icon('upload', 'icon icon-sm'); ?>
-        </a>
-      </div>
-    </div>
-  </div>
-</section>
-
 <nav class="product-tabs-section" aria-label="<?php esc_attr_e('Product sections', 'springapex'); ?>" data-product-tabs>
   <div class="container container-wide product-tabs">
     <a class="tab is-active" href="#overview" data-section="overview" aria-current="true"><?php esc_html_e('Overview', 'springapex'); ?></a>
+    <a class="tab" href="#specifications" data-section="specifications"><?php esc_html_e('Specifications', 'springapex'); ?></a>
     <a class="tab" href="#materials" data-section="materials"><?php esc_html_e('Materials', 'springapex'); ?></a>
     <a class="tab" href="#applications" data-section="applications"><?php esc_html_e('Applications', 'springapex'); ?></a>
     <a class="tab" href="#quality" data-section="quality"><?php esc_html_e('Quality & Documents', 'springapex'); ?></a>
@@ -167,6 +130,19 @@ get_template_part('parts/inner-hero', null, [
           ]); ?>
         </div>
       <?php endif; ?>
+    </div>
+    <div class="spec-table-wrap" id="specifications" data-product-section data-reveal="up">
+      <h2 class="sr-only"><?php esc_html_e('Specifications', 'springapex'); ?></h2>
+      <table class="spec-table">
+        <tbody>
+          <?php foreach ($specs as $row) : ?>
+            <tr>
+              <th scope="row"><?php echo esc_html((string) $row['label']); ?></th>
+              <td><?php echo esc_html((string) $row['value']); ?></td>
+            </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
     </div>
   </div>
 </section>
