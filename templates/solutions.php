@@ -11,15 +11,12 @@ get_template_part('parts/inner-hero', null, [
     'title' => $hero['title'] ?? 'Solutions',
     'subtitle' => $hero['subtitle'] ?? '',
     'image' => $hero['image'] ?? 'solutions-hero-v2.png',
-    'mobile_image' => 'solutions-hero-v2.png',
+    'mobile_image' => $hero['mobile_image'] ?? 'solutions-hero-mobile-v1.png',
     'image_width' => 1890,
     'image_height' => 830,
-    'ctas' => [[
-        'label' => 'Explore Industries',
-        'href' => '#solutions-grid',
-        'icon' => 'arrow-right',
-    ]],
 ]);
+
+get_template_part('parts/solutions-subnav', null, ['active' => 'industries']);
 ?>
 
 <section class="section solutions-grid-section" id="solutions-grid">
@@ -44,22 +41,6 @@ get_template_part('parts/inner-hero', null, [
         </a>
       <?php endforeach; ?>
     </div>
-  </div>
-</section>
-
-<section class="section sa-solution-method">
-  <div class="container container-wide sa-solution-method__layout">
-    <div class="sa-section-intro" data-reveal="up">
-      <p class="section-kicker"><?php esc_html_e('ENGINEERING METHOD', 'springapex'); ?></p>
-      <h2><?php esc_html_e('Every industry page follows the same technical chain.', 'springapex'); ?></h2>
-      <p class="sa-section-lede"><?php esc_html_e('We connect the application challenge to the spring family, material and process choices, then define how performance will be verified.', 'springapex'); ?></p>
-    </div>
-    <ol class="sa-solution-method__steps" data-reveal-group>
-      <li><span>01</span><strong><?php esc_html_e('Application challenge', 'springapex'); ?></strong></li>
-      <li><span>02</span><strong><?php esc_html_e('Recommended spring', 'springapex'); ?></strong></li>
-      <li><span>03</span><strong><?php esc_html_e('Material and process', 'springapex'); ?></strong></li>
-      <li><span>04</span><strong><?php esc_html_e('Validation plan', 'springapex'); ?></strong></li>
-    </ol>
   </div>
 </section>
 

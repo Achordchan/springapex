@@ -16,38 +16,77 @@ function springapex_content(): array
 
     $data = [
         'brand' => [
-            'name' => 'APEX SPRING',
+            'name' => 'ApexSpring',
             'tagline' => 'SPRING MANUFACTURING EXPERT',
             'company' => 'Xuzhou APEX Spring Manufacturing Co., Ltd.',
             'email' => 'victoria@springapex.cn',
             'phone' => '+86 187 9642 2510',
             'whatsapp' => '+86 187 9642 2510',
-            'address' => "Xuzhou, Jiangsu, China",
+            'address' => 'No. 15, Zhongnan Gaoke, Liuji Town, Tongshan District, Xuzhou City, Jiangsu Province, China 221112',
             'hours' => 'Monday – Friday, China Standard Time',
             'linkedin' => '',
+            'facebook' => 'https://www.facebook.com/1088694501000892/',
+            'x' => '',
+            'instagram' => 'https://www.instagram.com/apexspring/',
+            'tiktok' => '',
         ],
         'nav' => [
-            ['label' => 'About Us', 'slug' => 'about-us', 'href' => '/about/'],
+            ['label' => 'Home', 'slug' => 'home', 'href' => '/'],
+            [
+                'label' => 'About Us',
+                'slug' => 'about-us',
+                'href' => '/about/',
+                'children' => [
+                    ['label' => 'Company', 'href' => '/about/'],
+                    ['label' => 'Sustainability', 'href' => '/sustainability/'],
+                    ['label' => 'Download Center', 'href' => '/resources/'],
+                ],
+            ],
             ['label' => 'Products', 'slug' => 'products', 'href' => '/products/'],
-            ['label' => 'Industries', 'slug' => 'solutions', 'href' => '/solutions/'],
-            ['label' => 'Custom Springs', 'slug' => 'capabilities', 'href' => '/capabilities/'],
-            ['label' => 'News', 'slug' => 'news', 'href' => '/news/'],
+            [
+                'label' => 'Industries',
+                'slug' => 'solutions',
+                'href' => '/solutions/',
+                'children' => [
+                    ['label' => 'Industries', 'href' => '/solutions/'],
+                    ['label' => 'Case Studies', 'href' => '/case-studies/'],
+                ],
+            ],
+            [
+                'label' => 'Custom Springs',
+                'slug' => 'capabilities',
+                'href' => '/capabilities/',
+                'children' => [
+                    ['label' => 'Capabilities', 'href' => '/capabilities/'],
+                    ['label' => 'Manufacturing Videos', 'href' => '/manufacturing-videos/'],
+                ],
+            ],
+            [
+                'label' => 'News',
+                'slug' => 'news',
+                'href' => '/news/',
+                'children' => [
+                    ['label' => 'Industry News', 'href' => '/news/?news_type=industry-news'],
+                    ['label' => 'Exhibitions', 'href' => '/news/?news_type=exhibitions'],
+                    ['label' => 'Company News', 'href' => '/news/?news_type=company-news'],
+                ],
+            ],
             ['label' => 'Contact', 'slug' => 'contact', 'href' => '/contact/'],
         ],
         'home' => [
             'hero' => [
                 'title' => "Precision Springs. Designed for Your Applications.",
                 'subtitle' => 'From engineering design to mass production, we deliver reliable spring solutions for global industries.',
-                'primary_cta' => ['label' => 'Get a Quote', 'href' => '/contact/?intent=quote', 'icon' => 'arrow-right'],
-                'secondary_cta' => ['label' => 'Find Products', 'href' => '/products/', 'icon' => 'arrow-right'],
-                'image' => 'hero-spring-v2.png',
+                'video_cta' => ['label' => 'Play a Video', 'youtube_id' => '5LUKHmIHPDY'],
+                'quote_cta' => ['label' => 'Request a Quote', 'href' => '/contact/?intent=quote', 'icon' => 'arrow-right'],
+                'image' => 'hero-spring-v3.png',
             ],
             'industries' => ['AUTOMOTIVE', 'INDUSTRIAL', 'MEDICAL', 'AEROSPACE', 'RAIL', 'ENERGY'],
             'pillars' => [
-                ['icon' => 'pen', 'title' => 'Your Design, Optimized', 'text' => 'We review your drawings and application needs to develop a spring that performs reliably and is ready for production.'],
-                ['icon' => 'cubes', 'title' => 'Any Quantity, Consistent Quality', 'text' => 'From a single prototype to millions of pieces — advanced CNC forming delivers the same precision every time.'],
-                ['icon' => 'check-shield', 'title' => 'Verified Before Shipment', 'text' => 'Every batch is dimensionally inspected and load-tested, with documentation available for your quality records.'],
-                ['icon' => 'headset', 'title' => 'Fast, Clear Communication', 'text' => 'Your inquiries are answered within 24 hours. Engineering feedback and quotes follow a predictable timeline.'],
+                ['icon' => 'pen', 'title' => 'Production-Ready Design', 'text' => 'Drawing review for reliable, manufacturable spring designs.'],
+                ['icon' => 'cubes', 'title' => 'Prototype to Production', 'text' => 'Repeatable CNC precision from samples to volume orders.'],
+                ['icon' => 'check-shield', 'title' => 'Verified Before Shipment', 'text' => 'Inspection, load testing and documentation for every batch.'],
+                ['icon' => 'headset', 'title' => 'Fast Engineering Support', 'text' => 'Clear feedback and quotations within 24 hours.'],
             ],
             'applications' => [
                 ['slug' => 'automotive', 'title' => 'Automotive', 'image' => 'home-automotive-v2.png'],
@@ -56,7 +95,7 @@ function springapex_content(): array
                 ['slug' => 'energy', 'title' => 'Energy', 'image' => 'home-energy-v2.png'],
             ],
             'process' => [
-                ['icon' => 'spring', 'label' => 'Engineering'],
+                ['icon' => 'target', 'label' => 'Engineering'],
                 ['icon' => 'cubes', 'label' => 'Prototyping'],
                 ['icon' => 'gear', 'label' => 'Manufacturing'],
                 ['icon' => 'check-shield', 'label' => 'Testing'],
@@ -66,18 +105,19 @@ function springapex_content(): array
         'products' => [
             'hero' => [
                 'title' => 'Products',
-                'subtitle' => 'Precision springs for every need. Built to perform, built to last.',
+                'subtitle' => 'Precision springs engineered for dependable performance.',
                 'primary_cta' => ['label' => 'Explore Product Range', 'href' => '#product-categories', 'icon' => 'arrow-right'],
                 'image' => 'products-hero-v3.png',
+                'mobile_image' => 'products-hero-mobile-v1.png',
             ],
             'categories' => [
-                ['slug' => 'compression-springs', 'title' => 'Compression Springs', 'icon' => 'spring', 'image' => 'product-compression-detail-v4.png', 'category_image' => 'product-compression-detail-v4.png', 'featured_image' => 'product-compression-card-v3.png', 'desc' => 'Designed for dependable axial load and return force.'],
-                ['slug' => 'extension-springs', 'title' => 'Extension Springs', 'icon' => 'extension', 'image' => 'product-extension-v2.png', 'category_image' => 'product-extension-category-v3.png', 'desc' => 'Built to deliver reliable tension and controlled extension.'],
-                ['slug' => 'torsion-springs', 'title' => 'Torsion Springs', 'icon' => 'torsion', 'image' => 'product-torsion-v2.png', 'category_image' => 'product-torsion-category-v3.png', 'desc' => 'Engineered for repeatable rotational force and torque.'],
-                ['slug' => 'disc-springs', 'title' => 'Disc Springs', 'icon' => 'disc', 'image' => 'product-disc-v2.png', 'desc' => 'High load capacity in compact assemblies.'],
-                ['slug' => 'wire-forms', 'title' => 'Wire Forms', 'icon' => 'form', 'image' => 'product-wire-form-v2.png', 'desc' => 'Complex formed-wire parts manufactured to specification.'],
-                ['slug' => 'die-springs', 'title' => 'Die Springs', 'icon' => 'disc', 'image' => 'product-disc-v2.png', 'desc' => 'Heavy-duty springs for stamping dies and industrial tooling.'],
-                ['slug' => 'other-customized-springs', 'title' => 'Other Customized Springs', 'icon' => 'spring', 'image' => 'product-wire-v2.png', 'desc' => 'Custom spring solutions for specialized applications and requirements.'],
+                ['slug' => 'compression-springs', 'title' => 'Compression Springs', 'image' => 'product-compression-detail-v4.png', 'category_image' => 'product-compression-detail-v4.png', 'featured_image' => 'product-compression-card-v3.png', 'desc' => 'Designed for dependable axial load and return force.'],
+                ['slug' => 'extension-springs', 'title' => 'Extension Springs', 'image' => 'product-extension-v2.png', 'category_image' => 'product-extension-category-v3.png', 'desc' => 'Built to deliver reliable tension and controlled extension.'],
+                ['slug' => 'torsion-springs', 'title' => 'Torsion Springs', 'image' => 'product-torsion-v2.png', 'category_image' => 'product-torsion-category-v3.png', 'desc' => 'Engineered for repeatable rotational force and torque.'],
+                ['slug' => 'disc-springs', 'title' => 'Disc Springs', 'image' => 'product-disc-v2.png', 'desc' => 'High load capacity in compact assemblies.'],
+                ['slug' => 'wire-forms', 'title' => 'Wire Forms', 'image' => 'product-wire-form-v2.png', 'desc' => 'Complex formed-wire parts manufactured to specification.'],
+                ['slug' => 'die-springs', 'title' => 'Die Springs', 'image' => 'product-disc-v2.png', 'desc' => 'Heavy-duty springs for stamping dies and industrial tooling.'],
+                ['slug' => 'other-customized-springs', 'title' => 'Other Customized Springs', 'image' => 'product-wire-v2.png', 'desc' => 'Custom spring solutions for specialized applications and requirements.'],
             ],
             'featured' => ['compression-springs', 'extension-springs', 'torsion-springs', 'disc-springs'],
         ],
@@ -87,7 +127,6 @@ function springapex_content(): array
                 'subtitle' => 'Designed to resist axial compression and deliver reliable performance.',
                 'overview' => 'Compression springs are open-coil helical springs that store energy under axial load and return toward their original length when that load is removed. Diameters, wire sizes, materials, ends and surface treatments can be engineered around the application.',
                 'image' => 'product-compression-detail-v4.png',
-                'diagram' => 'compression-diagram-v2.png',
                 'catalog_url' => '',
                 'specs' => [
                     ['label' => 'Wire Diameter', 'value' => '0.1 – 60 mm'],
@@ -115,6 +154,7 @@ function springapex_content(): array
                 'title' => 'Solutions',
                 'subtitle' => 'Tailored spring solutions for your industry.',
                 'image' => 'solutions-hero-v2.png',
+                'mobile_image' => 'solutions-hero-mobile-v1.png',
             ],
             'items' => [
                 ['slug' => 'automotive', 'title' => 'Automotive', 'tagline' => 'Built for performance', 'image' => 'solution-automotive-v2.png'],
@@ -125,142 +165,67 @@ function springapex_content(): array
                 ['slug' => 'rail-transit', 'title' => 'Rail Transit', 'tagline' => 'Moving the future', 'image' => 'solution-rail-v2.png'],
             ],
         ],
+        'case_studies' => [
+            'hero' => [
+                'title' => 'Case Studies',
+                'subtitle' => 'Approved project examples from application review through repeat production.',
+                'image' => 'solutions-hero-v2.png',
+                'mobile_image' => 'solutions-hero-mobile-v1.png',
+            ],
+            'items' => [],
+        ],
         'news' => [
             'hero' => [
                 'title' => 'News',
-                'subtitle' => 'Company updates, engineering insights and manufacturing news from SpringApex.',
+                'subtitle' => 'Company and engineering updates.',
                 'image' => 'generated/springapex-news-hero-v3.webp',
+                'mobile_image' => 'news-hero-mobile-v1.png',
             ],
             'items' => [
                 [
-                    'slug' => 'new-cnc-coiling-line',
-                    'title' => 'New CNC Coiling Line Expands Custom Spring Capacity',
-                    'date' => '2026-07-18',
-                    'category' => 'Manufacturing',
-                    'summary' => 'A fully automatic CNC coiling line is now in operation, supporting tighter dimensional tolerances and shorter lead times for custom compression and torsion springs.',
-                    'image' => 'generated/springapex-news-cnc-coiling-v1.webp',
-                    'products' => ['compression-springs', 'torsion-springs'],
+                    'slug' => 'manufacturing-expo-bangkok-2024',
+                    'title' => 'ApexSpring at Manufacturing Expo 2024 in Bangkok',
+                    'date' => '2024-06-20',
+                    'date_label' => 'June 17–20, 2024',
+                    'category' => 'Exhibition',
+                    'news_type' => 'exhibitions',
+                    'summary' => 'ApexSpring presented precision spring products and met visitors at Manufacturing Expo 2024 in Bangkok, Thailand.',
+                    'image' => 'news/manufacturing-expo-bangkok-2024/hero.jpg',
+                    'products' => ['compression-springs', 'torsion-springs', 'wire-forms'],
                     'content' => [
-                        ['type' => 'p', 'text' => 'A new fully automatic CNC coiling line has been commissioned at the SpringApex plant. The line combines servo-driven wire feeding, high-speed coiling and in-process length measurement so dimensional results stay consistent across the full production batch.'],
-                        ['type' => 'p', 'text' => 'The equipment extends our manufacturing window for compression and torsion springs, covering wire diameters from 0.1 mm to 60 mm with closed, closed-and-ground and plain end options.'],
-                        ['type' => 'h2', 'text' => 'What this means for customers'],
+                        ['type' => 'p', 'text' => 'From June 17 to 20, 2024, ApexSpring exhibited at Manufacturing Expo in Bangkok, Thailand. The event brought manufacturing teams and suppliers together at BITEC to review production technologies and component solutions.'],
+                        ['type' => 'p', 'text' => 'At the ApexSpring booth, visitors reviewed spring samples and discussed custom applications with our team. The conversations focused on turning drawings and operating requirements into practical production plans.'],
+                        ['type' => 'h2', 'text' => 'Discussions at the booth'],
                         ['type' => 'list', 'items' => [
-                            'Tighter dimensional control on batch production for the same design.',
-                            'Shorter changeover time between custom jobs, which supports smaller minimum quantities.',
-                            'More capacity for prototype loops before a design is released to mass production.',
+                            'Custom spring geometry, load and installation requirements.',
+                            'Material and surface-treatment options for different operating environments.',
+                            'Prototype, production and quality-documentation requirements.',
                         ]],
-                        ['type' => 'p', 'text' => 'If you are reviewing a custom spring design, send the drawing and operating conditions to our engineering team. We will confirm whether the required wire diameter, tolerances and end configuration fit the new line.'],
+                        ['type' => 'h2', 'text' => 'Thank you for visiting'],
+                        ['type' => 'p', 'text' => 'Thank you to everyone who visited the ApexSpring booth and shared their application requirements. Our team continues to support follow-up discussions with drawing review, product selection and quotation preparation.'],
                     ],
-                ],
-                [
-                    'slug' => 'spring-material-selection-guide',
-                    'title' => 'How to Choose the Right Spring Material Before Production',
-                    'date' => '2026-06-25',
-                    'category' => 'Engineering Guide',
-                    'summary' => 'Music wire, stainless steel, carbon steel or alloy material: a practical checklist to shortlist the right spring material from the application requirements.',
-                    'image' => 'generated/springapex-news-material-selection-v1.webp',
-                    'products' => ['compression-springs', 'extension-springs', 'torsion-springs'],
-                    'content' => [
-                        ['type' => 'p', 'text' => 'Material selection decides how a spring behaves in service: how much force it can deliver, how it responds to temperature and corrosion, and how long it keeps its original dimensions.'],
-                        ['type' => 'h2', 'text' => 'Start from four questions'],
-                        ['type' => 'list', 'items' => [
-                            'What loads does the spring see, and how many cycles must it survive?',
-                            'Is the spring exposed to moisture, chemicals or high temperature?',
-                            'Are the dimensions tight enough that plating or coating thickness matters?',
-                            'Does the end product require magnetic, electrical or medical-grade properties?',
-                        ]],
-                        ['type' => 'p', 'text' => 'Music wire offers good strength and surface quality for general industrial use. Stainless steel is chosen when corrosion resistance matters, carbon steel when cost and availability lead, and alloy materials when the application runs hot or demands fatigue resistance.'],
-                        ['type' => 'p', 'text' => 'Our engineering team reviews the material proposal together with the drawing, and flags alternatives when a different wire grade would improve service life without changing the envelope.'],
-                    ],
-                ],
-                [
-                    'slug' => 'quality-system-audit-completed',
-                    'title' => 'Scheduled Quality System Audit Completed Across Production',
-                    'date' => '2026-05-30',
-                    'category' => 'Quality',
-                    'summary' => 'The annual quality management system audit covered incoming material control, in-process inspection, final load testing and batch documentation.',
-                    'image' => 'generated/springapex-news-quality-audit-v1.webp',
-                    'products' => ['disc-springs', 'die-springs'],
-                    'content' => [
-                        ['type' => 'p', 'text' => 'SpringApex completed a scheduled quality management system audit covering incoming material control, in-process inspection, final load testing and batch documentation.'],
-                        ['type' => 'h2', 'text' => 'Audit scope'],
-                        ['type' => 'list', 'items' => [
-                            'Incoming wire verification against material certificates and diameter checks.',
-                            'In-process dimensional and force checks at defined control points.',
-                            'Final inspection including free length, outer diameter and load testing per drawing.',
-                            'Batch traceability from wire lot to shipped carton.'],
-                        ],
-                        ['type' => 'p', 'text' => 'Inspection records are kept per batch and made available to customers on request, so the documentation trail matches the parts that were actually shipped.'],
-                    ],
-                ],
-                [
-                    'slug' => 'prototype-to-production-process',
-                    'title' => 'From Drawing to Production: The SpringApex Prototype Process',
-                    'date' => '2026-05-08',
-                    'category' => 'Engineering',
-                    'summary' => 'What happens after you send a spring drawing: design review, prototype confirmation and controlled release to production.',
-                    'image' => 'generated/springapex-news-prototype-v1.webp',
-                    'products' => ['compression-springs', 'wire-forms'],
-                    'content' => [
-                        ['type' => 'p', 'text' => 'Every custom spring starts with the same exchange: the customer sends a drawing or sample, and engineering confirms the design before any wire is cut.'],
-                        ['type' => 'h2', 'text' => 'The four steps'],
-                        ['type' => 'list', 'items' => [
-                            'Design review: dimensions, loads, material and tolerances are checked against manufacturing capability.',
-                            'Process confirmation: coiling method, end configuration, heat treatment and surface finish are fixed.',
-                            'Prototype: a small run is produced and measured against the drawing.',
-                            'Production release: after the prototype is confirmed, the job moves to controlled batch production.'],
-                        ],
-                        ['type' => 'p', 'text' => 'Questions during review are answered within one business day, so the clarification loop does not stall the project.'],
-                    ],
-                ],
-                [
-                    'slug' => 'export-packaging-and-traceability',
-                    'title' => 'Export Packaging and Batch Traceability for Every Shipment',
-                    'date' => '2026-04-16',
-                    'category' => 'Logistics',
-                    'summary' => 'Corrosion protection, sturdy packing and carton-level traceability are applied to every export shipment leaving the SpringApex plant.',
-                    'image' => 'generated/springapex-news-export-packaging-v1.webp',
-                    'products' => ['disc-springs', 'die-springs'],
-                    'content' => [
-                        ['type' => 'p', 'text' => 'Springs can arrive at their destination in perfect technical condition yet be rejected because of rust, damaged packaging or unclear labeling. Export packing at SpringApex is treated as part of the quality process, not an afterthought.'],
-                        ['type' => 'h2', 'text' => 'Standard export packing'],
-                        ['type' => 'list', 'items' => [
-                            'Rust protection applied according to the agreed surface treatment and transit time.',
-                            'Layer separation and cushioning so parts do not rub or deform in transit.',
-                            'Cartons or wooden cases matched to weight and route, with handling labels.',
-                            'Carton labels carrying the batch number, so records can be traced back to the wire lot.'],
-                        ],
-                        ['type' => 'p', 'text' => 'For programs with a specific packaging specification, we confirm the packing method and inspection level before production so the shipment matches the customer quality agreement.'],
-                    ],
-                ],
-                [
-                    'slug' => 'engineering-support-response-time',
-                    'title' => 'Engineering Support: Initial Response Within 24 Hours',
-                    'date' => '2026-03-27',
-                    'category' => 'Service',
-                    'summary' => 'Every engineering inquiry receives an initial response within one business day, with the information needed to move the project forward.',
-                    'image' => 'generated/springapex-news-engineering-support-v1.webp',
-                    'products' => ['compression-springs', 'extension-springs'],
-                    'content' => [
-                        ['type' => 'p', 'text' => 'A slow first reply is often what stalls a spring project. SpringApex commits to an initial engineering response within 24 hours on business days, even when the final quotation needs more review time.'],
-                        ['type' => 'h2', 'text' => 'What to include in your inquiry'],
-                        ['type' => 'list', 'items' => [
-                            'A drawing or sample with key dimensions and tolerances.',
-                            'Operating conditions: load, travel, cycles and environment.',
-                            'Material or surface treatment requirements, if already specified.',
-                            'Target quantity and delivery date.'],
-                        ],
-                        ['type' => 'p', 'text' => 'You can reach engineering by email or WhatsApp. Inquiries that already include operating conditions usually receive a more precise response in the first round.'],
+                    'gallery_title' => 'Manufacturing Expo 2024 in Bangkok',
+                    'gallery' => [
+                        ['image' => 'news/manufacturing-expo-bangkok-2024/venue.jpg', 'alt' => 'Manufacturing Expo 2024 entrance at BITEC in Bangkok', 'caption' => 'Manufacturing Expo 2024 at BITEC, Bangkok'],
+                        ['image' => 'news/manufacturing-expo-bangkok-2024/visitor-discussion.jpg', 'alt' => 'ApexSpring team discussing spring samples with a visitor', 'caption' => 'Spring samples and application discussion'],
+                        ['image' => 'news/manufacturing-expo-bangkok-2024/project-meeting.jpg', 'alt' => 'Visitors meeting with the ApexSpring team at the exhibition booth', 'caption' => 'Project requirements discussed at the booth'],
+                        ['image' => 'news/manufacturing-expo-bangkok-2024/product-consultation.jpg', 'alt' => 'ApexSpring representative presenting products at Manufacturing Expo', 'caption' => 'Product consultation during the exhibition'],
+                        ['image' => 'news/manufacturing-expo-bangkok-2024/technical-review.jpg', 'alt' => 'Technical discussion at the ApexSpring exhibition counter', 'caption' => 'Technical requirements review'],
+                        ['image' => 'news/manufacturing-expo-bangkok-2024/exhibition-team.jpg', 'alt' => 'ApexSpring exhibition team at Manufacturing Expo 2024', 'caption' => 'The ApexSpring exhibition team'],
                     ],
                 ],
             ],
         ],
         'about' => [
             'hero' => [
-                'title' => 'About SpringApex',
-                'subtitle' => 'Precision springs. Purpose-built performance. Trusted worldwide.',
-                'cta' => ['label' => 'Get to Know Us', 'href' => '#story', 'icon' => 'arrow-right'],
+                'title' => 'About ApexSpring',
+                'subtitle' => 'Precision spring manufacturing since 2001.',
                 'image' => 'about-building-v3.png',
+                'mobile_image' => 'about-hero-mobile-v1.png',
+            ],
+            'company_video' => [
+                'title' => 'Inside ApexSpring',
+                'youtube_id' => '5LUKHmIHPDY',
             ],
             'stats' => [
                 ['icon' => 'users', 'value' => '2001', 'label' => 'Founded'],
@@ -268,15 +233,64 @@ function springapex_content(): array
                 ['icon' => 'spring', 'value' => '120+', 'label' => 'Employees'],
                 ['icon' => 'globe', 'value' => '2,000+', 'label' => 'Customers'],
             ],
-            'story' => [
-                'eyebrow' => 'OUR STORY',
-                'title' => "Built on Precision.\nDriven by Purpose.",
-                'text' => 'SpringApex was founded on a simple belief: precision components drive extraordinary outcomes. From our early days to global partnerships today, we remain committed to delivering springs that perform—every time.',
-                'image' => 'about-story-springs-v5.png',
-                'values' => [
-                    ['icon' => 'target', 'title' => 'Customer Focused', 'text' => 'We listen, collaborate and engineer around the real application.'],
-                    ['icon' => 'award', 'title' => 'Quality First', 'text' => 'Every part, every batch and every shipment is handled with care.'],
-                    ['icon' => 'leaf', 'title' => 'Continuous Improvement', 'text' => 'We invest in equipment, people and better production methods.'],
+            'why_choose' => [
+                'eyebrow' => 'WHY APEXSPRING',
+                'title' => 'From application challenge to repeat production.',
+                'media' => [
+                    [
+                        'image' => 'generated/about-design-engineering-v1.png',
+                        'label' => 'Design & Engineering',
+                        'alt' => 'Spring engineer reviewing a CAD model and measuring a compression spring',
+                    ],
+                    [
+                        'image' => 'generated/about-controlled-production-v1.png',
+                        'label' => 'Controlled Production',
+                        'alt' => 'CNC spring coiling equipment producing consistent compression springs',
+                    ],
+                ],
+                'items' => [
+                    ['icon_image' => 'generated/about-process-application-v1.png', 'title' => 'Application Review', 'text' => 'Drawing, sample or operating requirements.'],
+                    ['icon_image' => 'generated/about-process-design-v1.png', 'title' => 'Design & Manufacturability', 'text' => 'Geometry, material and tolerances reviewed for production.'],
+                    ['icon_image' => 'generated/about-process-prototype-v1.png', 'title' => 'Prototype & Validation', 'text' => 'Samples, dimensional checks and load verification.'],
+                    ['icon_image' => 'generated/about-process-production-v1.png', 'title' => 'Controlled Production', 'text' => 'CNC forming, heat or surface processes and repeatable settings.'],
+                    ['icon_image' => 'generated/about-process-delivery-v1.png', 'title' => 'Inspection & Delivery', 'text' => 'Batch checks, agreed records, identification and export support.'],
+                ],
+                'outcomes_title' => 'Why customers choose this approach',
+                'outcomes' => [
+                    ['icon' => 'network', 'text' => 'One Project Path'],
+                    ['icon' => 'users', 'text' => 'Fewer Handovers'],
+                    ['icon' => 'check-shield', 'text' => 'Repeatable Quality'],
+                    ['icon' => 'globe', 'text' => 'Global Support'],
+                ],
+            ],
+            'team' => [
+                'eyebrow' => 'WOMEN-OWNED PRECISION MANUFACTURING',
+                'statement_lead' => 'Women-owned precision.',
+                'statement_signature' => 'Driven by innovation.',
+                'founder' => [
+                    'name' => 'Tan Longfeng',
+                    'role' => 'Founder',
+                    'image' => 'team/tan-longfeng.webp',
+                ],
+                'groups' => [
+                    [
+                        'title' => 'Engineering',
+                        'members' => [
+                            ['name' => 'Wu Chao', 'role' => 'Chairman', 'image' => 'team/wu-chao.webp'],
+                            ['name' => 'Feng Yulin', 'role' => 'General Manager', 'image' => 'team/feng-yulin.webp'],
+                            ['name' => 'Zhou Yang', 'role' => 'Senior Engineer', 'image' => 'team/zhou-yang.webp'],
+                            ['name' => 'Chen Zhiyuan', 'role' => 'Senior Engineer', 'image' => 'team/chen-zhiyuan.webp'],
+                        ],
+                    ],
+                    [
+                        'title' => 'Global Support',
+                        'members' => [
+                            ['name' => 'Chen Shangrong', 'role' => 'Operations Director', 'image' => 'team/chen-shangrong.webp'],
+                            ['name' => 'Xu Qinghe', 'role' => 'Engineer', 'image' => 'team/xu-qinghe.webp'],
+                            ['name' => 'Lin Shuran', 'role' => 'Engineer', 'image' => 'team/lin-shuran.webp'],
+                            ['name' => 'Ji Minli', 'role' => 'Export Engineer', 'image' => 'team/ji-minli.webp'],
+                        ],
+                    ],
                 ],
             ],
         ],
@@ -286,6 +300,7 @@ function springapex_content(): array
                 'subtitle' => 'From application requirements and drawing review to controlled repeat production.',
                 'cta' => ['label' => 'Upload Your Drawing', 'href' => '/contact/?intent=drawing', 'icon' => 'upload'],
                 'image' => 'generated/springapex-capabilities-hero-v2.webp',
+                'mobile_image' => 'capabilities-hero-mobile-v1.png',
             ],
             'intro' => [
                 'title' => 'Built around your application.',
@@ -310,18 +325,81 @@ function springapex_content(): array
                 ],
             ],
         ],
+        'manufacturing_videos' => [
+            'eyebrow' => 'MANUFACTURING VIDEOS',
+            'title' => 'See how precision is built.',
+            'intro' => 'Explore the processes, inspection and testing behind repeatable spring production.',
+            'hero_image' => 'manufacturing-videos/hero-engineering-studio-v2.webp',
+            'featured' => [
+                'category' => 'Manufacturing Process',
+                'title' => 'From Wire to Verified Performance',
+                'image' => 'manufacturing-videos/featured-cnc-coiling-v1.webp',
+                'youtube_id' => '5LUKHmIHPDY',
+                'duration' => '09:57',
+            ],
+            'categories' => [
+                [
+                    'title' => 'Manufacturing Processes',
+                    'text' => 'Coiling, forming, heat treatment and controlled production steps.',
+                    'image' => 'manufacturing-videos/manufacturing-processes-v1.webp',
+                    'duration' => '03:12',
+                ],
+                [
+                    'title' => 'Quality Inspection',
+                    'text' => 'Dimensional checks and verification matched to the drawing.',
+                    'image' => 'manufacturing-videos/quality-inspection-v1.webp',
+                    'duration' => '02:45',
+                ],
+                [
+                    'title' => 'Stamping & Forming',
+                    'text' => 'Precision tooling and forming for repeatable component geometry.',
+                    'image' => 'manufacturing-videos/stamping-forming-v1.webp',
+                    'duration' => '03:36',
+                ],
+                [
+                    'title' => 'Testing & Validation',
+                    'text' => 'Controlled load and performance checks before release.',
+                    'image' => 'manufacturing-videos/testing-validation-v1.webp',
+                    'duration' => '02:58',
+                ],
+                [
+                    'title' => 'Application Engineering',
+                    'text' => 'Drawing review, spring measurement and design decisions before production.',
+                    'image' => 'manufacturing-videos/application-engineering-v1.webp',
+                    'duration' => '03:28',
+                ],
+                [
+                    'title' => 'Machine Setup',
+                    'text' => 'Tooling alignment and CNC setup for stable repeat production.',
+                    'image' => 'manufacturing-videos/machine-setup-v1.webp',
+                    'duration' => '04:06',
+                ],
+                [
+                    'title' => 'Material Traceability',
+                    'text' => 'Wire identification and material checks from receipt to production.',
+                    'image' => 'manufacturing-videos/material-traceability-v1.webp',
+                    'duration' => '02:34',
+                ],
+                [
+                    'title' => 'Packaging & Delivery',
+                    'text' => 'Final count, protective packing and shipment preparation.',
+                    'image' => 'manufacturing-videos/packaging-delivery-v1.webp',
+                    'duration' => '02:51',
+                ],
+            ],
+        ],
         'contact' => [
             'hero' => [
-                'title' => 'Contact Us',
-                'subtitle' => "We're here to support your projects.",
+                'title' => 'Contact',
+                'subtitle' => 'Tell us what you need.',
                 'points' => [
                     ['icon' => 'headset', 'title' => 'Fast, expert support', 'text' => 'Get answers from our engineering team.'],
                     ['icon' => 'shield', 'title' => 'Confidential & secure', 'text' => 'Your drawings and project details are handled with care.'],
                 ],
                 'image' => 'contact-springs-v2.png',
+                'mobile_image' => 'contact-hero-mobile-v1.png',
             ],
             'inquiry_types' => ['Request a Quote', 'Upload a Drawing', 'Technical Support', 'Custom Design', 'Catalog / Technical Documents', 'Supplier Qualification', 'Feedback / Suggestions', 'Partnership', 'Other'],
-            'map_image' => 'map-xuzhou-v2.png',
         ],
     ];
 
@@ -558,6 +636,90 @@ function springapex_solutions(): array
     }, $posts ?: []);
 }
 
+function springapex_case_seed(string $slug): ?array
+{
+    foreach (springapex_get('case_studies.items', []) as $item) {
+        if ((string) ($item['slug'] ?? '') === $slug) {
+            return $item;
+        }
+    }
+    return null;
+}
+
+function springapex_case_from_post(object $post): array
+{
+    $seed = springapex_case_seed((string) $post->post_name) ?? [];
+    $post_id = (int) $post->ID;
+    $seed_image = metadata_exists('post', $post_id, '_springapex_seed_image')
+        ? (string) get_post_meta($post_id, '_springapex_seed_image', true)
+        : (string) ($seed['image'] ?? '');
+
+    return array_merge($seed, [
+        'id' => $post_id,
+        'slug' => (string) $post->post_name,
+        'title' => get_the_title($post),
+        'tagline' => (string) ($post->post_excerpt ?? ''),
+        'image' => [
+            'id' => (int) get_post_thumbnail_id($post),
+            'file' => $seed_image,
+        ],
+        'content' => (string) apply_filters('the_content', (string) ($post->post_content ?? '')),
+    ]);
+}
+
+function springapex_cases(): array
+{
+    if (defined('SPRINGAPEX_PREVIEW')) {
+        return springapex_get('case_studies.items', []);
+    }
+
+    if (!function_exists('get_posts') || !post_type_exists('spring_case')) {
+        return [];
+    }
+
+    $posts = get_posts([
+        'post_type' => 'spring_case',
+        'post_status' => 'publish',
+        'posts_per_page' => -1,
+        'orderby' => ['menu_order' => 'ASC', 'date' => 'DESC'],
+    ]);
+
+    return array_map('springapex_case_from_post', $posts ?: []);
+}
+
+function springapex_case(string $slug): ?array
+{
+    $slug = sanitize_title($slug);
+    if ($slug === '') {
+        return null;
+    }
+
+    if (defined('SPRINGAPEX_PREVIEW')) {
+        return springapex_case_seed($slug);
+    }
+
+    if (!function_exists('get_posts') || !post_type_exists('spring_case')) {
+        return null;
+    }
+
+    $posts = get_posts([
+        'name' => $slug,
+        'post_type' => 'spring_case',
+        'post_status' => 'publish',
+        'posts_per_page' => 1,
+    ]);
+
+    return isset($posts[0]) ? springapex_case_from_post((object) $posts[0]) : null;
+}
+
+function springapex_case_url(array $case): string
+{
+    if (!empty($case['id']) && !defined('SPRINGAPEX_PREVIEW') && function_exists('get_permalink')) {
+        return (string) get_permalink((int) $case['id']);
+    }
+    return springapex_url('/case-studies/' . ($case['slug'] ?? '') . '/');
+}
+
 function springapex_news_seed(string $slug): ?array
 {
     foreach (springapex_get('news.items', []) as $item) {
@@ -596,21 +758,55 @@ function springapex_news_from_post(object $post): array
     $seed_image = metadata_exists('post', $post_id, '_springapex_seed_image')
         ? get_post_meta($post_id, '_springapex_seed_image', true)
         : ($seed['image'] ?? '');
+    $news_type = (string) ($seed['news_type'] ?? 'company-news');
+    $news_type_label = '';
+    if (function_exists('get_the_terms')) {
+        $terms = get_the_terms($post_id, 'spring_news_type');
+        if (is_array($terms) && isset($terms[0])) {
+            $news_type = (string) ($terms[0]->slug ?? $news_type);
+            $news_type_label = (string) ($terms[0]->name ?? '');
+        }
+    }
+    $category = function_exists('springapex_news_category_meta')
+        ? springapex_news_category_meta($post_id)
+        : (string) ($seed['category'] ?? '');
+    if ($category === '') {
+        $category = $news_type_label;
+    }
+    // Optional caption replacing the published date, for multi-day events. Read
+    // through the meta resolver, not merged from the seed: the seed is matched by
+    // slug and a new article would otherwise never be able to have one.
+    $date_label = function_exists('springapex_news_date_label_meta')
+        ? springapex_news_date_label_meta($post_id)
+        : (string) ($seed['date_label'] ?? '');
 
     return array_merge($seed, [
         'id' => $post_id,
         'slug' => (string) $post->post_name,
         'title' => get_the_title($post),
         'date' => (string) get_the_date('Y-m-d', $post),
-        'category' => metadata_exists('post', $post_id, '_springapex_news_category')
-            ? (string) get_post_meta($post_id, '_springapex_news_category', true)
-            : (string) ($seed['category'] ?? ''),
+        'date_label' => $date_label,
+        'category' => $category,
+        'news_type' => $news_type,
         'summary' => (string) ($post->post_excerpt !== '' ? $post->post_excerpt : ($seed['summary'] ?? '')),
         'image' => [
             'id' => (int) get_post_thumbnail_id($post),
             'file' => (string) $seed_image,
         ],
+        // Body and photos come from the editor, so the operator can add, caption
+        // and reorder images the way any other post works. The seed's blocks and
+        // gallery are matched by slug and can never exist for a new article, so
+        // carrying them here would show pictures nobody can edit or delete.
+        // They still feed the database-free preview/ build via
+        // springapex_news_seed().
         'content' => [],
+        'gallery' => [],
+        'gallery_title' => '',
+        // Sidebar picks, chosen from the real product entries. Falls back to the
+        // seed while an article has never been saved (see news-meta.php).
+        'products' => function_exists('springapex_news_products_meta')
+            ? springapex_news_products_meta($post_id)
+            : (array) ($seed['products'] ?? []),
     ]);
 }
 

@@ -175,6 +175,34 @@
   grid-column: auto;
 }
 
+@media (min-width: 701px) and (max-width: 1080px) {
+  .sa-product-quality-documents__layout {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .sa-product-quality-documents__evidence article {
+    min-height: 168px;
+    padding: 22px;
+  }
+
+  .sa-product-quality-documents__documents {
+    padding: 26px;
+  }
+
+  .sa-product-quality-documents .sa-documentation__list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .sa-product-quality-documents .sa-documentation__list li {
+    min-height: 142px;
+    padding: 18px;
+    grid-template-columns: 1fr;
+    align-content: start;
+    gap: 12px;
+  }
+}
+
 @media (max-width: 700px) {
   .sa-route-products .product-grid--all {
     grid-template-columns: repeat(2, minmax(0, 1fr));

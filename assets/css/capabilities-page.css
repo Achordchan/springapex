@@ -36,7 +36,7 @@
 
 .sa-route-capabilities .sa-process-detail__intro > p,
 .sa-route-capabilities .sa-evidence__intro > p {
-  max-width: 62ch;
+  max-width: none;
   margin: 0;
   color: var(--sa-text-2);
   font-size: 16px;

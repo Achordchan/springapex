@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
 
 add_action('customize_register', static function (object $customizer): void {
     $customizer->add_section('springapex_company', [
-        'title' => __('SpringApex Company Details', 'springapex'),
+        'title' => __('ApexSpring Company Details', 'springapex'),
         'priority' => 30,
     ]);
 
@@ -21,6 +21,10 @@ add_action('customize_register', static function (object $customizer): void {
         'springapex_address' => ['Address', 'textarea', $brand['address'] ?? ''],
         'springapex_hours' => ['Business hours', 'text', $brand['hours'] ?? ''],
         'springapex_linkedin' => ['LinkedIn URL', 'url', $brand['linkedin'] ?? ''],
+        'springapex_facebook' => ['Facebook URL', 'url', $brand['facebook'] ?? ''],
+        'springapex_x' => ['X URL', 'url', $brand['x'] ?? ''],
+        'springapex_instagram' => ['Instagram URL', 'url', $brand['instagram'] ?? ''],
+        'springapex_tiktok' => ['TikTok URL', 'url', $brand['tiktok'] ?? ''],
     ];
 
     foreach ($fields as $setting => [$label, $type, $default]) {

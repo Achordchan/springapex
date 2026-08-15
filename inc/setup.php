@@ -43,15 +43,27 @@ add_action('wp_enqueue_scripts', static function (): void {
         SPRINGAPEX_VERSION
     );
     wp_enqueue_style(
+        'springapex-product-mega-menu',
+        SPRINGAPEX_URI . '/assets/css/product-mega-menu.css',
+        ['springapex-components'],
+        SPRINGAPEX_VERSION
+    );
+    wp_enqueue_style(
         'springapex-pages',
         SPRINGAPEX_URI . '/assets/css/pages.css',
-        ['springapex-components'],
+        ['springapex-product-mega-menu'],
+        SPRINGAPEX_VERSION
+    );
+    wp_enqueue_style(
+        'springapex-company-introduction',
+        SPRINGAPEX_URI . '/assets/css/company-introduction.css',
+        ['springapex-pages'],
         SPRINGAPEX_VERSION
     );
     wp_enqueue_style(
         'springapex-responsive',
         SPRINGAPEX_URI . '/assets/css/responsive.css',
-        ['springapex-pages'],
+        ['springapex-company-introduction'],
         SPRINGAPEX_VERSION
     );
     wp_enqueue_style(
@@ -91,15 +103,75 @@ add_action('wp_enqueue_scripts', static function (): void {
         SPRINGAPEX_VERSION
     );
     wp_enqueue_style(
+        'springapex-about-team',
+        SPRINGAPEX_URI . '/assets/css/about-team.css',
+        ['springapex-about-page'],
+        SPRINGAPEX_VERSION
+    );
+    wp_enqueue_style(
+        'springapex-about-sections',
+        SPRINGAPEX_URI . '/assets/css/about-sections.css',
+        ['springapex-about-team'],
+        SPRINGAPEX_VERSION
+    );
+    wp_enqueue_style(
         'springapex-search-page',
         SPRINGAPEX_URI . '/assets/css/search-page.css',
-        ['springapex-about-page'],
+        ['springapex-about-sections'],
         SPRINGAPEX_VERSION
     );
     wp_enqueue_style(
         'springapex-products-page',
         SPRINGAPEX_URI . '/assets/css/products-page.css',
         ['springapex-search-page'],
+        SPRINGAPEX_VERSION
+    );
+    wp_enqueue_style(
+        'springapex-mobile-polish',
+        SPRINGAPEX_URI . '/assets/css/mobile-polish.css',
+        ['springapex-products-page'],
+        SPRINGAPEX_VERSION
+    );
+    wp_enqueue_style(
+        'springapex-contact-network',
+        SPRINGAPEX_URI . '/assets/css/contact-network.css',
+        ['springapex-mobile-polish'],
+        SPRINGAPEX_VERSION
+    );
+    wp_enqueue_style(
+        'springapex-case-studies',
+        SPRINGAPEX_URI . '/assets/css/case-studies.css',
+        ['springapex-contact-network'],
+        SPRINGAPEX_VERSION
+    );
+    wp_enqueue_style(
+        'springapex-manufacturing-videos',
+        SPRINGAPEX_URI . '/assets/css/manufacturing-videos.css',
+        ['springapex-case-studies'],
+        SPRINGAPEX_VERSION
+    );
+    wp_enqueue_style(
+        'springapex-product-details',
+        SPRINGAPEX_URI . '/assets/css/product-details.css',
+        ['springapex-manufacturing-videos'],
+        SPRINGAPEX_VERSION
+    );
+    wp_enqueue_style(
+        'springapex-product-compression',
+        SPRINGAPEX_URI . '/assets/css/product-compression.css',
+        ['springapex-product-details'],
+        SPRINGAPEX_VERSION
+    );
+    wp_enqueue_style(
+        'springapex-solution-detail',
+        SPRINGAPEX_URI . '/assets/css/solution-detail.css',
+        ['springapex-product-compression'],
+        SPRINGAPEX_VERSION
+    );
+    wp_enqueue_style(
+        'springapex-solution-detail-responsive',
+        SPRINGAPEX_URI . '/assets/css/solution-detail-responsive.css',
+        ['springapex-solution-detail'],
         SPRINGAPEX_VERSION
     );
 
@@ -110,9 +182,16 @@ add_action('wp_enqueue_scripts', static function (): void {
         SPRINGAPEX_VERSION,
         ['strategy' => 'defer', 'in_footer' => true]
     );
+    wp_enqueue_script(
+        'springapex-product-compression',
+        SPRINGAPEX_URI . '/assets/js/product-compression.js',
+        ['springapex-main'],
+        SPRINGAPEX_VERSION,
+        ['strategy' => 'defer', 'in_footer' => true]
+    );
 
     $brand = springapex_brand();
-    wp_localize_script('springapex-main', 'SpringApex', [
+    wp_localize_script('springapex-main', 'ApexSpring', [
         'homeUrl' => home_url('/'),
         'themeUrl' => SPRINGAPEX_URI,
         'ajaxUrl' => admin_url('admin-ajax.php'),
@@ -132,17 +211,24 @@ add_action('wp_head', static function (): void {
         'home' => springapex_get('home.hero.image', ''),
         'products' => springapex_get('products.hero.image', ''),
         'solutions' => springapex_get('solutions.hero.image', ''),
+        'case-studies' => springapex_get('case_studies.hero.image', ''),
         'capabilities' => springapex_get('capabilities.hero.image', ''),
-        'about' => springapex_get('about.hero.image', ''),
+        'manufacturing-videos' => springapex_get('manufacturing_videos.hero_image', ''),
+        'about' => springapex_get('about.hero.image', 'about-building-v3.png'),
+        'sustainability' => 'home-energy-v2.png',
         'contact' => springapex_get('contact.hero.image', ''),
-        'resources' => springapex_get('capabilities.hero.image', ''),
+        'resources' => 'generated/springapex-resources-hero-v2.webp',
     ];
     $static_sizes = [
         'home' => '(max-width: 760px) 100vw, 62vw',
         'products' => '100vw',
         'solutions' => '100vw',
+        'case-studies' => '100vw',
         'capabilities' => '100vw',
+        'manufacturing-videos' => '100vw',
         'about' => '100vw',
+        'sustainability' => '100vw',
+        'resources' => '100vw',
         'contact' => '100vw',
     ];
 
@@ -197,6 +283,14 @@ add_action('wp_head', static function (): void {
                 $image_url = springapex_asset('assets/images/' . $image);
             }
         }
+    } elseif ($route === 'case-study' && is_singular('spring_case')) {
+        $post_id = get_queried_object_id();
+        $thumbnail_id = $post_id > 0 ? (int) get_post_thumbnail_id($post_id) : 0;
+        if ($thumbnail_id > 0) {
+            $image_url = (string) wp_get_attachment_image_url($thumbnail_id, 'full');
+            $image_srcset = (string) (wp_get_attachment_image_srcset($thumbnail_id, 'full') ?: '');
+            $image_sizes = '100vw';
+        }
     } else {
         $image = (string) ($images[$route] ?? '');
         if ($image !== '') {
@@ -230,6 +324,12 @@ add_action('wp_head', static function (): void {
 add_filter('body_class', static function (array $classes): array {
     $route = springapex_current_route();
     $classes[] = 'sa-route-' . sanitize_html_class($route);
+    if (in_array($route, ['about', 'about-story', 'sustainability', 'resources'], true)) {
+        if ($route !== 'about') {
+            $classes[] = 'sa-route-about';
+        }
+        $classes[] = 'sa-route-about-family';
+    }
     return $classes;
 });
 

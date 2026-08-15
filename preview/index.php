@@ -22,6 +22,9 @@ if ($route === 'product') {
 if ($route === 'solution') {
     $_GET['solution'] = springapex_preview_solution_slug();
 }
+if ($route === 'case-study') {
+    $_GET['case'] = springapex_preview_case_slug();
+}
 if ($route === 'news-single') {
     $_GET['news'] = springapex_preview_news_slug();
 }
@@ -32,13 +35,20 @@ $templates = [
     'product' => 'templates/product',
     'solutions' => 'templates/solutions',
     'solution' => 'templates/solution',
+    'case-studies' => 'templates/case-studies',
+    'case-study' => 'templates/case-study',
     'news' => 'templates/news',
     'news-single' => 'templates/news-single',
     'capabilities' => 'templates/capabilities',
+    'manufacturing-videos' => 'templates/manufacturing-videos',
     'about' => 'templates/about',
+    'sustainability' => 'templates/sustainability',
     'contact' => 'templates/contact',
     'resources' => 'templates/resources',
     'search' => 'templates/search',
+    'privacy' => 'templates/privacy',
+    'terms' => 'templates/terms',
+    'sitemap' => 'templates/sitemap',
 ];
 
 status_header(200);

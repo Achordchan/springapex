@@ -7,10 +7,20 @@ $brand = springapex_brand();
 $products = springapex_products();
 $route = springapex_current_route();
 $show_footer_cta = $route === 'home';
-$privacy_url = !defined('SPRINGAPEX_PREVIEW') && function_exists('get_privacy_policy_url') ? get_privacy_policy_url() : '';
-$sitemap_url = defined('SPRINGAPEX_PREVIEW') ? '' : springapex_url('/wp-sitemap.xml');
+$privacy_url = springapex_url('/privacy/');
+$terms_url = springapex_url('/terms/');
+$sitemap_url = springapex_url('/sitemap/');
+$company_name = rtrim((string) ($brand['company'] ?? 'ApexSpring'), ". \t\n\r\0\x0B");
 $phone = trim((string) ($brand['phone'] ?? ''));
 $phone_href = preg_replace('/[^0-9+]/', '', $phone);
+$youtube_id = trim((string) springapex_get('home.hero.video_cta.youtube_id', ''));
+$footer_socials = [
+    ['key' => 'youtube', 'label' => 'YouTube', 'url' => $youtube_id !== '' ? 'https://www.youtube.com/watch?v=' . rawurlencode($youtube_id) : ''],
+    ['key' => 'facebook', 'label' => 'Facebook', 'url' => (string) ($brand['facebook'] ?? '')],
+    ['key' => 'x', 'label' => 'X', 'url' => (string) ($brand['x'] ?? '')],
+    ['key' => 'instagram', 'label' => 'Instagram', 'url' => (string) ($brand['instagram'] ?? '')],
+    ['key' => 'tiktok', 'label' => 'TikTok', 'url' => (string) ($brand['tiktok'] ?? '')],
+];
 ?>
 <footer class="site-footer footer-universal">
   <?php if ($show_footer_cta) : ?>
@@ -40,11 +50,28 @@ $phone_href = preg_replace('/[^0-9+]/', '', $phone);
   <div class="footer-directory">
     <div class="container container-wide footer-directory-grid">
       <div class="footer-brand-column">
-        <a class="brand brand-footer" href="<?php echo esc_url(springapex_url('/')); ?>">
-          <span class="brand-name"><?php echo esc_html($brand['name'] ?? 'APEX SPRING'); ?></span>
-          <span class="brand-tag"><?php echo esc_html($brand['tagline'] ?? 'SPRING MANUFACTURING EXPERT'); ?></span>
+        <a class="brand brand-footer brand--image" href="<?php echo esc_url(springapex_url('/')); ?>" aria-label="<?php echo esc_attr($brand['name'] ?? 'ApexSpring'); ?> home">
+          <?php echo springapex_image('logo-site.png', (string) ($brand['name'] ?? 'ApexSpring'), [
+              'class' => 'site-logo site-logo--footer',
+              'width' => 916,
+              'height' => 529,
+              'sizes' => '180px',
+          ]); ?>
         </a>
         <p><?php esc_html_e('Precision spring engineering and manufacturing, from early design support through dependable production.', 'springapex'); ?></p>
+        <nav class="footer-socials" aria-label="<?php esc_attr_e('Social media', 'springapex'); ?>">
+          <?php foreach ($footer_socials as $social) : ?>
+            <?php if ($social['url'] !== '') : ?>
+              <a class="footer-social footer-social--<?php echo esc_attr($social['key']); ?>" href="<?php echo esc_url($social['url']); ?>" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr($social['label']); ?>">
+                <?php echo springapex_icon((string) $social['key'], 'icon'); ?>
+              </a>
+            <?php else : ?>
+              <span class="footer-social footer-social--<?php echo esc_attr($social['key']); ?> is-pending" aria-label="<?php echo esc_attr($social['label'] . ' profile link pending'); ?>" role="img">
+                <?php echo springapex_icon((string) $social['key'], 'icon'); ?>
+              </span>
+            <?php endif; ?>
+          <?php endforeach; ?>
+        </nav>
       </div>
 
       <nav class="footer-column" aria-label="<?php esc_attr_e('Product navigation', 'springapex'); ?>">
@@ -64,7 +91,7 @@ $phone_href = preg_replace('/[^0-9+]/', '', $phone);
           ?>
             <li><a href="<?php echo esc_url($href); ?>"><?php echo esc_html((string) ($item['label'] ?? '')); ?></a></li>
           <?php endforeach; ?>
-          <li><a href="<?php echo esc_url(springapex_url('/resources/')); ?>"><?php esc_html_e('Resources', 'springapex'); ?></a></li>
+          <li><a href="<?php echo esc_url(springapex_url('/resources/')); ?>"><?php esc_html_e('Download Center', 'springapex'); ?></a></li>
         </ul>
       </nav>
 
@@ -76,25 +103,15 @@ $phone_href = preg_replace('/[^0-9+]/', '', $phone);
           <?php if (!empty($brand['address'])) : ?><span><?php echo esc_html($brand['address']); ?></span><?php endif; ?>
           <?php if (!empty($brand['hours'])) : ?><span><?php echo esc_html($brand['hours']); ?></span><?php endif; ?>
         </address>
-        <?php if (!empty($brand['linkedin'])) : ?>
-          <a class="footer-social-link" href="<?php echo esc_url($brand['linkedin']); ?>" target="_blank" rel="noopener noreferrer">
-            <?php echo springapex_icon('linkedin', 'icon icon-sm'); ?>
-            <span><?php esc_html_e('LinkedIn', 'springapex'); ?></span>
-          </a>
-        <?php endif; ?>
-        <a class="footer-social-link" href="<?php echo esc_url(springapex_url('/contact/?intent=feedback')); ?>">
-          <?php echo springapex_icon('chat', 'icon icon-sm'); ?>
-          <span><?php esc_html_e('Share site feedback', 'springapex'); ?></span>
-        </a>
       </div>
     </div>
 
     <div class="container container-wide footer-bottom">
-      <p>© <?php echo esc_html(date('Y')); ?> <?php echo esc_html($brand['company'] ?? 'SpringApex'); ?>. <?php esc_html_e('All rights reserved.', 'springapex'); ?></p>
+      <p>© <?php echo esc_html(date('Y')); ?> <?php echo esc_html($company_name); ?>. <?php esc_html_e('All rights reserved.', 'springapex'); ?></p>
       <nav class="footer-legal" aria-label="<?php esc_attr_e('Legal navigation', 'springapex'); ?>">
-        <?php if ($privacy_url) : ?><a href="<?php echo esc_url($privacy_url); ?>"><?php esc_html_e('Privacy Policy', 'springapex'); ?></a><?php endif; ?>
-        <?php if ($sitemap_url) : ?><a href="<?php echo esc_url($sitemap_url); ?>"><?php esc_html_e('Sitemap', 'springapex'); ?></a><?php endif; ?>
-        <a href="<?php echo esc_url(springapex_url('/contact/')); ?>"><?php esc_html_e('Contact', 'springapex'); ?></a>
+        <a href="<?php echo esc_url($privacy_url); ?>"><?php esc_html_e('Privacy Policy', 'springapex'); ?></a>
+        <a href="<?php echo esc_url($terms_url); ?>"><?php esc_html_e('Terms of Use', 'springapex'); ?></a>
+        <a href="<?php echo esc_url($sitemap_url); ?>"><?php esc_html_e('Sitemap', 'springapex'); ?></a>
       </nav>
     </div>
   </div>

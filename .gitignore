@@ -8,6 +8,9 @@ design-qa-assets/
 evidence/
 qa-artifacts/
 output/
+audit/
+tmp/
+.codex-*.png
 
 # Patch leftovers and machine files
 *.rej

@@ -22,6 +22,32 @@ function springapex_asset_path(string $path): string
     return rtrim((string) SPRINGAPEX_DIR, '/') . '/' . ltrim($path, '/');
 }
 
+/**
+ * URL for a content-managed file that is either a media-library attachment ID
+ * (what the admin's picker stores), an absolute URL, or a filename shipped
+ * with the theme under $base.
+ */
+function springapex_file_url(int|string $value, string $base): string
+{
+    $value = is_int($value) ? (string) $value : trim($value);
+    if ($value === '') {
+        return '';
+    }
+
+    if (ctype_digit($value)) {
+        if (!defined('SPRINGAPEX_PREVIEW') && function_exists('wp_get_attachment_url')) {
+            return (string) wp_get_attachment_url((int) $value);
+        }
+        return '';
+    }
+
+    if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+        return $value;
+    }
+
+    return springapex_asset(rtrim($base, '/') . '/' . ltrim($value, '/'));
+}
+
 function springapex_is_route(string $route): bool
 {
     if (!defined('SPRINGAPEX_PREVIEW')) {
@@ -59,6 +85,10 @@ function springapex_current_route(): string
         return 'solution';
     }
 
+    if (function_exists('is_singular') && is_singular('spring_case')) {
+        return 'case-study';
+    }
+
     if (function_exists('is_singular') && is_singular('spring_news')) {
         return 'news-single';
     }
@@ -69,6 +99,9 @@ function springapex_current_route(): string
         }
         if (is_post_type_archive('spring_solution')) {
             return 'solutions';
+        }
+        if (is_post_type_archive('spring_case')) {
+            return 'case-studies';
         }
         if (is_post_type_archive('spring_news')) {
             return 'news';
@@ -84,7 +117,7 @@ function springapex_current_route(): string
     }
 
     if (function_exists('is_page')) {
-        foreach (['products', 'solutions', 'contact', 'capabilities', 'resources', 'news'] as $route) {
+        foreach (['products', 'solutions', 'contact', 'capabilities', 'manufacturing-videos', 'resources', 'news', 'privacy', 'terms', 'sitemap', 'about-story', 'sustainability'] as $route) {
             if (is_page($route)) {
                 return $route;
             }
@@ -106,14 +139,31 @@ function springapex_nav_is_active(string $slug): bool
     }
 
     if ($slug === 'solutions') {
-        return in_array($route, ['solutions', 'solution'], true);
+        return in_array($route, ['solutions', 'solution', 'case-studies', 'case-study'], true);
     }
 
     if ($slug === 'news') {
         return in_array($route, ['news', 'news-single'], true);
     }
 
-    return $slug === 'about-us' ? $route === 'about' : $route === $slug;
+    if ($slug === 'about-us') {
+        return in_array($route, ['about', 'about-story', 'sustainability', 'resources'], true);
+    }
+
+    if ($slug === 'capabilities') {
+        return in_array($route, ['capabilities', 'manufacturing-videos'], true);
+    }
+
+    return $route === $slug;
+}
+
+function springapex_about_navigation_items(): array
+{
+    return [
+        ['label' => 'Company', 'route' => 'about', 'href' => '/about/'],
+        ['label' => 'Sustainability', 'route' => 'sustainability', 'href' => '/sustainability/'],
+        ['label' => 'Download Center', 'route' => 'resources', 'href' => '/resources/'],
+    ];
 }
 
 function springapex_brand(): array
@@ -130,6 +180,10 @@ function springapex_brand(): array
         'address'  => 'springapex_address',
         'hours'    => 'springapex_hours',
         'linkedin' => 'springapex_linkedin',
+        'facebook' => 'springapex_facebook',
+        'x'         => 'springapex_x',
+        'instagram' => 'springapex_instagram',
+        'tiktok'    => 'springapex_tiktok',
     ];
 
     foreach ($theme_mods as $key => $setting) {
@@ -162,80 +216,103 @@ function springapex_navigation_items(string $location = 'primary'): array
         return $fallback;
     }
 
+    $children_by_parent = [];
+    foreach ($items as $item) {
+        $parent_id = (int) $item->menu_item_parent;
+        if ($parent_id === 0) {
+            continue;
+        }
+        $children_by_parent[$parent_id][] = [
+            'label' => (string) $item->title,
+            'href'  => (string) $item->url,
+        ];
+    }
+
+    // Label, URL and order all come straight from 外观 → 菜单. This function used to
+    // rewrite titles, force a fixed order and inject missing Home/News entries; that
+    // made the menu screen a decoration — renaming or reordering there changed
+    // nothing — and the fixed order was keyed on slugs the menu no longer used, so
+    // it actually shuffled Industries and Custom Springs to the end of the bar.
     $nav = [];
     foreach ($items as $item) {
         if ((int) $item->menu_item_parent !== 0) {
             continue;
         }
-        $label = (string) $item->title;
-        $slug  = sanitize_title($label);
-        $href  = (string) $item->url;
-        $legacy_capabilities_url = false;
-        if ($slug === 'news' || $slug === 'resources' || $slug === 'catalog' || $slug === 'view-our-catalog') {
-            $label = 'News';
-            $slug = 'news';
-            $href = springapex_url('/news/');
+        $entry = [
+            'label'  => (string) $item->title,
+            'slug'   => springapex_nav_slug_for_item($item),
+            'href'   => (string) $item->url,
+            'current'=> !empty($item->current) || !empty($item->current_item_ancestor),
+        ];
+        $children = $children_by_parent[(int) $item->ID] ?? [];
+        if ($children) {
+            $entry['children'] = $children;
         }
-        if (
-            $slug === 'capabilities' &&
-            (str_contains($href, '/about/#capabilities') || str_contains($href, '/about#capabilities'))
-        ) {
-            $legacy_capabilities_url = true;
-            $href = springapex_url('/capabilities/');
-        }
-        $match = [
-            'about-us'    => 'about-us',
-            'about'       => 'about-us',
-            'capabilities'=> 'capabilities',
-        ];
-        $label_map = [
-            'about-us' => 'About Us',
-            'about' => 'About Us',
-            'solutions' => 'Industries',
-            'capabilities' => 'Custom Springs',
-        ];
-        $label = $label_map[$slug] ?? $label;
-        $nav[] = [
-            'label'  => $label,
-            'slug'   => $match[$slug] ?? $slug,
-            'href'   => $href,
-            'current'=> !$legacy_capabilities_url && (!empty($item->current) || !empty($item->current_item_ancestor)),
-        ];
+        $nav[] = $entry;
     }
 
-    if (!$nav) {
-        return $fallback;
-    }
+    return $nav ?: $fallback;
+}
 
-    $has_news = false;
-    foreach ($nav as $item) {
-        if (($item['slug'] ?? '') === 'news') {
-            $has_news = true;
-            break;
-        }
-    }
-    if (!$has_news && $location === 'primary') {
-        $nav[] = [
-            'label' => 'News',
-            'slug' => 'news',
-            'href' => springapex_url('/news/'),
-            'current' => springapex_nav_is_active('news'),
-        ];
-    }
-
-    $order = [
-        'about-us' => 10,
-        'products' => 20,
-        'solutions' => 30,
-        'capabilities' => 40,
-        'news' => 50,
-        'contact' => 60,
+/**
+ * Stable identifier for a menu item, used for the active-state rules
+ * (springapex_nav_is_active) and to decide which item carries the products mega
+ * menu.
+ *
+ * Derived from what the item points at, never from its title. The operator renames
+ * menu items in 外观 → 菜单, and a rename must not silently drop the mega menu or
+ * the highlight — which is exactly what the old sanitize_title($label) did once the
+ * menu said "Industries" instead of "Solutions".
+ */
+function springapex_nav_slug_for_item(object $item): string
+{
+    $archives = [
+        'spring_product' => 'products',
+        'spring_solution' => 'solutions',
+        'spring_news' => 'news',
+        'spring_case' => 'case-studies',
     ];
-    usort($nav, static function (array $left, array $right) use ($order): int {
-        return ($order[$left['slug']] ?? 999) <=> ($order[$right['slug']] ?? 999);
-    });
+    // Paths the active-state rules know by a different name than the URL uses.
+    $path_aliases = ['about' => 'about-us'];
 
-    return $nav;
+    $type = (string) ($item->type ?? '');
+    $object = (string) ($item->object ?? '');
+
+    if ($type === 'post_type_archive' && isset($archives[$object])) {
+        return $archives[$object];
+    }
+
+    if ($type === 'post_type' && $object === 'page') {
+        $page_id = (int) ($item->object_id ?? 0);
+        if ($page_id > 0) {
+            if ((int) get_option('page_on_front') === $page_id) {
+                return 'home';
+            }
+            $slug = sanitize_title((string) get_post_field('post_name', $page_id));
+            return $path_aliases[$slug] ?? $slug;
+        }
+    }
+
+    // Custom links, which is what the seeded menu uses. The archive links carry the
+    // post type in the query string and have no path at all, so check that first or
+    // they all read as the home page.
+    $url = (string) ($item->url ?? '');
+    $query = (string) (wp_parse_url($url, PHP_URL_QUERY) ?? '');
+    if ($query !== '') {
+        parse_str($query, $args);
+        $post_type = (string) ($args['post_type'] ?? '');
+        if (isset($archives[$post_type])) {
+            return $archives[$post_type];
+        }
+    }
+
+    $path = trim((string) (wp_parse_url($url, PHP_URL_PATH) ?? ''), '/');
+    if ($path === '') {
+        return 'home';
+    }
+    $first = sanitize_title(explode('/', $path)[0]);
+
+    return $path_aliases[$first] ?? $first;
 }
 
 function springapex_search_query(): string
@@ -298,9 +375,12 @@ function springapex_contact_status_message(string $status): array
     return $messages[$status] ?? [];
 }
 
-function springapex_icon(string $name, string $class = 'icon'): string
+/**
+ * Icon name => file. The keys are what content and the admin icon picker use.
+ */
+function springapex_icon_map(): array
 {
-    $icons = [
+    return [
         'arrow-right' => 'arrow-right.svg',
         'arrow-up' => 'arrow-up.svg',
         'upload' => 'upload.svg',
@@ -325,6 +405,7 @@ function springapex_icon(string $name, string $class = 'icon'): string
         'qc' => 'badge-check.svg',
         'heat' => 'fire-flame.svg',
         'search' => 'search.svg',
+        'network' => 'network.svg',
         'car' => 'car.svg',
         'gear' => 'settings.svg',
         'rocket' => 'rocket.svg',
@@ -335,16 +416,27 @@ function springapex_icon(string $name, string $class = 'icon'): string
         'extension' => 'link.svg',
         'form' => 'ruler-combine.svg',
         'linkedin' => 'linkedin.svg',
+        'youtube' => 'youtube.svg',
+        'facebook' => 'facebook.svg',
+        'x' => 'x.svg',
+        'instagram' => 'instagram.svg',
+        'tiktok' => 'tiktok.svg',
+        'whatsapp' => 'whatsapp.svg',
         'user' => 'user.svg',
         'menu' => 'menu.svg',
         'close' => 'xmark.svg',
         'chat' => 'chat-lines.svg',
         'delivery' => 'delivery-truck.svg',
     ];
+}
+
+function springapex_icon(string $name, string $class = 'icon'): string
+{
+    $icons = springapex_icon_map();
 
     $file = $icons[$name] ?? $icons['arrow-right'];
     return sprintf(
-        '<img class="%s" src="%s" width="24" height="24" alt="" aria-hidden="true" decoding="async">',
+        '<img class="%s" src="%s" alt="" aria-hidden="true" decoding="async">',
         esc_attr($class),
         esc_url(springapex_asset('assets/icons/iconoir/' . $file))
     );
@@ -606,7 +698,11 @@ function springapex_solution(string $slug): ?array
 
     foreach (springapex_solutions() as $solution) {
         if ((string) ($solution['slug'] ?? '') === $slug) {
-            return array_merge($solution, springapex_get('solution_details.' . $slug, []));
+            $details = springapex_get('solution_details.' . $slug, []);
+            if (!empty($solution['id']) && function_exists('springapex_solution_saved_details')) {
+                $details = springapex_solution_saved_details((int) $solution['id'], $details);
+            }
+            return array_merge($solution, $details);
         }
     }
 

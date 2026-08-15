@@ -82,17 +82,25 @@ function springapex_process_contact_submission(): array|WP_Error
     $email = sanitize_email(springapex_request_scalar($_POST['email'] ?? ''));
     $company = springapex_limited_text($_POST['company'] ?? '', 160);
     $phone = springapex_limited_text($_POST['phone'] ?? '', 80);
+    $country = springapex_limited_text($_POST['country'] ?? $_POST['region'] ?? '', 100);
     $type = springapex_limited_text($_POST['inquiry_type'] ?? '', 100);
     $message = springapex_limited_textarea($_POST['message'] ?? '', 5000);
+    $wire_diameter = springapex_limited_text($_POST['wire_diameter'] ?? '', 80);
+    $outside_diameter = springapex_limited_text($_POST['outside_diameter'] ?? '', 80);
+    $free_length = springapex_limited_text($_POST['free_length'] ?? '', 80);
+    $quantity = springapex_limited_text($_POST['quantity'] ?? '', 80);
+    $material = springapex_limited_text($_POST['material'] ?? '', 120);
+    $operating_environment = springapex_limited_text($_POST['operating_environment'] ?? '', 240);
     $intent = sanitize_key(springapex_request_scalar($_POST['intent'] ?? ''));
+    $form_context = sanitize_key(springapex_request_scalar($_POST['form_context'] ?? 'full'));
     $product = sanitize_title(springapex_request_scalar($_POST['product'] ?? ''));
     $industry = sanitize_title(springapex_request_scalar($_POST['industry'] ?? ''));
     $allowed_types = springapex_get('contact.inquiry_types', []);
-
     if (
         $name === '' ||
         !is_email($email) ||
-        $message === '' ||
+        (!in_array($form_context, ['quick', 'product'], true) && ($phone === '' || $country === '')) ||
+        ($form_context === 'quick' && $message === '') ||
         $type === '' ||
         !is_array($allowed_types) ||
         !in_array($type, $allowed_types, true)
@@ -145,7 +153,14 @@ function springapex_process_contact_submission(): array|WP_Error
         '_springapex_email' => $email,
         '_springapex_company' => $company,
         '_springapex_phone' => $phone,
+        '_springapex_country' => $country,
         '_springapex_type' => $type,
+        '_springapex_wire_diameter' => $wire_diameter,
+        '_springapex_outside_diameter' => $outside_diameter,
+        '_springapex_free_length' => $free_length,
+        '_springapex_quantity' => $quantity,
+        '_springapex_material' => $material,
+        '_springapex_operating_environment' => $operating_environment,
         '_springapex_intent' => $intent,
         '_springapex_product' => $product,
         '_springapex_industry' => $industry,
@@ -173,13 +188,20 @@ function springapex_process_contact_submission(): array|WP_Error
     }
 
     $recipient = springapex_inquiry_recipient();
-    $subject = sprintf('[SpringApex] %s inquiry from %s', $type, $name);
+    $subject = sprintf('[ApexSpring] %s inquiry from %s', $type, $name);
     $body = implode("\n", [
         "Name: {$name}",
         "Email: {$email}",
         "Company: {$company}",
         "Phone: {$phone}",
+        "Country: {$country}",
         "Type: {$type}",
+        "Wire diameter: {$wire_diameter}",
+        "Outside diameter: {$outside_diameter}",
+        "Free length: {$free_length}",
+        "Quantity: {$quantity}",
+        "Material: {$material}",
+        "Operating environment: {$operating_environment}",
         "Intent: {$intent}",
         "Product: {$product}",
         "Industry: {$industry}",
@@ -372,28 +394,28 @@ function springapex_validate_drawing_upload(): array|WP_Error|null
 
     $file = $_FILES['drawing'];
     if (!is_array($file)) {
-        return springapex_contact_error('springapex_upload', __('The drawing upload did not complete.', 'springapex'), 422);
+        return springapex_contact_error('springapex_upload', __('The file upload did not complete.', 'springapex'), 422);
     }
 
     if (!array_key_exists('error', $file) || !is_scalar($file['error'])) {
-        return springapex_contact_error('springapex_upload', __('The drawing upload did not complete.', 'springapex'), 422);
+        return springapex_contact_error('springapex_upload', __('The file upload did not complete.', 'springapex'), 422);
     }
     $error = (int) $file['error'];
     if ($error === UPLOAD_ERR_NO_FILE) {
         return null;
     }
     if ($error !== UPLOAD_ERR_OK) {
-        return springapex_contact_error('springapex_upload', __('The drawing upload did not complete.', 'springapex'), 422);
+        return springapex_contact_error('springapex_upload', __('The file upload did not complete.', 'springapex'), 422);
     }
 
     $name = is_string($file['name'] ?? null) ? $file['name'] : '';
     $tmp_name = is_string($file['tmp_name'] ?? null) ? $file['tmp_name'] : '';
     $size = is_scalar($file['size'] ?? null) ? (int) $file['size'] : 0;
     if ($name === '' || $tmp_name === '' || $size < 1 || !is_uploaded_file($tmp_name) || !is_readable($tmp_name)) {
-        return springapex_contact_error('springapex_upload', __('The drawing upload did not complete.', 'springapex'), 422);
+        return springapex_contact_error('springapex_upload', __('The file upload did not complete.', 'springapex'), 422);
     }
     if ($size > 10 * MB_IN_BYTES) {
-        return springapex_contact_error('springapex_upload_size', __('The drawing must be 10 MB or smaller.', 'springapex'), 422);
+        return springapex_contact_error('springapex_upload_size', __('The uploaded file must be 10 MB or smaller.', 'springapex'), 422);
     }
     if (!springapex_private_uploads_are_protected()) {
         return springapex_private_upload_protection_error();
@@ -698,7 +720,9 @@ add_filter('manage_spring_inquiry_posts_columns', static function (array $column
         'title' => __('Inquiry', 'springapex'),
         'springapex_email' => __('Email', 'springapex'),
         'springapex_company' => __('Company', 'springapex'),
+        'springapex_country' => __('Country', 'springapex'),
         'springapex_type' => __('Type', 'springapex'),
+        'springapex_specs' => __('Spring Specs', 'springapex'),
         'springapex_file' => __('Drawing', 'springapex'),
         'date' => __('Date', 'springapex'),
     ];
@@ -712,6 +736,28 @@ add_action('manage_spring_inquiry_posts_custom_column', static function (string 
     ];
     if (isset($map[$column])) {
         echo esc_html((string) get_post_meta($post_id, $map[$column], true));
+        return;
+    }
+    if ($column === 'springapex_country') {
+        $country = (string) get_post_meta($post_id, '_springapex_country', true);
+        if ($country === '') {
+            $country = (string) get_post_meta($post_id, '_springapex_region', true);
+        }
+        echo $country !== '' ? esc_html($country) : '&mdash;';
+        return;
+    }
+    if ($column === 'springapex_specs') {
+        $wire = (string) get_post_meta($post_id, '_springapex_wire_diameter', true);
+        $outside = (string) get_post_meta($post_id, '_springapex_outside_diameter', true);
+        $length = (string) get_post_meta($post_id, '_springapex_free_length', true);
+        $quantity = (string) get_post_meta($post_id, '_springapex_quantity', true);
+        $values = array_filter([
+            $wire !== '' ? sprintf(__('Wire: %s', 'springapex'), $wire) : '',
+            $outside !== '' ? sprintf(__('OD: %s', 'springapex'), $outside) : '',
+            $length !== '' ? sprintf(__('Length: %s', 'springapex'), $length) : '',
+            $quantity !== '' ? sprintf(__('Qty: %s', 'springapex'), $quantity) : '',
+        ]);
+        echo $values ? esc_html(implode(' · ', $values)) : '&mdash;';
         return;
     }
     if ($column !== 'springapex_file') {
@@ -750,7 +796,7 @@ function springapex_contact_admin_notices(): void
     if (!springapex_private_uploads_are_protected()) {
         printf(
             '<div class="notice notice-warning"><p>%s</p></div>',
-            esc_html__('SpringApex drawing uploads are disabled until the private uploads path is blocked by the Web Server/CDN and SPRINGAPEX_PRIVATE_UPLOADS_PROTECTED is enabled in wp-config.php.', 'springapex')
+            esc_html__('ApexSpring drawing uploads are disabled until the private uploads path is blocked by the Web Server/CDN and SPRINGAPEX_PRIVATE_UPLOADS_PROTECTED is enabled in wp-config.php.', 'springapex')
         );
     }
 
@@ -769,8 +815,8 @@ function springapex_contact_admin_notices(): void
         '<div class="notice notice-warning"><p>%1$s <a href="%2$s">%3$s</a> <a href="%4$s">%5$s</a></p></div>',
         esc_html(sprintf(
             _n(
-                'SpringApex could not finalize the email status for %d inquiry. The inquiry is still saved.',
-                'SpringApex could not finalize the email status for %d inquiries. The inquiries are still saved.',
+                'ApexSpring could not finalize the email status for %d inquiry. The inquiry is still saved.',
+                'ApexSpring could not finalize the email status for %d inquiries. The inquiries are still saved.',
                 $count,
                 'springapex'
             ),

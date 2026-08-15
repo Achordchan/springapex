@@ -1,0 +1,1026 @@
+/* Cross-page mobile hierarchy and shared interaction polish. */
+
+/* Keep hero copy readable across every image, regardless of the artwork behind it. */
+.hero-home .hero-media-home::after,
+.inner-hero:not(.inner-hero--product):not(.inner-hero--solution-detail) .inner-hero-media::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(247, 249, 252, .94) 0%,
+    rgba(247, 249, 252, .86) 30%,
+    rgba(247, 249, 252, .52) 50%,
+    rgba(247, 249, 252, .14) 70%,
+    rgba(247, 249, 252, 0) 84%
+  );
+  content: "";
+}
+
+.inner-hero:not(.inner-hero--product):not(.inner-hero--solution-detail) .inner-hero-copy,
+.inner-hero:not(.inner-hero--product):not(.inner-hero--solution-detail) .display {
+  color: #0b1528;
+}
+
+.inner-hero:not(.inner-hero--product):not(.inner-hero--solution-detail) .lede {
+  color: #293950;
+  font-weight: 500;
+}
+
+.inner-hero:not(.inner-hero--product):not(.inner-hero--solution-detail) .btn-ghost {
+  color: #0b1528;
+  border-color: rgba(11, 21, 40, .24);
+  background: rgba(255, 255, 255, .76);
+  backdrop-filter: blur(8px);
+}
+
+@media (max-width: 860px) {
+  .hero-home .hero-media-home::after {
+    display: none;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1040px) {
+  .inner-hero:not(.inner-hero--product):not(.inner-hero--solution-detail) .inner-hero-media::after {
+    background: linear-gradient(
+      90deg,
+      rgba(247, 249, 252, .98) 0%,
+      rgba(247, 249, 252, .94) 42%,
+      rgba(247, 249, 252, .72) 62%,
+      rgba(247, 249, 252, .24) 82%,
+      rgba(247, 249, 252, 0) 100%
+    );
+  }
+
+  .inner-hero:not(.inner-hero--product):not(.inner-hero--solution-detail) .inner-hero-copy {
+    width: min(58vw, 500px);
+  }
+
+  .sa-route-solution .inner-hero--solution-detail,
+  .sa-route-solution .inner-hero--solution-detail .inner-hero-inner {
+    min-height: 440px;
+  }
+
+  .sa-route-solution .inner-hero--solution-detail .inner-hero-copy {
+    width: min(58vw, 480px);
+  }
+
+  .sa-route-solution .sa-solution-detail__grid,
+  .sa-route-solution .sa-application-examples__layout {
+    grid-template-columns: minmax(240px, .72fr) minmax(0, 1.28fr);
+    gap: 32px;
+  }
+
+  .sa-route-solution .sa-related-products .sa-product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .sa-route-solution .sa-related-products .sa-product-grid--count-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sa-route-solution .sa-related-products .sa-product-grid--count-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sa-route-solution .sa-related-products .sa-product-grid--count-1 {
+    grid-template-columns: minmax(0, 420px);
+  }
+
+  .sa-route-solution .sa-product-card__body {
+    min-height: 174px;
+    padding: 18px;
+  }
+
+  .sa-route-solution .sa-product-card h3 {
+    font-size: 17px;
+  }
+
+  .sa-route-solution .sa-product-card p {
+    display: -webkit-box;
+    min-height: 45px;
+    margin: 9px 0 16px;
+    overflow: hidden;
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .sa-route-solution .sa-solution-detail__columns {
+    gap: 16px;
+  }
+
+  .sa-route-solution .sa-solution-detail__columns article {
+    padding: 30px 26px;
+  }
+
+  .sa-route-solution .sa-solution-detail__columns h2 {
+    font-size: 25px;
+    line-height: 1.18;
+  }
+
+  .sa-route-solution .sa-number-list {
+    margin-top: 22px;
+  }
+
+  .sa-route-solution .sa-solution-cta .cta-band-inner {
+    padding: 28px;
+    grid-template-columns: minmax(190px, .72fr) minmax(0, 1.28fr);
+    gap: 26px;
+  }
+
+  .sa-route-solution .sa-solution-cta .cta-copy {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .sa-route-solution .sa-solution-cta .cta-copy .btn {
+    justify-self: start;
+  }
+}
+
+.sa-route-solution .sa-solution-detail,
+.sa-route-solution .sa-related-products,
+.sa-route-solution .sa-application-examples {
+  padding-block: clamp(52px, 6vw, 76px);
+}
+
+.sa-route-solution .sa-solution-detail__grid,
+.sa-route-solution .sa-application-examples__layout {
+  align-items: start;
+}
+
+.sa-route-solution .sa-solution-detail .sa-section-intro h2,
+.sa-route-solution .sa-application-examples .sa-section-intro h2 {
+  max-width: 15ch;
+  font-size: clamp(28px, 3vw, 38px);
+  line-height: 1.12;
+}
+
+.sa-route-solution .sa-section-bridge {
+  max-width: 38ch;
+  margin-top: 14px;
+  color: var(--sa-text-2);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.sa-route-solution .sa-related-products {
+  border-block: 1px solid var(--sa-border);
+  background: var(--sa-bg-soft);
+}
+
+.sa-route-solution .sa-related-products .section-head {
+  max-width: 760px;
+  margin-bottom: 30px;
+}
+
+.sa-route-solution .sa-related-products .sa-product-grid {
+  align-items: stretch;
+}
+
+@media (min-width: 1181px) {
+  .sa-route-solution .sa-related-products .sa-product-grid--count-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .sa-route-solution .sa-related-products .sa-product-grid--count-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .sa-route-solution .sa-related-products .sa-product-grid--count-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sa-route-solution .sa-related-products .sa-product-grid--count-1 {
+    grid-template-columns: minmax(0, 420px);
+  }
+}
+
+@media (min-width: 1041px) and (max-width: 1180px) {
+  .sa-route-solution .sa-related-products .sa-product-grid--count-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sa-route-solution .sa-related-products .sa-product-grid--count-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .sa-route-solution .sa-related-products .sa-product-grid--count-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sa-route-solution .sa-related-products .sa-product-grid--count-1 {
+    grid-template-columns: minmax(0, 420px);
+  }
+}
+
+.sa-route-solution .sa-related-products .sa-product-card {
+  height: 100%;
+}
+
+.sa-route-solution .sa-solution-mid-cta {
+  display: flex;
+  margin-top: 22px;
+  padding-top: 22px;
+  justify-content: flex-end;
+  border-top: 1px solid var(--sa-border);
+}
+
+.sa-route-solution .sa-solution-detail--split {
+  background: var(--sa-surface);
+}
+
+.sa-route-solution .sa-solution-detail__columns article {
+  box-shadow: none;
+}
+
+.sa-route-solution .sa-application-examples {
+  border-top: 1px solid var(--sa-border);
+  background: var(--sa-bg-soft);
+}
+
+.sa-route-solution .sa-application-examples__grid span {
+  min-height: 78px;
+}
+
+.sa-route-solution .sa-solution-cta {
+  padding-block: 14px 26px;
+}
+
+@media (max-width: 760px) {
+  .sa-route-about .inner-hero .display,
+  .sa-route-solutions .inner-hero .display,
+  .sa-route-solution .inner-hero .display,
+  .sa-route-capabilities .inner-hero .display,
+  .sa-route-news .inner-hero .display,
+  .sa-route-contact .inner-hero .display,
+  .sa-route-resources .inner-hero .display,
+  .sa-route-product .inner-hero .display {
+    font-size: clamp(32px, 8.5vw, 36px);
+    line-height: 1.08;
+    letter-spacing: -.035em;
+    text-wrap: pretty;
+  }
+
+  .sa-route-about .inner-hero .lede,
+  .sa-route-solutions .inner-hero .lede,
+  .sa-route-solution .inner-hero .lede,
+  .sa-route-capabilities .inner-hero .lede,
+  .sa-route-news .inner-hero .lede,
+  .sa-route-contact .inner-hero .lede,
+  .sa-route-resources .inner-hero .lede,
+  .sa-route-product .inner-hero .lede {
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .sa-route-about .inner-hero .hero-actions,
+  .sa-route-solutions .inner-hero .hero-actions,
+  .sa-route-solution .inner-hero .hero-actions,
+  .sa-route-capabilities .inner-hero .hero-actions,
+  .sa-route-contact .inner-hero .hero-actions,
+  .sa-route-resources .inner-hero .hero-actions {
+    margin-top: 20px;
+  }
+
+  .sa-route-about .inner-hero .hero-actions .btn,
+  .sa-route-solutions .inner-hero .hero-actions .btn,
+  .sa-route-solution .inner-hero .hero-actions .btn,
+  .sa-route-capabilities .inner-hero .hero-actions .btn,
+  .sa-route-contact .inner-hero .hero-actions .btn,
+  .sa-route-resources .inner-hero .hero-actions .btn {
+    min-height: 44px;
+    padding-inline: 16px;
+    font-size: 13px;
+  }
+
+  .sa-route-about .sa-section-intro h2,
+  .sa-route-about .sa-timeline__intro h2,
+  .sa-route-about .sa-factory-gallery .sa-section-intro h2,
+  .sa-route-solutions .sa-section-intro h2,
+  .sa-route-solution .sa-section-intro h2,
+  .sa-route-solution .sa-solution-detail h2,
+  .sa-route-solution .sa-application-examples h2,
+  .sa-route-capabilities .sa-section-intro h2,
+  .sa-route-capabilities .sa-custom-brief h2,
+  .sa-route-capabilities .sa-quality h2,
+  .sa-route-news .sa-section-intro h2,
+  .sa-route-contact .sa-section-intro h2,
+  .sa-route-contact .sa-contact-workflow h2,
+  .sa-route-resources .sa-section-intro h2,
+  .sa-route-resources .sa-resource-paths h2,
+  .sa-route-product .sa-section-intro h2,
+  .sa-route-product .sa-quality h2,
+  .sa-route-product .sa-related-products h2 {
+    max-width: 22ch;
+    font-size: clamp(26px, 6.8vw, 28px);
+    line-height: 1.13;
+    letter-spacing: -.03em;
+    text-wrap: pretty;
+  }
+
+  .sa-route-resources .sa-resources-index .sa-section-intro h2,
+  .sa-route-news .sa-news-index .sa-section-intro h2,
+  .sa-route-solution .sa-solution-detail h2 {
+    max-width: 24ch;
+    font-size: 28px;
+  }
+
+  .sa-route-resources .sa-resource-paths h2 {
+    margin-top: 18px;
+    font-size: 22px;
+    line-height: 1.2;
+  }
+
+  .sa-route-resources .sa-resource-paths article {
+    padding: 22px 18px;
+  }
+
+  .sa-route-resources .sa-resource-paths article > span {
+    width: 42px;
+    height: 42px;
+  }
+
+  .sa-route-resources .sa-resource-paths p {
+    margin: 10px 0 18px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero,
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-inner {
+    min-height: 0;
+  }
+
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero {
+    border-bottom: 1px solid var(--sa-border);
+    background: var(--sa-surface);
+  }
+
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-media {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-bottom: 1px solid var(--sa-border);
+  }
+
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-media picture,
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-media img {
+    width: 100%;
+    height: 100%;
+  }
+
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-media img {
+    object-fit: cover;
+    object-position: center;
+  }
+
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-media::after {
+    display: none;
+  }
+
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-inner {
+    padding-top: 22px;
+    padding-bottom: 24px;
+    align-items: flex-start;
+  }
+
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-copy,
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .display,
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .lede {
+    color: var(--sa-primary);
+  }
+
+  .sa-route-solution .inner-hero--solution-detail,
+  .sa-route-solution .inner-hero--solution-detail .inner-hero-inner {
+    min-height: 0;
+  }
+
+  .sa-route-solution .inner-hero--solution-detail {
+    border-bottom: 1px solid var(--sa-border);
+    background: var(--sa-surface);
+  }
+
+  .sa-route-solution .inner-hero--solution-detail .inner-hero-media {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-bottom: 1px solid var(--sa-border);
+    background: var(--sa-bg-soft);
+  }
+
+  .sa-route-solution .inner-hero--solution-detail .inner-hero-media picture,
+  .sa-route-solution .inner-hero--solution-detail .inner-hero-media img {
+    width: 100%;
+    height: 100%;
+  }
+
+  .sa-route-solution .inner-hero--solution-detail .inner-hero-media img {
+    object-fit: cover;
+    object-position: center;
+    transform: none;
+  }
+
+  .sa-route-solution .inner-hero--solution-detail .inner-hero-media::after {
+    display: none;
+  }
+
+  .sa-route-solution .inner-hero--solution-detail .inner-hero-inner {
+    display: block;
+    padding-top: 18px;
+    padding-bottom: 24px;
+  }
+
+  .sa-route-solution .inner-hero--solution-detail .inner-hero-breadcrumb {
+    position: static;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    color: var(--sa-text-muted);
+    font-size: 11px;
+  }
+
+  .sa-route-solution .inner-hero--solution-detail .inner-hero-breadcrumb a,
+  .sa-route-solution .inner-hero--solution-detail .inner-hero-breadcrumb .current {
+    color: var(--sa-text-2);
+  }
+
+  .sa-route-solution .inner-hero--solution-detail .inner-hero-copy {
+    top: 0;
+    width: 100%;
+  }
+
+  .sa-route-solution .inner-hero--solution-detail .display {
+    color: var(--sa-primary);
+    font-size: 30px;
+  }
+
+  .sa-route-solution .inner-hero--solution-detail .lede {
+    margin-top: 10px;
+    color: var(--sa-text-2);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .sa-route-solution .inner-hero--solution-detail .hero-actions {
+    display: grid;
+    width: 100%;
+    margin-top: 18px;
+    grid-template-columns: 1fr;
+  }
+
+  .sa-route-solution .inner-hero--solution-detail .hero-actions .btn-primary,
+  .sa-route-solution .inner-hero--solution-detail .hero-actions .btn-primary:hover {
+    width: 100%;
+    min-height: 44px;
+    justify-content: space-between;
+    color: #fff;
+    background: var(--sa-primary);
+    box-shadow: none;
+  }
+
+  .sa-route-solution .sa-solution-detail,
+  .sa-route-solution .sa-related-products,
+  .sa-route-solution .sa-application-examples {
+    padding-block: 40px 44px;
+  }
+
+  .sa-route-solution .sa-solution-detail__grid,
+  .sa-route-solution .sa-application-examples__layout {
+    gap: 22px;
+  }
+
+  .sa-route-solution .sa-solution-detail .sa-section-intro h2,
+  .sa-route-solution .sa-application-examples .sa-section-intro h2 {
+    max-width: none;
+    font-size: 26px;
+    line-height: 1.15;
+  }
+
+  .sa-route-solution .sa-check-list {
+    overflow: hidden;
+    gap: 0;
+    border: 1px solid var(--sa-border);
+    border-radius: 14px;
+    background: var(--sa-surface);
+  }
+
+  .sa-route-solution .sa-check-list li {
+    min-height: 62px;
+    padding: 15px 16px;
+    grid-template-columns: 28px minmax(0, 1fr);
+    border: 0;
+    border-bottom: 1px solid var(--sa-border);
+    border-radius: 0;
+    font-size: 14px;
+  }
+
+  .sa-route-solution .sa-check-list li:last-child {
+    border-bottom: 0;
+  }
+
+  .sa-route-solution .sa-related-products .section-head {
+    margin-bottom: 22px;
+  }
+
+  .sa-route-solution .sa-related-products .sa-product-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .sa-route-solution .sa-related-products :is(
+    .sa-product-grid--count-4,
+    .sa-product-grid--count-3,
+    .sa-product-grid--count-2,
+    .sa-product-grid--count-1
+  ) {
+    grid-template-columns: 1fr;
+  }
+
+  .sa-route-solution .sa-related-products .sa-product-card {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    min-height: 148px;
+  }
+
+  .sa-route-solution .sa-related-products .sa-product-card__media {
+    width: 112px;
+    height: 100%;
+    min-height: 148px;
+    aspect-ratio: auto;
+    border-right: 1px solid var(--sa-border);
+  }
+
+  .sa-route-solution .sa-related-products .sa-product-card__media img {
+    padding: 10px;
+  }
+
+  .sa-route-solution .sa-related-products .sa-product-card__body {
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .sa-route-solution .sa-related-products .sa-product-card h3 {
+    font-size: 16px;
+  }
+
+  .sa-route-solution .sa-related-products .sa-product-card p {
+    display: -webkit-box;
+    margin: 7px 0 12px;
+    overflow: hidden;
+    font-size: 12px;
+    line-height: 1.45;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .sa-route-solution .sa-related-products .sa-product-card .text-link {
+    font-size: 12px;
+  }
+
+  .sa-route-solution .sa-solution-mid-cta {
+    margin-top: 16px;
+    padding-top: 16px;
+  }
+
+  .sa-route-solution .sa-solution-mid-cta .btn {
+    width: 100%;
+  }
+
+  .sa-route-solution .sa-solution-detail__columns {
+    gap: 12px;
+  }
+
+  .sa-route-solution .sa-solution-detail__columns article {
+    padding: 22px 18px;
+    border-radius: 14px;
+  }
+
+  .sa-route-solution .sa-solution-detail__columns h2 {
+    font-size: 23px;
+    line-height: 1.17;
+  }
+
+  .sa-route-solution .sa-number-list {
+    margin-top: 18px;
+  }
+
+  .sa-route-solution .sa-number-list li {
+    min-height: 56px;
+    padding-block: 12px;
+    grid-template-columns: 34px minmax(0, 1fr);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .sa-route-solution .sa-application-examples__grid {
+    overflow: hidden;
+    grid-template-columns: 1fr;
+    gap: 0;
+    border: 1px solid var(--sa-border);
+    border-radius: 14px;
+    background: var(--sa-surface);
+  }
+
+  .sa-route-solution .sa-application-examples__grid span {
+    min-height: 56px;
+    padding: 14px 16px;
+    border: 0;
+    border-bottom: 1px solid var(--sa-border);
+    border-radius: 0;
+    font-size: 13px;
+  }
+
+  .sa-route-solution .sa-application-examples__grid span:last-child {
+    border-bottom: 0;
+  }
+
+  .sa-route-solution .sa-solution-cta {
+    padding-block: 10px 20px;
+  }
+
+  .sa-route-solution .sa-solution-cta .cta-band-inner {
+    min-height: 0;
+    padding: 22px 18px;
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .sa-route-solution .sa-solution-cta .cta-title {
+    padding-bottom: 16px;
+    font-size: 25px;
+  }
+
+  .sa-route-solution .sa-solution-cta .cta-copy {
+    gap: 16px;
+  }
+
+  .sa-route-solution .sa-solution-cta .cta-copy p {
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .sa-route-solution .sa-solution-cta .cta-copy .btn {
+    width: 100%;
+  }
+
+  .sa-route-news .sa-news-index,
+  .sa-route-resources .sa-resources-index {
+    padding-block: 40px 44px;
+  }
+
+  .sa-route-news .sa-news-index .section-head,
+  .sa-route-resources .sa-resources-index .section-head {
+    margin-bottom: 24px;
+  }
+
+  .sa-route-resources .sa-resources-index .sa-section-lede,
+  .sa-route-solution .sa-section-lede,
+  .sa-route-about .sa-section-lede,
+  .sa-route-capabilities .sa-section-lede,
+  .sa-route-contact .sa-section-lede {
+    margin-top: 11px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .sa-route-news .sa-news-featured__body h3 {
+    font-size: 21px;
+    line-height: 1.22;
+  }
+
+  .sa-route-news .sa-news-card__body h3 {
+    font-size: 17px;
+  }
+
+  .sa-route-search .sa-search-hero {
+    padding-block: 40px;
+  }
+
+  .sa-route-search .sa-search-hero__kicker {
+    margin-bottom: 9px;
+    font-size: 10px;
+  }
+
+  .sa-route-search .sa-search-hero__title {
+    max-width: none;
+    font-size: clamp(30px, 8vw, 34px);
+    line-height: 1.1;
+    letter-spacing: -.035em;
+    text-wrap: pretty;
+  }
+
+  .sa-route-search .sa-search-hero__subtitle {
+    margin-top: 14px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .sa-route-search .sa-search-results {
+    padding-block: 40px 56px;
+  }
+
+  .sa-route-search .sa-search-results__grid {
+    gap: 10px;
+  }
+
+  .sa-route-search .sa-search-card {
+    min-height: 0;
+    padding: 20px;
+    border-radius: 12px;
+  }
+
+  .sa-route-search .sa-search-card h3 {
+    font-size: 18px;
+    line-height: 1.28;
+  }
+
+  .sa-route-search .sa-search-card p {
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  /* Contact: lead with the conversion form and keep direct details scannable. */
+  .sa-route-contact .contact-main {
+    padding-block: 32px 40px;
+  }
+
+  .sa-route-contact .contact-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .sa-route-contact .contact-form-wrap,
+  .sa-route-contact .contact-info {
+    width: 100%;
+    max-width: none;
+  }
+
+  .sa-route-contact .contact-form-wrap {
+    order: 1;
+    padding: 22px 18px;
+    border-radius: 14px;
+    box-shadow: none;
+  }
+
+  .sa-route-contact .contact-info {
+    order: 2;
+    padding: 20px 18px 16px;
+    border-radius: 14px;
+    background: var(--sa-bg-soft);
+    box-shadow: none;
+  }
+
+  .sa-route-contact .contact-form-wrap h2 {
+    margin-bottom: 18px;
+    font-size: 25px;
+    line-height: 1.16;
+  }
+
+  .sa-route-contact .contact-info h2 {
+    margin-bottom: 12px;
+    font-size: 21px;
+    line-height: 1.2;
+  }
+
+  .sa-route-contact .contact-form {
+    gap: 12px;
+  }
+
+  .sa-route-contact .sa-drawing-guidance {
+    width: 100%;
+  }
+
+  .sa-route-contact .sa-drawing-guidance__trigger {
+    min-height: 64px;
+    padding: 10px 12px;
+    grid-template-columns: 36px minmax(0, 1fr) 18px;
+    gap: 11px;
+  }
+
+  .sa-route-contact .sa-drawing-guidance__trigger-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .sa-drawing-guide-dialog {
+    width: calc(100% - 24px);
+    max-height: calc(100dvh - 32px);
+    border-radius: 16px;
+  }
+
+  .sa-drawing-guide-dialog__header {
+    padding: 18px 18px 15px;
+  }
+
+  .sa-drawing-guide-dialog__header h3 {
+    font-size: 20px;
+  }
+
+  .sa-drawing-guide-dialog__body {
+    padding: 16px 18px 20px;
+  }
+
+  .sa-drawing-guide-dialog__intro {
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .sa-drawing-guide-dialog .sa-drawing-guidance__list {
+    margin-top: 14px;
+  }
+
+  .sa-drawing-guide-dialog .sa-drawing-guidance__list summary {
+    padding-block: 13px;
+  }
+
+  .sa-route-contact .contact-form .field input,
+  .sa-route-contact .contact-form .field select,
+  .sa-route-contact .contact-form .field textarea {
+    min-height: 46px;
+    padding: 11px 13px;
+    font-size: 14px;
+  }
+
+  .sa-route-contact .contact-form .field textarea {
+    height: 104px;
+    min-height: 104px;
+  }
+
+  .sa-route-contact .info-list {
+    grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+    gap: 0 14px;
+  }
+
+  .sa-route-contact .info-list li {
+    min-width: 0;
+    gap: 10px;
+    padding: 12px 0;
+    border-radius: 0;
+  }
+
+  .sa-route-contact .info-list li:nth-child(1),
+  .sa-route-contact .info-list li:nth-child(4),
+  .sa-route-contact .info-list li:nth-child(5) {
+    grid-column: 1 / -1;
+  }
+
+  .sa-route-contact .info-list .icon-circle {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+  }
+
+  .sa-route-contact .info-list .icon-circle .icon {
+    width: 17px;
+    height: 17px;
+  }
+
+  .sa-route-contact .info-label {
+    font-size: 9px;
+    letter-spacing: .08em;
+  }
+
+  .sa-route-contact .info-value {
+    overflow-wrap: anywhere;
+    margin-top: 3px;
+    font-size: 13px;
+    line-height: 1.42;
+  }
+
+  .sa-route-contact .sa-contact-workflow {
+    padding-block: 36px 40px;
+  }
+
+  .sa-route-contact .sa-contact-workflow .section-head {
+    margin-bottom: 20px;
+  }
+
+  .sa-route-contact .sa-contact-workflow .section-kicker {
+    margin-bottom: 8px;
+    font-size: 10px;
+  }
+
+  .sa-route-contact .sa-contact-workflow h2 {
+    max-width: none;
+    font-size: 25px;
+    line-height: 1.15;
+  }
+
+  .sa-route-contact .sa-contact-workflow__grid {
+    overflow: hidden;
+    grid-template-columns: 1fr;
+    gap: 0;
+    border: 1px solid var(--sa-border);
+    border-radius: 14px;
+    background: var(--sa-surface);
+  }
+
+  .sa-route-contact .sa-contact-workflow__grid li {
+    display: grid;
+    min-height: 0;
+    padding: 16px;
+    grid-template-columns: 36px minmax(0, 1fr);
+    grid-template-areas:
+      "step title"
+      "step copy";
+    column-gap: 12px;
+    border: 0;
+    border-bottom: 1px solid var(--sa-border);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .sa-route-contact .sa-contact-workflow__grid li:last-child {
+    border-bottom: 0;
+  }
+
+  .sa-route-contact .sa-contact-workflow__grid span {
+    width: 34px;
+    height: 34px;
+    grid-area: step;
+    font-size: 11px;
+  }
+
+  .sa-route-contact .sa-contact-workflow__grid h3 {
+    grid-area: title;
+    margin-top: 0;
+    font-size: 16px;
+    line-height: 1.3;
+  }
+
+  .sa-route-contact .sa-contact-workflow__grid p {
+    grid-area: copy;
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 1.48;
+  }
+
+  .sa-route-contact .sa-contact-location {
+    padding-block: 32px 40px;
+    background: var(--sa-bg-soft);
+  }
+
+  .sa-route-contact .sa-contact-location__header {
+    grid-template-columns: 1fr;
+    padding-bottom: 18px;
+    gap: 15px;
+  }
+
+  .sa-route-contact .sa-contact-location__copy h2 {
+    max-width: none;
+    font-size: 23px;
+    line-height: 1.18;
+  }
+
+  .sa-route-contact .sa-contact-location__copy .sa-section-lede {
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .sa-route-contact .sa-contact-location__regions {
+    justify-content: flex-start;
+    gap: 6px;
+  }
+
+  .sa-route-contact .sa-contact-location__regions span {
+    min-height: 0;
+    padding: 7px 10px;
+    text-align: center;
+    font-size: 10px;
+    line-height: 1.25;
+  }
+
+  .sa-route-contact .sa-contact-location__map,
+  .sa-route-contact .sa-contact-location__map iframe {
+    min-height: 230px;
+  }
+
+  .sa-route-contact .sa-contact-location__map {
+    margin-top: 14px;
+    border-radius: 14px;
+  }
+
+  .sa-route-contact .sa-contact-location__map figcaption {
+    right: 8px;
+    bottom: 8px;
+    left: 8px;
+    max-width: calc(100% - 16px);
+    padding: 7px 10px;
+    font-size: 10px;
+  }
+}

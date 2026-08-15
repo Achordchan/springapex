@@ -5,14 +5,28 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+/**
+ * Admin-facing labels are written in Chinese rather than wrapped in __(): the
+ * operator is the only audience for them. No front-end template reads a post type
+ * label — the public archive URLs come from `has_archive` / `rewrite`, and the page
+ * headings are their own copy — so this cannot leak Chinese onto the English site.
+ * The names match the ones used in the admin menu and the design skill.
+ */
 function springapex_register_post_types(): void
 {
     register_post_type('spring_product', [
         'labels' => [
-            'name' => __('Spring Products', 'springapex'),
-            'singular_name' => __('Spring Product', 'springapex'),
-            'add_new_item' => __('Add Spring Product', 'springapex'),
-            'edit_item' => __('Edit Spring Product', 'springapex'),
+            'name' => '产品',
+            'singular_name' => '产品条目',
+            'menu_name' => '产品',
+            'all_items' => '所有产品',
+            'add_new' => '添加产品',
+            'add_new_item' => '添加产品',
+            'edit_item' => '编辑产品',
+            'view_item' => '查看产品页',
+            'search_items' => '搜索产品',
+            'not_found' => '还没有产品条目。',
+            'not_found_in_trash' => '回收站里没有产品条目。',
         ],
         'public' => true,
         'show_in_rest' => true,
@@ -24,10 +38,17 @@ function springapex_register_post_types(): void
 
     register_post_type('spring_solution', [
         'labels' => [
-            'name' => __('Industry Solutions', 'springapex'),
-            'singular_name' => __('Industry Solution', 'springapex'),
-            'add_new_item' => __('Add Industry Solution', 'springapex'),
-            'edit_item' => __('Edit Industry Solution', 'springapex'),
+            'name' => '行业方案',
+            'singular_name' => '行业方案条目',
+            'menu_name' => '行业方案',
+            'all_items' => '所有行业方案',
+            'add_new' => '添加行业方案',
+            'add_new_item' => '添加行业方案',
+            'edit_item' => '编辑行业方案',
+            'view_item' => '查看方案页',
+            'search_items' => '搜索行业方案',
+            'not_found' => '还没有行业方案条目。',
+            'not_found_in_trash' => '回收站里没有行业方案条目。',
         ],
         'public' => true,
         'show_in_rest' => true,
@@ -37,12 +58,41 @@ function springapex_register_post_types(): void
         'supports' => ['title', 'editor', 'excerpt', 'thumbnail', 'page-attributes'],
     ]);
 
+    register_post_type('spring_case', [
+        'labels' => [
+            'name' => '案例',
+            'singular_name' => '案例条目',
+            'menu_name' => '案例',
+            'all_items' => '所有案例',
+            'add_new' => '添加案例',
+            'add_new_item' => '添加案例',
+            'edit_item' => '编辑案例',
+            'view_item' => '查看案例页',
+            'search_items' => '搜索案例',
+            'not_found' => '还没有案例条目。',
+            'not_found_in_trash' => '回收站里没有案例条目。',
+        ],
+        'public' => true,
+        'show_in_rest' => true,
+        'has_archive' => 'case-studies',
+        'rewrite' => ['slug' => 'case-studies', 'with_front' => false],
+        'menu_icon' => 'dashicons-portfolio',
+        'supports' => ['title', 'editor', 'excerpt', 'thumbnail', 'page-attributes'],
+    ]);
+
     register_post_type('spring_news', [
         'labels' => [
-            'name' => __('News', 'springapex'),
-            'singular_name' => __('News Item', 'springapex'),
-            'add_new_item' => __('Add News Item', 'springapex'),
-            'edit_item' => __('Edit News Item', 'springapex'),
+            'name' => '新闻',
+            'singular_name' => '新闻文章',
+            'menu_name' => '新闻',
+            'all_items' => '所有新闻',
+            'add_new' => '写新闻',
+            'add_new_item' => '写新闻',
+            'edit_item' => '编辑新闻',
+            'view_item' => '查看新闻页',
+            'search_items' => '搜索新闻',
+            'not_found' => '还没有新闻文章。',
+            'not_found_in_trash' => '回收站里没有新闻文章。',
         ],
         'public' => true,
         'show_in_rest' => true,
@@ -52,11 +102,39 @@ function springapex_register_post_types(): void
         'supports' => ['title', 'editor', 'excerpt', 'thumbnail', 'page-attributes'],
     ]);
 
+    register_taxonomy('spring_news_type', ['spring_news'], [
+        'labels' => [
+            'name' => '新闻分类',
+            'singular_name' => '新闻分类',
+            'menu_name' => '新闻分类',
+            'search_items' => '搜索新闻分类',
+            'all_items' => '所有新闻分类',
+            'edit_item' => '编辑新闻分类',
+            'update_item' => '更新新闻分类',
+            'add_new_item' => '添加新闻分类',
+            'new_item_name' => '新分类名称',
+            'not_found' => '还没有新闻分类。',
+        ],
+        'public' => false,
+        'show_ui' => true,
+        'show_admin_column' => true,
+        'show_in_rest' => true,
+        'show_in_nav_menus' => false,
+        'hierarchical' => false,
+        'rewrite' => false,
+        'query_var' => false,
+    ]);
+
     register_post_type('spring_inquiry', [
         'labels' => [
-            'name' => __('Inquiries', 'springapex'),
-            'singular_name' => __('Inquiry', 'springapex'),
-            'edit_item' => __('View Inquiry', 'springapex'),
+            'name' => '客户询盘',
+            'singular_name' => '询盘',
+            'menu_name' => '客户询盘',
+            'all_items' => '所有询盘',
+            'edit_item' => '查看询盘',
+            'search_items' => '搜索询盘',
+            'not_found' => '还没有收到询盘。',
+            'not_found_in_trash' => '回收站里没有询盘。',
         ],
         'public' => false,
         'publicly_queryable' => false,
@@ -128,7 +206,7 @@ add_action('admin_init', static function (): void {
 add_action('add_meta_boxes_spring_product', static function (): void {
     add_meta_box(
         'springapex-product-details',
-        __('Product Details', 'springapex'),
+        __('Product Settings', 'springapex'),
         'springapex_render_product_meta_box',
         'spring_product',
         'normal',
@@ -147,6 +225,9 @@ function springapex_render_product_meta_box(object $post): void
     $catalog_url = (string) get_post_meta((int) $post->ID, '_springapex_catalog_url', true);
     $featured = (bool) get_post_meta((int) $post->ID, '_springapex_featured', true);
     ?>
+    <p class="description">
+      <?php esc_html_e('Use the main content editor above for the Product Details text, headings, images and galleries. The fields below control structured product data used elsewhere on the page.', 'springapex'); ?>
+    </p>
     <p>
       <label for="springapex-subtitle"><strong><?php esc_html_e('Hero subtitle', 'springapex'); ?></strong></label><br>
       <textarea class="widefat" rows="3" id="springapex-subtitle" name="springapex_subtitle"><?php echo esc_textarea($subtitle); ?></textarea>

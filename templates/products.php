@@ -12,9 +12,10 @@ get_template_part('parts/inner-hero', null, [
     'title' => $hero['title'] ?? 'Products',
     'subtitle' => $hero['subtitle'] ?? '',
     'image' => $hero['image'] ?? 'products-hero-v3.png',
+    'mobile_image' => $hero['mobile_image'] ?? 'products-hero-mobile-v1.png',
     'ctas' => [
         ['label' => 'Browse Products', 'href' => '#product-families', 'icon' => 'arrow-right'],
-        ['label' => 'Submit Custom Requirement', 'href' => '/contact/?intent=drawing', 'icon' => 'upload', 'style' => 'ghost'],
+        ['label' => 'Send a Drawing', 'href' => '/contact/?intent=drawing', 'icon' => 'upload', 'style' => 'ghost'],
     ],
 ]);
 ?>
@@ -24,24 +25,16 @@ get_template_part('parts/inner-hero', null, [
     <div class="sa-products-intro" data-reveal="up">
       <div>
         <p class="section-kicker"><?php esc_html_e('START HERE', 'springapex'); ?></p>
-        <h2><?php esc_html_e('Choose the route that matches what you already know.', 'springapex'); ?></h2>
+        <h2><?php esc_html_e('Choose How to Start', 'springapex'); ?></h2>
       </div>
-      <p><?php esc_html_e('Browse directly by spring type, describe the application or send an existing drawing for engineering review.', 'springapex'); ?></p>
+      <p><?php esc_html_e('Describe your application or send a drawing for review.', 'springapex'); ?></p>
     </div>
     <div class="sa-product-entry-paths__grid" data-reveal-group>
-      <a class="sa-entry-path-card" href="#product-families">
-        <div class="sa-entry-path-card__icon"><?php echo springapex_icon('spring', 'icon'); ?></div>
-        <div class="sa-entry-path-card__content">
-          <h3><?php esc_html_e('Find by Product Type', 'springapex'); ?></h3>
-          <p><?php esc_html_e('I know the spring type I need. Show me compression, extension, torsion, disc, wire form or die springs.', 'springapex'); ?></p>
-        </div>
-        <span class="sa-entry-path-card__arrow"><?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></span>
-      </a>
       <a class="sa-entry-path-card" href="<?php echo esc_url(springapex_url('/contact/?intent=solution')); ?>">
         <div class="sa-entry-path-card__icon"><?php echo springapex_icon('gear', 'icon'); ?></div>
         <div class="sa-entry-path-card__content">
           <h3><?php esc_html_e('Describe Your Application', 'springapex'); ?></h3>
-          <p><?php esc_html_e('I have a load, space or motion requirement but need help selecting the right spring type and parameters.', 'springapex'); ?></p>
+          <p><?php esc_html_e('Share the load, space and motion requirements for engineering guidance.', 'springapex'); ?></p>
         </div>
         <span class="sa-entry-path-card__arrow"><?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></span>
       </a>
@@ -49,7 +42,15 @@ get_template_part('parts/inner-hero', null, [
         <div class="sa-entry-path-card__icon"><?php echo springapex_icon('upload', 'icon'); ?></div>
         <div class="sa-entry-path-card__content">
           <h3><?php esc_html_e('Upload Drawing for Quote', 'springapex'); ?></h3>
-          <p><?php esc_html_e('I have a drawing, sample or specification ready. Get engineering review and quotation.', 'springapex'); ?></p>
+          <p><?php esc_html_e('Send a drawing or specification for review and quotation.', 'springapex'); ?></p>
+        </div>
+        <span class="sa-entry-path-card__arrow"><?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></span>
+      </a>
+      <a class="sa-entry-path-card" href="#product-families">
+        <div class="sa-entry-path-card__icon"><?php echo springapex_icon('spring', 'icon'); ?></div>
+        <div class="sa-entry-path-card__content">
+          <h3><?php esc_html_e('Find by Product Type', 'springapex'); ?></h3>
+          <p><?php esc_html_e('Browse spring families by load direction and component type.', 'springapex'); ?></p>
         </div>
         <span class="sa-entry-path-card__arrow"><?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></span>
       </a>
@@ -62,9 +63,9 @@ get_template_part('parts/inner-hero', null, [
     <div class="sa-products-intro" data-reveal="up">
       <div>
         <p class="section-kicker"><?php esc_html_e('PRODUCT RANGE', 'springapex'); ?></p>
-        <h2><?php esc_html_e('Product families for different load and motion requirements.', 'springapex'); ?></h2>
+        <h2><?php esc_html_e('Spring families for every load and motion.', 'springapex'); ?></h2>
       </div>
-      <p><?php esc_html_e('Start with the direction of force and available installation space, then review dimensions, material and operating conditions on the product page.', 'springapex'); ?></p>
+      <p><?php esc_html_e('Compare force direction, space, material and operating conditions.', 'springapex'); ?></p>
     </div>
     <div class="product-grid product-grid--all" data-reveal-group>
       <?php foreach ($products as $product) : ?>
@@ -106,18 +107,5 @@ get_template_part('parts/inner-hero', null, [
         </article>
       <?php endforeach; ?>
     </div>
-  </div>
-</section>
-
-<section class="section sa-products-resource-link" id="resources">
-  <div class="container container-wide sa-products-resource-link__inner" data-reveal="up">
-    <div>
-      <p class="section-kicker"><?php esc_html_e('BEFORE YOU REQUEST A QUOTE', 'springapex'); ?></p>
-      <h2><?php esc_html_e('Prepare the right spring requirements.', 'springapex'); ?></h2>
-      <p><?php esc_html_e('Use our RFQ, material and inspection guides to prepare a clearer engineering request.', 'springapex'); ?></p>
-    </div>
-    <a class="btn btn-outline" href="<?php echo esc_url(springapex_url('/resources/')); ?>">
-      <?php esc_html_e('Open Engineering Resources', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
-    </a>
   </div>
 </section>

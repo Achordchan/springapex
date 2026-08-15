@@ -1,0 +1,119 @@
+/* 可增删行的编辑器。见 inc/admin/row-editor.php。
+   Scoped to .sa-row* only: this file loads on the post edit screen, where any bare
+   element selector would fight the block editor. */
+
+.sa-rows__list {
+	display: grid;
+	gap: 12px;
+	margin: 8px 0 12px;
+}
+
+.sa-rows__empty {
+	margin: 8px 0 12px;
+	padding: 14px;
+	border: 1px dashed #c3c4c7;
+	border-radius: 4px;
+	color: #646970;
+	text-align: center;
+}
+
+.sa-row {
+	padding: 12px 14px 14px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #fff;
+}
+
+.sa-row__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 10px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.sa-row__num {
+	color: #646970;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.sa-row__actions {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.sa-row__actions .button-link[disabled] {
+	color: #c3c4c7;
+	cursor: default;
+}
+
+.sa-row__remove {
+	color: #b32d2e;
+}
+
+.sa-row__remove:hover,
+.sa-row__remove:focus {
+	color: #8a2424;
+}
+
+.sa-row__field {
+	margin-bottom: 10px;
+}
+
+.sa-row__field > label {
+	display: block;
+	margin-bottom: 3px;
+	font-weight: 600;
+}
+
+.sa-row__field .description {
+	display: block;
+	margin-top: 3px;
+}
+
+.sa-row__products {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+	gap: 2px 14px;
+	margin: 0;
+}
+
+.sa-row__products li {
+	margin: 0;
+}
+
+.sa-row__image {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+}
+
+.sa-row__image img {
+	width: 60px;
+	height: 60px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	object-fit: cover;
+}
+
+.sa-row__image .description {
+	flex-basis: 100%;
+	margin-top: 0;
+}
+
+.sa-row__image-actions {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+@media screen and (max-width: 782px) {
+	.sa-row__products {
+		grid-template-columns: 1fr;
+	}
+}

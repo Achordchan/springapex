@@ -5,10 +5,32 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+require_once __DIR__ . '/solution-content.php';
+
 function springapex_content_enhancements(): array
 {
     return [
         'company' => [
+            'profile' => [
+                'eyebrow' => 'ABOUT APEXSPRING',
+                'home_title' => 'Precision spring manufacturing, built for long-term production.',
+                'home_text' => 'ApexSpring is a women-owned precision spring manufacturer based in Xuzhou, China. Since 2001, we have supported projects from application review and prototyping through controlled production, inspection and export delivery.',
+                'home_support' => 'We manufacture standard and custom spring components for automotive, industrial equipment, medical, energy and other demanding applications.',
+                'title' => 'Precision manufacturing, from review to delivery.',
+                'paragraphs' => [
+                    'Xuzhou Apex Spring Manufacturing Co., Ltd, established in 2001 and headquartered in Xuzhou, China, is a comprehensive spring manufacturer integrating R&D, engineering design, and precision manufacturing. The group includes Jiangsu APEX Spring Manufacturing Co., Ltd., Jiangsu Chaoxing Spring Technology Co., Ltd., and Jiangsu Chaofan Spring Manufacturing Co., Ltd. Unlike traditional manufacturers, we focus on engineered spring solutions and performance optimization. With strong capabilities in design development and parameter analysis, we provide customized, high-precision spring solutions tailored to real application requirements across automotive, industrial equipment, and precision engineering sectors.',
+                    'The company operates multiple production facilities with a combined production area of 12,000 square meters and more than 120 employees, and offers a fully integrated production chain from raw material processing to finished products, covering wire diameters from 0.1 mm to 80 mm, with an annual output value of approximately RMB 150 million.',
+                    'Our product range includes precision small springs, special-shaped springs, compression, extension, and torsion springs, automotive suspension and braking springs, hot-coiled large springs, heavy-duty springs, as well as wire forms and various customized spring products. These products are widely used in automotive & mobility, railway & transportation, construction & heavy equipment, agricultural machinery, and medical & precision devices, serving leading companies and supply chain partners across these industries.',
+                    'Our products have been exported to dozens of countries and regions, including Switzerland, France, Thailand, Singapore, and Malaysia. In the domestic market, we maintain long-term cooperation with over 2,000 stable customers, demonstrating strong market recognition and reliability. The company is certified to IATF 16949, ISO 13485, ISO 9001, ISO 14001, and ISO 45001, and is supported by a comprehensive quality control system and in-house testing laboratory to ensure consistent performance and reliability under demanding operating conditions. We don’t just manufacture springs — we engineer solutions for performance and reliability.',
+                ],
+                'image' => 'facility-aerial-original.webp',
+                'image_alt' => 'ApexSpring manufacturing facility in Xuzhou, Jiangsu, China',
+                'highlights' => [
+                    ['value' => '2001', 'label' => 'Founded'],
+                    ['value' => 'Xuzhou, China', 'label' => 'Manufacturing base'],
+                    ['value' => '120+', 'label' => 'Employees'],
+                ],
+            ],
             'facts' => [
                 ['icon' => 'users', 'value' => '2001', 'label' => 'Founded', 'detail' => 'Spring manufacturing experience built in Xuzhou.'],
                 ['icon' => 'factory', 'value' => '3', 'label' => 'Production Facilities', 'detail' => 'Manufacturing capacity organized across three facilities.'],
@@ -16,39 +38,228 @@ function springapex_content_enhancements(): array
                 ['icon' => 'spring', 'value' => 'USD 30+ million', 'label' => 'Annual Output', 'detail' => 'Precision spring components produced each year.'],
                 ['icon' => 'form', 'value' => '0.1–80 mm', 'label' => 'Wire Diameter Range', 'detail' => 'From fine-wire components to heavy-duty spring applications.'],
             ],
-            'manufacturing' => [
-                'eyebrow' => 'MANUFACTURING SCALE',
-                'title' => 'Built for reliable production.',
-                'text' => 'From engineering review and process validation to precision forming and final inspection, SpringApex provides consistent spring solutions for both prototype development and high-volume production.',
-                'image' => 'generated/springapex-factory-floor-v1.webp',
-            ],
             'quality' => [
                 'eyebrow' => 'QUALITY SYSTEMS',
-                'title' => 'Quality Requirements Translated into Production Excellence',
-                'text' => 'Quality is built into every step of our manufacturing process. Through strict process control, advanced inspection equipment, and continuous improvement, we ensure consistent spring performance and reliability.',
-                'detail' => 'Our quality management systems are certified to international standards, including IATF 16949, ISO 9001, ISO 13485, ISO 14001, and ISO 45001. Certification documents are available for customer review during supplier qualification.',
+                'title' => 'Quality built into production.',
+                'text' => 'Controlled processes, inspection and traceable records.',
                 'standards' => [
-                    ['name' => 'IATF 16949', 'scope' => 'Automotive quality management'],
-                    ['name' => 'ISO 9001', 'scope' => 'Quality management system'],
-                    ['name' => 'ISO 13485', 'scope' => 'Medical device quality management'],
-                    ['name' => 'ISO 14001', 'scope' => 'Environmental management system'],
-                    ['name' => 'ISO 45001', 'scope' => 'Occupational health and safety'],
+                    ['name' => 'IATF 16949', 'scope' => 'Automotive quality management', 'document' => 'certificates/iatf-16949-certificate.jpg'],
+                    ['name' => 'ISO 9001', 'scope' => 'Quality management system', 'document' => 'certificates/iso-9001-certificate.jpg'],
+                    ['name' => 'ISO 13485', 'scope' => 'Medical device quality management', 'document' => 'certificates/iso-13485-certificate.jpg'],
+                    ['name' => 'ISO 14001', 'scope' => 'Environmental management system', 'document' => 'certificates/iso-14001-certificate.jpg'],
+                    ['name' => 'ISO 45001', 'scope' => 'Occupational health and safety', 'document' => 'certificates/iso-45001-certificate.jpg'],
+                ],
+                'certificates' => [
+                    [
+                        'name' => 'IATF 16949',
+                        'scope' => 'Automotive quality management',
+                        'valid_until' => 'Valid until February 4, 2028',
+                        'image' => 'certificates/iatf-16949.png',
+                        'document' => 'certificates/iatf-16949-certificate.jpg',
+                    ],
+                    [
+                        'name' => 'ISO 9001',
+                        'scope' => 'Quality management system',
+                        'valid_until' => 'Valid until December 11, 2026',
+                        'image' => 'certificates/iso-9001.png',
+                        'document' => 'certificates/iso-9001-certificate.jpg',
+                    ],
+                    [
+                        'name' => 'ISO 13485',
+                        'scope' => 'Medical device quality management',
+                        'valid_until' => 'Valid until March 26, 2028',
+                        'image' => 'certificates/iso-13485.png',
+                        'document' => 'certificates/iso-13485-certificate.jpg',
+                    ],
+                    [
+                        'name' => 'ISO 14001',
+                        'scope' => 'Environmental management system',
+                        'valid_until' => 'Valid until April 17, 2028',
+                        'image' => 'certificates/iso-14001.png',
+                        'document' => 'certificates/iso-14001-certificate.jpg',
+                    ],
+                    [
+                        'name' => 'ISO 45001',
+                        'scope' => 'Occupational health and safety',
+                        'valid_until' => 'Valid until April 17, 2028',
+                        'image' => 'certificates/iso-45001.png',
+                        'document' => 'certificates/iso-45001-certificate.jpg',
+                    ],
                 ],
                 'image' => 'generated/springapex-quality-lab-v1.webp',
             ],
             'timeline' => [
-                ['year' => '2001', 'title' => 'APEX Spring founded', 'text' => 'The company began precision spring manufacturing in Xuzhou, Jiangsu.'],
-                ['year' => 'Growth', 'title' => 'Expanded production capacity', 'text' => 'Production developed across three facilities with broader wire-diameter and industry coverage.'],
-                ['year' => 'Today', 'title' => 'International program support', 'text' => 'Engineering, quality and export teams support customers from drawing review through repeat delivery.'],
+                [
+                    'year' => '2001',
+                    'title' => 'ApexSpring founded',
+                    'text' => 'Production began in Xuzhou.',
+                    'image' => 'generated/about-timeline-2001-workshop-v1.png',
+                    'alt' => 'Representative early precision spring manufacturing workshop',
+                ],
+                [
+                    'year' => 'Growth',
+                    'title' => 'Production expanded',
+                    'text' => 'Three facilities increased capacity.',
+                    'image' => 'generated/about-timeline-growth-cnc-v1.png',
+                    'alt' => 'Representative modern CNC spring coiling production line',
+                ],
+                [
+                    'year' => 'Today',
+                    'title' => 'Global project support',
+                    'text' => 'Engineering and export support worldwide.',
+                    'image' => 'generated/about-timeline-today-support-v1.png',
+                    'alt' => 'Representative global engineering team reviewing spring drawings and samples',
+                ],
             ],
             'gallery' => [
                 ['image' => 'generated/springapex-factory-floor-v1.webp', 'alt' => 'Representative precision spring manufacturing workflow', 'caption' => 'Representative manufacturing workflow'],
                 ['image' => 'generated/springapex-quality-lab-v1.webp', 'alt' => 'Representative spring inspection setup', 'caption' => 'Representative inspection setup'],
             ],
             'markets' => [
-                'title' => 'Built in Xuzhou. Supporting international programs.',
-                'text' => 'The export team coordinates drawing review, technical communication, documentation and shipment planning for customers across global industrial markets.',
-                'regions' => ['North America', 'Europe', 'Asia-Pacific', 'International industrial markets'],
+                'title' => 'Global support from Xuzhou.',
+                'text' => 'Drawing review, documentation and shipment support.',
+                'regions' => ['North America', 'Europe', 'Asia-Pacific'],
+            ],
+        ],
+        'contact_network' => [
+            'eyebrow' => 'GLOBAL CONTACT NETWORK',
+            'title' => 'Engineering support, wherever your project begins.',
+            'facility_image' => 'facility-aerial-original.webp',
+            'map_image' => 'contact/contact-world-map-v1.png',
+            'headquarters' => [
+                'title' => 'Who we are',
+                'location' => '',
+                'text' => 'ApexSpring is a precision spring manufacturer delivering reliable spring solutions from design and prototyping to mass production. Our Xuzhou facility combines advanced machinery with experienced engineering support for customers across diverse industries.',
+            ],
+            'facts' => [
+                ['icon' => 'factory', 'value' => '12,000 m²', 'label' => 'Production facility'],
+                ['icon' => 'cnc', 'value' => '3', 'label' => 'Production lines'],
+                ['icon' => 'users', 'value' => '120+', 'label' => 'Employees'],
+                ['icon' => 'pen', 'value' => '28', 'label' => 'Engineering team'],
+            ],
+            'markers' => [
+                ['label' => 'North America · Mexico', 'left' => '21.1%', 'top' => '38.5%', 'label_side' => 'right', 'label_y' => '0px'],
+                ['label' => 'Europe · 7 partners', 'left' => '52.8%', 'top' => '24.5%', 'label_side' => 'right', 'label_y' => '0px'],
+                ['label' => 'Asia Pacific · India', 'left' => '67.8%', 'top' => '46.5%', 'label_side' => 'right', 'label_y' => '0px'],
+                ['label' => 'Asia Headquarters · Xuzhou', 'left' => '78.7%', 'top' => '36.6%', 'label_side' => 'left', 'label_y' => '0px', 'headquarters' => true],
+            ],
+            'regions' => [
+                [
+                    'slug' => 'headquarters',
+                    'label' => 'Headquarters',
+                    'locations' => [
+                        [
+                            'name' => 'China (Xuzhou)',
+                            'detail' => 'Asia Headquarters',
+                            'company' => 'Xuzhou APEX Spring Manufacturing Co., Ltd.',
+                            'phone' => '+86 187 9642 2510',
+                            'email' => 'victoria@springapex.cn',
+                            'address' => 'No. 15, Zhongnan Gaoke, Luji Town, Tongshan District, Xuzhou City, Jiangsu Province, China 221112',
+                        ],
+                    ],
+                ],
+                [
+                    'slug' => 'asia-pacific',
+                    'label' => 'Asia Pacific',
+                    'locations' => [
+                        [
+                            'name' => 'India',
+                            'company' => 'Alcomex Springs Pvt. Ltd.',
+                            'phone' => '+91 02137 666 102',
+                            'email' => 'info@alcomex.in',
+                            'address' => 'Plot No. 3362, Talegaon Dhamdhere, Maharashtra, Pune 412208, India',
+                            'website' => 'https://www.alcomex.com/',
+                        ],
+                    ],
+                ],
+                [
+                    'slug' => 'europe',
+                    'label' => 'Europe',
+                    'locations' => [
+                        [
+                            'name' => 'Denmark',
+                            'company' => 'Lesjøfors A/S',
+                            'phone' => '+45 4695 6100',
+                            'email' => 'info.bby@lesjoforsab.com',
+                            'address' => 'Ringager 9-11, Brøndby, DK-2605, Denmark',
+                            'website' => 'https://shop.lesjofors.com/dk/da-DK/',
+                        ],
+                        [
+                            'name' => 'Finland',
+                            'company' => 'Lesjöfors Springs',
+                            'phone' => '+358 207 649 340',
+                            'email' => 'info.abo@lesjoforsab.com',
+                            'address' => 'Hallimestarinkatu 7, Kaarina, SF-20780, Finland',
+                            'website' => 'https://shop.lesjofors.com/fi/fi-FI/',
+                        ],
+                        [
+                            'name' => 'France',
+                            'company' => 'Ressorts Lacroix',
+                            'phone' => '+33 2 38 44 32 03',
+                            'email' => 'commercial@ressorts-lacroix.com',
+                            'address' => 'Zone d’activité Synergie, 4ième avenue, 45130 Meung-sur-Loire, France',
+                            'website' => 'https://ressorts-lacroix.com/',
+                        ],
+                        [
+                            'name' => 'Germany',
+                            'company' => 'Lesjöfors Industrial Springs & Pressings GmbH',
+                            'phone' => '+49 233 450 17 0',
+                            'email' => 'automotive.hag@lesjoforsab.com',
+                            'address' => 'Heidestraße 115, Velbert, DE-42549, Germany',
+                            'website' => 'https://www.lesjofors.com/en/industries/automotive-aftermarket/',
+                        ],
+                        [
+                            'name' => 'Latvia',
+                            'company' => 'LSEZ SIA Lesjofors Gas Springs',
+                            'phone' => '+371 2578 4100',
+                            'email' => 'info.lep@lesjoforsab.com',
+                            'address' => 'Dūņu street 4, Liepāja, LV-3401, Latvia',
+                        ],
+                        [
+                            'name' => 'Netherlands',
+                            'company' => 'Alcomex Veren B.V.',
+                            'phone' => '+31 226 351122',
+                            'email' => 'info@alcomex.nl',
+                            'address' => 'De Veken 109, 1716 KG Opmeer, Netherlands',
+                            'website' => 'https://www.alcomex.com/',
+                        ],
+                        [
+                            'name' => 'Poland',
+                            'company' => 'Alcomex Springs-Pol Sp. z o.o.',
+                            'phone' => '+48 22 615 83 67',
+                            'email' => 'biuro@alcomex.pl',
+                            'address' => 'Ul. Okólna 45 hala D, Marki, 05-270, Poland',
+                            'website' => 'https://www.alcomex.com/springs/door-springs/',
+                        ],
+                    ],
+                ],
+                [
+                    'slug' => 'north-america',
+                    'label' => 'North America',
+                    'locations' => [
+                        [
+                            'name' => 'Mexico',
+                            'company' => 'Lesjöfors Springs America, Inc.',
+                            'phone' => '011-631 104 13 69',
+                            'email' => 'info.us@lesjoforsab.com',
+                            'address' => '911 North Industrial Park Road, C/O Gamas International, Nogales, MX-85621, Mexico',
+                        ],
+                    ],
+                ],
+                [
+                    'slug' => 'other-regions',
+                    'label' => 'Other Regions',
+                    'locations' => [
+                        [
+                            'name' => 'Global programs',
+                            'detail' => 'Coordinated from Xuzhou, China',
+                            'company' => 'ApexSpring',
+                            'phone' => '+86 187 9642 2510',
+                            'email' => 'victoria@springapex.cn',
+                            'address' => 'Xuzhou, Jiangsu Province, China',
+                        ],
+                    ],
+                ],
             ],
         ],
         'manufacturing_process' => [
@@ -66,8 +277,8 @@ function springapex_content_enhancements(): array
             ['icon' => 'check-shield', 'title' => 'Batch Documentation', 'text' => 'Inspection records, material documentation and traceability can be supplied by project agreement.'],
         ],
         'product_selection' => [
-            'title' => 'Choose by how the part carries load.',
-            'text' => 'Start with the load direction, available space, service environment and expected cycle life. Our engineers can then narrow the spring family, material and manufacturing route.',
+            'title' => 'Choose by load direction.',
+            'text' => 'Match force, space and service conditions to the right spring family.',
             'items' => [
                 ['icon' => 'spring', 'title' => 'Axial Compression', 'text' => 'Compression, die and disc springs resist force as the available length decreases.'],
                 ['icon' => 'extension', 'title' => 'Axial Tension', 'text' => 'Extension springs store energy as hooks or loops are pulled apart.'],
@@ -77,8 +288,9 @@ function springapex_content_enhancements(): array
         ],
         'resources' => [
             'hero' => [
-                'title' => 'Engineering Resources',
-                'subtitle' => 'Practical guidance for specifying, reviewing and sourcing precision springs.',
+                'title' => 'Download Center',
+                'subtitle' => 'Company, product and industry brochures in one place.',
+                'mobile_image' => 'resources-hero-mobile-v1.png',
             ],
             'items' => [
                 [
@@ -119,67 +331,21 @@ function springapex_content_enhancements(): array
                 ],
             ],
         ],
-        'solution_details' => [
-            'automotive' => [
-                'challenge_intro' => 'Automotive spring programs balance packaging, fatigue life, corrosion exposure and repeatable force across high-volume production.',
-                'challenges' => ['Consistent load and geometry across repeat batches', 'Fatigue performance under vibration and repeated motion', 'Corrosion protection and material traceability'],
-                'products' => ['compression-springs', 'extension-springs', 'torsion-springs', 'wire-forms'],
-                'processes' => ['Material and surface-treatment review', 'Prototype and first-article verification', 'Load, dimension and traceability controls'],
-                'validation' => ['Dimensional inspection', 'Load or torque checks', 'Fatigue and corrosion testing when specified'],
-                'applications' => ['Seat and latch mechanisms', 'Controls and return mechanisms', 'Powertrain and thermal-management assemblies'],
-            ],
-            'industrial-equipment' => [
-                'challenge_intro' => 'Industrial equipment requires durable spring components that remain serviceable under load, contamination and repeated operation.',
-                'challenges' => ['Heavy or repeated loading', 'Dust, moisture and temperature exposure', 'Maintenance access and replacement consistency'],
-                'products' => ['compression-springs', 'torsion-springs', 'disc-springs', 'wire-springs'],
-                'processes' => ['Load and installation-space review', 'Material and finish selection', 'Controlled forming and final inspection'],
-                'validation' => ['Load-at-height verification', 'Dimensional and assembly checks', 'Application-specific cycle testing'],
-                'applications' => ['Valves and actuators', 'Machine guards and access systems', 'Fixtures, tooling and automation'],
-            ],
-            'medical' => [
-                'challenge_intro' => 'Medical spring components often require fine geometry, clean material choices and controlled documentation.',
-                'challenges' => ['Small dimensions and sensitive force windows', 'Material, cleanliness and corrosion requirements', 'Documented change and batch control'],
-                'products' => ['compression-springs', 'extension-springs', 'torsion-springs', 'wire-forms'],
-                'processes' => ['Drawing and critical-characteristic review', 'Material and surface-condition selection', 'Controlled inspection and documentation'],
-                'validation' => ['Fine-dimensional measurement', 'Low-force verification', 'Material and traceability documentation'],
-                'applications' => ['Delivery and diagnostic devices', 'Handheld instruments', 'Positioning and return mechanisms'],
-            ],
-            'aerospace' => [
-                'challenge_intro' => 'Aerospace applications demand disciplined requirements review, material control and verification of application-critical characteristics.',
-                'challenges' => ['High consequence of dimensional or load variation', 'Temperature, vibration and corrosion exposure', 'Documentation and configuration control'],
-                'products' => ['compression-springs', 'torsion-springs', 'disc-springs', 'wire-forms'],
-                'processes' => ['Requirement and material review', 'Prototype and first-article planning', 'Inspection and documentation controls'],
-                'validation' => ['Critical dimension and force checks', 'Material documentation', 'Application-specific validation by agreement'],
-                'applications' => ['Actuation and control mechanisms', 'Latches and retention systems', 'Ground-support and cabin equipment'],
-            ],
-            'energy' => [
-                'challenge_intro' => 'Energy applications require stable mechanical performance across environmental exposure and long service intervals.',
-                'challenges' => ['Outdoor corrosion and temperature variation', 'Long-term preload or repeated actuation', 'Traceable maintenance and replacement supply'],
-                'products' => ['compression-springs', 'disc-springs', 'torsion-springs', 'wire-forms'],
-                'processes' => ['Environment and material review', 'Surface-treatment planning', 'Load and dimension verification'],
-                'validation' => ['Load retention checks', 'Coating or corrosion validation when specified', 'Batch documentation'],
-                'applications' => ['Switchgear and electrical mechanisms', 'Valves and control equipment', 'Renewable-energy assemblies'],
-            ],
-            'rail-transit' => [
-                'challenge_intro' => 'Rail spring components must withstand vibration, repeated use and demanding maintenance cycles.',
-                'challenges' => ['Continuous vibration and shock', 'Corrosion and outdoor exposure', 'Long service intervals and repeatability'],
-                'products' => ['compression-springs', 'extension-springs', 'disc-springs', 'wire-forms'],
-                'processes' => ['Duty-cycle and load review', 'Material and finish selection', 'Production and traceability controls'],
-                'validation' => ['Load and dimensional checks', 'Cycle testing by application requirement', 'Material and batch documentation'],
-                'applications' => ['Door and access mechanisms', 'Coupling and braking assemblies', 'Cabin and electrical equipment'],
-            ],
-        ],
+        'solution_details' => springapex_solution_content(),
         'contact_workflow' => [
-            ['step' => '01', 'title' => 'Submit Requirements', 'text' => 'Share the drawing, application, quantity and known performance requirements.'],
-            ['step' => '02', 'title' => 'Information Check', 'text' => 'The team confirms the project context and identifies any missing engineering inputs.'],
-            ['step' => '03', 'title' => 'Engineering Review', 'text' => 'Material, geometry, process and validation needs are reviewed for manufacturability.'],
-            ['step' => '04', 'title' => 'Quote or Technical Feedback', 'text' => 'You receive the next technical questions, sample plan or quotation path.'],
+            ['step' => '01', 'title' => 'Send Details', 'text' => 'Share your drawing, quantity and requirements.'],
+            ['step' => '02', 'title' => 'Engineering Review', 'text' => 'We assess the design and confirm any missing details.'],
+            ['step' => '03', 'title' => 'Receive Next Steps', 'text' => 'Get technical feedback, sample options or a quote.'],
         ],
         'home_faq' => [
             ['question' => 'Can you manufacture from my drawing without a standard part number?', 'answer' => 'Yes. Most of our projects start from a customer drawing or application sketch. We review the geometry, material and performance needs, then confirm manufacturability before quoting.'],
             ['question' => 'What is your minimum order quantity?', 'answer' => 'We support both small-batch prototypes and high-volume production. There is no fixed MOQ — quantities are evaluated based on the spring type, tooling and material requirements.'],
             ['question' => 'How do you handle springs for high-temperature or corrosive environments?', 'answer' => 'We select materials (such as Inconel, stainless steel or special alloys) and surface treatments matched to the operating environment. Our engineers can recommend options based on temperature range, media exposure and cycle life.'],
             ['question' => 'What documentation can you provide with production orders?', 'answer' => 'We supply inspection reports, material certificates, dimensional records and traceability documentation as agreed during project setup. PPAP and FAIR packages are available for automotive and aerospace programs.'],
+            ['question' => 'What is the expected lead time?', 'answer' => 'Lead time depends on the spring type, material, tooling, quantity and approval requirements. We confirm the production and sample schedule during quotation.'],
+            ['question' => 'How are payment and delivery terms confirmed?', 'answer' => 'Commercial terms, delivery address and documentation requirements are confirmed with the quotation before production starts.'],
+            ['question' => 'What support is available after delivery?', 'answer' => 'After-delivery questions can be routed through the project contact for drawing questions, quality documents, repeat orders and application feedback.'],
+            ['question' => 'Can you provide samples before mass production?', 'answer' => 'Yes. Prototype and pre-production samples can be arranged for dimensional, load and application approval before the full production order proceeds.'],
         ],
     ];
 }

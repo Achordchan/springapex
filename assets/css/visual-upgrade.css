@@ -19,46 +19,6 @@
   color: var(--sa-text-2);
 }
 
-/* --- Product and solutions heroes: keep copy readable over light industrial images --- */
-.inner-hero--products .inner-hero-media::after,
-.inner-hero--solutions .inner-hero-media::after {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(90deg, rgba(247, 249, 252, .84) 0%, rgba(247, 249, 252, .72) 34%, rgba(247, 249, 252, .24) 60%, rgba(247, 249, 252, 0) 82%);
-  content: "";
-}
-
-.inner-hero--products .display,
-.inner-hero--solutions .display,
-.inner-hero--about .display,
-.inner-hero--capabilities .display,
-.inner-hero--contact .display,
-.inner-hero--resources .display {
-  color: #0b1528;
-}
-
-.inner-hero--products .lede,
-.inner-hero--solutions .lede,
-.inner-hero--about .lede,
-.inner-hero--capabilities .lede,
-.inner-hero--contact .lede,
-.inner-hero--resources .lede {
-  color: #293950;
-  font-weight: 500;
-}
-
-.inner-hero--products .btn-ghost,
-.inner-hero--solutions .btn-ghost {
-  color: #0b1528;
-  font-weight: 600;
-}
-
-.inner-hero--products .btn-ghost:hover,
-.inner-hero--solutions .btn-ghost:hover {
-  color: #164d7d;
-}
-
 /* --- Solution detail hero: force the title into the existing dark overlay --- */
 .inner-hero--solution-detail .display {
   color: #fff;
@@ -73,28 +33,6 @@
 .inner-hero--solution-detail .btn-primary:hover {
   color: #0b1528;
   background: #eaf1f6;
-}
-
-@media (max-width: 760px) {
-  .inner-hero--products .inner-hero-media::after,
-  .inner-hero--solutions .inner-hero-media::after {
-    background: linear-gradient(180deg, rgba(247, 249, 252, .96) 0%, rgba(247, 249, 252, .88) 56%, rgba(247, 249, 252, .38) 78%, rgba(247, 249, 252, .08) 100%);
-  }
-}
-
-/* News now uses a light editorial image with dark, high-contrast copy. */
-.inner-hero--news .inner-hero-media::after {
-  display: none;
-}
-
-.inner-hero--news .display,
-.inner-hero--news .lede {
-  color: #0b1528;
-}
-
-.inner-hero--news .lede {
-  font-weight: 500;
-  color: #293950;
 }
 
 /* --- Hero CTA: stronger visual weight --- */
@@ -590,8 +528,7 @@
 
 @media (max-width: 860px) {
   .sa-search-results__grid,
-  .sa-document-list--three,
-  .sa-about-snapshot__grid {
+  .sa-document-list--three {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -634,8 +571,7 @@
   }
 
   .sa-search-results__grid,
-  .sa-document-list--three,
-  .sa-about-snapshot__grid {
+  .sa-document-list--three {
     grid-template-columns: 1fr;
   }
 
@@ -663,37 +599,6 @@
   width: auto;
 }
 
-.sa-about-snapshot {
-  background: var(--sa-bg-elevated);
-}
-
-.sa-about-snapshot__grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.sa-about-snapshot__item {
-  padding: 28px;
-  border: 1px solid var(--sa-border);
-  border-radius: var(--sa-radius-lg);
-  background: var(--sa-surface);
-}
-
-.sa-about-snapshot__item h3 {
-  margin-top: 18px;
-  color: var(--sa-primary);
-  font-size: 21px;
-  line-height: 1.25;
-}
-
-.sa-about-snapshot__item p {
-  margin-top: 10px;
-  color: var(--sa-text-2);
-  font-size: 15px;
-  line-height: 1.65;
-}
-
 .sa-contact-map-link {
   display: inline-flex;
   margin-top: 18px;
@@ -702,8 +607,4 @@
   color: var(--sa-accent);
   font-size: 14px;
   font-weight: 600;
-}
-
-.sa-site-faq {
-  background: var(--sa-bg-elevated);
 }

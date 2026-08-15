@@ -307,7 +307,7 @@ figure {
 .btn-ghost,
 .btn-text {
   min-height: 40px;
-  padding-inline: 0;
+  padding: 10px 16px;
   color: var(--sa-text);
   border: 0;
   box-shadow: none;

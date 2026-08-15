@@ -5,7 +5,6 @@
 
 .sa-process-detail__grid,
 .sa-contact-workflow__grid,
-.sa-solution-method__steps,
 .sa-timeline__list {
   margin-left: 0;
   padding-left: 0;
@@ -37,24 +36,6 @@
 
 .sa-resource-card h3 {
   text-wrap: balance;
-}
-
-.product-overview-grid {
-  grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
-  align-items: stretch;
-}
-
-.product-overview-grid .overview-copy,
-.product-overview-grid .spec-table-wrap {
-  min-width: 0;
-}
-
-.product-overview-grid .overview-copy > p {
-  max-width: 62ch;
-}
-
-.product-overview-grid .diagram-card {
-  width: min(90%, 620px);
 }
 
 .spec-table tr {
@@ -167,7 +148,6 @@
   .section-head.row-between,
   .sa-route-home .section-head,
   .sa-home-products .section-head,
-  .sa-resources-preview .section-head,
   .sa-factory-gallery .section-head,
   .sa-related-products .section-head,
   .featured-section .section-head {
@@ -305,10 +285,6 @@
     padding-top: 14px;
   }
 
-  .product-overview-grid {
-    grid-template-columns: 1fr;
-  }
-
   .product-tabs-section {
     top: var(--sa-header-height);
     min-height: var(--sa-product-tabs-height);
@@ -343,7 +319,6 @@
 @media (hover: none) {
   .pillar-card:hover,
   .stat-item:hover,
-  .value-item:hover,
   .industry-row span:hover,
   .sa-product-card:hover,
   .sa-resource-card:hover,
@@ -352,14 +327,11 @@
   .sa-capability-metrics article:hover,
   .sa-contact-workflow__grid li:hover,
   .sa-resource-paths article:hover,
-  .sa-product-gallery figure:hover,
   .sa-application-examples__grid span:hover,
-  .sa-global-presence__regions span:hover,
   .sa-product-quality-documents__evidence article:hover {
     transform: none;
   }
 
-  .sa-product-gallery figure:hover img,
   .sa-factory-gallery figure:hover img {
     transform: none;
   }

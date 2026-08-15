@@ -30,7 +30,17 @@ if (!$product) {
     return;
 }
 
+if ($slug === 'compression-springs') {
+    get_template_part('templates/product-compression', null, [
+        'product' => $product,
+        'slug' => $slug,
+    ]);
+    return;
+}
+
 $catalog_url = (string) ($product['catalog_url'] ?? '');
+$details_source = trim((string) ($product['overview'] ?? ''));
+$has_product_details = defined('SPRINGAPEX_PREVIEW') || $details_source !== '';
 $materials = !empty($product['materials']) ? $product['materials'] : [
     ['title' => 'Music Wire', 'icon' => 'wire'],
     ['title' => 'Stainless Steel', 'icon' => 'shield'],
@@ -47,14 +57,6 @@ $specs = !empty($product['specs']) ? $product['specs'] : [
     ['label' => 'Surface Treatment', 'value' => 'Available according to material and operating environment'],
     ['label' => 'Inspection', 'value' => 'Critical dimensions and functional characteristics by agreement'],
 ];
-$gallery_images = [];
-foreach ([$product['image'] ?? '', $product['category_image'] ?? '', $product['featured_image'] ?? '', 'quality-inspection-original.jpg'] as $gallery_image) {
-    $key = is_array($gallery_image) ? (string) ($gallery_image['file'] ?? '') : (string) $gallery_image;
-    if ($key !== '' && !isset($gallery_images[$key])) {
-        $gallery_images[$key] = $gallery_image;
-    }
-}
-$gallery_images = array_slice(array_values($gallery_images), 0, 3);
 $related_products = springapex_related_products($slug, 3);
 ?>
 <?php
@@ -86,53 +88,30 @@ get_template_part('parts/inner-hero', null, [
 
 <nav class="product-tabs-section" aria-label="<?php esc_attr_e('Product sections', 'springapex'); ?>" data-product-tabs>
   <div class="container container-wide product-tabs">
-    <a class="tab is-active" href="#overview" data-section="overview" aria-current="true"><?php esc_html_e('Overview', 'springapex'); ?></a>
-    <a class="tab" href="#specifications" data-section="specifications"><?php esc_html_e('Specifications', 'springapex'); ?></a>
+    <?php if ($has_product_details) : ?>
+      <a class="tab is-active" href="#product-details" data-section="product-details" aria-current="true"><?php esc_html_e('Product Details', 'springapex'); ?></a>
+    <?php endif; ?>
+    <a class="tab<?php echo $has_product_details ? '' : ' is-active'; ?>" href="#specifications" data-section="specifications"<?php echo $has_product_details ? '' : ' aria-current="true"'; ?>><?php esc_html_e('Specifications', 'springapex'); ?></a>
     <a class="tab" href="#materials" data-section="materials"><?php esc_html_e('Materials', 'springapex'); ?></a>
     <a class="tab" href="#applications" data-section="applications"><?php esc_html_e('Applications', 'springapex'); ?></a>
     <a class="tab" href="#quality" data-section="quality"><?php esc_html_e('Quality & Documents', 'springapex'); ?></a>
   </div>
 </nav>
 
-<?php if ($gallery_images) : ?>
-<section class="section sa-product-gallery" aria-labelledby="product-gallery-title">
-  <div class="container container-wide">
-    <div class="section-head sa-section-intro">
-      <p class="section-kicker"><?php esc_html_e('PRODUCT VIEW', 'springapex'); ?></p>
-      <h2 id="product-gallery-title"><?php esc_html_e('Geometry, finish and inspection context.', 'springapex'); ?></h2>
-    </div>
-    <div class="sa-product-gallery__track">
-      <?php foreach ($gallery_images as $index => $gallery_image) : ?>
-        <figure>
-          <?php echo springapex_image($gallery_image, sprintf(__('%s product view %d', 'springapex'), (string) $product['title'], $index + 1), [
-              'width' => 1000,
-              'height' => 760,
-              'sizes' => '(max-width: 760px) 86vw, 33vw',
-          ]); ?>
-        </figure>
-      <?php endforeach; ?>
-    </div>
-  </div>
-</section>
+<?php if ($has_product_details) : ?>
+  <?php get_template_part('parts/product-editor-details', null, [
+      'product' => $product,
+      'id' => 'product-details',
+  ]); ?>
 <?php endif; ?>
 
-<section class="section product-overview" id="overview" data-product-section>
-  <div class="container container-wide product-overview-grid">
-    <div class="overview-copy" data-reveal="up">
-      <h2><?php esc_html_e('Overview', 'springapex'); ?></h2>
-      <p><?php echo esc_html((string) ($product['overview'] ?? '')); ?></p>
-      <?php if (!empty($product['diagram'])) : ?>
-        <div class="diagram-card">
-          <?php echo springapex_image((string) $product['diagram'], __('Compression spring dimension diagram', 'springapex'), [
-              'width' => 840,
-              'height' => 440,
-              'sizes' => '(max-width: 760px) 100vw, 45vw',
-          ]); ?>
-        </div>
-      <?php endif; ?>
-    </div>
-    <div class="spec-table-wrap" id="specifications" data-product-section data-reveal="up">
-      <h2 class="sr-only"><?php esc_html_e('Specifications', 'springapex'); ?></h2>
+<section class="sa-product-specifications" id="specifications" data-product-section>
+  <div class="container container-wide sa-product-specifications__layout">
+    <header class="sa-product-specifications__head" data-reveal="up">
+      <p class="section-kicker"><?php esc_html_e('PRODUCT DATA', 'springapex'); ?></p>
+      <h2><?php esc_html_e('Specifications', 'springapex'); ?></h2>
+    </header>
+    <div class="spec-table-wrap" data-reveal="up">
       <table class="spec-table">
         <tbody>
           <?php foreach ($specs as $row) : ?>
@@ -183,20 +162,7 @@ get_template_part('parts/inner-hero', null, [
     'product_slug' => $slug,
 ]); ?>
 
-<section class="section sa-faq">
-  <div class="container container-wide sa-faq__layout">
-    <div class="sa-section-intro">
-      <p class="section-kicker"><?php esc_html_e('ENGINEERING FAQ', 'springapex'); ?></p>
-      <h2><?php esc_html_e('Questions that help define the right spring.', 'springapex'); ?></h2>
-    </div>
-    <div class="sa-faq__list">
-      <details><summary><?php esc_html_e('What information should I send for a quotation?', 'springapex'); ?></summary><p><?php esc_html_e('Send the drawing or installation geometry, required load or torque, material or environment, quantity and expected cycle life.', 'springapex'); ?></p></details>
-      <details><summary><?php esc_html_e('Can you review an existing design?', 'springapex'); ?></summary><p><?php esc_html_e('Yes. Engineering review can identify manufacturability, tolerance, material and inspection questions before sampling.', 'springapex'); ?></p></details>
-      <details><summary><?php esc_html_e('How are materials and finishes selected?', 'springapex'); ?></summary><p><?php esc_html_e('Selection depends on stress, fatigue, corrosion, temperature, cleanliness and any industry-specific documentation.', 'springapex'); ?></p></details>
-      <details><summary><?php esc_html_e('Can inspection reports be supplied?', 'springapex'); ?></summary><p><?php esc_html_e('Inspection, material and traceability documents can be defined during quotation according to project requirements.', 'springapex'); ?></p></details>
-    </div>
-  </div>
-</section>
+<?php get_template_part('parts/site-faq'); ?>
 
 <?php if ($related_products) : ?>
 <section class="section sa-related-products">

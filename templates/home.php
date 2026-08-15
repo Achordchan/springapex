@@ -8,24 +8,6 @@ $hero_lines = preg_split('/\R/', (string) ($hero['title'] ?? '')) ?: [];
 ?>
 <section class="hero hero-home">
   <div class="container container-wide hero-grid hero-grid-home">
-    <div class="hero-copy">
-      <h1 class="display display-home">
-        <?php foreach ($hero_lines as $index => $line) : ?>
-          <span class="<?php echo $index === 0 ? 'headline-strong' : ''; ?>"><?php echo esc_html($line); ?></span><?php echo $index < count($hero_lines) - 1 ? '<br>' : ''; ?>
-        <?php endforeach; ?>
-      </h1>
-      <p class="lede lede-home"><?php echo esc_html($hero['subtitle'] ?? ''); ?></p>
-      <div class="hero-actions">
-        <a class="btn btn-primary" href="<?php echo esc_url(springapex_url($hero['primary_cta']['href'] ?? '/contact/')); ?>">
-          <?php echo esc_html($hero['primary_cta']['label'] ?? 'Upload Your Drawing'); ?>
-          <?php echo springapex_icon($hero['primary_cta']['icon'] ?? 'upload', 'icon icon-sm'); ?>
-        </a>
-        <a class="btn btn-text" href="<?php echo esc_url(springapex_url($hero['secondary_cta']['href'] ?? '/solutions/')); ?>">
-          <?php echo esc_html($hero['secondary_cta']['label'] ?? 'Explore Solutions'); ?>
-          <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
-        </a>
-      </div>
-    </div>
     <div class="hero-media hero-media-home">
       <?php echo springapex_image($hero['image'] ?? '', 'Polished precision compression spring', [
           'class' => 'hero-product-image',
@@ -34,28 +16,67 @@ $hero_lines = preg_split('/\R/', (string) ($hero['title'] ?? '')) ?: [];
           'loading' => 'eager',
           'fetchpriority' => 'high',
           'sizes' => '(max-width: 760px) 100vw, 62vw',
+          'mobile_image' => 'hero-spring-mobile-v1.png',
+          'mobile_sizes' => '100vw',
+          'mobile_breakpoint' => '860px',
       ]); ?>
+    </div>
+    <div class="hero-copy">
+      <h1 class="display display-home">
+        <?php foreach ($hero_lines as $index => $line) : ?>
+          <span class="<?php echo $index === 0 ? 'headline-strong' : ''; ?>"><?php echo esc_html($line); ?></span><?php echo $index < count($hero_lines) - 1 ? '<br>' : ''; ?>
+        <?php endforeach; ?>
+      </h1>
+      <p class="lede lede-home"><?php echo esc_html($hero['subtitle'] ?? ''); ?></p>
+      <div class="hero-actions">
+        <button class="btn btn-primary hero-video-trigger" type="button" data-hero-video-open aria-haspopup="dialog" aria-controls="hero-video-dialog">
+          <span class="hero-video-trigger__icon" aria-hidden="true"></span>
+          <?php echo esc_html($hero['video_cta']['label'] ?? 'Play a Video'); ?>
+        </button>
+        <a class="btn btn-text" href="<?php echo esc_url(springapex_url($hero['quote_cta']['href'] ?? '/contact/?intent=quote')); ?>">
+          <?php echo esc_html($hero['quote_cta']['label'] ?? 'Request a Quote'); ?>
+          <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+        </a>
+      </div>
     </div>
   </div>
 </section>
 
-<?php $certifications = springapex_get('company.quality.standards', []); ?>
-<section class="certification-strip" aria-labelledby="certification-strip-title">
-  <div class="container container-wide">
-    <p class="section-kicker" id="certification-strip-title"><?php esc_html_e('Quality Certifications', 'springapex'); ?></p>
-    <div class="certification-row" data-reveal-group>
-      <?php foreach ($certifications as $certification) : ?>
-        <?php
-        $certification_name = (string) ($certification['name'] ?? '');
-        $certification_url = trim((string) ($certification['url'] ?? ''));
-        $certification_tag = $certification_url !== '' ? 'a' : 'span';
-        ?>
-        <<?php echo $certification_tag; ?> class="certification-card"<?php echo $certification_url !== '' ? ' href="' . esc_url($certification_url) . '" target="_blank" rel="noopener noreferrer"' : ''; ?> aria-label="<?php echo esc_attr($certification_name); ?>">
-          <span class="certification-card__icon" aria-hidden="true"><?php echo springapex_icon('check-shield', 'icon icon-sm'); ?></span>
-          <span class="certification-card__name"><?php echo esc_html($certification_name); ?></span>
-        </<?php echo $certification_tag; ?>>
-      <?php endforeach; ?>
+<dialog
+  class="sa-video-dialog"
+  id="hero-video-dialog"
+  data-hero-video-dialog
+  data-video-src="<?php echo esc_url('https://www.youtube-nocookie.com/embed/' . ($hero['video_cta']['youtube_id'] ?? '') . '?autoplay=1&rel=0'); ?>"
+  aria-labelledby="hero-video-title"
+>
+  <div class="sa-video-dialog__shell">
+    <div class="sa-video-dialog__header">
+      <h2 id="hero-video-title"><?php esc_html_e('ApexSpring Manufacturing', 'springapex'); ?></h2>
+      <button class="sa-video-dialog__close" type="button" data-hero-video-close aria-label="Close video">
+        <?php echo springapex_icon('close', 'icon'); ?>
+      </button>
     </div>
+    <div class="sa-video-dialog__media">
+      <iframe
+        data-hero-video-frame
+        title="ApexSpring manufacturing video"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen
+      ></iframe>
+    </div>
+  </div>
+</dialog>
+
+<?php $certificates = springapex_get('company.quality.certificates', []); ?>
+<section class="certification-strip" aria-label="<?php esc_attr_e('Quality certificates', 'springapex'); ?>">
+  <div class="container container-wide">
+    <?php get_template_part('parts/certification-gallery', null, [
+        'id' => 'home-certificate-gallery',
+        'certificates' => $certificates,
+        'variant' => 'strip',
+        'viewer' => true,
+    ]); ?>
   </div>
 </section>
 
@@ -79,11 +100,13 @@ $hero_lines = preg_split('/\R/', (string) ($hero['title'] ?? '')) ?: [];
   </div>
 </section>
 
+<?php get_template_part('parts/company-introduction', null, ['variant' => 'home']); ?>
+
 <section class="section pillars-section">
   <div class="container container-wide">
     <div class="section-head row-between">
       <div class="sa-section-intro">
-        <p class="section-kicker"><?php esc_html_e('WHY SPRINGAPEX', 'springapex'); ?></p>
+        <p class="section-kicker"><?php esc_html_e('WHY APEXSPRING', 'springapex'); ?></p>
         <h2><?php esc_html_e('What You Get When You Work With Us', 'springapex'); ?></h2>
         <p class="sa-section-bridge"><?php esc_html_e('Choosing a spring supplier is choosing a manufacturing partner. Here is what that partnership delivers.', 'springapex'); ?></p>
       </div>
@@ -103,7 +126,24 @@ $hero_lines = preg_split('/\R/', (string) ($hero['title'] ?? '')) ?: [];
   </div>
 </section>
 
-<?php get_template_part('parts/manufacturing-proof'); ?>
+<section class="section process-section">
+  <div class="container container-wide" data-reveal="up">
+    <div class="process-header">
+      <p class="section-kicker"><?php esc_html_e('HOW WE WORK', 'springapex'); ?></p>
+      <h2 class="process-title"><?php esc_html_e('From Wire to Performance', 'springapex'); ?></h2>
+      <p class="process-intro"><?php esc_html_e('Every order follows the same disciplined sequence — so quality is built in, not inspected in.', 'springapex'); ?></p>
+    </div>
+    <div class="process-track" data-reveal-group>
+      <?php foreach (($home['process'] ?? []) as $step) : ?>
+        <div class="process-step">
+          <div class="icon-circle soft"><?php echo springapex_icon((string) $step['icon']); ?></div>
+          <span><?php echo esc_html((string) $step['label']); ?></span>
+        </div>
+      <?php endforeach; ?>
+    </div>
+    <p class="process-note"><?php esc_html_e('A proven process. Precision quality. Reliable delivery.', 'springapex'); ?></p>
+  </div>
+</section>
 
 <section class="section applications-section">
   <div class="container container-wide">
@@ -138,40 +178,3 @@ $hero_lines = preg_split('/\R/', (string) ($hero['title'] ?? '')) ?: [];
 </section>
 
 <?php get_template_part('parts/home-faq'); ?>
-
-<section class="section process-section">
-  <div class="container container-wide" data-reveal="up">
-    <div class="process-header">
-      <p class="section-kicker"><?php esc_html_e('HOW WE WORK', 'springapex'); ?></p>
-      <h2 class="process-title"><?php esc_html_e('From Wire to Performance', 'springapex'); ?></h2>
-      <p class="process-intro"><?php esc_html_e('Every order follows the same disciplined sequence — so quality is built in, not inspected in.', 'springapex'); ?></p>
-    </div>
-    <div class="process-track" data-reveal-group>
-      <?php foreach (($home['process'] ?? []) as $step) : ?>
-        <div class="process-step">
-          <div class="icon-circle soft"><?php echo springapex_icon((string) $step['icon']); ?></div>
-          <span><?php echo esc_html((string) $step['label']); ?></span>
-        </div>
-      <?php endforeach; ?>
-    </div>
-    <p class="process-note"><?php esc_html_e('A proven process. Precision quality. Reliable delivery.', 'springapex'); ?></p>
-  </div>
-</section>
-
-<?php get_template_part('parts/quality-summary'); ?>
-
-<section class="section sa-resources-preview">
-  <div class="container container-wide">
-    <div class="section-head row-between">
-      <div class="sa-section-intro">
-        <p class="section-kicker"><?php esc_html_e('ENGINEERING INSIGHTS', 'springapex'); ?></p>
-        <h2><?php esc_html_e('Useful guidance before you send a drawing.', 'springapex'); ?></h2>
-        <p class="sa-section-bridge"><?php esc_html_e('Spring design details matter. These short guides help you spec with confidence.', 'springapex'); ?></p>
-      </div>
-      <a class="text-link" href="<?php echo esc_url(springapex_url('/resources/')); ?>">
-        <?php esc_html_e('View all resources', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
-      </a>
-    </div>
-    <?php get_template_part('parts/resources-grid', null, ['limit' => 3]); ?>
-  </div>
-</section>

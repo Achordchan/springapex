@@ -3,21 +3,32 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-$faq_items = springapex_get('home_faq', []);
+$faq_args = is_array($args ?? null) ? $args : [];
+$faq_items = is_array($faq_args['items'] ?? null)
+    ? $faq_args['items']
+    : springapex_get('home_faq', []);
 if (!$faq_items) {
     return;
 }
+
+$section_id = sanitize_key((string) ($faq_args['id'] ?? ''));
+$is_product_section = !empty($faq_args['product_section']);
+$kicker = (string) ($faq_args['kicker'] ?? __('COMMON QUESTIONS', 'springapex'));
+$title = (string) ($faq_args['title'] ?? __('Answers Before You Ask', 'springapex'));
+$bridge = (string) ($faq_args['bridge'] ?? __('Clear answers to common purchasing questions.', 'springapex'));
+$link_label = (string) ($faq_args['link_label'] ?? __('Still have questions?', 'springapex'));
+$link_url = (string) ($faq_args['link_url'] ?? springapex_url('/contact/'));
 ?>
-<section class="section sa-home-faq">
+<section class="section sa-home-faq"<?php echo $section_id !== '' ? ' id="' . esc_attr($section_id) . '"' : ''; ?><?php echo $is_product_section ? ' data-product-section' : ''; ?>>
   <div class="container container-wide">
     <div class="section-head row-between">
       <div class="sa-section-intro">
-        <p class="section-kicker"><?php esc_html_e('COMMON QUESTIONS', 'springapex'); ?></p>
-        <h2><?php esc_html_e('Answers Before You Ask', 'springapex'); ?></h2>
-        <p class="sa-section-bridge"><?php esc_html_e('First-time buyers and procurement engineers both ask these. Good questions deserve clear answers.', 'springapex'); ?></p>
+        <p class="section-kicker"><?php echo esc_html($kicker); ?></p>
+        <h2><?php echo esc_html($title); ?></h2>
+        <p class="sa-section-bridge"><?php echo esc_html($bridge); ?></p>
       </div>
-      <a class="text-link" href="<?php echo esc_url(springapex_url('/contact/')); ?>">
-        <?php esc_html_e('Still have questions?', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+      <a class="text-link" href="<?php echo esc_url($link_url); ?>">
+        <?php echo esc_html($link_label); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
       </a>
     </div>
     <div class="sa-home-faq__grid" data-reveal-group>

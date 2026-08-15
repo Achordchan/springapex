@@ -4,6 +4,22 @@ if (!defined('ABSPATH')) {
 }
 $nav = springapex_navigation_items();
 $brand = springapex_brand();
+$products = array_slice(springapex_products(), 0, 7);
+$product_menu_copy = [
+    'compression-springs' => 'Axial load and return force',
+    'extension-springs' => 'Controlled tension',
+    'torsion-springs' => 'Repeatable rotational torque',
+    'disc-springs' => 'High load in compact spaces',
+    'wire-forms' => 'Formed parts to drawing',
+    'die-springs' => 'Heavy-duty tooling loads',
+    'other-customized-springs' => 'Specialized geometries',
+];
+$product_menu_images = [
+    'torsion-springs' => 'product-torsion-v2.png',
+    'die-springs' => 'product-die-spring-menu-v1.png',
+];
+$product_menu_feature = $products[0] ?? [];
+$product_menu_feature_image = 'product-compression-menu-v2.png';
 ?>
 <a class="skip-link" href="#main"><?php esc_html_e('Skip to content', 'springapex'); ?></a>
 <header class="site-header" data-header>
@@ -12,9 +28,15 @@ $brand = springapex_brand();
       <?php if (!defined('SPRINGAPEX_PREVIEW') && function_exists('has_custom_logo') && has_custom_logo()) : ?>
         <?php echo get_custom_logo(); ?>
       <?php else : ?>
-        <a class="brand" href="<?php echo esc_url(springapex_url('/')); ?>" aria-label="<?php echo esc_attr($brand['name'] ?? 'SpringApex'); ?> home">
-          <span class="brand-name"><?php echo esc_html($brand['name'] ?? 'APEX SPRING'); ?></span>
-          <span class="brand-tag"><?php echo esc_html($brand['tagline'] ?? 'SPRING MANUFACTURING EXPERT'); ?></span>
+        <a class="brand brand--image" href="<?php echo esc_url(springapex_url('/')); ?>" aria-label="<?php echo esc_attr($brand['name'] ?? 'ApexSpring'); ?> home">
+          <?php echo springapex_image('logo-site.png', (string) ($brand['name'] ?? 'ApexSpring'), [
+              'class' => 'site-logo site-logo--header',
+              'loading' => 'eager',
+              'fetchpriority' => 'high',
+              'width' => 916,
+              'height' => 529,
+              'sizes' => '110px',
+          ]); ?>
         </a>
       <?php endif; ?>
     </div>
@@ -26,7 +48,43 @@ $brand = springapex_brand();
             $href = springapex_navigation_href($href);
             $active = !empty($item['current']) || springapex_nav_is_active((string) ($item['slug'] ?? ''));
         ?>
-          <li><a href="<?php echo esc_url($href); ?>" class="<?php echo $active ? 'is-active' : ''; ?>"><?php echo esc_html((string) ($item['label'] ?? '')); ?></a></li>
+          <?php
+          $is_products = (string) ($item['slug'] ?? '') === 'products';
+          $children = is_array($item['children'] ?? null) ? $item['children'] : [];
+          $dropdown_id = 'nav-dropdown-' . sanitize_key((string) ($item['slug'] ?? ''));
+          ?>
+          <li class="nav-desktop__item<?php echo $is_products ? ' nav-desktop__item--products' : ''; ?><?php echo $children ? ' nav-desktop__item--has-children' : ''; ?>">
+            <a
+              href="<?php echo esc_url($href); ?>"
+              class="<?php echo $active ? 'is-active' : ''; ?>"
+              <?php if ($is_products && $products) : ?>
+                data-product-menu-trigger
+                aria-haspopup="true"
+                aria-expanded="false"
+                aria-controls="products-mega-menu"
+              <?php elseif ($children) : ?>
+                data-nav-dropdown-trigger
+                aria-haspopup="true"
+                aria-expanded="false"
+                aria-controls="<?php echo esc_attr($dropdown_id); ?>"
+              <?php endif; ?>
+            ><?php echo esc_html((string) ($item['label'] ?? '')); ?></a>
+            <?php if ($children) : ?>
+              <div class="nav-dropdown" id="<?php echo esc_attr($dropdown_id); ?>" data-nav-dropdown hidden>
+                <ul>
+                  <?php foreach ($children as $child) :
+                      $child_href = springapex_navigation_href((string) ($child['href'] ?? '/'));
+                  ?>
+                    <li>
+                      <a href="<?php echo esc_url($child_href); ?>">
+                        <?php echo esc_html((string) ($child['label'] ?? '')); ?>
+                      </a>
+                    </li>
+                  <?php endforeach; ?>
+                </ul>
+              </div>
+            <?php endif; ?>
+          </li>
         <?php endforeach; ?>
       </ul>
     </nav>
@@ -34,6 +92,7 @@ $brand = springapex_brand();
     <div class="header-actions">
       <button class="icon-btn site-search__toggle" type="button" data-search-toggle aria-label="<?php esc_attr_e('Search the site', 'springapex'); ?>">
         <?php echo springapex_icon('search', 'icon'); ?>
+        <span class="site-search__label"><?php esc_html_e('Search', 'springapex'); ?></span>
       </button>
       <div class="site-search-overlay" data-search-overlay role="dialog" aria-modal="true" aria-labelledby="site-search-title" hidden>
         <div class="site-search-overlay__backdrop" data-search-backdrop></div>
@@ -50,7 +109,7 @@ $brand = springapex_brand();
           <form class="site-search-overlay__form" action="<?php echo esc_url(springapex_url('/search/')); ?>" method="get" role="search">
             <span class="site-search-overlay__icon"><?php echo springapex_icon('search', 'icon'); ?></span>
             <label class="sr-only" for="overlay-search-input"><?php esc_html_e('Search products, industries and resources', 'springapex'); ?></label>
-            <input id="overlay-search-input" class="site-search-overlay__input" type="search" name="s" placeholder="<?php esc_attr_e('Search products, industries, resources...', 'springapex'); ?>" autocomplete="off">
+            <input id="overlay-search-input" class="site-search-overlay__input" type="search" name="s" placeholder="<?php esc_attr_e('Search products...', 'springapex'); ?>" autocomplete="off">
             <button class="site-search-overlay__submit" type="submit" aria-label="<?php esc_attr_e('Submit search', 'springapex'); ?>">
               <span><?php esc_html_e('Search', 'springapex'); ?></span><?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
             </button>
@@ -93,26 +152,135 @@ $brand = springapex_brand();
     </div>
   </div>
 
-  <nav class="nav-mobile" id="mobile-navigation" data-mobile-nav aria-label="<?php esc_attr_e('Mobile navigation', 'springapex'); ?>" hidden>
-    <div class="container">
-      <ul class="nav-mobile__links">
-        <?php foreach ($nav as $index => $item) :
-            $href = (string) ($item['href'] ?? '/');
-            $href = springapex_navigation_href($href);
-        ?>
-          <li><a href="<?php echo esc_url($href); ?>"><span class="nav-mobile__number"><?php echo esc_html(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)); ?></span><?php echo esc_html((string) ($item['label'] ?? '')); ?></a></li>
-        <?php endforeach; ?>
-      </ul>
-      <div class="nav-mobile__footer">
-        <a class="nav-mobile__cta" href="<?php echo esc_url(springapex_url('/contact/?intent=quote')); ?>">
-          <?php esc_html_e('Get a Quote', 'springapex'); ?>
-          <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
-        </a>
-        <div class="nav-mobile__contact">
-          <a href="mailto:<?php echo esc_attr($brand['email'] ?? ''); ?>"><?php echo springapex_icon('mail', 'icon icon-sm'); ?><?php echo esc_html($brand['email'] ?? ''); ?></a>
-          <a href="https://wa.me/<?php echo esc_attr(preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? $brand['phone'] ?? ''))); ?>"><?php echo springapex_icon('chat', 'icon icon-sm'); ?><?php esc_html_e('WhatsApp', 'springapex'); ?></a>
+  <?php if ($products) : ?>
+    <section class="products-mega-menu" id="products-mega-menu" data-product-menu-panel aria-label="<?php esc_attr_e('Product categories', 'springapex'); ?>" hidden>
+      <div class="products-mega-menu__intro">
+        <div class="products-mega-menu__intro-copy">
+          <p class="products-mega-menu__kicker"><?php esc_html_e('PRODUCTS', 'springapex'); ?></p>
+          <h2><?php esc_html_e('Engineered for the way your part carries load.', 'springapex'); ?></h2>
+          <p><?php esc_html_e('Explore our core spring families and engineered solutions.', 'springapex'); ?></p>
+          <a class="products-mega-menu__all" href="<?php echo esc_url(springapex_url('/products/')); ?>">
+            <span><?php esc_html_e('View complete range', 'springapex'); ?></span>
+            <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+          </a>
         </div>
+        <?php if ($product_menu_feature) : ?>
+          <div class="products-mega-menu__feature-media">
+            <?php
+            echo springapex_image(
+                $product_menu_feature_image,
+                __('Custom precision compression springs manufactured by ApexSpring', 'springapex'),
+                [
+                    'class' => 'products-mega-menu__feature-image',
+                    'sizes' => '340px',
+                    'width' => 560,
+                    'height' => 560,
+                ]
+            );
+            ?>
+          </div>
+        <?php endif; ?>
+      </div>
+
+      <div class="products-mega-menu__index">
+        <?php foreach ($products as $product) :
+            $slug = (string) ($product['slug'] ?? '');
+            $title = (string) ($product['title'] ?? '');
+            $image = $product_menu_images[$slug] ?? $product['category_image'] ?? $product['image'] ?? '';
+            $summary = (string) ($product_menu_copy[$slug] ?? $product['desc'] ?? '');
+        ?>
+          <a class="products-mega-menu__item" href="<?php echo esc_url(springapex_product_url($product)); ?>">
+            <span class="products-mega-menu__thumb">
+              <?php
+              echo springapex_image($image, $title, [
+                  'class' => 'products-mega-menu__image',
+                  'sizes' => '92px',
+                  'width' => 180,
+                  'height' => 180,
+              ]);
+              ?>
+            </span>
+            <span class="products-mega-menu__item-copy">
+              <strong><?php echo esc_html($title); ?></strong>
+              <small><?php echo esc_html($summary); ?></small>
+            </span>
+            <?php echo springapex_icon('arrow-right', 'icon icon-sm products-mega-menu__arrow'); ?>
+          </a>
+        <?php endforeach; ?>
+      </div>
+    </section>
+  <?php endif; ?>
+</header>
+
+<nav class="nav-mobile" id="mobile-navigation" data-mobile-nav aria-label="<?php esc_attr_e('Mobile navigation', 'springapex'); ?>" hidden>
+  <div class="container">
+    <ul class="nav-mobile__links">
+      <?php foreach ($nav as $index => $item) :
+          $href = (string) ($item['href'] ?? '/');
+          $href = springapex_navigation_href($href);
+          $active = !empty($item['current']) || springapex_nav_is_active((string) ($item['slug'] ?? ''));
+      ?>
+        <?php
+        $mobile_children = is_array($item['children'] ?? null) ? $item['children'] : [];
+        $mobile_slug = sanitize_key((string) ($item['slug'] ?? ''));
+        ?>
+        <?php if ((string) ($item['slug'] ?? '') === 'products' && $products) : ?>
+          <li class="nav-mobile__products-item">
+            <button class="nav-mobile__products-toggle<?php echo $active ? ' is-active' : ''; ?>" type="button" data-mobile-products-toggle aria-expanded="false" aria-controls="mobile-products-menu">
+              <span><?php echo esc_html((string) ($item['label'] ?? '')); ?></span>
+              <?php echo springapex_icon('arrow-right', 'icon icon-sm nav-mobile__products-arrow'); ?>
+            </button>
+            <div class="nav-mobile__products-menu" id="mobile-products-menu" data-mobile-products-panel hidden>
+              <a class="nav-mobile__products-all" href="<?php echo esc_url($href); ?>">
+                <span><?php esc_html_e('View all products', 'springapex'); ?></span>
+                <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+              </a>
+              <div class="nav-mobile__products-grid">
+                <?php foreach ($products as $product) : ?>
+                  <a href="<?php echo esc_url(springapex_product_url($product)); ?>">
+                    <span><?php echo esc_html((string) ($product['title'] ?? '')); ?></span>
+                    <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+                  </a>
+                <?php endforeach; ?>
+              </div>
+            </div>
+          </li>
+        <?php elseif ($mobile_children) : ?>
+          <li class="nav-mobile__products-item">
+            <button class="nav-mobile__products-toggle<?php echo $active ? ' is-active' : ''; ?>" type="button" data-mobile-submenu-toggle aria-expanded="false" aria-controls="mobile-submenu-<?php echo esc_attr($mobile_slug); ?>">
+              <span><?php echo esc_html((string) ($item['label'] ?? '')); ?></span>
+              <?php echo springapex_icon('arrow-right', 'icon icon-sm nav-mobile__products-arrow'); ?>
+            </button>
+            <div class="nav-mobile__products-menu" id="mobile-submenu-<?php echo esc_attr($mobile_slug); ?>" data-mobile-submenu-panel hidden>
+              <?php foreach ($mobile_children as $child) :
+                  $child_href = springapex_navigation_href((string) ($child['href'] ?? '/'));
+              ?>
+                <a href="<?php echo esc_url($child_href); ?>">
+                  <span><?php echo esc_html((string) ($child['label'] ?? '')); ?></span>
+                  <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+                </a>
+              <?php endforeach; ?>
+            </div>
+          </li>
+        <?php else : ?>
+          <li>
+            <a href="<?php echo esc_url($href); ?>" class="<?php echo $active ? 'is-active' : ''; ?>"<?php echo $active ? ' aria-current="page"' : ''; ?>>
+              <span><?php echo esc_html((string) ($item['label'] ?? '')); ?></span>
+              <?php echo springapex_icon('arrow-right', 'icon icon-sm nav-mobile__arrow'); ?>
+            </a>
+          </li>
+        <?php endif; ?>
+      <?php endforeach; ?>
+    </ul>
+    <div class="nav-mobile__footer">
+      <a class="nav-mobile__cta" href="<?php echo esc_url(springapex_url('/contact/?intent=quote')); ?>">
+        <?php esc_html_e('Get a Quote', 'springapex'); ?>
+        <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+      </a>
+      <div class="nav-mobile__contact">
+        <a href="mailto:<?php echo esc_attr($brand['email'] ?? ''); ?>"><?php echo springapex_icon('mail', 'icon icon-sm'); ?><?php esc_html_e('Email', 'springapex'); ?></a>
+        <a href="https://wa.me/<?php echo esc_attr(preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? $brand['phone'] ?? ''))); ?>"><?php echo springapex_icon('whatsapp', 'icon icon-sm'); ?><?php esc_html_e('WhatsApp', 'springapex'); ?></a>
       </div>
     </div>
-  </nav>
-</header>
+  </div>
+</nav>

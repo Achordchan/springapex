@@ -11,7 +11,7 @@ if (!defined('SPRINGAPEX_PREVIEW') && function_exists('is_singular') && is_singu
     $news_item = springapex_news($slug);
 }
 if ($slug === '' && defined('SPRINGAPEX_PREVIEW')) {
-    $slug = (string) get_query_var('news_slug', 'new-cnc-coiling-line');
+    $slug = (string) get_query_var('news_slug', 'manufacturing-expo-bangkok-2024');
     $news_item = springapex_news($slug);
 }
 if (!$news_item) {
@@ -21,7 +21,10 @@ if (!$news_item) {
 }
 
 $news_date = (string) ($news_item['date'] ?? '');
+$news_date_label = (string) ($news_item['date_label'] ?? '');
 $blocks = is_array($news_item['content'] ?? null) ? $news_item['content'] : [];
+$gallery_title = (string) ($news_item['gallery_title'] ?? 'Event gallery');
+$gallery = is_array($news_item['gallery'] ?? null) ? $news_item['gallery'] : [];
 
 /* 推荐产品：从新闻数据里的产品 slug 解析 */
 $products = [];
@@ -47,7 +50,7 @@ $related = springapex_related_news($slug, 3);
     <div class="sa-news-card__meta">
       <span class="sa-news-card__category"><?php echo esc_html((string) ($news_item['category'] ?? '')); ?></span>
       <?php if ($news_date !== '') : ?>
-        <time datetime="<?php echo esc_attr($news_date); ?>"><?php echo esc_html(date_i18n('F j, Y', strtotime($news_date))); ?></time>
+        <time datetime="<?php echo esc_attr($news_date); ?>"><?php echo esc_html($news_date_label !== '' ? $news_date_label : date_i18n('F j, Y', strtotime($news_date))); ?></time>
       <?php endif; ?>
     </div>
     <h1><?php echo esc_html((string) ($news_item['title'] ?? '')); ?></h1>
@@ -94,21 +97,41 @@ $related = springapex_related_news($slug, 3);
       </div>
     </article>
 
+    <?php if ($gallery) : ?>
+      <section class="sa-news-gallery" aria-labelledby="sa-news-gallery-title">
+        <div class="sa-news-gallery__head">
+          <p class="section-kicker"><?php esc_html_e('EVENT GALLERY', 'springapex'); ?></p>
+          <h2 id="sa-news-gallery-title"><?php echo esc_html($gallery_title); ?></h2>
+        </div>
+        <div class="sa-news-gallery__grid">
+          <?php foreach ($gallery as $photo) : ?>
+            <figure class="sa-news-gallery__item">
+              <?php echo springapex_image((string) ($photo['image'] ?? ''), (string) ($photo['alt'] ?? ''), [
+                  'width' => 1200,
+                  'height' => 900,
+                  'sizes' => '(max-width: 700px) 100vw, (max-width: 1180px) 50vw, 420px',
+              ]); ?>
+              <?php if (!empty($photo['caption'])) : ?>
+                <figcaption><?php echo esc_html((string) $photo['caption']); ?></figcaption>
+              <?php endif; ?>
+            </figure>
+          <?php endforeach; ?>
+        </div>
+      </section>
+    <?php endif; ?>
+
     <div class="sa-news-single__footer">
       <a class="btn btn-outline" href="<?php echo esc_url(springapex_url('/news/')); ?>">
         <?php echo springapex_icon('arrow-right', 'icon icon-sm sa-icon-flip'); ?>
         <?php esc_html_e('Back to all news', 'springapex'); ?>
-      </a>
-      <a class="btn btn-primary" href="<?php echo esc_url(springapex_url('/contact/?intent=engineer')); ?>">
-        <?php esc_html_e('Ask Engineering', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
       </a>
     </div>
   </div>
 
   <aside class="sa-news-single-aside">
     <?php if ($products) : ?>
-      <section class="sa-news-aside-card" aria-label="<?php esc_attr_e('Recommended products', 'springapex'); ?>">
-        <h2 class="sa-news-aside-card__title"><?php esc_html_e('Recommended products', 'springapex'); ?></h2>
+      <section class="sa-news-aside-card" aria-label="<?php esc_attr_e('Related products', 'springapex'); ?>">
+        <h2 class="sa-news-aside-card__title"><?php esc_html_e('Related products', 'springapex'); ?></h2>
         <ul class="sa-news-aside-list">
           <?php foreach ($products as $product) : ?>
             <li class="sa-news-aside-item">
@@ -136,9 +159,9 @@ $related = springapex_related_news($slug, 3);
         <span class="sa-news-aside-card__icon"><?php echo springapex_icon('headset', 'icon'); ?></span>
         <h2 class="sa-news-aside-card__title"><?php esc_html_e('Talk to engineering', 'springapex'); ?></h2>
       </div>
-      <p><?php esc_html_e('Send your drawing and operating conditions; our engineers reply within 24 hours.', 'springapex'); ?></p>
+      <p><?php esc_html_e('Send your drawing or operating conditions.', 'springapex'); ?></p>
       <a class="btn btn-primary" href="<?php echo esc_url(springapex_url('/contact/?intent=engineer')); ?>">
-        <?php esc_html_e('Contact us', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+        <?php esc_html_e('Contact Engineering', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
       </a>
     </section>
   </aside>
@@ -149,11 +172,12 @@ $related = springapex_related_news($slug, 3);
   <div class="container container-wide">
     <div class="section-head sa-section-intro">
       <p class="section-kicker"><?php esc_html_e('KEEP READING', 'springapex'); ?></p>
-      <h2><?php esc_html_e('Related news from SpringApex.', 'springapex'); ?></h2>
+      <h2><?php esc_html_e('Related news from ApexSpring.', 'springapex'); ?></h2>
     </div>
     <div class="sa-news-grid" data-reveal-group>
       <?php foreach ($related as $item) :
           $item_date = (string) ($item['date'] ?? '');
+          $item_date_label = (string) ($item['date_label'] ?? '');
       ?>
         <article class="sa-news-card">
           <a class="sa-news-card__media" href="<?php echo esc_url(springapex_news_url($item)); ?>">
@@ -167,7 +191,7 @@ $related = springapex_related_news($slug, 3);
             <div class="sa-news-card__meta">
               <span class="sa-news-card__category"><?php echo esc_html((string) ($item['category'] ?? '')); ?></span>
               <?php if ($item_date !== '') : ?>
-                <time datetime="<?php echo esc_attr($item_date); ?>"><?php echo esc_html(date_i18n('M j, Y', strtotime($item_date))); ?></time>
+                <time datetime="<?php echo esc_attr($item_date); ?>"><?php echo esc_html($item_date_label !== '' ? $item_date_label : date_i18n('M j, Y', strtotime($item_date))); ?></time>
               <?php endif; ?>
             </div>
             <h3><a href="<?php echo esc_url(springapex_news_url($item)); ?>"><?php echo esc_html((string) ($item['title'] ?? '')); ?></a></h3>

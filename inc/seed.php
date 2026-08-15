@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-defined('SPRINGAPEX_SEED_VERSION') || define('SPRINGAPEX_SEED_VERSION', '2.7.0');
+defined('SPRINGAPEX_SEED_VERSION') || define('SPRINGAPEX_SEED_VERSION', '2.7.8');
 
 add_action('after_switch_theme', 'springapex_seed_site');
 add_action('admin_notices', 'springapex_seed_admin_notice');
@@ -69,7 +69,7 @@ function springapex_seed_admin_notice(): void
     $message = $messages[$code] ?? __('Theme initialization did not complete.', 'springapex');
     printf(
         '<div class="notice notice-error"><p>%s</p></div>',
-        esc_html(sprintf(__('SpringApex setup will retry automatically: %s', 'springapex'), $message))
+        esc_html(sprintf(__('ApexSpring setup will retry automatically: %s', 'springapex'), $message))
     );
 }
 
@@ -83,12 +83,27 @@ function springapex_seed_site_locked(): bool
     $initialized = (string) get_option('springapex_seed_initialized', '') === '1' || $current_version !== '';
     $allow_create = !$initialized;
 
+    $legacy_brand = 'Spring' . 'Apex';
+    foreach (['blogname', 'blogdescription'] as $option_name) {
+        $current_value = (string) get_option($option_name, '');
+        $updated_value = str_replace($legacy_brand, 'ApexSpring', $current_value);
+        if (
+            $updated_value !== $current_value &&
+            !springapex_seed_update_option($option_name, $updated_value)
+        ) {
+            return springapex_seed_failure('content');
+        }
+    }
+
     if (
         function_exists('springapex_register_post_types') &&
         (
             !post_type_exists('spring_product') ||
             !post_type_exists('spring_solution') ||
-            !post_type_exists('spring_inquiry')
+            !post_type_exists('spring_case') ||
+            !post_type_exists('spring_news') ||
+            !post_type_exists('spring_inquiry') ||
+            !taxonomy_exists('spring_news_type')
         )
     ) {
         springapex_register_post_types();
@@ -97,7 +112,10 @@ function springapex_seed_site_locked(): bool
     if (
         !post_type_exists('spring_product') ||
         !post_type_exists('spring_solution') ||
+        !post_type_exists('spring_case') ||
+        !post_type_exists('spring_news') ||
         !post_type_exists('spring_inquiry') ||
+        !taxonomy_exists('spring_news_type') ||
         !springapex_grant_inquiry_capabilities()
     ) {
         return springapex_seed_failure('capabilities');
@@ -105,15 +123,30 @@ function springapex_seed_site_locked(): bool
 
     $home_id = springapex_seed_page('Home', 'home', '', 'default', $allow_create);
     $about_id = springapex_seed_page('About', 'about', '', 'page-about.php', $allow_create);
+    $sustainability_id = springapex_seed_page('Sustainability', 'sustainability', '', 'page-sustainability.php', true);
     $capabilities_id = springapex_seed_page('Capabilities', 'capabilities', '', 'page-capabilities.php', true);
+    $manufacturing_videos_id = springapex_seed_page('Manufacturing Videos', 'manufacturing-videos', '', 'page-manufacturing-videos.php', true);
     $contact_id = springapex_seed_page('Contact', 'contact', '', 'page-contact.php', $allow_create);
     $resources_id = springapex_seed_page(
         'Resources',
         'resources',
-        '<h2>Engineering resources</h2><p>Catalogs, material guidance and technical support are available from the SpringApex engineering team.</p>',
+        '<h2>Engineering resources</h2><p>Catalogs, material guidance and technical support are available from the ApexSpring engineering team.</p>',
         'page-resources.php',
         $allow_create
     );
+    if (
+        is_int($resources_id) &&
+        $resources_id > 0 &&
+        (string) get_post_field('post_title', $resources_id) === 'Resources'
+    ) {
+        $renamed_resources = wp_update_post(['ID' => $resources_id, 'post_title' => 'Download Center'], true);
+        if (is_wp_error($renamed_resources) || (int) $renamed_resources <= 0) {
+            return springapex_seed_failure('content');
+        }
+    }
+    $privacy_id = springapex_seed_page('Privacy Policy', 'privacy', '', 'page-privacy.php', true);
+    $terms_id = springapex_seed_page('Terms of Use', 'terms', '', 'page-terms.php', true);
+    $sitemap_id = springapex_seed_page('Sitemap', 'sitemap', '', 'page-sitemap.php', true);
 
     $front_page_ready = true;
     if (is_int($home_id) && $home_id > 0 && (int) get_option('page_on_front') === 0) {
@@ -123,10 +156,20 @@ function springapex_seed_site_locked(): bool
             (int) get_option('page_on_front') === $home_id;
     }
 
-    $success = $front_page_ready && $home_id !== 0 && $about_id !== 0 && $capabilities_id !== 0 && $contact_id !== 0 && $resources_id !== 0;
+    $success = $front_page_ready &&
+        $home_id !== 0 &&
+        $about_id !== 0 &&
+        $sustainability_id !== 0 &&
+        $capabilities_id !== 0 &&
+        $manufacturing_videos_id !== 0 &&
+        $contact_id !== 0 &&
+        $resources_id !== 0 &&
+        $privacy_id !== 0 &&
+        $terms_id !== 0 &&
+        $sitemap_id !== 0;
     $success = springapex_seed_products($allow_create) && $success;
     $success = springapex_seed_solutions($allow_create) && $success;
-    $success = springapex_seed_news($allow_create) && $success;
+    $success = springapex_seed_news(true) && $success;
     $success = springapex_seed_primary_menu($allow_create) && $success;
     $success = springapex_seed_capabilities_menu_url() && $success;
 
@@ -157,6 +200,12 @@ function springapex_seed_page(string $title, string $slug, string $content, stri
 {
     $existing = springapex_seed_find_post_by_slug($slug, 'page');
     if ($existing) {
+        if (
+            $content !== '' &&
+            !springapex_seed_upgrade_brand_fields($existing, ['post_content' => $content])
+        ) {
+            return 0;
+        }
         if (
             $template !== 'default' &&
             !metadata_exists('post', (int) $existing->ID, '_wp_page_template') &&
@@ -219,6 +268,30 @@ function springapex_seed_update_option(string $name, string $value): bool
 {
     $updated = update_option($name, $value, false);
     return $updated || (string) get_option($name, '') === $value;
+}
+
+/**
+ * Update only untouched seed text that still contains the previous brand name.
+ *
+ * @param array<string, string> $target_fields
+ */
+function springapex_seed_upgrade_brand_fields(object $post, array $target_fields): bool
+{
+    $update = ['ID' => (int) $post->ID];
+    $legacy_brand = 'Spring' . 'Apex';
+
+    foreach ($target_fields as $field => $target) {
+        $legacy = str_replace('ApexSpring', $legacy_brand, $target);
+        if ($legacy !== $target && (string) ($post->{$field} ?? '') === $legacy) {
+            $update[$field] = $target;
+        }
+    }
+
+    if (count($update) === 1) {
+        return true;
+    }
+
+    return !is_wp_error(wp_update_post($update, true));
 }
 
 function springapex_seed_products(bool $allow_create = true): bool
@@ -310,6 +383,13 @@ function springapex_seed_solutions(bool $allow_create = true): bool
         $existing = springapex_seed_find_post_by_slug($slug, 'spring_solution');
         if ($existing) {
             $post_id = (int) $existing->ID;
+            $seed_content = sprintf(
+                'ApexSpring engineers precision spring solutions for %s applications, from design review and prototyping through stable production.',
+                strtolower((string) ($solution['title'] ?? 'industrial'))
+            );
+            if (!springapex_seed_upgrade_brand_fields($existing, ['post_content' => $seed_content])) {
+                $success = false;
+            }
             $legacy_images = [
                 'industrial-equipment' => 'solution-industrial-v2.png',
                 'medical' => 'solution-medical-v2.png',
@@ -342,7 +422,7 @@ function springapex_seed_solutions(bool $allow_create = true): bool
             'post_name' => $slug,
             'post_excerpt' => (string) ($solution['tagline'] ?? ''),
             'post_content' => sprintf(
-                'SpringApex engineers precision spring solutions for %s applications, from design review and prototyping through stable production.',
+                'ApexSpring engineers precision spring solutions for %s applications, from design review and prototyping through stable production.',
                 strtolower((string) ($solution['title'] ?? 'industrial'))
             ),
             'menu_order' => $index,
@@ -383,9 +463,77 @@ function springapex_seed_news_content_html(array $blocks): string
     return $html;
 }
 
+function springapex_remove_legacy_seed_news(): bool
+{
+    if (!function_exists('wp_trash_post')) {
+        return true;
+    }
+
+    $legacy_items = [
+        'new-cnc-coiling-line' => 'generated/springapex-news-cnc-coiling-v1.webp',
+        'spring-material-selection-guide' => 'generated/springapex-news-material-selection-v1.webp',
+        'quality-system-audit-completed' => 'generated/springapex-news-quality-audit-v1.webp',
+        'prototype-to-production-process' => 'generated/springapex-news-prototype-v1.webp',
+        'export-packaging-and-traceability' => 'generated/springapex-news-export-packaging-v1.webp',
+        'engineering-support-response-time' => 'generated/springapex-news-engineering-support-v1.webp',
+    ];
+
+    foreach ($legacy_items as $slug => $seed_image) {
+        $post = springapex_seed_find_post_by_slug($slug, 'spring_news');
+        if (!$post) {
+            continue;
+        }
+
+        $post_id = (int) $post->ID;
+        if ((string) get_post_meta($post_id, '_springapex_seed_image', true) !== $seed_image) {
+            continue;
+        }
+
+        if (!wp_trash_post($post_id)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function springapex_seed_news_types(): bool
+{
+    if (!function_exists('term_exists') || !function_exists('wp_insert_term')) {
+        return false;
+    }
+
+    $types = [
+        'industry-news' => 'Industry News',
+        'exhibitions' => 'Exhibitions',
+        'company-news' => 'Company News',
+    ];
+
+    foreach ($types as $slug => $name) {
+        if (term_exists($slug, 'spring_news_type')) {
+            continue;
+        }
+        if (is_wp_error(wp_insert_term($name, 'spring_news_type', ['slug' => $slug]))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function springapex_assign_news_type(int $post_id, string $news_type): bool
+{
+    $news_type = sanitize_key($news_type);
+    if ($news_type === '' || !function_exists('wp_set_object_terms')) {
+        return $news_type === '';
+    }
+
+    return !is_wp_error(wp_set_object_terms($post_id, [$news_type], 'spring_news_type', false));
+}
+
 function springapex_seed_news(bool $allow_create = true): bool
 {
-    $success = true;
+    $success = springapex_seed_news_types() && springapex_remove_legacy_seed_news();
     foreach (springapex_get('news.items', []) as $index => $item) {
         $slug = (string) ($item['slug'] ?? '');
         if ($slug === '') {
@@ -395,10 +543,20 @@ function springapex_seed_news(bool $allow_create = true): bool
         $existing = springapex_seed_find_post_by_slug($slug, 'spring_news');
         if ($existing) {
             $post_id = (int) $existing->ID;
+            if (!springapex_seed_upgrade_brand_fields($existing, [
+                'post_title' => (string) ($item['title'] ?? ''),
+                'post_excerpt' => (string) ($item['summary'] ?? ''),
+                'post_content' => springapex_seed_news_content_html((array) ($item['content'] ?? [])),
+            ])) {
+                $success = false;
+            }
             if (
                 !metadata_exists('post', $post_id, '_springapex_seed_image') &&
                 !springapex_seed_update_meta($post_id, '_springapex_seed_image', (string) ($item['image'] ?? ''))
             ) {
+                $success = false;
+            }
+            if (!springapex_assign_news_type($post_id, (string) ($item['news_type'] ?? 'company-news'))) {
                 $success = false;
             }
             continue;
@@ -431,6 +589,12 @@ function springapex_seed_news(bool $allow_create = true): bool
         if (!springapex_seed_update_meta((int) $post_id, '_springapex_news_category', (string) ($item['category'] ?? ''))) {
             $success = false;
         }
+        if (!springapex_seed_update_meta((int) $post_id, '_springapex_news_date_label', (string) ($item['date_label'] ?? ''))) {
+            $success = false;
+        }
+        if (!springapex_assign_news_type((int) $post_id, (string) ($item['news_type'] ?? 'company-news'))) {
+            $success = false;
+        }
     }
 
     return $success;
@@ -438,16 +602,28 @@ function springapex_seed_news(bool $allow_create = true): bool
 
 function springapex_seed_primary_menu(bool $allow_create = true): bool
 {
-    if (!$allow_create) {
-        return true;
-    }
-
     $locations = get_theme_mod('nav_menu_locations', []);
     $locations = is_array($locations) ? $locations : [];
     $primary_id = (int) ($locations['primary'] ?? 0);
     $footer_id = (int) ($locations['footer'] ?? 0);
     $primary_menu = $primary_id > 0 ? wp_get_nav_menu_object($primary_id) : false;
     $footer_menu = $footer_id > 0 ? wp_get_nav_menu_object($footer_id) : false;
+    $legacy_menu_name = ('Spring' . 'Apex') . ' Primary';
+
+    if (
+        $primary_menu &&
+        !is_wp_error($primary_menu) &&
+        (string) ($primary_menu->name ?? '') === $legacy_menu_name
+    ) {
+        $renamed = wp_update_nav_menu_object($primary_id, ['menu-name' => 'ApexSpring Primary']);
+        if (is_wp_error($renamed)) {
+            return false;
+        }
+        $primary_menu = wp_get_nav_menu_object($primary_id);
+        if (!$primary_menu || is_wp_error($primary_menu)) {
+            return false;
+        }
+    }
 
     if ($primary_menu && !is_wp_error($primary_menu)) {
         if (!$footer_menu || is_wp_error($footer_menu)) {
@@ -465,18 +641,49 @@ function springapex_seed_primary_menu(bool $allow_create = true): bool
             !is_wp_error($saved_footer_menu);
     }
 
+    if (!$allow_create) {
+        $legacy_menu = wp_get_nav_menu_object($legacy_menu_name);
+        if (is_wp_error($legacy_menu)) {
+            return false;
+        }
+        if ($legacy_menu) {
+            return !is_wp_error(wp_update_nav_menu_object(
+                (int) $legacy_menu->term_id,
+                ['menu-name' => 'ApexSpring Primary']
+            ));
+        }
+        return true;
+    }
+
     unset($locations['primary']);
     if (!$footer_menu || is_wp_error($footer_menu)) {
         unset($locations['footer']);
         $footer_id = 0;
     }
 
-    $menu = wp_get_nav_menu_object('SpringApex Primary');
+    $menu = wp_get_nav_menu_object('ApexSpring Primary');
     if (is_wp_error($menu)) {
         return false;
     }
 
-    $menu_result = $menu ?: wp_create_nav_menu('SpringApex Primary');
+    if (!$menu) {
+        $legacy_menu = wp_get_nav_menu_object($legacy_menu_name);
+        if (is_wp_error($legacy_menu)) {
+            return false;
+        }
+        if ($legacy_menu) {
+            $renamed = wp_update_nav_menu_object((int) $legacy_menu->term_id, ['menu-name' => 'ApexSpring Primary']);
+            if (is_wp_error($renamed)) {
+                return false;
+            }
+            $menu = wp_get_nav_menu_object((int) $legacy_menu->term_id);
+            if (!$menu || is_wp_error($menu)) {
+                return false;
+            }
+        }
+    }
+
+    $menu_result = $menu ?: wp_create_nav_menu('ApexSpring Primary');
     if (is_wp_error($menu_result)) {
         return false;
     }
@@ -487,6 +694,7 @@ function springapex_seed_primary_menu(bool $allow_create = true): bool
     }
 
     $items = [
+        ['Home', home_url('/')],
         ['About Us', home_url('/about/')],
         ['Products', get_post_type_archive_link('spring_product') ?: home_url('/products/')],
         ['Industries', get_post_type_archive_link('spring_solution') ?: home_url('/solutions/')],

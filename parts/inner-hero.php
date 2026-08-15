@@ -64,8 +64,8 @@ $staged_media = !empty($hero_args['staged_media']);
             $icon = (string) ($cta['icon'] ?? 'arrow-right');
             ?>
             <a class="btn <?php echo esc_attr($button_class); ?>" href="<?php echo esc_url(springapex_navigation_href((string) ($cta['href'] ?? '/'))); ?>">
-              <?php echo esc_html((string) ($cta['label'] ?? 'Learn More')); ?>
               <?php echo springapex_icon($icon, 'icon icon-sm'); ?>
+              <?php echo esc_html((string) ($cta['label'] ?? 'Learn More')); ?>
             </a>
           <?php endforeach; ?>
         </div>

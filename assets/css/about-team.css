@@ -1,0 +1,374 @@
+.sa-route-about .sa-team {
+  overflow: hidden;
+  padding-block: clamp(58px, 5.4vw, 82px);
+  border-bottom: 1px solid var(--sa-border);
+  background: var(--sa-bg-soft);
+}
+
+.sa-route-about .sa-team__manifesto {
+  display: grid;
+  min-height: 390px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(330px, .72fr);
+  align-items: stretch;
+  gap: clamp(48px, 6vw, 96px);
+  border-bottom: 1px solid rgba(15, 23, 42, .14);
+}
+
+.sa-route-about .sa-team__statement {
+  padding: 6px 0 clamp(42px, 4vw, 64px);
+  align-self: center;
+}
+
+.sa-route-about .sa-team__eyebrow {
+  margin: 0;
+  color: var(--sa-text-3);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+
+.sa-route-about .sa-team__accent,
+.sa-route-about .sa-team__group-header span,
+.sa-route-about .sa-team__founder-caption > span {
+  display: block;
+  width: 34px;
+  height: 2px;
+  background: #ee5b24;
+}
+
+.sa-route-about .sa-team__accent {
+  margin-top: 19px;
+}
+
+.sa-route-about .sa-team__statement h2 {
+  max-width: 650px;
+  margin: 30px 0 0;
+  color: var(--sa-primary);
+  font-size: clamp(40px, 3.6vw, 56px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -.048em;
+}
+
+.sa-route-about .sa-team__statement-lead,
+.sa-route-about .sa-team__statement-signature {
+  display: block;
+}
+
+.sa-route-about .sa-team__statement-lead {
+  text-wrap: balance;
+}
+
+.sa-route-about .sa-team__statement-signature {
+  margin-top: 13px;
+  margin-left: clamp(24px, 4vw, 68px);
+  color: var(--sa-text-2);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: .7em;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -.025em;
+  white-space: nowrap;
+}
+
+.sa-route-about .sa-team__founder {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) 150px;
+  align-items: end;
+}
+
+.sa-route-about .sa-team__founder-media {
+  position: relative;
+  height: 390px;
+  overflow: hidden;
+  background: #bac8cf;
+}
+
+.sa-route-about .sa-team__founder-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 21%;
+}
+
+.sa-route-about .sa-team__founder-caption {
+  display: grid;
+  padding: 0 0 40px 26px;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: start;
+  gap: 13px;
+}
+
+.sa-route-about .sa-team__founder-caption > span {
+  width: 28px;
+  margin-top: 8px;
+}
+
+.sa-route-about .sa-team__founder-caption p,
+.sa-route-about .sa-team__founder-caption strong,
+.sa-route-about .sa-team__founder-caption small {
+  display: block;
+  margin: 0;
+}
+
+.sa-route-about .sa-team__founder-caption strong {
+  color: var(--sa-primary);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.sa-route-about .sa-team__founder-caption small {
+  margin-top: 7px;
+  color: var(--sa-text-2);
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.sa-route-about .sa-team__groups {
+  display: grid;
+  padding-top: clamp(34px, 3.6vw, 52px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(44px, 5vw, 76px);
+}
+
+.sa-route-about .sa-team__group-header h3 {
+  margin: 0;
+  color: var(--sa-primary);
+  font-family: var(--sa-font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+
+.sa-route-about .sa-team__group-header span {
+  margin-top: 14px;
+}
+
+.sa-route-about .sa-team__grid {
+  display: grid;
+  margin-top: 19px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.sa-route-about .sa-team__member {
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid var(--sa-border);
+  background: var(--sa-surface);
+}
+
+.sa-route-about .sa-team__member-media {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #edf0ef;
+}
+
+.sa-route-about .sa-team__member-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  transition: transform .45s var(--sa-ease-out, ease);
+}
+
+.sa-route-about .sa-team__member figcaption {
+  padding: 13px 15px 14px;
+  border-top: 1px solid var(--sa-border);
+}
+
+.sa-route-about .sa-team__member figcaption strong,
+.sa-route-about .sa-team__member figcaption span {
+  display: block;
+}
+
+.sa-route-about .sa-team__member figcaption strong {
+  color: var(--sa-primary);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.sa-route-about .sa-team__member figcaption span {
+  margin-top: 3px;
+  color: var(--sa-text-3);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+@media (hover: hover) {
+  .sa-route-about .sa-team__member:hover .sa-team__member-media img {
+    transform: scale(1.025);
+  }
+}
+
+@media (max-width: 1180px) {
+  .sa-route-about .sa-team__manifesto {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, .8fr);
+    gap: 40px;
+  }
+
+  .sa-route-about .sa-team__founder {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sa-route-about .sa-team__founder-caption {
+    position: absolute;
+    right: 18px;
+    bottom: 18px;
+    padding: 13px 16px;
+    grid-template-columns: 24px minmax(0, 1fr);
+    background: rgba(248, 249, 250, .94);
+  }
+}
+
+@media (max-width: 860px) {
+  .sa-route-about .sa-team__manifesto {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .sa-route-about .sa-team__statement {
+    padding-bottom: 34px;
+  }
+
+  .sa-route-about .sa-team__statement h2 {
+    max-width: 16ch;
+    font-size: clamp(38px, 6.4vw, 50px);
+  }
+
+  .sa-route-about .sa-team__founder-media {
+    height: 420px;
+  }
+
+  .sa-route-about .sa-team__groups {
+    gap: 30px;
+  }
+}
+
+@media (max-width: 760px) {
+  .sa-route-about .sa-team {
+    padding-block: 38px 42px;
+  }
+
+  .sa-route-about .sa-team__manifesto {
+    min-height: 0;
+  }
+
+  .sa-route-about .sa-team__statement {
+    padding: 0 0 26px;
+  }
+
+  .sa-route-about .sa-team__eyebrow {
+    max-width: 26ch;
+    font-size: 10px;
+    letter-spacing: .16em;
+  }
+
+  .sa-route-about .sa-team__accent {
+    margin-top: 13px;
+  }
+
+  .sa-route-about .sa-team__statement h2 {
+    max-width: 18ch;
+    margin-top: 22px;
+    font-size: 31px;
+    line-height: 1.04;
+    letter-spacing: -.04em;
+  }
+
+  .sa-route-about .sa-team__statement-signature {
+    margin-top: 10px;
+    margin-left: 18px;
+    font-size: .76em;
+  }
+
+  .sa-route-about .sa-team__founder-media {
+    height: min(102vw, 390px);
+  }
+
+  .sa-route-about .sa-team__founder-media img {
+    object-position: center 18%;
+  }
+
+  .sa-route-about .sa-team__founder-caption {
+    right: 12px;
+    bottom: 12px;
+    padding: 10px 12px;
+    grid-template-columns: 20px minmax(0, 1fr);
+    gap: 9px;
+  }
+
+  .sa-route-about .sa-team__founder-caption > span {
+    width: 20px;
+    margin-top: 6px;
+  }
+
+  .sa-route-about .sa-team__founder-caption strong {
+    font-size: 15px;
+  }
+
+  .sa-route-about .sa-team__founder-caption small {
+    margin-top: 3px;
+    font-size: 12px;
+  }
+
+  .sa-route-about .sa-team__groups {
+    padding-top: 28px;
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .sa-route-about .sa-team__group-header h3 {
+    font-size: 11px;
+    letter-spacing: .18em;
+  }
+
+  .sa-route-about .sa-team__group-header span {
+    margin-top: 10px;
+  }
+
+  .sa-route-about .sa-team__grid {
+    margin-top: 13px;
+    gap: 8px;
+  }
+
+  .sa-route-about .sa-team__member figcaption {
+    padding: 10px 11px 11px;
+  }
+
+  .sa-route-about .sa-team__member figcaption strong {
+    font-size: 13px;
+  }
+
+  .sa-route-about .sa-team__member figcaption span {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 420px) {
+  .sa-route-about .sa-team__statement h2 {
+    font-size: 29px;
+  }
+
+  .sa-route-about .sa-team__founder-media {
+    height: 340px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sa-route-about .sa-team__member-media img {
+    transition: none;
+  }
+}

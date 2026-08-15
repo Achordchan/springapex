@@ -1,6 +1,88 @@
-/* SpringApex News — index and detail, scoped under .sa-news-* */
+/* ApexSpring News — index and detail, scoped under .sa-news-* */
 
 /* ---- News index ---- */
+
+.sa-news-subnav {
+  border-top: 1px solid var(--sa-border-subtle);
+  border-bottom: 1px solid var(--sa-border);
+  background: var(--sa-surface);
+}
+
+.sa-news-subnav__inner {
+  display: flex;
+  min-height: 70px;
+  align-items: stretch;
+  gap: clamp(24px, 3vw, 42px);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.sa-news-subnav__inner::-webkit-scrollbar {
+  display: none;
+}
+
+.sa-news-subnav__link {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  color: var(--sa-text-2);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color .2s var(--sa-ease);
+}
+
+.sa-news-subnav__link::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: var(--sa-accent);
+  opacity: 0;
+  transform: scaleX(.4);
+  transition: opacity .2s var(--sa-ease), transform .2s var(--sa-ease);
+}
+
+.sa-news-subnav__link:hover,
+.sa-news-subnav__link:focus-visible,
+.sa-news-subnav__link.is-active {
+  color: var(--sa-primary);
+}
+
+.sa-news-subnav__link.is-active::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.sa-news-subnav + .sa-news-index {
+  padding-top: 56px;
+  border-top: 0;
+}
+
+.sa-news-empty {
+  padding: 38px 0 8px;
+  border-top: 1px solid var(--sa-border);
+}
+
+.sa-news-empty h3 {
+  color: var(--sa-primary);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.sa-news-empty p {
+  margin-top: 9px;
+  color: var(--sa-text-2);
+  font-size: 14px;
+  line-height: 1.6;
+}
 
 .sa-news-featured {
   display: grid;
@@ -348,6 +430,125 @@
   background: var(--sa-accent);
 }
 
+/* Editor-authored body ------------------------------------------------- */
+/* The article body is whatever the operator built in the block editor, so the
+   blocks WordPress can produce have to look right here — not just the three
+   the old seed data used. */
+
+.sa-news-single-body__inner > h3 {
+  margin-top: 32px;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  color: var(--sa-primary);
+}
+
+.sa-news-single-body__inner > ol {
+  margin-top: 18px;
+  padding-left: 22px;
+  color: var(--sa-text-2);
+  font-size: 16.5px;
+  line-height: 1.8;
+}
+
+.sa-news-single-body__inner > figure,
+.sa-news-single-body__inner > .wp-block-image,
+.sa-news-single-body__inner > .wp-block-gallery,
+.sa-news-single-body__inner > .wp-block-embed,
+.sa-news-single-body__inner > blockquote,
+.sa-news-single-body__inner > .wp-block-table {
+  margin: 32px 0 0;
+}
+
+.sa-news-single-body__inner img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+/* Captions read as captions, not as body copy. */
+.sa-news-single-body__inner figcaption {
+  margin-top: 10px;
+  color: var(--sa-text-3);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+/* alignwide/alignfull inside a fixed-width column: widen, but never past the
+   column's own container, or the page scrolls sideways. */
+.sa-news-single-body__inner > .alignwide,
+.sa-news-single-body__inner > .alignfull {
+  width: 100%;
+  max-width: 100%;
+}
+
+.sa-news-single-body__inner > blockquote {
+  padding-left: 20px;
+  border-left: 3px solid var(--sa-accent);
+  color: var(--sa-text-2);
+  font-size: 17px;
+  line-height: 1.75;
+}
+
+.sa-news-single-body__inner > .wp-block-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.sa-news-single-body__inner > .wp-block-table :is(th, td) {
+  padding: 10px 12px;
+  border: 1px solid var(--sa-border);
+  text-align: left;
+}
+
+.sa-news-gallery {
+  margin-top: 48px;
+  padding-top: 36px;
+  border-top: 1px solid var(--sa-border);
+}
+
+.sa-news-gallery__head h2 {
+  margin-top: 8px;
+  color: var(--sa-primary);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -.025em;
+}
+
+.sa-news-gallery__grid {
+  display: grid;
+  margin-top: 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.sa-news-gallery__item {
+  margin: 0;
+  min-width: 0;
+}
+
+.sa-news-gallery__item picture,
+.sa-news-gallery__item img {
+  display: block;
+  width: 100%;
+}
+
+.sa-news-gallery__item img {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--sa-radius-lg);
+  background: var(--sa-bg-inset);
+}
+
+.sa-news-gallery__item figcaption {
+  margin-top: 9px;
+  color: var(--sa-text-3);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .sa-news-single__footer {
   display: flex;
   flex-wrap: wrap;
@@ -539,6 +740,15 @@
 }
 
 @media (max-width: 860px) {
+  .sa-news-subnav__inner {
+    min-height: 60px;
+    gap: 26px;
+  }
+
+  .sa-news-subnav + .sa-news-index {
+    padding-top: 42px;
+  }
+
   .sa-news-featured {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -587,9 +797,27 @@
   .sa-news-single-body__inner > ul {
     font-size: 16px;
   }
+
+  .sa-news-gallery {
+    margin-top: 36px;
+    padding-top: 28px;
+  }
 }
 
 @media (max-width: 420px) {
+  .sa-news-subnav__inner {
+    min-height: 54px;
+    gap: 22px;
+  }
+
+  .sa-news-subnav__link {
+    font-size: 13px;
+  }
+
+  .sa-news-subnav + .sa-news-index {
+    padding-top: 34px;
+  }
+
   .sa-news-featured__body,
   .sa-news-card__body {
     padding: 22px;
@@ -598,5 +826,170 @@
   .sa-news-single__footer .btn {
     width: 100%;
     justify-content: center;
+  }
+
+  .sa-news-gallery__grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .sa-news-gallery__head h2 {
+    font-size: 23px;
+  }
+}
+
+@media (max-width: 760px) {
+  .sa-news-single-hero {
+    padding-block: 28px 12px;
+  }
+
+  .sa-news-single__breadcrumb {
+    margin-bottom: 16px;
+    gap: 6px;
+    font-size: 11px;
+  }
+
+  .sa-news-single-hero h1 {
+    margin-top: 12px;
+    font-size: 30px;
+    line-height: 1.1;
+  }
+
+  .sa-news-single-hero .lede {
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .sa-news-single-layout {
+    gap: 24px;
+    padding-block: 20px 48px;
+  }
+
+  .sa-news-single-media img {
+    border-radius: 12px;
+    box-shadow: none;
+  }
+
+  .sa-news-single-body {
+    margin-top: 24px;
+  }
+
+  .sa-news-single-body__inner > p,
+  .sa-news-single-body__inner > ul {
+    margin-top: 14px;
+    font-size: 15px;
+    line-height: 1.68;
+  }
+
+  .sa-news-single-body__inner > h2 {
+    margin-top: 28px;
+    font-size: 21px;
+    line-height: 1.22;
+  }
+
+  .sa-news-single__footer {
+    margin-top: 32px;
+    padding-top: 18px;
+  }
+
+  .sa-news-single__footer .btn {
+    width: fit-content;
+    min-height: 42px;
+    padding-inline: 14px;
+    justify-content: center;
+    font-size: 13px;
+  }
+
+  .sa-news-single-aside {
+    gap: 12px;
+  }
+
+  .sa-news-aside-card:not(.sa-news-aside-card--contact) {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .sa-news-aside-card__title {
+    margin-bottom: 10px;
+    padding-bottom: 0;
+    border-bottom: 0;
+    font-size: 10px;
+  }
+
+  .sa-news-aside-list {
+    overflow: hidden;
+    gap: 0;
+    border: 1px solid var(--sa-border);
+    border-radius: 14px;
+    background: var(--sa-surface);
+  }
+
+  .sa-news-aside-item {
+    padding: 12px;
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 12px;
+    border-bottom: 1px solid var(--sa-border);
+  }
+
+  .sa-news-aside-item:last-child {
+    border-bottom: 0;
+  }
+
+  .sa-news-aside-item__media {
+    width: 56px;
+    border-radius: 10px;
+  }
+
+  .sa-news-aside-item__body > a:first-child {
+    font-size: 14px;
+  }
+
+  .sa-news-aside-item__link {
+    font-size: 12px;
+  }
+
+  .sa-news-aside-card--contact {
+    padding: 18px;
+    border-radius: 14px;
+    background: var(--sa-bg-soft);
+    box-shadow: none;
+  }
+
+  .sa-news-aside-card__head {
+    margin-bottom: 8px;
+  }
+
+  .sa-news-aside-card__icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .sa-news-aside-card__icon .icon {
+    width: 17px;
+    height: 17px;
+  }
+
+  .sa-news-aside-card--contact .sa-news-aside-card__title {
+    font-size: 16px;
+  }
+
+  .sa-news-aside-card--contact p {
+    margin-bottom: 14px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .sa-news-aside-card--contact .btn {
+    min-height: 44px;
+    justify-content: space-between;
+    font-size: 13px;
+  }
+
+  .sa-news-related {
+    padding-block: 36px 44px;
   }
 }
