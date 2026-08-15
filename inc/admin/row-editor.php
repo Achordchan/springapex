@@ -17,6 +17,11 @@
  *   icon      <select> of the keys springapex_icon_map() actually resolves
  *   image     Media Library picker (stores an attachment id)
  *   products  checkboxes of the real published products (stores slugs)
+ *
+ * A column may also set 'half' => true to share its line with the next half column,
+ * which keeps a two-short-field row (label / value) from stacking into a tall card,
+ * and 'default' => '…' for the value a newly added row starts with. Without a default
+ * an icon column opens on whatever sorts first, which is the arrow nobody wants.
  */
 
 declare(strict_types=1);
@@ -26,8 +31,45 @@ if (!defined('ABSPATH')) {
 }
 
 /**
+ * Post types whose edit screen renders a row editor. Anything added here gets the
+ * stylesheet, the script and the Media Library; anything missing renders as an
+ * unstyled list of inputs whose buttons do nothing.
+ *
+ * @return string[]
+ */
+function springapex_row_editor_post_types(): array
+{
+    return ['spring_solution', 'spring_product'];
+}
+
+add_action('admin_enqueue_scripts', static function (string $hook): void {
+    if (!in_array($hook, ['post.php', 'post-new.php'], true)) {
+        return;
+    }
+    $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+    if (!$screen || !in_array((string) $screen->post_type, springapex_row_editor_post_types(), true)) {
+        return;
+    }
+
+    wp_enqueue_media();
+    wp_enqueue_style(
+        'springapex-row-editor',
+        SPRINGAPEX_URI . '/assets/css/row-editor.css',
+        [],
+        SPRINGAPEX_VERSION
+    );
+    wp_enqueue_script(
+        'springapex-row-editor',
+        SPRINGAPEX_URI . '/assets/js/row-editor.js',
+        [],
+        SPRINGAPEX_VERSION,
+        true
+    );
+});
+
+/**
  * @param array<int, array<string, mixed>> $rows
- * @param array<int, array{key: string, label: string, type: string, help?: string}> $columns
+ * @param array<int, array{key: string, label: string, type: string, help?: string, half?: bool, default?: string}> $columns
  */
 function springapex_render_row_editor(string $field, array $rows, array $columns, string $intro): void
 {
@@ -59,7 +101,7 @@ function springapex_render_row_editor(string $field, array $rows, array $columns
 
 /**
  * @param array<string, mixed> $row
- * @param array<int, array{key: string, label: string, type: string, help?: string}> $columns
+ * @param array<int, array{key: string, label: string, type: string, help?: string, half?: bool, default?: string}> $columns
  */
 function springapex_render_row_editor_row(string $field, ?int $index, array $row, array $columns): void
 {
@@ -81,7 +123,7 @@ function springapex_render_row_editor_row(string $field, ?int $index, array $row
             $type = (string) $column['type'];
             $value = $row[$key] ?? '';
             ?>
-            <div class="sa-row__field sa-row__field--<?php echo esc_attr($type); ?>">
+            <div class="sa-row__field sa-row__field--<?php echo esc_attr($type); ?><?php echo !empty($column['half']) ? ' sa-row__field--half' : ''; ?>">
                 <label for="<?php echo esc_attr($id($key)); ?>"><?php echo esc_html((string) $column['label']); ?></label>
                 <?php
                 switch ($type) {
@@ -95,7 +137,11 @@ function springapex_render_row_editor_row(string $field, ?int $index, array $row
                         break;
 
                     case 'icon':
-                        springapex_render_row_editor_icon($id($key), $name($key), (string) (is_scalar($value) ? $value : ''));
+                        $icon = is_scalar($value) ? (string) $value : '';
+                        if ($icon === '') {
+                            $icon = (string) ($column['default'] ?? '');
+                        }
+                        springapex_render_row_editor_icon($id($key), $name($key), $icon);
                         break;
 
                     case 'image':
@@ -217,7 +263,7 @@ function springapex_render_row_editor_products(string $name, array $selected): v
  * Submitted rows, cleaned per column type. Rows whose first column is empty are
  * dropped, which is how the operator deletes one without a confirm dialog.
  *
- * @param array<int, array{key: string, label: string, type: string, help?: string}> $columns
+ * @param array<int, array{key: string, label: string, type: string, help?: string, half?: bool, default?: string}> $columns
  * @return array<int, array<string, mixed>>
  */
 function springapex_sanitize_row_editor(mixed $submitted, array $columns): array
@@ -248,7 +294,7 @@ function springapex_sanitize_row_editor(mixed $submitted, array $columns): array
                     // An unknown key is kept, not corrected: rewriting it here would
                     // clear the warning the picker shows without anyone having decided
                     // what the icon should actually be. Only a missing value defaults.
-                    $row[$key] = $value !== '' ? $value : 'target';
+                    $row[$key] = $value !== '' ? $value : (string) ($column['default'] ?? 'target');
                     break;
 
                 case 'image':

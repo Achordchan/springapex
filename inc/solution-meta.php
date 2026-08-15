@@ -29,13 +29,13 @@ add_action('add_meta_boxes_spring_solution', static function (): void {
  * Column sets for the four repeating sections. Keyed by the request field so the
  * renderer and the save handler can never disagree about a row's shape.
  *
- * @return array<string, array<int, array{key: string, label: string, type: string, help?: string}>>
+ * @return array<string, array<int, array{key: string, label: string, type: string, help?: string, half?: bool, default?: string}>>
  */
 function springapex_solution_row_sets(): array
 {
     $title = ['key' => 'title', 'label' => '标题', 'type' => 'text'];
     $text = ['key' => 'text', 'label' => '说明', 'type' => 'textarea'];
-    $icon = ['key' => 'icon', 'label' => '图标', 'type' => 'icon'];
+    $icon = ['key' => 'icon', 'label' => '图标', 'type' => 'icon', 'default' => 'target'];
 
     return [
         'springapex_solution_challenges' => [$title, $text, $icon],
@@ -226,31 +226,3 @@ function springapex_solution_saved_details(int $post_id, array $defaults): array
     }
     return $defaults;
 }
-
-/**
- * Editor assets for the row editor, on the solution edit screen only.
- */
-add_action('admin_enqueue_scripts', static function (string $hook): void {
-    if (!in_array($hook, ['post.php', 'post-new.php'], true)) {
-        return;
-    }
-    $screen = function_exists('get_current_screen') ? get_current_screen() : null;
-    if (!$screen || (string) $screen->post_type !== 'spring_solution') {
-        return;
-    }
-
-    wp_enqueue_media();
-    wp_enqueue_style(
-        'springapex-row-editor',
-        SPRINGAPEX_URI . '/assets/css/row-editor.css',
-        [],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_script(
-        'springapex-row-editor',
-        SPRINGAPEX_URI . '/assets/js/row-editor.js',
-        [],
-        SPRINGAPEX_VERSION,
-        true
-    );
-});

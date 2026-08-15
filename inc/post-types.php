@@ -206,7 +206,7 @@ add_action('admin_init', static function (): void {
 add_action('add_meta_boxes_spring_product', static function (): void {
     add_meta_box(
         'springapex-product-details',
-        __('Product Settings', 'springapex'),
+        '这个产品页面的内容',
         'springapex_render_product_meta_box',
         'spring_product',
         'normal',
@@ -214,79 +214,111 @@ add_action('add_meta_boxes_spring_product', static function (): void {
     );
 });
 
+/**
+ * Column sets for the product screen's repeating sections. Keyed by the request
+ * field, same contract as springapex_solution_row_sets().
+ *
+ * @return array<string, array<int, array{key: string, label: string, type: string, help?: string, half?: bool, default?: string}>>
+ */
+function springapex_product_row_sets(): array
+{
+    return [
+        'springapex_specs' => [
+            ['key' => 'label', 'label' => '项目', 'type' => 'text', 'half' => true],
+            ['key' => 'value', 'label' => '数值或范围', 'type' => 'text', 'half' => true],
+        ],
+        'springapex_materials' => [
+            ['key' => 'title', 'label' => '材料名称', 'type' => 'text', 'half' => true],
+            ['key' => 'icon', 'label' => '图标', 'type' => 'icon', 'half' => true, 'default' => 'spring'],
+        ],
+        'springapex_applications' => [
+            ['key' => 'title', 'label' => '应用场景', 'type' => 'text', 'half' => true],
+            ['key' => 'icon', 'label' => '图标', 'type' => 'icon', 'half' => true, 'default' => 'spring'],
+        ],
+    ];
+}
+
+/** 请求字段 ⇒ 存储的 meta key。 */
+function springapex_product_row_meta_keys(): array
+{
+    return [
+        'springapex_specs' => '_springapex_specs',
+        'springapex_materials' => '_springapex_materials',
+        'springapex_applications' => '_springapex_applications',
+    ];
+}
+
 function springapex_render_product_meta_box(object $post): void
 {
     wp_nonce_field('springapex_save_product', 'springapex_product_nonce');
 
-    $subtitle = (string) get_post_meta((int) $post->ID, '_springapex_subtitle', true);
-    $specs = springapex_meta_rows_to_text(get_post_meta((int) $post->ID, '_springapex_specs', true), 'label', 'value');
-    $materials = springapex_meta_rows_to_text(get_post_meta((int) $post->ID, '_springapex_materials', true), 'title', 'icon');
-    $applications = springapex_meta_rows_to_text(get_post_meta((int) $post->ID, '_springapex_applications', true), 'title', 'icon');
-    $catalog_url = (string) get_post_meta((int) $post->ID, '_springapex_catalog_url', true);
-    $featured = (bool) get_post_meta((int) $post->ID, '_springapex_featured', true);
+    $post_id = (int) $post->ID;
+    // Same rule as the front end (springapex_product_from_post): a key that was never
+    // saved shows the seed value. Reading get_post_meta() straight would render every
+    // untouched product as an empty screen, and the first save would then wipe content
+    // the operator can see on the public page but never had in front of them.
+    $seed = springapex_product_seed((string) ($post->post_name ?? '')) ?? [];
+    $value = static function (string $key, mixed $fallback) use ($post_id): mixed {
+        return metadata_exists('post', $post_id, $key) ? get_post_meta($post_id, $key, true) : $fallback;
+    };
+
+    $subtitle = (string) $value('_springapex_subtitle', $seed['subtitle'] ?? '');
+    $catalog_url = (string) $value('_springapex_catalog_url', $seed['catalog_url'] ?? '');
+    $featured = (bool) $value('_springapex_featured', !empty($seed['featured']));
+
+    $sets = springapex_product_row_sets();
+    $seed_keys = [
+        'springapex_specs' => 'specs',
+        'springapex_materials' => 'materials',
+        'springapex_applications' => 'applications',
+    ];
+    $rows = [];
+    foreach (springapex_product_row_meta_keys() as $field => $meta_key) {
+        $rows[$field] = (array) $value($meta_key, $seed[$seed_keys[$field]] ?? []);
+    }
     ?>
     <p class="description">
-      <?php esc_html_e('Use the main content editor above for the Product Details text, headings, images and galleries. The fields below control structured product data used elsewhere on the page.', 'springapex'); ?>
+      产品详情的正文、小标题和图片在上面那个编辑器里写。这里填的是结构化的数据，前台会排成表格和卡片。这里的文字会原样出现在前台，所以请用英文填写。
     </p>
     <p>
-      <label for="springapex-subtitle"><strong><?php esc_html_e('Hero subtitle', 'springapex'); ?></strong></label><br>
+      <label for="springapex-subtitle"><strong>大标题下的一段话</strong></label><br>
       <textarea class="widefat" rows="3" id="springapex-subtitle" name="springapex_subtitle"><?php echo esc_textarea($subtitle); ?></textarea>
     </p>
+
+    <h3>技术参数</h3>
+    <?php springapex_render_row_editor(
+        'springapex_specs',
+        $rows['springapex_specs'],
+        $sets['springapex_specs'],
+        '产品页「Specifications」那张表，一条一行。左边是项目名（例如 Wire diameter），右边是数值或范围（例如 0.15 – 12 mm）。'
+    ); ?>
+
+    <h3>可用材料</h3>
+    <?php springapex_render_row_editor(
+        'springapex_materials',
+        $rows['springapex_materials'],
+        $sets['springapex_materials'],
+        '显示在产品页「Materials」一节的卡片。'
+    ); ?>
+
+    <h3>应用场景</h3>
+    <?php springapex_render_row_editor(
+        'springapex_applications',
+        $rows['springapex_applications'],
+        $sets['springapex_applications'],
+        '显示在产品页「Applications」一节的卡片。'
+    ); ?>
+
+    <h3>其他</h3>
     <p>
-      <label for="springapex-specs"><strong><?php esc_html_e('Specifications', 'springapex'); ?></strong></label><br>
-      <span class="description"><?php esc_html_e('One row per line: Label | Value', 'springapex'); ?></span>
-      <textarea class="widefat" rows="7" id="springapex-specs" name="springapex_specs"><?php echo esc_textarea($specs); ?></textarea>
+      <label for="springapex-catalog"><strong>产品资料下载链接</strong></label><br>
+      <input class="widefat" type="url" id="springapex-catalog" name="springapex_catalog_url" value="<?php echo esc_attr($catalog_url); ?>"><br>
+      <span class="description">填了才会出现下载按钮。先把 PDF 传到「媒体」，再把它的文件网址粘到这里。</span>
     </p>
     <p>
-      <label for="springapex-materials"><strong><?php esc_html_e('Materials', 'springapex'); ?></strong></label><br>
-      <span class="description"><?php esc_html_e('One row per line: Title | icon-key', 'springapex'); ?></span>
-      <textarea class="widefat" rows="4" id="springapex-materials" name="springapex_materials"><?php echo esc_textarea($materials); ?></textarea>
-    </p>
-    <p>
-      <label for="springapex-applications"><strong><?php esc_html_e('Applications', 'springapex'); ?></strong></label><br>
-      <span class="description"><?php esc_html_e('One row per line: Title | icon-key', 'springapex'); ?></span>
-      <textarea class="widefat" rows="5" id="springapex-applications" name="springapex_applications"><?php echo esc_textarea($applications); ?></textarea>
-    </p>
-    <p>
-      <label for="springapex-catalog"><strong><?php esc_html_e('Catalog URL', 'springapex'); ?></strong></label><br>
-      <input class="widefat" type="url" id="springapex-catalog" name="springapex_catalog_url" value="<?php echo esc_attr($catalog_url); ?>">
-    </p>
-    <p>
-      <label><input type="checkbox" name="springapex_featured" value="1" <?php checked($featured); ?>> <?php esc_html_e('Show in Featured Products', 'springapex'); ?></label>
+      <label><input type="checkbox" name="springapex_featured" value="1" <?php checked($featured); ?>> 在首页的「Featured Products」里显示这个产品</label>
     </p>
     <?php
-}
-
-function springapex_meta_rows_to_text(mixed $rows, string $left_key, string $right_key): string
-{
-    if (!is_array($rows)) {
-        return is_string($rows) ? $rows : '';
-    }
-
-    $lines = [];
-    foreach ($rows as $row) {
-        if (!is_array($row) || empty($row[$left_key])) {
-            continue;
-        }
-        $lines[] = trim((string) $row[$left_key]) . ' | ' . trim((string) ($row[$right_key] ?? ''));
-    }
-    return implode("\n", $lines);
-}
-
-function springapex_parse_icon_rows(string $value): array
-{
-    $rows = [];
-    foreach (preg_split('/\R/', $value) ?: [] as $line) {
-        $parts = array_map('trim', explode('|', $line, 2));
-        if (($parts[0] ?? '') === '') {
-            continue;
-        }
-        $rows[] = [
-            'title' => sanitize_text_field($parts[0]),
-            'icon' => sanitize_key($parts[1] ?? 'spring'),
-        ];
-    }
-    return $rows;
 }
 
 function springapex_admin_request_scalar(mixed $value): string
@@ -306,15 +338,19 @@ add_action('save_post_spring_product', static function (int $post_id): void {
     }
 
     $subtitle = sanitize_textarea_field(springapex_admin_request_scalar($_POST['springapex_subtitle'] ?? ''));
-    $specs_text = sanitize_textarea_field(springapex_admin_request_scalar($_POST['springapex_specs'] ?? ''));
-    $materials_text = sanitize_textarea_field(springapex_admin_request_scalar($_POST['springapex_materials'] ?? ''));
-    $applications_text = sanitize_textarea_field(springapex_admin_request_scalar($_POST['springapex_applications'] ?? ''));
     $catalog_url = esc_url_raw(springapex_admin_request_scalar($_POST['springapex_catalog_url'] ?? ''));
 
     update_post_meta($post_id, '_springapex_subtitle', $subtitle);
-    update_post_meta($post_id, '_springapex_specs', springapex_parse_meta_rows($specs_text));
-    update_post_meta($post_id, '_springapex_materials', springapex_parse_icon_rows($materials_text));
-    update_post_meta($post_id, '_springapex_applications', springapex_parse_icon_rows($applications_text));
+    foreach (springapex_product_row_sets() as $field => $columns) {
+        $meta_key = springapex_product_row_meta_keys()[$field] ?? '';
+        if ($meta_key === '') {
+            continue;
+        }
+        update_post_meta($post_id, $meta_key, springapex_sanitize_row_editor(
+            isset($_POST[$field]) ? wp_unslash($_POST[$field]) : [],
+            $columns
+        ));
+    }
     update_post_meta($post_id, '_springapex_catalog_url', $catalog_url);
     update_post_meta($post_id, '_springapex_featured', isset($_POST['springapex_featured']) ? '1' : '0');
 });

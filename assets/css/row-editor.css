@@ -18,10 +18,23 @@
 }
 
 .sa-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0 14px;
 	padding: 12px 14px 14px;
 	border: 1px solid #dcdcde;
 	border-radius: 4px;
 	background: #fff;
+}
+
+.sa-row > * {
+	flex: 0 0 100%;
+	min-width: 0;
+}
+
+/* Two short fields (label / value) share a line instead of stacking. */
+.sa-row__field--half {
+	flex: 1 1 calc(50% - 7px);
 }
 
 .sa-row__head {
@@ -115,5 +128,9 @@
 @media screen and (max-width: 782px) {
 	.sa-row__products {
 		grid-template-columns: 1fr;
+	}
+
+	.sa-row__field--half {
+		flex-basis: 100%;
 	}
 }
