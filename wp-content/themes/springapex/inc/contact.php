@@ -104,6 +104,10 @@ function springapex_process_contact_submission(): array|WP_Error
         $source_id = 0;
     }
     $source_url = esc_url_raw((string) wp_get_referer());
+    // Canonical referring path, stored alongside the URL so the admin source
+    // filter can match it exactly (no LIKE substring bleed between /products/
+    // and /products/compression-springs/).
+    $source_path = $source_url !== '' ? (string) (wp_parse_url($source_url, PHP_URL_PATH) ?: '') : '';
     $allowed_types = springapex_get('contact.inquiry_types', []);
     if (
         $name === '' ||
@@ -174,6 +178,7 @@ function springapex_process_contact_submission(): array|WP_Error
         '_springapex_form_context' => $form_context,
         '_springapex_source_id' => (string) $source_id,
         '_springapex_source_url' => $source_url,
+        '_springapex_source_path' => $source_path,
         '_springapex_product' => $product,
         '_springapex_industry' => $industry,
         '_springapex_document' => sanitize_key(springapex_request_scalar($_POST['document'] ?? '')),
@@ -874,22 +879,23 @@ add_action('restrict_manage_posts', static function (string $post_type): void {
     }
 
     // Site-wide widgets and CPT archive pages (e.g. /products/) submit without a
-    // usable post ID, so those inquiries store only _springapex_source_url. Offer
-    // the referring path as a filter option too, else they can never be selected.
-    $source_urls = $wpdb->get_col($wpdb->prepare(
-        "SELECT DISTINCT pm_url.meta_value FROM {$wpdb->postmeta} pm_url
-         INNER JOIN {$wpdb->posts} p ON p.ID = pm_url.post_id
-         LEFT JOIN {$wpdb->postmeta} pm_id ON pm_id.post_id = pm_url.post_id
+    // usable post ID, so those inquiries have no resolvable title — only the
+    // canonical referring path. Offer that path as a filter option, restricted to
+    // URL-only records so a singular page is never listed here as well as by title.
+    $source_paths = $wpdb->get_col($wpdb->prepare(
+        "SELECT DISTINCT pm_path.meta_value FROM {$wpdb->postmeta} pm_path
+         INNER JOIN {$wpdb->posts} p ON p.ID = pm_path.post_id
+         LEFT JOIN {$wpdb->postmeta} pm_id ON pm_id.post_id = pm_path.post_id
              AND pm_id.meta_key = %s
-         WHERE pm_url.meta_key = %s AND pm_url.meta_value <> ''
+         WHERE pm_path.meta_key = %s AND pm_path.meta_value <> ''
            AND p.post_type = %s
            AND (pm_id.meta_value IS NULL OR pm_id.meta_value = '' OR pm_id.meta_value = '0')",
         '_springapex_source_id',
-        '_springapex_source_url',
+        '_springapex_source_path',
         'spring_inquiry'
     ));
-    foreach ($source_urls as $url) {
-        $path = wp_parse_url((string) $url, PHP_URL_PATH) ?: (string) $url;
+    foreach ($source_paths as $path) {
+        $path = (string) $path;
         if ($path === '') {
             continue;
         }
@@ -937,10 +943,19 @@ add_action('pre_get_posts', static function (WP_Query $query): void {
         if (str_starts_with($source, 'url:')) {
             $path = substr($source, 4);
             if ($path !== '') {
+                // Exact path match, and only URL-only records, so selecting the
+                // /products/ archive never drags in singular product inquiries.
                 $meta_query[] = [
-                    'key' => '_springapex_source_url',
-                    'value' => $path,
-                    'compare' => 'LIKE',
+                    'relation' => 'AND',
+                    [
+                        'key' => '_springapex_source_path',
+                        'value' => $path,
+                    ],
+                    [
+                        'relation' => 'OR',
+                        ['key' => '_springapex_source_id', 'value' => ['', '0'], 'compare' => 'IN'],
+                        ['key' => '_springapex_source_id', 'compare' => 'NOT EXISTS'],
+                    ],
                 ];
             }
         } else {
