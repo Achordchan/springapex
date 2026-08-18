@@ -1,0 +1,24 @@
+name: PHP Lint
+
+# 上线走 PR：给针对 main 的 PR 加一道 PHP 语法门禁。
+# 只扫主题目录（日常开发都在这里），不扫 WordPress 内核，保持快速。
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  php-lint:
+    name: php -l (theme)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Lint theme PHP files
+        run: |
+          find wp-content/themes/springapex -name '*.php' -print0 \
+            | xargs -0 -n1 -P4 php -l

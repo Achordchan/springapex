@@ -1,13 +1,34 @@
 node_modules/
 
+# WordPress 本地站点：核心与运行数据不入库，只跟踪 wp-content/themes/springapex
+/index.php
+/wp-*.php
+!/wp-router.php
+/wp-admin/
+/wp-includes/
+/license.txt
+/readme.html
+/xmlrpc.php
+/wp-content/index.php
+/wp-content/debug.log
+/wp-content/plugins/
+/wp-content/uploads/
+/wp-content/languages/
+/wp-content/upgrade/
+/wp-content/themes/index.php
+
 # Local tooling and review artifacts
 .claude/
 .codex_work/
 .playwright-cli/
+.zcode/
 design-qa-assets/
 evidence/
 qa-artifacts/
 output/
+audit/
+tmp/
+.codex-*.png
 
 # Patch leftovers and machine files
 *.rej
