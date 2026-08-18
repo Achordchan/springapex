@@ -203,6 +203,7 @@ $documents = [
               data-language="en"
               data-action="product-inquiry"
             ></div>
+            <?php echo springapex_turnstile_noscript(); ?>
           </div>
           <p class="sa-compression-form__privacy"><?php esc_html_e('Your file and project details are used only to review this inquiry.', 'springapex'); ?></p>
           <p class="form-status" data-form-status role="status" aria-live="polite" hidden></p>

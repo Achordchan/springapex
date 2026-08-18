@@ -45,6 +45,10 @@ function springapex_turnstile_secret(): string
         }
     }
 
+    if (!function_exists('get_option')) {
+        return '';
+    }
+
     $option = get_option('springapex_turnstile_secret', '');
     return is_string($option) ? trim($option) : '';
 }
@@ -52,6 +56,28 @@ function springapex_turnstile_secret(): string
 function springapex_turnstile_enabled(): bool
 {
     return springapex_turnstile_secret() !== '';
+}
+
+/**
+ * Notice shown in place of the widget for visitors without JavaScript.
+ *
+ * Turnstile is a JavaScript widget: with no JS it cannot render or mint the
+ * cf-turnstile-response token, so a submission can never pass verification. When
+ * verification is enabled we therefore tell no-JS visitors that JavaScript is
+ * required and point them at direct contact, rather than leaving a form that
+ * looks usable but always rejects. When verification is disabled the non-JS
+ * admin-post.php path still works (honeypot, timing, rate limits), so nothing is
+ * shown.
+ */
+function springapex_turnstile_noscript(): string
+{
+    if (!springapex_turnstile_enabled()) {
+        return '';
+    }
+
+    return '<noscript><p class="sa-turnstile-noscript">'
+        . esc_html__('JavaScript is required to submit this form. Please enable JavaScript, or contact us directly by email.', 'springapex')
+        . '</p></noscript>';
 }
 
 /**

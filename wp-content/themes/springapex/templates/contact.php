@@ -324,6 +324,7 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
               data-language="en"
               data-action="contact-inquiry"
             ></div>
+            <?php echo springapex_turnstile_noscript(); ?>
           </div>
           <p class="form-status<?php echo !empty($status['type']) ? ' is-' . esc_attr((string) $status['type']) : ''; ?>" data-form-status role="status" aria-live="polite" <?php echo $status ? '' : 'hidden'; ?>><?php echo $status ? esc_html((string) $status['message']) : ''; ?></p>
         </form>

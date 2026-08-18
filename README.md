@@ -92,7 +92,7 @@ Products 与 Solutions 由自定义文章类型归档提供；产品详情使用
 - `spring_product` = 产品内容，支持标题、正文、摘要、特色图片、排序和产品规格字段。
 - `spring_solution` = 行业方案内容，支持标题、正文、摘要、特色图片和排序。
 - `spring_inquiry` = 后台私有询盘记录，不提供前台查询或 REST API；主题默认只给 Administrator 角色授予询盘查看、编辑、下载与删除权限。
-- 联系表单同时支持 JavaScript AJAX 和无 JavaScript `admin-post.php` POST 路径；两者共用 nonce、蜜罐、提交时长、字段白名单、IP 限流和邮箱限流。
+- 联系表单同时支持 JavaScript AJAX 和无 JavaScript `admin-post.php` POST 路径；两者共用 nonce、蜜罐、提交时长、字段白名单、IP 限流和邮箱限流。启用 Cloudflare Turnstile（配置了 `SPRINGAPEX_TURNSTILE_SECRET`）后，因 Turnstile 为 JavaScript 组件，只有 JS 路径能生成校验 token，故提交需要 JavaScript；无 JS 访客会在表单处看到提示并被引导直接联系。未配置 Turnstile 时无 JS 路径照常可用。
 - 上传上限为 10 MB；仅允许 PDF、ZIP、DWG、DXF、STEP、IGES、JPG 和 PNG，服务端同时校验扩展名与文件签名。JPG/PNG 在真实 WordPress 中还会通过核心图片 MIME 检测。
 - 生产环境需同步设置 PHP `upload_max_filesize=10M`、`post_max_size=12M`，Nginx `client_max_body_size 12m`，并确保 CDN 请求体上限不少于 12 MB；上线时验证 9.9 MB 文件成功、10.1 MB 文件被拒绝。
 - 新图纸不创建媒体库 attachment，不保存公开 URL；文件使用随机名存入 `wp-content/uploads/springapex-private/{year}/{month}/`，数据库只保存私有根目录下的相对路径。

@@ -73,6 +73,7 @@ $form_action = defined('SPRINGAPEX_PREVIEW')
             data-language="en"
             data-action="quick-inquiry"
           ></div>
+          <?php echo springapex_turnstile_noscript(); ?>
         </div>
         <p class="form-status support-form-status" data-form-status role="status" aria-live="polite" hidden></p>
       </form>
