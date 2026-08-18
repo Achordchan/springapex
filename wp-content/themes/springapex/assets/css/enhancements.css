@@ -1494,3 +1494,30 @@
     padding: 28px 22px;
   }
 }
+
+.sa-process-detail__media {
+  margin: -30px -30px 26px;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: var(--sa-radius) var(--sa-radius) 0 0;
+  background: var(--sa-bg-soft);
+}
+
+.sa-process-detail__media picture,
+.sa-process-detail__media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sa-process-detail__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.sa-process-detail__step {
+  position: static;
+}

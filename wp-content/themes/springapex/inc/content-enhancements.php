@@ -263,12 +263,12 @@ function springapex_content_enhancements(): array
             ],
         ],
         'manufacturing_process' => [
-            ['icon' => 'pen', 'step' => '01', 'title' => 'Requirement Review', 'text' => 'Load, movement, space, environment and drawing requirements are checked before production planning.'],
-            ['icon' => 'form', 'step' => '02', 'title' => 'Prototype & Tooling', 'text' => 'Geometry and process settings are prepared for samples or the first controlled production run.'],
-            ['icon' => 'cnc', 'step' => '03', 'title' => 'Forming & Coiling', 'text' => 'CNC coiling and forming processes control dimensions, pitch, hooks and wire geometry.'],
-            ['icon' => 'heat', 'step' => '04', 'title' => 'Heat & Surface Process', 'text' => 'Stress relief, heat treatment and surface options are selected for material and service conditions.'],
-            ['icon' => 'search', 'step' => '05', 'title' => 'Inspection & Validation', 'text' => 'Dimensions, load and application-critical characteristics are checked against the agreed control plan.'],
-            ['icon' => 'delivery', 'step' => '06', 'title' => 'Packing & Delivery', 'text' => 'Parts are protected, identified and prepared with the documentation required for shipment.'],
+            ['icon' => 'pen', 'step' => '01', 'title' => 'Requirement Review', 'text' => 'Load, movement, space, environment and drawing requirements are checked before production planning.', 'image' => 'manufacturing-videos/application-engineering-v1.webp'],
+            ['icon' => 'form', 'step' => '02', 'title' => 'Prototype & Tooling', 'text' => 'Geometry and process settings are prepared for samples or the first controlled production run.', 'image' => 'manufacturing-videos/machine-setup-v1.webp'],
+            ['icon' => 'cnc', 'step' => '03', 'title' => 'Forming & Coiling', 'text' => 'CNC coiling and forming processes control dimensions, pitch, hooks and wire geometry.', 'image' => 'manufacturing-videos/featured-cnc-coiling-v1.webp'],
+            ['icon' => 'heat', 'step' => '04', 'title' => 'Heat & Surface Process', 'text' => 'Stress relief, heat treatment and surface options are selected for material and service conditions.', 'image' => 'manufacturing-videos/manufacturing-processes-v1.webp'],
+            ['icon' => 'search', 'step' => '05', 'title' => 'Inspection & Validation', 'text' => 'Dimensions, load and application-critical characteristics are checked against the agreed control plan.', 'image' => 'manufacturing-videos/quality-inspection-v1.webp'],
+            ['icon' => 'delivery', 'step' => '06', 'title' => 'Packing & Delivery', 'text' => 'Parts are protected, identified and prepared with the documentation required for shipment.', 'image' => 'manufacturing-videos/packaging-delivery-v1.webp'],
         ],
         'quality_evidence' => [
             ['icon' => 'form', 'title' => 'Dimensional Inspection', 'text' => 'Wire diameter, free length, diameters, pitch, angles and formed features.'],

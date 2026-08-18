@@ -20,6 +20,15 @@ if (!$process) {
     <ol class="sa-process-detail__grid" data-reveal-group>
       <?php foreach ($process as $item) : ?>
         <li>
+          <?php if (!empty($item['image'])) : ?>
+            <figure class="sa-process-detail__media">
+              <?php echo springapex_image((string) $item['image'], sprintf(__('%s at ApexSpring', 'springapex'), (string) ($item['title'] ?? '')), [
+                  'width' => 640,
+                  'height' => 400,
+                  'sizes' => '(max-width: 760px) 100vw, (max-width: 1180px) 50vw, 370px',
+              ]); ?>
+            </figure>
+          <?php endif; ?>
           <div class="sa-process-detail__top">
             <span class="sa-process-detail__icon"><?php echo springapex_icon((string) ($item['icon'] ?? 'settings')); ?></span>
             <span class="sa-process-detail__step"><?php echo esc_html((string) ($item['step'] ?? '')); ?></span>
