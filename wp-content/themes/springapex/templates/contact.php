@@ -190,6 +190,7 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
           <?php endif; ?>
           <input type="hidden" name="intent" value="<?php echo esc_attr($intent); ?>">
           <input type="hidden" name="form_context" value="full">
+          <input type="hidden" name="source" value="<?php echo esc_attr((string) get_queried_object_id()); ?>">
           <input type="hidden" name="product" value="<?php echo esc_attr($product); ?>">
           <input type="hidden" name="industry" value="<?php echo esc_attr($industry); ?>">
           <input type="hidden" name="document" value="<?php echo esc_attr($document); ?>">

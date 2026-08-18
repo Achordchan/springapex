@@ -95,6 +95,15 @@ function springapex_process_contact_submission(): array|WP_Error
     $form_context = sanitize_key(springapex_request_scalar($_POST['form_context'] ?? 'full'));
     $product = sanitize_title(springapex_request_scalar($_POST['product'] ?? ''));
     $industry = sanitize_title(springapex_request_scalar($_POST['industry'] ?? ''));
+    // Source page: the hidden `source` field carries the queried page/post ID
+    // where the form was rendered; the referer is a fallback for non-singular
+    // pages or when the field is missing. Together they let admins tell which
+    // page a generic form was submitted from.
+    $source_id = absint(springapex_request_scalar($_POST['source'] ?? '0'));
+    if ($source_id > 0 && get_post_status($source_id) === false) {
+        $source_id = 0;
+    }
+    $source_url = esc_url_raw((string) wp_get_referer());
     $allowed_types = springapex_get('contact.inquiry_types', []);
     if (
         $name === '' ||
@@ -162,6 +171,9 @@ function springapex_process_contact_submission(): array|WP_Error
         '_springapex_material' => $material,
         '_springapex_operating_environment' => $operating_environment,
         '_springapex_intent' => $intent,
+        '_springapex_form_context' => $form_context,
+        '_springapex_source_id' => (string) $source_id,
+        '_springapex_source_url' => $source_url,
         '_springapex_product' => $product,
         '_springapex_industry' => $industry,
         '_springapex_document' => sanitize_key(springapex_request_scalar($_POST['document'] ?? '')),
@@ -714,6 +726,19 @@ function springapex_download_inquiry_file(): void
     exit;
 }
 
+/**
+ * Human labels for the form each inquiry came from (the hidden `form_context`).
+ * Shared by the admin column and the source filter dropdown.
+ */
+function springapex_inquiry_form_context_labels(): array
+{
+    return [
+        'full' => '整表单（联系页）',
+        'product' => '产品询价',
+        'quick' => '快速留言',
+    ];
+}
+
 add_filter('manage_spring_inquiry_posts_columns', static function (array $columns): array {
     return [
         'cb' => $columns['cb'] ?? '<input type="checkbox">',
@@ -722,6 +747,7 @@ add_filter('manage_spring_inquiry_posts_columns', static function (array $column
         'springapex_company' => __('Company', 'springapex'),
         'springapex_country' => __('Country', 'springapex'),
         'springapex_type' => __('Type', 'springapex'),
+        'springapex_source' => '来源',
         'springapex_specs' => __('Spring Specs', 'springapex'),
         'springapex_file' => __('Drawing', 'springapex'),
         'date' => __('Date', 'springapex'),
@@ -744,6 +770,32 @@ add_action('manage_spring_inquiry_posts_custom_column', static function (string 
             $country = (string) get_post_meta($post_id, '_springapex_region', true);
         }
         echo $country !== '' ? esc_html($country) : '&mdash;';
+        return;
+    }
+    if ($column === 'springapex_source') {
+        $context = (string) get_post_meta($post_id, '_springapex_form_context', true);
+        $labels = springapex_inquiry_form_context_labels();
+        $label = $labels[$context] ?? ($context !== '' ? $context : '&mdash;');
+
+        $source_id = (int) get_post_meta($post_id, '_springapex_source_id', true);
+        $page = '';
+        if ($source_id > 0) {
+            $title = get_the_title($source_id);
+            if ($title !== '') {
+                $page = $title;
+            }
+        }
+        if ($page === '') {
+            $url = (string) get_post_meta($post_id, '_springapex_source_url', true);
+            if ($url !== '') {
+                $page = wp_parse_url($url, PHP_URL_PATH) ?: $url;
+            }
+        }
+
+        echo '<strong>' . wp_kses($label, ['br' => []]) . '</strong>';
+        if ($page !== '') {
+            echo '<br><span class="description">' . esc_html($page) . '</span>';
+        }
         return;
     }
     if ($column === 'springapex_specs') {
@@ -775,6 +827,97 @@ add_action('manage_spring_inquiry_posts_custom_column', static function (string 
     );
     printf('<a href="%s">%s</a>', esc_url($url), esc_html__('Download', 'springapex'));
 }, 10, 2);
+
+/**
+ * Source filters above the inquiry list: one dropdown for form type, one for
+ * the specific page an inquiry was submitted from. Native restrict_manage_posts
+ * UI; the actual filtering happens in the pre_get_posts handler below.
+ */
+add_action('restrict_manage_posts', static function (string $post_type): void {
+    if ($post_type !== 'spring_inquiry') {
+        return;
+    }
+
+    $selected_context = isset($_GET['sa_form_context']) ? sanitize_key(wp_unslash($_GET['sa_form_context'])) : '';
+    echo '<label class="screen-reader-text" for="sa_form_context">按表单类型筛选</label>';
+    echo '<select name="sa_form_context" id="sa_form_context">';
+    echo '<option value="">全部来源类型</option>';
+    foreach (springapex_inquiry_form_context_labels() as $value => $label) {
+        printf(
+            '<option value="%s"%s>%s</option>',
+            esc_attr($value),
+            selected($selected_context, $value, false),
+            esc_html($label)
+        );
+    }
+    echo '</select>';
+
+    global $wpdb;
+    $source_ids = $wpdb->get_col($wpdb->prepare(
+        "SELECT DISTINCT pm.meta_value FROM {$wpdb->postmeta} pm
+         INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+         WHERE pm.meta_key = %s AND pm.meta_value <> '' AND pm.meta_value <> '0'
+           AND p.post_type = %s",
+        '_springapex_source_id',
+        'spring_inquiry'
+    ));
+    if (empty($source_ids)) {
+        return;
+    }
+
+    $selected_source = isset($_GET['sa_source_id']) ? absint($_GET['sa_source_id']) : 0;
+    echo '<label class="screen-reader-text" for="sa_source_id">按来源页面筛选</label>';
+    echo '<select name="sa_source_id" id="sa_source_id">';
+    echo '<option value="">全部来源页面</option>';
+    foreach ($source_ids as $source_id) {
+        $source_id = (int) $source_id;
+        $title = get_the_title($source_id);
+        if ($title === '') {
+            continue;
+        }
+        printf(
+            '<option value="%d"%s>%s</option>',
+            $source_id,
+            selected($selected_source, $source_id, false),
+            esc_html($title)
+        );
+    }
+    echo '</select>';
+});
+
+add_action('pre_get_posts', static function (WP_Query $query): void {
+    if (!is_admin() || !$query->is_main_query()) {
+        return;
+    }
+    if (($query->get('post_type') ?: '') !== 'spring_inquiry') {
+        return;
+    }
+
+    $meta_query = [];
+    $context = isset($_GET['sa_form_context']) ? sanitize_key(wp_unslash($_GET['sa_form_context'])) : '';
+    if ($context !== '' && array_key_exists($context, springapex_inquiry_form_context_labels())) {
+        $meta_query[] = [
+            'key' => '_springapex_form_context',
+            'value' => $context,
+        ];
+    }
+
+    $source_id = isset($_GET['sa_source_id']) ? absint($_GET['sa_source_id']) : 0;
+    if ($source_id > 0) {
+        $meta_query[] = [
+            'key' => '_springapex_source_id',
+            'value' => (string) $source_id,
+        ];
+    }
+
+    if ($meta_query === []) {
+        return;
+    }
+    if (count($meta_query) > 1) {
+        $meta_query['relation'] = 'AND';
+    }
+    $query->set('meta_query', $meta_query);
+});
 
 function springapex_record_contact_admin_warning(string $code): void
 {

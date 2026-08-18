@@ -689,3 +689,131 @@ textarea.sa-input {
     margin-right: 0;
   }
 }
+
+/* Field search ------------------------------------------------------- */
+
+.sa-search {
+  position: relative;
+  margin: 0 0 20px;
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px solid var(--sa-a-line);
+  border-left: 4px solid var(--sa-a-accent);
+  border-radius: 4px;
+}
+
+.sa-search__label {
+  display: block;
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sa-a-ink);
+}
+
+.sa-search__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.sa-search__input {
+  flex: 1 1 320px;
+  min-width: 0;
+  max-width: 560px;
+}
+
+.sa-search__hint {
+  margin: 8px 0 0;
+  color: var(--sa-a-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.sa-search__results {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  max-height: 420px;
+  overflow-y: auto;
+  border: 1px solid var(--sa-a-line);
+  border-radius: 4px;
+}
+
+.sa-search__results[hidden] { display: none; }
+
+.sa-search__item + .sa-search__item {
+  border-top: 1px solid var(--sa-a-line);
+}
+
+.sa-search__link {
+  display: block;
+  padding: 10px 12px;
+  text-decoration: none;
+  color: var(--sa-a-ink);
+}
+
+.sa-search__link:hover,
+.sa-search__link:focus {
+  background: var(--sa-a-bg);
+}
+
+.sa-search__field {
+  display: block;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.sa-search__where {
+  display: block;
+  margin-top: 2px;
+  color: var(--sa-a-accent);
+  font-size: 12px;
+}
+
+.sa-search__snippet {
+  display: block;
+  margin-top: 3px;
+  color: var(--sa-a-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Highlight the field a search result jumped to. */
+.sa-field.is-search-focus,
+.sa-repeater.is-search-focus {
+  outline: 2px solid var(--sa-a-accent);
+  outline-offset: 3px;
+  border-radius: 3px;
+  animation: sa-search-pulse 2.6s ease-out;
+}
+
+@keyframes sa-search-pulse {
+  0% { background: rgba(34, 113, 177, 0.14); }
+  100% { background: transparent; }
+}
+
+/* Recommended image size ------------------------------------------- */
+
+.sa-image__dims {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sa-a-ink);
+}
+
+.sa-image__dims-tag {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(34, 113, 177, 0.12);
+  color: var(--sa-a-accent);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}

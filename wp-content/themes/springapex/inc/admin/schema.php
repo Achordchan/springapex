@@ -88,14 +88,7 @@ function springapex_admin_screens(): array
                         ['path' => 'home.hero.video_cta.label', 'label' => '视频按钮文字', 'type' => 'text', 'help' => '例如 Play a Video。'],
                         ['path' => 'home.hero.video_cta.youtube_id', 'label' => 'YouTube 视频 ID', 'type' => 'youtube', 'help' => '只填 ID，不是整条网址。'],
                         ['path' => 'home.hero.quote_cta.label', 'label' => '询价按钮文字', 'type' => 'text', 'help' => '例如 Request a Quote。'],
-                        ['path' => 'home.hero.quote_cta.href', 'label' => '询价按钮链接', 'type' => 'text', 'help' => '默认指向联系页的询价表单。'],
-                    ],
-                ],
-                [
-                    'title' => '行业滚动条',
-                    'desc' => '首屏下方滚动的行业名称，全部大写。',
-                    'fields' => [
-                        ['path' => 'home.industries', 'label' => '行业名称', 'type' => 'lines', 'help' => '一行一个，建议 5–8 个。'],
+                        ['path' => 'home.hero.quote_cta.href', 'label' => '询价按钮链接', 'type' => 'route', 'help' => '从下拉里选一个目的地，默认指向联系页的询价表单。'],
                     ],
                 ],
                 [
@@ -129,7 +122,7 @@ function springapex_admin_screens(): array
                             'fields' => [
                                 ['path' => 'title', 'label' => '名称', 'type' => 'text', 'help' => ''],
                                 ['path' => 'slug', 'label' => '对应行业方案', 'type' => 'text', 'help' => '要和「行业方案页」里的标识一致，否则点击会 404。'],
-                                ['path' => 'image', 'label' => '配图', 'type' => 'image', 'help' => '竖版或方形，展示实际应用场景。'],
+                                ['path' => 'image', 'label' => '配图', 'type' => 'image', 'help' => '展示实际应用场景。'],
                             ],
                         ],
                     ],
@@ -184,9 +177,9 @@ function springapex_admin_screens(): array
                         ['path' => 'products.hero.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
                         ['path' => 'products.hero.subtitle', 'label' => '副标题', 'type' => 'textarea', 'help' => ''],
                         ['path' => 'products.hero.image', 'label' => '电脑端配图', 'type' => 'image', 'help' => '横版，宽度不小于 1600px。'],
-                        ['path' => 'products.hero.mobile_image', 'label' => '手机端配图', 'type' => 'image', 'help' => '竖版；留空则手机上沿用电脑端配图。'],
+                        ['path' => 'products.hero.mobile_image', 'label' => '手机端配图', 'type' => 'image', 'help' => '留空则手机上沿用电脑端配图。'],
                         ['path' => 'products.hero.primary_cta.label', 'label' => '按钮文字', 'type' => 'text', 'help' => ''],
-                        ['path' => 'products.hero.primary_cta.href', 'label' => '按钮链接', 'type' => 'text', 'help' => ''],
+                        ['path' => 'products.hero.primary_cta.href', 'label' => '按钮链接', 'type' => 'route', 'help' => '从下拉里选一个目的地。'],
                     ],
                 ],
                 [
@@ -313,7 +306,7 @@ function springapex_admin_screens(): array
                         ['path' => 'capabilities.hero.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
                         ['path' => 'capabilities.hero.subtitle', 'label' => '副标题', 'type' => 'textarea', 'help' => ''],
                         ['path' => 'capabilities.hero.cta.label', 'label' => '按钮文字', 'type' => 'text', 'help' => '例如 Upload Your Drawing。'],
-                        ['path' => 'capabilities.hero.cta.href', 'label' => '按钮链接', 'type' => 'text', 'help' => ''],
+                        ['path' => 'capabilities.hero.cta.href', 'label' => '按钮链接', 'type' => 'route', 'help' => '从下拉里选一个目的地。'],
                         ['path' => 'capabilities.hero.image', 'label' => '电脑端配图', 'type' => 'image', 'help' => ''],
                         ['path' => 'capabilities.hero.mobile_image', 'label' => '手机端配图', 'type' => 'image', 'help' => ''],
                     ],
@@ -449,7 +442,7 @@ function springapex_admin_screens(): array
         'about' => [
             'label' => '关于我们页',
             'title' => '关于我们页',
-            'intro' => '公司介绍页。团队成员、数据统计和公司视频都在这里维护。',
+            'intro' => '公司介绍页。团队成员和公司视频都在这里维护。',
             'preview' => '/about/',
             'sections' => [
                 [
@@ -468,24 +461,6 @@ function springapex_admin_screens(): array
                     'fields' => [
                         ['path' => 'about.company_video.title', 'label' => '视频标题', 'type' => 'text', 'help' => ''],
                         ['path' => 'about.company_video.youtube_id', 'label' => 'YouTube 视频 ID', 'type' => 'youtube', 'help' => '只填 ID。'],
-                    ],
-                ],
-                [
-                    'title' => '关键数据',
-                    'desc' => '四个数字，建议保持四个。',
-                    'fields' => [
-                        [
-                            'path' => 'about.stats',
-                            'type' => 'repeater',
-                            'label' => '数据',
-                            'item_label' => '数据',
-                            'title_key' => 'label',
-                            'fields' => [
-                                ['path' => 'icon', 'label' => '图标', 'type' => 'icon', 'help' => ''],
-                                ['path' => 'value', 'label' => '数字', 'type' => 'text', 'help' => '例如 120+ 或 2,000+。'],
-                                ['path' => 'label', 'label' => '说明', 'type' => 'text', 'help' => '例如 Employees。'],
-                            ],
-                        ],
                     ],
                 ],
                 [
@@ -741,7 +716,7 @@ function springapex_admin_screens(): array
                     'title' => '手机端头图',
                     'desc' => '资源下载主页在手机上显示的头图；电脑端头图与文案目前写死在模板里。',
                     'fields' => [
-                        ['path' => 'resources.hero.mobile_image', 'label' => '手机端配图', 'type' => 'image', 'help' => '竖版。'],
+                        ['path' => 'resources.hero.mobile_image', 'label' => '手机端配图', 'type' => 'image', 'help' => '手机上单独显示的头图。'],
                     ],
                 ],
                 [
@@ -798,4 +773,127 @@ function springapex_admin_icon_choices(): array
     }
     ksort($choices);
     return $choices;
+}
+
+/**
+ * Recommended upload size for every image field, so whoever makes the artwork
+ * has an exact target. Keyed by the content path with repeater row indexes
+ * normalised to '#'. Hero/content images are shown at their own aspect ratio
+ * (the theme sets no crop on them), so these values match the ratio of the
+ * current placeholder in each slot — keeping the layout identical. Add a row
+ * when a new image field appears; springapex_admin_image_dimension() returns ''
+ * for anything missing.
+ */
+function springapex_admin_image_dimensions_map(): array
+{
+    return [
+        // 页面头图 · 电脑端（各页宽幅不一，按现有图比例）
+        'home.hero.image' => '1920 × 1080 px（16:9，横版）',
+        'products.hero.image' => '2400 × 1050 px（16:7，横版宽幅）',
+        'solutions.hero.image' => '2400 × 1050 px（16:7，横版宽幅）',
+        'case_studies.hero.image' => '2400 × 1050 px（16:7，横版宽幅）',
+        'capabilities.hero.image' => '2400 × 1050 px（16:7，横版宽幅）',
+        'about.hero.image' => '2400 × 1050 px（16:7，横版宽幅）',
+        'contact.hero.image' => '1920 × 1080 px（16:9，横版）',
+        'news.hero.image' => '2400 × 1000 px（2.4:1，横版宽幅）',
+        'manufacturing_videos.hero_image' => '2400 × 810 px（约 3:1，横版超宽）',
+
+        // 页面头图 · 手机端（现有图均为 4:3 横版）
+        'products.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
+        'solutions.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
+        'case_studies.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
+        'capabilities.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
+        'about.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
+        'news.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
+        'contact.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
+        'resources.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
+
+        // 卡片 / 内容配图
+        'home.applications.#.image' => '1200 × 900 px（4:3，横版）',
+        'products.categories.#.image' => '1200 × 1200 px（1:1，方形，白底产品图）',
+        'products.categories.#.category_image' => '1200 × 1200 px（1:1，方形）',
+        'products.categories.#.featured_image' => '1200 × 1200 px（1:1，方形）',
+        'solutions.items.#.image' => '1200 × 900 px（4:3，横版）',
+        'capabilities.project_brief.image' => '1600 × 900 px（16:9，横版）',
+        'manufacturing_process.#.image' => '1600 × 1200 px（4:3，横版实拍）',
+        'capabilities.verification.image' => '1680 × 700 px（2.4:1，横版示意图）',
+        'company.profile.image' => '1920 × 700 px（约 2.75:1，横版宽幅）',
+        'contact_network.facility_image' => '1920 × 700 px（约 2.75:1，横版宽幅）',
+
+        // 视频封面：16:9
+        'manufacturing_videos.featured.image' => '1920 × 1080 px（16:9，横版）',
+        'manufacturing_videos.categories.#.image' => '1920 × 1080 px（16:9，横版）',
+
+        // 头像 / 小图
+        'about.team.founder.image' => '900 × 1200 px（3:4，竖版）',
+        'about.team.groups.#.members.#.image' => '1200 × 900 px（4:3，横版）',
+        'about.why_choose.items.#.icon_image' => '600 × 600 px（1:1，方形小图）',
+        'company.quality.certificates.#.image' => '600 × 800 px（3:4，竖版徽标）',
+
+        // 特殊
+        'contact_network.map_image' => '1800 × 822 px（约 2.19:1，横版世界地图底图）',
+        'company.quality.certificates.#.document' => '1240 × 1754 px（A4 竖版整页扫描）',
+    ];
+}
+
+/**
+ * Recommended size string for one image field's content path (row indexes are
+ * normalised to '#' before lookup). Empty when the field is not in the map.
+ */
+function springapex_admin_image_dimension(string $name_path): string
+{
+    $segments = explode('.', $name_path);
+    foreach ($segments as $i => $segment) {
+        if ($segment === '__i__' || $segment === '__row' || ctype_digit($segment)) {
+            $segments[$i] = '#';
+        }
+    }
+    $normalised = implode('.', $segments);
+    return (string) (springapex_admin_image_dimensions_map()[$normalised] ?? '');
+}
+
+/**
+ * Allowed destinations for `route` fields, grouped for the dropdown. Button
+ * links point at real site locations, so operators pick one instead of typing a
+ * path like /contact/?intent=quote by hand and getting it subtly wrong. Add a
+ * new destination here when the site gains one.
+ */
+function springapex_admin_route_options(): array
+{
+    return [
+        '主要页面' => [
+            '/' => '首页',
+            '/products/' => '产品',
+            '/solutions/' => '行业方案',
+            '/capabilities/' => '能力与工艺',
+            '/manufacturing-videos/' => '制造视频',
+            '/about/' => '关于我们',
+            '/sustainability/' => '可持续发展',
+            '/resources/' => '资源下载中心',
+            '/news/' => '新闻',
+            '/case-studies/' => '案例',
+            '/contact/' => '联系我们',
+        ],
+        '联系页（带预选意图）' => [
+            '/contact/?intent=quote' => '联系页 · 打开询价表单',
+            '/contact/?intent=drawing' => '联系页 · 打开上传图纸',
+        ],
+        '页面内锚点' => [
+            '#product-categories' => '产品页 · 跳到产品分类区块',
+        ],
+    ];
+}
+
+/**
+ * Flat list of every allowed route value, for the save-time whitelist.
+ */
+function springapex_admin_route_values(): array
+{
+    $values = [];
+    foreach (springapex_admin_route_options() as $options) {
+        foreach ($options as $value => $label) {
+            $values[] = (string) $value;
+        }
+    }
+    return $values;
 }
