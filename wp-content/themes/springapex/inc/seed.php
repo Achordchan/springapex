@@ -632,10 +632,13 @@ function springapex_seed_primary_menu(bool $allow_create = true): bool
             $footer_id = $primary_id;
         }
 
+        $children_seeded = springapex_seed_primary_menu_children($primary_id);
+
         $saved_locations = get_theme_mod('nav_menu_locations', []);
         $saved_footer_id = is_array($saved_locations) ? (int) ($saved_locations['footer'] ?? 0) : 0;
         $saved_footer_menu = $saved_footer_id > 0 ? wp_get_nav_menu_object($saved_footer_id) : false;
-        return is_array($saved_locations) &&
+        return $children_seeded &&
+            is_array($saved_locations) &&
             (int) ($saved_locations['primary'] ?? 0) === $primary_id &&
             $saved_footer_menu &&
             !is_wp_error($saved_footer_menu);
@@ -748,6 +751,10 @@ function springapex_seed_primary_menu(bool $allow_create = true): bool
         }
     }
 
+    if (!springapex_seed_primary_menu_children($menu_id)) {
+        return false;
+    }
+
     $locations['primary'] = $menu_id;
     if ($footer_id <= 0) {
         $locations['footer'] = $menu_id;
@@ -761,6 +768,75 @@ function springapex_seed_primary_menu(bool $allow_create = true): bool
         (int) ($saved_locations['primary'] ?? 0) === $menu_id &&
         $saved_footer_menu &&
         !is_wp_error($saved_footer_menu);
+}
+
+/**
+ * The first menu seed only wrote the seven top-level entries, so the dropdown
+ * children defined by the default navigation (About Us, Industries, Custom
+ * Springs, News) never reached the database and the desktop hover menus stayed
+ * empty. Only top-level items that have no children at all are filled in; when
+ * an administrator has configured sub-items of their own, the menu is left
+ * untouched so deleted or renamed entries are never rebuilt.
+ */
+function springapex_seed_primary_menu_children(int $menu_id): bool
+{
+    $items = wp_get_nav_menu_items($menu_id);
+    if (is_wp_error($items)) {
+        return false;
+    }
+
+    $top_by_title = [];
+    $has_children = [];
+    foreach ($items ?: [] as $item) {
+        if ((int) $item->menu_item_parent === 0) {
+            $top_by_title[(string) $item->title] = $item;
+        } else {
+            $has_children[(int) $item->menu_item_parent] = true;
+        }
+    }
+
+    $children_by_parent = [
+        'About Us' => [
+            ['Company', home_url('/about/')],
+            ['Sustainability', home_url('/sustainability/')],
+            ['Download Center', home_url('/resources/')],
+        ],
+        'Industries' => [
+            ['Industries', home_url('/solutions/')],
+            ['Case Studies', home_url('/case-studies/')],
+        ],
+        'Custom Springs' => [
+            ['Capabilities', home_url('/capabilities/')],
+            ['Manufacturing Videos', home_url('/manufacturing-videos/')],
+        ],
+        'News' => [
+            ['Industry News', home_url('/news/') . '?news_type=industry-news'],
+            ['Exhibitions', home_url('/news/') . '?news_type=exhibitions'],
+            ['Company News', home_url('/news/') . '?news_type=company-news'],
+        ],
+    ];
+
+    foreach ($children_by_parent as $parent_title => $children) {
+        $parent = $top_by_title[$parent_title] ?? null;
+        if (!$parent || !empty($has_children[(int) $parent->ID])) {
+            continue;
+        }
+
+        foreach ($children as [$title, $url]) {
+            $item_id = wp_update_nav_menu_item($menu_id, 0, [
+                'menu-item-title' => $title,
+                'menu-item-url' => $url,
+                'menu-item-status' => 'publish',
+                'menu-item-type' => 'custom',
+                'menu-item-parent-id' => (int) $parent->ID,
+            ]);
+            if (is_wp_error($item_id) || (int) $item_id <= 0) {
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 function springapex_seed_capabilities_menu_url(): bool
