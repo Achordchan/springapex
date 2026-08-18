@@ -325,6 +325,12 @@ function springapex_content_enhancements(): array
                 ],
             ],
         ],
+        'quality_evidence' => [
+            ['icon' => 'search', 'title' => 'Dimensional Verification', 'text' => 'Critical dimensions are checked against the agreed drawing and control plan.'],
+            ['icon' => 'spring', 'title' => 'Load & Force Testing', 'text' => 'Force at working height or angle is validated to the specified tolerance.'],
+            ['icon' => 'check-shield', 'title' => 'Material & Traceability', 'text' => 'Material certificates and batch traceability are recorded for each production lot.'],
+            ['icon' => 'form', 'title' => 'Documented Records', 'text' => 'Inspection reports and controlled documents follow the format agreed at quotation.'],
+        ],
         'solution_details' => springapex_solution_content(),
         'contact_workflow' => [
             ['step' => '01', 'title' => 'Send Details', 'text' => 'Share your drawing, quantity and requirements.'],

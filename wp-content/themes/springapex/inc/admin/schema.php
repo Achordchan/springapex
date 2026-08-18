@@ -151,6 +151,23 @@ function springapex_admin_screens(): array
                         ],
                     ],
                 ],
+                [
+                    'title' => '常见问题',
+                    'desc' => '首页底部的常见问题问答，同一组内容也会出现在其它页面的 FAQ 板块。',
+                    'fields' => [
+                        [
+                            'path' => 'home_faq',
+                            'type' => 'repeater',
+                            'label' => '问答',
+                            'item_label' => '问答',
+                            'title_key' => 'question',
+                            'fields' => [
+                                ['path' => 'question', 'label' => '问题', 'type' => 'text', 'help' => '客户视角的一句问题。'],
+                                ['path' => 'answer', 'label' => '回答', 'type' => 'textarea', 'help' => '两到三句话说清楚。'],
+                            ],
+                        ],
+                    ],
+                ],
             ],
         ],
 
@@ -190,6 +207,44 @@ function springapex_admin_screens(): array
                                 ['path' => 'image', 'label' => '主图', 'type' => 'image', 'help' => '产品详情页顶部使用。'],
                                 ['path' => 'category_image', 'label' => '列表图', 'type' => 'image', 'help' => '产品列表卡片使用；留空则用主图。'],
                                 ['path' => 'featured_image', 'label' => '大菜单图', 'type' => 'image', 'help' => '页头产品大菜单使用；留空则用列表图。'],
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'title' => '产品选型（按受力方向）',
+                    'desc' => '产品列表页中部的选型引导板块，帮助客户按受力方向找到对应的弹簧类别。',
+                    'fields' => [
+                        ['path' => 'product_selection.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'product_selection.text', 'label' => '说明', 'type' => 'textarea', 'help' => '一句话。'],
+                        [
+                            'path' => 'product_selection.items',
+                            'type' => 'repeater',
+                            'label' => '选型卡片',
+                            'item_label' => '卡片',
+                            'title_key' => 'title',
+                            'fields' => [
+                                ['path' => 'icon', 'label' => '图标', 'type' => 'icon', 'help' => ''],
+                                ['path' => 'title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                                ['path' => 'text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'title' => '产品详情页 · 质量佐证',
+                    'desc' => '每个产品详情页底部「QUALITY & DOCUMENTS」左侧的质检佐证卡片，所有产品共用这一组。',
+                    'fields' => [
+                        [
+                            'path' => 'quality_evidence',
+                            'type' => 'repeater',
+                            'label' => '佐证卡片',
+                            'item_label' => '卡片',
+                            'title_key' => 'title',
+                            'fields' => [
+                                ['path' => 'icon', 'label' => '图标', 'type' => 'icon', 'help' => ''],
+                                ['path' => 'title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                                ['path' => 'text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
                             ],
                         ],
                     ],
@@ -309,6 +364,34 @@ function springapex_admin_screens(): array
                                 ['path' => 'text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
                             ],
                         ],
+                    ],
+                ],
+                [
+                    'title' => '生产流程',
+                    'desc' => '定制能力页中部从左到右的生产流程步骤带（目前只有这个页面显示它）。',
+                    'fields' => [
+                        [
+                            'path' => 'manufacturing_process',
+                            'type' => 'repeater',
+                            'label' => '流程步骤',
+                            'item_label' => '步骤',
+                            'title_key' => 'title',
+                            'fields' => [
+                                ['path' => 'icon', 'label' => '图标', 'type' => 'icon', 'help' => ''],
+                                ['path' => 'step', 'label' => '序号', 'type' => 'text', 'help' => '如 01、02，顺序显示。'],
+                                ['path' => 'title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                                ['path' => 'text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
+                                ['path' => 'image', 'label' => '配图', 'type' => 'image', 'help' => '横版实拍。'],
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'title' => '质量佐证图',
+                    'desc' => '定制能力页尾部的尺寸参考图，配合「发图纸或填尺寸」的说明展示。',
+                    'fields' => [
+                        ['path' => 'capabilities.verification.image', 'label' => '参考图', 'type' => 'image', 'help' => '弹簧尺寸标注示意图。'],
+                        ['path' => 'capabilities.verification.image_alt', 'label' => '图片说明', 'type' => 'text', 'help' => '给搜索引擎和读屏软件看的描述，请如实填写图里是什么。'],
                     ],
                 ],
             ],
@@ -591,6 +674,93 @@ function springapex_admin_screens(): array
                     'desc' => '客户在表单里选择的下拉选项，会原样出现在询盘通知邮件里。',
                     'fields' => [
                         ['path' => 'contact.inquiry_types', 'label' => '选项', 'type' => 'lines', 'help' => '一行一个，把最常见的放在最前面。'],
+                    ],
+                ],
+                [
+                    'title' => '全球联系网络',
+                    'desc' => '联系页下方的全球网络板块。地图上标记点的位置是版式坐标，不在这里改。',
+                    'fields' => [
+                        ['path' => 'contact_network.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => '全大写的一行小字。'],
+                        ['path' => 'contact_network.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'contact_network.facility_image', 'label' => '厂区图', 'type' => 'image', 'help' => '标题旁的厂区实景。'],
+                        ['path' => 'contact_network.map_image', 'label' => '世界地图底图', 'type' => 'image', 'help' => '标记点叠加在这张底图上。'],
+                        ['path' => 'contact_network.headquarters.title', 'label' => '总部简介标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'contact_network.headquarters.location', 'label' => '总部所在地', 'type' => 'text', 'help' => '留空则不显示这行。'],
+                        ['path' => 'contact_network.headquarters.text', 'label' => '总部简介正文', 'type' => 'textarea', 'help' => ''],
+                        [
+                            'path' => 'contact_network.facts',
+                            'type' => 'repeater',
+                            'label' => '关键数据',
+                            'item_label' => '数据',
+                            'title_key' => 'label',
+                            'fields' => [
+                                ['path' => 'icon', 'label' => '图标', 'type' => 'icon', 'help' => ''],
+                                ['path' => 'value', 'label' => '数值', 'type' => 'text', 'help' => ''],
+                                ['path' => 'label', 'label' => '名称', 'type' => 'text', 'help' => ''],
+                            ],
+                        ],
+                        [
+                            'path' => 'contact_network.regions',
+                            'type' => 'repeater',
+                            'label' => '区域',
+                            'item_label' => '区域',
+                            'title_key' => 'label',
+                            'fields' => [
+                                ['path' => 'label', 'label' => '区域名称', 'type' => 'text', 'help' => '标签页上显示，例如 Europe。'],
+                                ['path' => 'slug', 'label' => '网址标识', 'type' => 'text', 'help' => '小写英文加连字符，用于标签切换。'],
+                                [
+                                    'path' => 'locations',
+                                    'type' => 'repeater',
+                                    'label' => '联系点',
+                                    'item_label' => '联系点',
+                                    'title_key' => 'name',
+                                    'fields' => [
+                                        ['path' => 'name', 'label' => '国家/地区', 'type' => 'text', 'help' => ''],
+                                        ['path' => 'detail', 'label' => '补充说明', 'type' => 'text', 'help' => '名称下方的小字，可留空。'],
+                                        ['path' => 'company', 'label' => '公司名称', 'type' => 'text', 'help' => ''],
+                                        ['path' => 'phone', 'label' => '电话', 'type' => 'tel', 'help' => '含国家区号。'],
+                                        ['path' => 'email', 'label' => '邮箱', 'type' => 'email', 'help' => ''],
+                                        ['path' => 'address', 'label' => '地址', 'type' => 'textarea', 'help' => ''],
+                                        ['path' => 'website', 'label' => '网站', 'type' => 'url', 'help' => '完整网址，可留空。'],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+
+        'resources' => [
+            'label' => '资源下载',
+            'title' => '资源下载',
+            'intro' => '这里维护的是一组「资源指引」条目，目前显示在联系页的「图纸准备指引」（取前三条）和站内搜索结果中。注意：资源下载主页（/resources/）的手册列表目前是写死的，不在这里改。',
+            'preview' => '/contact/',
+            'sections' => [
+                [
+                    'title' => '手机端头图',
+                    'desc' => '资源下载主页在手机上显示的头图；电脑端头图与文案目前写死在模板里。',
+                    'fields' => [
+                        ['path' => 'resources.hero.mobile_image', 'label' => '手机端配图', 'type' => 'image', 'help' => '竖版。'],
+                    ],
+                ],
+                [
+                    'title' => '资源指引条目',
+                    'desc' => '联系页「图纸准备指引」取这里的前三条；搜索结果也会用到。',
+                    'fields' => [
+                        [
+                            'path' => 'resources.items',
+                            'type' => 'repeater',
+                            'label' => '指引',
+                            'item_label' => '指引',
+                            'title_key' => 'title',
+                            'fields' => [
+                                ['path' => 'type', 'label' => '类型标签', 'type' => 'text', 'help' => '例如 Quality Guide。'],
+                                ['path' => 'title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                                ['path' => 'summary', 'label' => '摘要', 'type' => 'textarea', 'help' => '一到两句话。'],
+                                ['path' => 'points', 'label' => '要点', 'type' => 'lines', 'help' => '一行一个要点。'],
+                            ],
+                        ],
                     ],
                 ],
             ],
