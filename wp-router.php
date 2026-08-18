@@ -17,7 +17,11 @@ $safe = $path !== '' && strpos($path, "\0") === false && !preg_match('#(^|/)\.\.
 // scripts may serve or execute files directly. Everything else falls through
 // to the front controller and 404s; wp-config.php stays unreachable.
 $servable = preg_match('#^/(wp-admin|wp-includes)(/|$)#', $path) === 1
-    || preg_match('#^/wp-content/(themes/springapex|uploads|plugins)/#', $path) === 1
+    || preg_match('#^/wp-content/(themes/springapex|uploads|uploads-webpc|plugins)/#', $path) === 1
+    // Converter for Media drops a pass-through loader at the wp-content root and
+    // probes it over HTTP; the built-in server has no rewrite engine, so we let
+    // this one file execute to satisfy the loader self-test during local dev.
+    || $path === '/wp-content/webpc-passthru.php'
     || preg_match('#^/(wp-login|wp-signup|wp-activate|wp-cron|wp-mail|wp-trackback|wp-links-opml|wp-comments-post|xmlrpc)\.php$#', $path) === 1;
 
 if ($safe && $servable) {
