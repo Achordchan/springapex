@@ -1522,32 +1522,6 @@
   position: static;
 }
 
-.sa-evidence__custom {
-  display: grid;
+.sa-evidence--custom .sa-compression-review__panel {
   margin-top: 42px;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 32px;
-  align-items: start;
-}
-
-.sa-evidence__diagram {
-  display: grid;
-  place-items: center;
-  padding: 28px;
-  border: 1px solid var(--sa-border);
-  border-radius: var(--sa-radius);
-  background: var(--sa-bg-soft);
-}
-
-.sa-evidence__diagram picture,
-.sa-evidence__diagram img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-@media (max-width: 960px) {
-  .sa-evidence__custom {
-    grid-template-columns: 1fr;
-  }
 }

@@ -1,12 +1,9 @@
 (function () {
   'use strict';
 
-  const root = document.querySelector('.sa-compression-detail');
-  if (!root) return;
-
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  function initHeroGallery() {
+  function initHeroGallery(root) {
     const gallery = root.querySelector('[data-compression-hero-gallery]');
     if (!gallery) return;
 
@@ -58,7 +55,7 @@
     });
   }
 
-  function initInquiryModes() {
+  function initInquiryModes(root) {
     const form = root.querySelector('[data-compression-inquiry]');
     if (!(form instanceof HTMLFormElement)) return;
 
@@ -193,6 +190,10 @@
     activate('drawing', false);
   }
 
-  initHeroGallery();
-  initInquiryModes();
+  // The inquiry form also lives outside the compression product page
+  // (capabilities), so initialize every instance instead of a single root.
+  Array.from(document.querySelectorAll('.sa-compression-detail, .sa-evidence--custom')).forEach((root) => {
+    initHeroGallery(root);
+    initInquiryModes(root);
+  });
 })();
