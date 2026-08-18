@@ -11,8 +11,16 @@ node_modules/
 /xmlrpc.php
 /wp-content/index.php
 /wp-content/debug.log
-/wp-content/plugins/
+# 插件默认不入库；仅放行随仓库一起部署的官方免费插件（GPL）。
+# 注意：代码入库 ≠ 自动启用，各站仍需在后台启用并跑一次插件设置页。
+/wp-content/plugins/*
+!/wp-content/plugins/webp-converter-for-media/
 /wp-content/uploads/
+# Converter for Media 运行时转换产物（转好的 webp/avif），随上传内容生成，不入库
+/wp-content/uploads-webpc/
+# 插件按各环境自动生成的送达脚本与重写规则，不入库（每站由插件设置页重建）
+/wp-content/webpc-passthru.php
+/wp-content/.htaccess
 /wp-content/languages/
 /wp-content/upgrade/
 /wp-content/themes/index.php
