@@ -321,4 +321,174 @@
       bindTitle(row);
     }
   });
+
+  /* Field search ---------------------------------------------------- */
+  // The overview searches every screen (results link out to each field's page);
+  // a sub-screen searches only its own page and jumps in place. Each box carries
+  // its own index inline and knows its scope (the screen key, empty = global).
+
+  function cssEscape(value) {
+    return (window.CSS && CSS.escape) ? CSS.escape(value) : value;
+  }
+
+  // Open and highlight the field for a path on the current page, if present.
+  function focusField(path) {
+    var target = document.querySelector('[data-sa-field-path="' + cssEscape(path) + '"]') ||
+      document.querySelector('[data-sa-repeater][data-path="' + cssEscape(path) + '"]');
+    if (!target) {
+      return false;
+    }
+    var card = target.closest('[data-sa-card]');
+    if (card && !card.open) {
+      card.open = true;
+    }
+    var rowBody = target.closest('.sa-row__body');
+    if (rowBody && rowBody.hidden) {
+      rowBody.hidden = false;
+      var rowToggle = rowBody.parentElement.querySelector('[data-sa-toggle]');
+      if (rowToggle) {
+        rowToggle.setAttribute('aria-expanded', 'true');
+      }
+    }
+    window.requestAnimationFrame(function () {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target.classList.add('is-search-focus');
+      setTimeout(function () {
+        target.classList.remove('is-search-focus');
+      }, 2600);
+    });
+    return true;
+  }
+
+  (function () {
+    var box = document.querySelector('[data-sa-search]');
+    var dataEl = box ? box.querySelector('[data-sa-search-data]') : null;
+    if (!box || !dataEl) {
+      return;
+    }
+
+    var index = [];
+    try {
+      index = JSON.parse(dataEl.textContent || '[]');
+    } catch (error) {
+      return;
+    }
+    var base = (window.SA_ADMIN_SEARCH && window.SA_ADMIN_SEARCH.base) || '';
+    var scope = box.getAttribute('data-sa-search-scope') || '';
+    var LIMIT = 40;
+
+    var input = box.querySelector('[data-sa-search-input]');
+    var clear = box.querySelector('[data-sa-search-clear]');
+    var hint = box.querySelector('[data-sa-search-hint]');
+    var results = box.querySelector('[data-sa-search-results]');
+    if (!input || !results) {
+      return;
+    }
+
+    // A result on this same page is located in place; one on another page is a
+    // real link. On a sub-screen every result is same-page (scope filters it).
+    function sameScreen(entry) {
+      return scope !== '' && entry.screen === scope;
+    }
+    function linkFor(entry) {
+      return base + encodeURIComponent(entry.screen) +
+        '&sa-focus=' + encodeURIComponent(entry.path) + '#' + entry.anchor;
+    }
+
+    function render(keyword) {
+      results.textContent = '';
+      if (keyword === '') {
+        results.hidden = true;
+        if (clear) { clear.hidden = true; }
+        if (hint) {
+          hint.textContent = scope === ''
+            ? '输入关键词，搜索所有页面的字段名、英文 key 或当前文字，点结果跳到对应页面。'
+            : '输入关键词，搜索本页的字段名、英文 key 或当前文字，点结果就地定位。';
+        }
+        return;
+      }
+      if (clear) { clear.hidden = false; }
+
+      var matches = index.filter(function (entry) {
+        return entry.text.indexOf(keyword) !== -1;
+      });
+      var shown = matches.slice(0, LIMIT);
+
+      shown.forEach(function (entry) {
+        var li = document.createElement('li');
+        li.className = 'sa-search__item';
+        var a = document.createElement('a');
+        a.className = 'sa-search__link';
+        a.href = linkFor(entry);
+        if (sameScreen(entry)) {
+          a.addEventListener('click', function (event) {
+            event.preventDefault();
+            focusField(entry.path);
+          });
+        }
+
+        var label = document.createElement('span');
+        label.className = 'sa-search__field';
+        label.textContent = entry.label;
+        a.appendChild(label);
+
+        var where = document.createElement('span');
+        where.className = 'sa-search__where';
+        // Within one screen the screen name is redundant; show the section only.
+        where.textContent = scope === '' ? (entry.screenLabel + ' › ' + entry.section) : entry.section;
+        a.appendChild(where);
+
+        if (entry.snippet) {
+          var snip = document.createElement('span');
+          snip.className = 'sa-search__snippet';
+          snip.textContent = entry.snippet;
+          a.appendChild(snip);
+        }
+
+        li.appendChild(a);
+        results.appendChild(li);
+      });
+
+      results.hidden = false;
+      if (hint) {
+        if (matches.length === 0) {
+          hint.textContent = '没有找到匹配的字段。';
+        } else if (matches.length > shown.length) {
+          hint.textContent = '找到 ' + matches.length + ' 个匹配，显示前 ' + shown.length + ' 个，继续输入可缩小范围。';
+        } else {
+          hint.textContent = '找到 ' + matches.length + ' 个匹配。';
+        }
+      }
+    }
+
+    input.addEventListener('input', function () {
+      render(input.value.trim().toLowerCase());
+    });
+    // Enter goes to the first result: locate in place, or navigate.
+    input.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        var first = results.querySelector('.sa-search__link');
+        if (first) {
+          event.preventDefault();
+          first.click();
+        }
+      }
+    });
+    if (clear) {
+      clear.addEventListener('click', function () {
+        input.value = '';
+        render('');
+        input.focus();
+      });
+    }
+    render('');
+  })();
+
+  // Arriving from an overview result: open and highlight the target field.
+  (function focusFromUrl() {
+    var match = location.search.match(/[?&]sa-focus=([^&#]*)/);
+    if (match) {
+      focusField(decodeURIComponent(match[1]));
+    }
+  })();
 })();

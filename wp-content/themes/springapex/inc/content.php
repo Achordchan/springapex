@@ -106,7 +106,7 @@ function springapex_content(): array
             'hero' => [
                 'title' => 'Products',
                 'subtitle' => 'Precision springs engineered for dependable performance.',
-                'primary_cta' => ['label' => 'Explore Product Range', 'href' => '#product-categories', 'icon' => 'arrow-right'],
+                'primary_cta' => ['label' => 'Explore Product Range', 'href' => '/products/#product-families', 'icon' => 'arrow-right'],
                 'image' => 'products-hero-v3.png',
                 'mobile_image' => 'products-hero-mobile-v1.png',
             ],

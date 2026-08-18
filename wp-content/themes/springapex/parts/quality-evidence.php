@@ -64,6 +64,7 @@ if (!$image) {
         <?php endif; ?>
         <input type="hidden" name="intent" value="drawing">
         <input type="hidden" name="form_context" value="product">
+        <input type="hidden" name="source" value="<?php echo esc_attr((string) get_queried_object_id()); ?>">
         <input type="hidden" name="inquiry_type" value="Upload a Drawing" data-inquiry-type>
         <input type="hidden" name="started_at" value="<?php echo esc_attr((string) time()); ?>" data-form-started-at>
         <input type="hidden" name="full_name" value="Capabilities inquiry">

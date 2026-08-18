@@ -17,6 +17,7 @@ if (!defined('ABSPATH')) {
 require_once __DIR__ . '/signposts.php';
 require_once __DIR__ . '/schema.php';
 require_once __DIR__ . '/render.php';
+require_once __DIR__ . '/search.php';
 require_once __DIR__ . '/sanitize.php';
 require_once __DIR__ . '/save.php';
 
@@ -54,6 +55,24 @@ function springapex_admin_menu(): void
             }
         );
     }
+}
+
+/**
+ * Hide native menus this site never uses, so the sidebar only shows content
+ * a service colleague actually edits. Runs late so the items exist first.
+ *
+ * - 文章 (native posts): all real content lives in spring_* CPTs; the only
+ *   template that touches native posts is the generic index.php fallback.
+ * - 评论: no post type registers `comments` support, so it is always empty.
+ *
+ * These only remove the menu items; the screens stay reachable by direct URL,
+ * and admin-only menus (外观/插件/用户/工具/设置) are left untouched.
+ */
+add_action('admin_menu', 'springapex_hide_unused_menus', 999);
+function springapex_hide_unused_menus(): void
+{
+    remove_menu_page('edit.php');
+    remove_menu_page('edit-comments.php');
 }
 
 add_action('admin_enqueue_scripts', 'springapex_admin_assets');
@@ -120,6 +139,8 @@ function springapex_admin_overview_page(): void
             </div>
             <a class="button sa-admin__preview" href="<?php echo esc_url(home_url('/')); ?>" target="_blank" rel="noopener">打开网站首页 ↗</a>
         </div>
+
+        <?php springapex_admin_render_search(); ?>
 
         <?php foreach ($groups as $group) : ?>
             <section class="sa-card">

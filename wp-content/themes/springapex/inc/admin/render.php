@@ -90,7 +90,7 @@ function springapex_admin_render_field(array $field, mixed $value, string $name_
     $label = (string) ($field['label'] ?? '');
     $help = (string) ($field['help'] ?? '');
     ?>
-    <div class="sa-field sa-field--<?php echo esc_attr($type); ?>">
+    <div class="sa-field sa-field--<?php echo esc_attr($type); ?>" data-sa-field-path="<?php echo esc_attr($name_path); ?>">
         <label class="sa-field__label" for="<?php echo esc_attr($id); ?>"><?php echo esc_html($label); ?></label>
         <div class="sa-field__control">
             <?php
@@ -121,11 +121,15 @@ function springapex_admin_render_field(array $field, mixed $value, string $name_
                     break;
 
                 case 'image':
-                    springapex_admin_render_image_field($id, $name, $value, springapex_admin_image_base($field));
+                    springapex_admin_render_image_field($id, $name, $value, springapex_admin_image_base($field), springapex_admin_image_dimension($name_path));
                     break;
 
                 case 'youtube':
                     springapex_admin_render_youtube_field($id, $name, (string) (is_scalar($value) ? $value : ''));
+                    break;
+
+                case 'route':
+                    springapex_admin_render_route_field($id, $name, (string) (is_scalar($value) ? $value : ''));
                     break;
 
                 default:
@@ -148,11 +152,14 @@ function springapex_admin_render_field(array $field, mixed $value, string $name_
     <?php
 }
 
-function springapex_admin_render_image_field(string $id, string $name, mixed $value, string $base = 'assets/images/'): void
+function springapex_admin_render_image_field(string $id, string $name, mixed $value, string $base = 'assets/images/', string $dimensions = ''): void
 {
     $url = springapex_admin_image_url($value, $base);
     $stored = springapex_admin_image_value($value);
     ?>
+    <?php if ($dimensions !== '') : ?>
+        <p class="sa-image__dims"><span class="sa-image__dims-tag">推荐尺寸</span><?php echo esc_html($dimensions); ?></p>
+    <?php endif; ?>
     <div class="sa-image" data-sa-image>
         <div class="sa-image__preview<?php echo $url === '' ? ' is-empty' : ''; ?>" data-sa-image-preview>
             <?php if ($url !== '') : ?>
@@ -185,6 +192,33 @@ function springapex_admin_render_youtube_field(string $id, string $name, string 
                target="_blank" rel="noopener">打开检查 ↗</a>
         <?php endif; ?>
     </div>
+    <?php
+}
+
+/**
+ * Route picker: a dropdown of real site destinations instead of a free-text
+ * path. An existing value that is no longer in the list is preserved as a
+ * locked "keep current" option so an edit elsewhere never silently drops it.
+ */
+function springapex_admin_render_route_field(string $id, string $name, string $value): void
+{
+    $groups = springapex_admin_route_options();
+    $known = in_array($value, springapex_admin_route_values(), true);
+    ?>
+    <select id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" class="sa-input sa-input--short sa-route">
+        <?php if ($value !== '' && !$known) : ?>
+            <option value="<?php echo esc_attr($value); ?>" selected>保留当前：<?php echo esc_html($value); ?></option>
+        <?php endif; ?>
+        <?php foreach ($groups as $group_label => $options) : ?>
+            <optgroup label="<?php echo esc_attr($group_label); ?>">
+                <?php foreach ($options as $opt_value => $opt_label) : ?>
+                    <option value="<?php echo esc_attr((string) $opt_value); ?>" <?php selected($value, (string) $opt_value); ?>>
+                        <?php echo esc_html($opt_label . '（' . (string) $opt_value . '）'); ?>
+                    </option>
+                <?php endforeach; ?>
+            </optgroup>
+        <?php endforeach; ?>
+    </select>
     <?php
 }
 
@@ -331,8 +365,8 @@ function springapex_admin_section_summary(array $section): string
     }
 
     if ($preview !== '') {
-        if (mb_strlen($preview) > 26) {
-            $preview = mb_substr($preview, 0, 26) . '…';
+        if (springapex_admin_strlen($preview) > 26) {
+            $preview = springapex_admin_substr($preview, 0, 26) . '…';
         }
         array_unshift($parts, $preview);
     }
@@ -373,6 +407,8 @@ function springapex_admin_render_screen(string $key): void
                 </a>
             <?php endif; ?>
         </div>
+
+        <?php springapex_admin_render_search($key); ?>
 
         <?php if ($show_jump) : ?>
             <nav class="sa-jump" aria-label="本页板块">

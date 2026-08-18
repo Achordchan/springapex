@@ -242,6 +242,22 @@ function springapex_admin_sanitize_field(
             }
             return ['accepted' => true, 'value' => $youtube_id];
 
+        case 'route':
+            $route = trim($value);
+            if ($route === '') {
+                return ['accepted' => true, 'value' => ''];
+            }
+            if (in_array($route, springapex_admin_route_values(), true)) {
+                return ['accepted' => true, 'value' => $route];
+            }
+            // Not in the list, but unchanged from what is stored: keep it, so a
+            // legacy custom path survives edits to other fields. Never accept a
+            // brand-new hand-entered path.
+            if (is_string($current) && $route === trim($current)) {
+                return ['accepted' => true, 'value' => $route];
+            }
+            return springapex_admin_reject($warnings, $label, '请从下拉里选择一个目的地，没有保存。');
+
         case 'lines':
             $lines = [];
             foreach (preg_split('/\R/u', $value) ?: [] as $line) {
