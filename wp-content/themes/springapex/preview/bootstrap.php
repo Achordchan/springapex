@@ -27,6 +27,12 @@ function esc_attr(mixed $text): string { return htmlspecialchars((string) $text,
 function esc_url(mixed $url): string { return htmlspecialchars((string) $url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
 function esc_textarea(mixed $text): string { return esc_html($text); }
 function wp_kses_post(mixed $text): string { return (string) $text; }
+function wp_json_encode(mixed $data, int $options = 0, int $depth = 512): string|false { return json_encode($data, $options, $depth); }
+// Turnstile is a live-WordPress feature; in the no-WP preview the widget cannot
+// verify anything, so the site key is rendered for representative markup and the
+// no-JS notice is suppressed (there is no secret configured here).
+function springapex_turnstile_site_key(): string { return '0x4AAAAAAEUKf1Ep7E9Fafsj'; }
+function springapex_turnstile_noscript(): string { return ''; }
 function __(string $text, string $domain = 'default'): string { return $text; }
 function esc_html__(string $text, string $domain = 'default'): string { return esc_html($text); }
 function esc_html_e(string $text, string $domain = 'default'): void { echo esc_html($text); }
@@ -439,5 +445,8 @@ function get_query_var(string $var, mixed $default = ''): mixed
     }
     return $default;
 }
+// No queried object in the no-WP preview; templates use this only to stamp a
+// source-page id on the inquiry form, which is irrelevant here.
+function get_queried_object_id(): int { return 0; }
 function status_header(int $code): void { http_response_code($code); }
 function apply_filters(string $hook, mixed $value, mixed ...$args): mixed { return $value; }
