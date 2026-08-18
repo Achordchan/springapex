@@ -142,8 +142,11 @@ function springapex_verify_turnstile(): bool|WP_Error
         return springapex_turnstile_error();
     }
 
+    // Fail-closed: every widget we render sets a data-action, so the verified
+    // action must be present and in the allowlist. An absent/empty action is
+    // treated as a mismatch and rejected.
     $action = isset($result['action']) && is_string($result['action']) ? $result['action'] : '';
-    if ($action !== '' && !in_array($action, springapex_turnstile_actions(), true)) {
+    if (!in_array($action, springapex_turnstile_actions(), true)) {
         return springapex_turnstile_error();
     }
 
