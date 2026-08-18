@@ -270,12 +270,6 @@ function springapex_content_enhancements(): array
             ['icon' => 'search', 'step' => '05', 'title' => 'Inspection & Validation', 'text' => 'Dimensions, load and application-critical characteristics are checked against the agreed control plan.', 'image' => 'manufacturing-videos/quality-inspection-v1.webp'],
             ['icon' => 'delivery', 'step' => '06', 'title' => 'Packing & Delivery', 'text' => 'Parts are protected, identified and prepared with the documentation required for shipment.', 'image' => 'manufacturing-videos/packaging-delivery-v1.webp'],
         ],
-        'quality_evidence' => [
-            ['icon' => 'form', 'title' => 'Dimensional Inspection', 'text' => 'Wire diameter, free length, diameters, pitch, angles and formed features.'],
-            ['icon' => 'spring', 'title' => 'Load Verification', 'text' => 'Load at height, torque or extension behavior checked to the product requirement.'],
-            ['icon' => 'search', 'title' => 'Performance Validation', 'text' => 'Fatigue, material and environmental tests can be planned where the application requires them.'],
-            ['icon' => 'check-shield', 'title' => 'Batch Documentation', 'text' => 'Inspection records, material documentation and traceability can be supplied by project agreement.'],
-        ],
         'product_selection' => [
             'title' => 'Choose by load direction.',
             'text' => 'Match force, space and service conditions to the right spring family.',
