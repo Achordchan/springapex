@@ -108,24 +108,32 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
             ];
         }
         ?>
+        <?php
+        // Static world-map image, reused as the no-JavaScript fallback and as the
+        // full replacement inside the no-WordPress preview (which does not load
+        // Leaflet or contact-map.js, so the interactive container cannot render).
+        $map_static_image = springapex_image((string) ($network['map_image'] ?? 'contact/contact-world-map-v1.png'), __('Global ApexSpring contact network map', 'springapex'), [
+            'width' => 1800,
+            'height' => 820,
+            'sizes' => '(max-width: 980px) 100vw, 68vw',
+            'loading' => 'eager',
+        ]);
+        ?>
         <div class="sa-contact-network__map" data-reveal="up">
-          <div
-            class="sa-contact-map"
-            data-sa-contact-map
-            data-points="<?php echo esc_attr((string) wp_json_encode($map_points)); ?>"
-            data-nav-label="<?php esc_attr_e('Get directions', 'springapex'); ?>"
-            role="application"
-            aria-label="<?php esc_attr_e('Interactive map of ApexSpring global contact locations', 'springapex'); ?>"
-          >
-            <noscript>
-              <?php echo springapex_image((string) ($network['map_image'] ?? 'contact/contact-world-map-v1.png'), __('Global ApexSpring contact network map', 'springapex'), [
-                  'width' => 1800,
-                  'height' => 820,
-                  'sizes' => '(max-width: 980px) 100vw, 68vw',
-                  'loading' => 'eager',
-              ]); ?>
-            </noscript>
-          </div>
+          <?php if (defined('SPRINGAPEX_PREVIEW')) : ?>
+            <?php echo $map_static_image; ?>
+          <?php else : ?>
+            <div
+              class="sa-contact-map"
+              data-sa-contact-map
+              data-points="<?php echo esc_attr((string) wp_json_encode($map_points)); ?>"
+              data-nav-label="<?php esc_attr_e('Get directions', 'springapex'); ?>"
+              role="application"
+              aria-label="<?php esc_attr_e('Interactive map of ApexSpring global contact locations', 'springapex'); ?>"
+            >
+              <noscript><?php echo $map_static_image; ?></noscript>
+            </div>
+          <?php endif; ?>
         </div>
 
         <?php if ($regions) : ?>
