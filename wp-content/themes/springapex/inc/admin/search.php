@@ -24,14 +24,26 @@ if (!defined('ABSPATH')) {
  */
 function springapex_admin_strlen(string $value): int
 {
-    return function_exists('mb_strlen') ? mb_strlen($value) : strlen($value);
+    if (function_exists('mb_strlen')) {
+        return mb_strlen($value);
+    }
+    // Count UTF-8 code points, not bytes, so length checks match how mb_* would
+    // measure Han text; fall back to bytes only if the string is not valid UTF-8.
+    $count = preg_match_all('/./us', $value);
+    return $count === false ? strlen($value) : $count;
 }
 
 function springapex_admin_substr(string $value, int $start, ?int $length = null): string
 {
-    return function_exists('mb_substr')
-        ? mb_substr($value, $start, $length)
-        : substr($value, $start, $length ?? PHP_INT_MAX);
+    if (function_exists('mb_substr')) {
+        return mb_substr($value, $start, $length);
+    }
+    // Slice on UTF-8 code-point boundaries so truncation never splits a
+    // multibyte character into invalid bytes (which WP escaping would drop).
+    if (preg_match_all('/./us', $value, $m)) {
+        return implode('', array_slice($m[0], $start, $length));
+    }
+    return substr($value, $start, $length ?? PHP_INT_MAX);
 }
 
 function springapex_admin_strtolower(string $value): string
