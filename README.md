@@ -9,35 +9,41 @@ ApexSpring 精密弹簧独立站的经典 WordPress 主题。运行栈为 PHP + 
 - WordPress 支持的 MySQL / MariaDB
 - 启用 JavaScript 的现代浏览器
 
-主题声明位于 `style.css`，主题入口位于 `functions.php`。
+主题声明位于 `wp-content/themes/springapex/style.css`，主题入口位于同目录的 `functions.php`。
 
 ## 目录结构
 
+项目根目录就是一个完整的 WordPress 站点；git 只跟踪主题代码和项目文档，WordPress 核心与本地上传数据通过 `.gitignore` 排除。
+
 ```text
-style.css                         主题声明
-functions.php                     加载主题模块
-front-page.php                    首页入口
-archive-spring_product.php        产品列表入口
-single-spring_product.php         产品详情入口
-archive-spring_solution.php       行业方案列表入口
-page-about.php                    About 页面入口
-page-capabilities.php             Capabilities 独立页面入口
-page-contact.php                  Contact 页面入口
-inc/
-  setup.php                       主题支持、资源加载、首图预加载
-  post-types.php                  产品、行业方案、询盘 CPT 与产品字段
-  seed.php                        主题启用后的非破坏性初始化
-  contact.php                     询盘保存、邮件、限流、文件上传
-  customizer.php                  公司联系信息设置
-  content.php                     默认内容与数据库内容适配
-  helpers.php                     路由、图片、图标、导航辅助
-templates/                        六个核心页面的业务模板
-parts/                            Header、Footer、CTA 等公共片段
-assets/css/                       foundation、components、pages、responsive
-assets/js/main.js                 菜单、滚动揭示、数字与产品页交互
-assets/images/                    主题静态图片
-assets/icons/iconoir/             本地图标与许可证
-preview/                          无 WordPress 时使用的只读 PHP 预览兼容层
+start.sh                          一键启动本地站点
+wp-content/themes/springapex/     主题目录（git 跟踪）
+  style.css                       主题声明
+  functions.php                   加载主题模块
+  front-page.php                  首页入口
+  archive-spring_product.php      产品列表入口
+  single-spring_product.php       产品详情入口
+  archive-spring_solution.php     行业方案列表入口
+  page-about.php                  About 页面入口
+  page-capabilities.php           Capabilities 独立页面入口
+  page-contact.php                Contact 页面入口
+  inc/
+    setup.php                     主题支持、资源加载、首图预加载
+    post-types.php                产品、行业方案、询盘 CPT 与产品字段
+    seed.php                      主题启用后的非破坏性初始化
+    contact.php                   询盘保存、邮件、限流、文件上传
+    customizer.php                公司联系信息设置
+    content.php                   默认内容与数据库内容适配
+    helpers.php                   路由、图片、图标、导航辅助
+  templates/                      六个核心页面的业务模板
+  parts/                          Header、Footer、CTA 等公共片段
+  assets/css/                     foundation、components、pages、responsive
+  assets/js/main.js               菜单、滚动揭示、数字与产品页交互
+  assets/images/                  主题静态图片
+  assets/icons/iconoir/           本地图标与许可证
+  preview/                        无 WordPress 时使用的只读 PHP 预览兼容层
+wp-content/uploads/               本地上传文件（gitignore）
+wp-admin/  wp-includes/  等       WordPress 核心与本地配置（gitignore）
 ```
 
 ## 本地运行
@@ -59,23 +65,19 @@ preview/                          无 WordPress 时使用的只读 PHP 预览兼
 
 服务在当前终端以前台方式运行，按 `Ctrl+C` 停止；不会创建 PID 文件、后台日志或 `end.sh`。
 
-WordPress 装在项目的**同级目录** `../超拓弹簧-wp`（不能装在项目内部，主题软链接会无限递归），主题以软链接接入，改代码刷新即生效。装在别处时用环境变量指定：
-
-```bash
-SPRINGAPEX_WP_DIR=/path/to/wordpress ./start.sh
-```
+项目根目录就是完整的 WordPress 安装，主题以真实目录放在 `wp-content/themes/springapex/`，改代码刷新即生效。WordPress 核心、`wp-config.php` 和上传数据只存在于本地，不进 git。
 
 换端口需要同时改数据库里的 `siteurl` 和 `home`，否则会一直跳回原端口：
 
 ```bash
-cd ../超拓弹簧-wp && wp option update siteurl http://127.0.0.1:9000 && wp option update home http://127.0.0.1:9000
+wp option update siteurl http://127.0.0.1:9000 && wp option update home http://127.0.0.1:9000
 ```
 
-`preview/` 目录里的无 WordPress 只读预览兼容层仍在仓库中（模板通过 `SPRINGAPEX_PREVIEW` 常量分支），但已经不再作为日常启动方式，也不再提供启动脚本。
+`wp-content/themes/springapex/preview/` 目录里的无 WordPress 只读预览兼容层仍在仓库中（模板通过 `SPRINGAPEX_PREVIEW` 常量分支），但已经不再作为日常启动方式，也不再提供启动脚本。
 
 ## 安装到 WordPress
 
-1. 将项目根目录中的主题运行文件（`style.css`、PHP 模板、`inc/`、`parts/`、`templates/`、`assets/`）复制到 `wp-content/themes/springapex`；不要复制 `node_modules/`、验收截图或证据目录。
+1. 将仓库中的 `wp-content/themes/springapex/` 目录整体复制到目标站点的 `wp-content/themes/`；不要复制项目根的 `node_modules/`、验收截图或证据目录。
 2. 在 WordPress 后台启用 **ApexSpring** 主题。
 3. 主题首次启用会补充缺失的 Home、About、Contact、Resources 页面，产品、行业方案和主导航；已有同 slug 内容不会被覆盖。后续主题升级只迁移仍存在的对象，不会重建管理员已删除或改名的默认内容。
 4. 在“设置 → 固定链接”保存一次，使 `/products/{slug}/`、产品归档和行业方案归档规则生效。
