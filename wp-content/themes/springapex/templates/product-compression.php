@@ -197,12 +197,13 @@ $documents = [
           <div class="sa-turnstile-widget">
             <div
               class="cf-turnstile"
-              data-sitekey="1x00000000000000000000AA"
+              data-sitekey="<?php echo esc_attr(springapex_turnstile_site_key()); ?>"
               data-size="flexible"
               data-theme="light"
               data-language="en"
-              data-action="contact-inquiry-demo"
+              data-action="product-inquiry"
             ></div>
+            <?php echo springapex_turnstile_noscript(); ?>
           </div>
           <p class="sa-compression-form__privacy"><?php esc_html_e('Your file and project details are used only to review this inquiry.', 'springapex'); ?></p>
           <p class="form-status" data-form-status role="status" aria-live="polite" hidden></p>

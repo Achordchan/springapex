@@ -137,11 +137,12 @@ function springapex_content_enhancements(): array
                 ['icon' => 'users', 'value' => '120+', 'label' => 'Employees'],
                 ['icon' => 'pen', 'value' => '28', 'label' => 'Engineering team'],
             ],
+            // lat / lng 是占位坐标，请在后台「网站内容 → 联系页 → 全球联系网络」按实际地点替换。
             'markers' => [
-                ['label' => 'North America · Mexico', 'left' => '21.1%', 'top' => '38.5%', 'label_side' => 'right', 'label_y' => '0px'],
-                ['label' => 'Europe · 7 partners', 'left' => '52.8%', 'top' => '24.5%', 'label_side' => 'right', 'label_y' => '0px'],
-                ['label' => 'Asia Pacific · India', 'left' => '67.8%', 'top' => '46.5%', 'label_side' => 'right', 'label_y' => '0px'],
-                ['label' => 'Asia Headquarters · Xuzhou', 'left' => '78.7%', 'top' => '36.6%', 'label_side' => 'left', 'label_y' => '0px', 'headquarters' => true],
+                ['label' => 'North America · Mexico', 'lat' => '31.3186', 'lng' => '-110.9458', 'address' => 'Nogales, Sonora, Mexico', 'label_side' => 'right', 'headquarters' => ''],
+                ['label' => 'Europe · 7 partners', 'lat' => '51.3402', 'lng' => '7.0436', 'address' => 'Velbert, Germany', 'label_side' => 'right', 'headquarters' => ''],
+                ['label' => 'Asia Pacific · India', 'lat' => '18.6602', 'lng' => '74.1985', 'address' => 'Talegaon Dhamdhere, Pune, India', 'label_side' => 'right', 'headquarters' => ''],
+                ['label' => 'Asia Headquarters · Xuzhou', 'lat' => '34.1560', 'lng' => '117.1060', 'address' => 'Tongshan District, Xuzhou, Jiangsu, China', 'label_side' => 'left', 'headquarters' => '1'],
             ],
             'regions' => [
                 [

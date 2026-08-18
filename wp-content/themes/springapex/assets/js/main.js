@@ -656,6 +656,16 @@
           submit.disabled = false;
           submit.removeAttribute('aria-busy');
         }
+        // Turnstile tokens are single-use; refresh the widget so a follow-up
+        // submission (after an error, or a second inquiry) gets a fresh token.
+        const captcha = form.querySelector('.cf-turnstile');
+        if (captcha && window.turnstile && typeof window.turnstile.reset === 'function') {
+          try {
+            window.turnstile.reset(captcha);
+          } catch (resetError) {
+            /* widget not ready yet — nothing to reset */
+          }
+        }
       }
       });
 

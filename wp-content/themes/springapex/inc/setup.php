@@ -190,6 +190,47 @@ add_action('wp_enqueue_scripts', static function (): void {
         ['strategy' => 'defer', 'in_footer' => true]
     );
 
+    // Cloudflare Turnstile auto-render script. Enqueued site-wide (not tied to
+    // the support widget, which is hidden on the contact and compression pages
+    // where the inquiry forms — and their widgets — actually live).
+    wp_enqueue_script(
+        'springapex-turnstile',
+        'https://challenges.cloudflare.com/turnstile/v0/api.js',
+        [],
+        null,
+        ['strategy' => 'defer', 'in_footer' => true]
+    );
+
+    // Interactive contact map: Leaflet + open tiles, only on the contact page.
+    if (springapex_current_route() === 'contact') {
+        wp_enqueue_style(
+            'springapex-leaflet',
+            SPRINGAPEX_URI . '/assets/vendor/leaflet/leaflet.css',
+            [],
+            '1.9.4'
+        );
+        wp_enqueue_style(
+            'springapex-contact-map',
+            SPRINGAPEX_URI . '/assets/css/contact-map.css',
+            ['springapex-leaflet', 'springapex-contact-network'],
+            SPRINGAPEX_VERSION
+        );
+        wp_enqueue_script(
+            'springapex-leaflet',
+            SPRINGAPEX_URI . '/assets/vendor/leaflet/leaflet.js',
+            [],
+            '1.9.4',
+            ['strategy' => 'defer', 'in_footer' => true]
+        );
+        wp_enqueue_script(
+            'springapex-contact-map',
+            SPRINGAPEX_URI . '/assets/js/contact-map.js',
+            ['springapex-leaflet'],
+            SPRINGAPEX_VERSION,
+            ['strategy' => 'defer', 'in_footer' => true]
+        );
+    }
+
     $brand = springapex_brand();
     wp_localize_script('springapex-main', 'ApexSpring', [
         'homeUrl' => home_url('/'),

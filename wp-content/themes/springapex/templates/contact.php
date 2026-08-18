@@ -31,7 +31,10 @@ $intent_types = [
 ];
 $selected_type = $intent_types[$intent] ?? '';
 $selected_type = in_array($selected_type, $types, true) ? $selected_type : 'Request a Quote';
-$project_details_open = $selected_type === 'Upload a Drawing';
+// Drawing-intent CTAs reveal the file-upload controls (but intentionally do NOT
+// auto-expand the optional "Add project details" accordion — a deliberate UX
+// choice so the form stays compact on arrival).
+$drawing_upload_open = $selected_type === 'Upload a Drawing';
 $status_value = $_GET['contact_status'] ?? '';
 $status_key = is_scalar($status_value) ? sanitize_key((string) $status_value) : '';
 $status = springapex_contact_status_message($status_key);
@@ -76,24 +79,64 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
           </div>
         </div>
 
+        <?php
+        // Build the interactive-map point list from the marker records. Only
+        // markers with a real numeric lat/lng make it onto the map; anything
+        // still holding a placeholder or blank coordinate is skipped so the map
+        // never drops a pin in the ocean.
+        $map_points = [];
+        foreach ($markers as $marker) {
+            if (!is_array($marker)) {
+                continue;
+            }
+            $lat_raw = (string) ($marker['lat'] ?? '');
+            $lng_raw = (string) ($marker['lng'] ?? '');
+            if (!is_numeric($lat_raw) || !is_numeric($lng_raw)) {
+                continue;
+            }
+            $lat = (float) $lat_raw;
+            $lng = (float) $lng_raw;
+            if ($lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+                continue;
+            }
+            $map_points[] = [
+                'label' => (string) ($marker['label'] ?? ''),
+                'address' => (string) ($marker['address'] ?? ''),
+                'lat' => $lat,
+                'lng' => $lng,
+                'side' => in_array(($marker['label_side'] ?? 'right'), ['left', 'right', 'top', 'bottom'], true)
+                    ? (string) $marker['label_side']
+                    : 'right',
+                'hq' => !empty($marker['headquarters']),
+            ];
+        }
+        ?>
+        <?php
+        // Static world-map image, reused as the no-JavaScript fallback and as the
+        // full replacement inside the no-WordPress preview (which does not load
+        // Leaflet or contact-map.js, so the interactive container cannot render).
+        $map_static_image = springapex_image((string) ($network['map_image'] ?? 'contact/contact-world-map-v1.png'), __('Global ApexSpring contact network map', 'springapex'), [
+            'width' => 1800,
+            'height' => 820,
+            'sizes' => '(max-width: 980px) 100vw, 68vw',
+            'loading' => 'eager',
+        ]);
+        ?>
         <div class="sa-contact-network__map" data-reveal="up">
-          <?php echo springapex_image((string) ($network['map_image'] ?? 'contact/contact-world-map-v1.png'), __('Global ApexSpring contact network map', 'springapex'), [
-              'width' => 1800,
-              'height' => 820,
-              'sizes' => '(max-width: 980px) 100vw, 68vw',
-              'loading' => 'eager',
-          ]); ?>
-          <?php foreach ($markers as $marker) : ?>
-            <span
-              class="sa-contact-network__marker is-label-<?php echo esc_attr(sanitize_key((string) ($marker['label_side'] ?? 'right'))); ?><?php echo !empty($marker['headquarters']) ? ' is-headquarters' : ''; ?>"
-              style="--marker-left: <?php echo esc_attr((string) ($marker['left'] ?? '50%')); ?>; --marker-top: <?php echo esc_attr((string) ($marker['top'] ?? '50%')); ?>; --marker-label-y: <?php echo esc_attr((string) ($marker['label_y'] ?? '0px')); ?>;"
-              title="<?php echo esc_attr((string) ($marker['label'] ?? '')); ?>"
-              aria-label="<?php echo esc_attr((string) ($marker['label'] ?? '')); ?>"
+          <?php if (defined('SPRINGAPEX_PREVIEW')) : ?>
+            <?php echo $map_static_image; ?>
+          <?php else : ?>
+            <div
+              class="sa-contact-map"
+              data-sa-contact-map
+              data-points="<?php echo esc_attr((string) wp_json_encode($map_points)); ?>"
+              data-nav-label="<?php esc_attr_e('Get directions', 'springapex'); ?>"
+              role="application"
+              aria-label="<?php esc_attr_e('Interactive map of ApexSpring global contact locations', 'springapex'); ?>"
             >
-              <span class="sa-contact-network__marker-dot"></span>
-              <span class="sa-contact-network__marker-label"><?php echo esc_html((string) ($marker['label'] ?? '')); ?></span>
-            </span>
-          <?php endforeach; ?>
+              <noscript><?php echo $map_static_image; ?></noscript>
+            </div>
+          <?php endif; ?>
         </div>
 
         <?php if ($regions) : ?>
@@ -226,7 +269,7 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
             </select>
           </label>
 
-          <div class="sa-contact-upload" data-drawing-upload<?php echo $project_details_open ? '' : ' hidden'; ?>>
+          <div class="sa-contact-upload" data-drawing-upload<?php echo $drawing_upload_open ? '' : ' hidden'; ?>>
             <?php get_template_part('parts/drawing-preparation-guide', null, [
                 'visible' => true,
             ]); ?>
@@ -237,7 +280,7 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
             </label>
           </div>
 
-          <details class="sa-contact-project-details"<?php echo $project_details_open ? ' open' : ''; ?>>
+          <details class="sa-contact-project-details">
             <summary>
               <span>
                 <strong><?php esc_html_e('Add project details', 'springapex'); ?></strong>
@@ -286,12 +329,13 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
           <div class="sa-turnstile-widget">
             <div
               class="cf-turnstile"
-              data-sitekey="1x00000000000000000000AA"
+              data-sitekey="<?php echo esc_attr(springapex_turnstile_site_key()); ?>"
               data-size="flexible"
               data-theme="light"
               data-language="en"
-              data-action="contact-inquiry-demo"
+              data-action="contact-inquiry"
             ></div>
+            <?php echo springapex_turnstile_noscript(); ?>
           </div>
           <p class="form-status<?php echo !empty($status['type']) ? ' is-' . esc_attr((string) $status['type']) : ''; ?>" data-form-status role="status" aria-live="polite" <?php echo $status ? '' : 'hidden'; ?>><?php echo $status ? esc_html((string) $status['message']) : ''; ?></p>
         </form>
