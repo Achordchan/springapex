@@ -61,9 +61,21 @@ $company_facts = $is_about ? array_slice((array) springapex_get('company.facts',
       <?php if (!$is_about) : ?>
         <dl class="sa-company-intro__facts">
           <?php foreach ((array) ($profile['highlights'] ?? []) as $highlight) : ?>
+            <?php
+            $highlight_value = (string) ($highlight['value'] ?? '');
+            $highlight_target = (int) (preg_replace('/[^0-9]/', '', $highlight_value) ?: '0');
+            $highlight_counts = preg_match('/[0-9]/', $highlight_value) === 1;
+            ?>
             <div>
               <dt><?php echo esc_html((string) ($highlight['label'] ?? '')); ?></dt>
-              <dd><?php echo esc_html((string) ($highlight['value'] ?? '')); ?></dd>
+              <?php if ($highlight_counts) : ?>
+                <dd>
+                  <span class="stat-value-visual" aria-hidden="true" data-count-target="<?php echo esc_attr((string) $highlight_target); ?>" data-count-display="<?php echo esc_attr($highlight_value); ?>"><?php echo esc_html($highlight_value); ?></span>
+                  <span class="sr-only"><?php echo esc_html($highlight_value); ?></span>
+                </dd>
+              <?php else : ?>
+                <dd><?php echo esc_html($highlight_value); ?></dd>
+              <?php endif; ?>
             </div>
           <?php endforeach; ?>
         </dl>
