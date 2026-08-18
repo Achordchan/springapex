@@ -61,7 +61,7 @@ wp-admin/  wp-includes/  等       WordPress 核心与本地配置（gitignore�
 | 后台 | `http://127.0.0.1:8899/wp-admin/` |
 | 网站内容 | `http://127.0.0.1:8899/wp-admin/admin.php?page=springapex-content` |
 
-本地管理员账号 `admin` / `springapex-dev`，只用于本机开发，上线要另建强密码账号。
+本地管理员账号 `achord` / `woshichen123`，只用于本机开发，上线要另建强密码账号。
 
 服务在当前终端以前台方式运行，按 `Ctrl+C` 停止；不会创建 PID 文件、后台日志或 `end.sh`。
 
