@@ -31,7 +31,10 @@ $intent_types = [
 ];
 $selected_type = $intent_types[$intent] ?? '';
 $selected_type = in_array($selected_type, $types, true) ? $selected_type : 'Request a Quote';
-$project_details_open = $selected_type === 'Upload a Drawing';
+// Drawing-intent CTAs reveal the file-upload controls (but intentionally do NOT
+// auto-expand the optional "Add project details" accordion — a deliberate UX
+// choice so the form stays compact on arrival).
+$drawing_upload_open = $selected_type === 'Upload a Drawing';
 $status_value = $_GET['contact_status'] ?? '';
 $status_key = is_scalar($status_value) ? sanitize_key((string) $status_value) : '';
 $status = springapex_contact_status_message($status_key);
@@ -266,7 +269,7 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
             </select>
           </label>
 
-          <div class="sa-contact-upload" data-drawing-upload<?php echo $project_details_open ? '' : ' hidden'; ?>>
+          <div class="sa-contact-upload" data-drawing-upload<?php echo $drawing_upload_open ? '' : ' hidden'; ?>>
             <?php get_template_part('parts/drawing-preparation-guide', null, [
                 'visible' => true,
             ]); ?>
