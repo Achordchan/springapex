@@ -853,6 +853,9 @@ add_action('restrict_manage_posts', static function (string $post_type): void {
     echo '</select>';
 
     global $wpdb;
+    $options = [];
+
+    // Pages we can resolve to a post: label them by title, filter by post ID.
     $source_ids = $wpdb->get_col($wpdb->prepare(
         "SELECT DISTINCT pm.meta_value FROM {$wpdb->postmeta} pm
          INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
@@ -861,25 +864,52 @@ add_action('restrict_manage_posts', static function (string $post_type): void {
         '_springapex_source_id',
         'spring_inquiry'
     ));
-    if (empty($source_ids)) {
-        return;
-    }
-
-    $selected_source = isset($_GET['sa_source_id']) ? absint($_GET['sa_source_id']) : 0;
-    echo '<label class="screen-reader-text" for="sa_source_id">按来源页面筛选</label>';
-    echo '<select name="sa_source_id" id="sa_source_id">';
-    echo '<option value="">全部来源页面</option>';
     foreach ($source_ids as $source_id) {
         $source_id = (int) $source_id;
         $title = get_the_title($source_id);
         if ($title === '') {
             continue;
         }
+        $options['id:' . $source_id] = $title;
+    }
+
+    // Site-wide widgets and CPT archive pages (e.g. /products/) submit without a
+    // usable post ID, so those inquiries store only _springapex_source_url. Offer
+    // the referring path as a filter option too, else they can never be selected.
+    $source_urls = $wpdb->get_col($wpdb->prepare(
+        "SELECT DISTINCT pm_url.meta_value FROM {$wpdb->postmeta} pm_url
+         INNER JOIN {$wpdb->posts} p ON p.ID = pm_url.post_id
+         LEFT JOIN {$wpdb->postmeta} pm_id ON pm_id.post_id = pm_url.post_id
+             AND pm_id.meta_key = %s
+         WHERE pm_url.meta_key = %s AND pm_url.meta_value <> ''
+           AND p.post_type = %s
+           AND (pm_id.meta_value IS NULL OR pm_id.meta_value = '' OR pm_id.meta_value = '0')",
+        '_springapex_source_id',
+        '_springapex_source_url',
+        'spring_inquiry'
+    ));
+    foreach ($source_urls as $url) {
+        $path = wp_parse_url((string) $url, PHP_URL_PATH) ?: (string) $url;
+        if ($path === '') {
+            continue;
+        }
+        $options['url:' . $path] = $path;
+    }
+
+    if (empty($options)) {
+        return;
+    }
+
+    $selected_source = isset($_GET['sa_source_id']) ? sanitize_text_field(wp_unslash($_GET['sa_source_id'])) : '';
+    echo '<label class="screen-reader-text" for="sa_source_id">按来源页面筛选</label>';
+    echo '<select name="sa_source_id" id="sa_source_id">';
+    echo '<option value="">全部来源页面</option>';
+    foreach ($options as $value => $label) {
         printf(
-            '<option value="%d"%s>%s</option>',
-            $source_id,
-            selected($selected_source, $source_id, false),
-            esc_html($title)
+            '<option value="%s"%s>%s</option>',
+            esc_attr($value),
+            selected($selected_source, $value, false),
+            esc_html($label)
         );
     }
     echo '</select>';
@@ -902,12 +932,27 @@ add_action('pre_get_posts', static function (WP_Query $query): void {
         ];
     }
 
-    $source_id = isset($_GET['sa_source_id']) ? absint($_GET['sa_source_id']) : 0;
-    if ($source_id > 0) {
-        $meta_query[] = [
-            'key' => '_springapex_source_id',
-            'value' => (string) $source_id,
-        ];
+    $source = isset($_GET['sa_source_id']) ? sanitize_text_field(wp_unslash($_GET['sa_source_id'])) : '';
+    if ($source !== '') {
+        if (str_starts_with($source, 'url:')) {
+            $path = substr($source, 4);
+            if ($path !== '') {
+                $meta_query[] = [
+                    'key' => '_springapex_source_url',
+                    'value' => $path,
+                    'compare' => 'LIKE',
+                ];
+            }
+        } else {
+            // "id:<n>" from the dropdown, or a bare numeric id for back-compat.
+            $source_id = str_starts_with($source, 'id:') ? absint(substr($source, 3)) : absint($source);
+            if ($source_id > 0) {
+                $meta_query[] = [
+                    'key' => '_springapex_source_id',
+                    'value' => (string) $source_id,
+                ];
+            }
+        }
     }
 
     if ($meta_query === []) {

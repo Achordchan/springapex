@@ -365,8 +365,8 @@ function springapex_admin_section_summary(array $section): string
     }
 
     if ($preview !== '') {
-        if (mb_strlen($preview) > 26) {
-            $preview = mb_substr($preview, 0, 26) . '…';
+        if (springapex_admin_strlen($preview) > 26) {
+            $preview = springapex_admin_substr($preview, 0, 26) . '…';
         }
         array_unshift($parts, $preview);
     }

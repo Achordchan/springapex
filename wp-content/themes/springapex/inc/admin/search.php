@@ -18,6 +18,28 @@ if (!defined('ABSPATH')) {
 }
 
 /**
+ * Multibyte helpers with single-byte fallbacks. The theme only requires PHP 8.0
+ * and mbstring is an optional extension, so opening 网站内容 must not fatal on a
+ * host without it — degrade to byte functions instead.
+ */
+function springapex_admin_strlen(string $value): int
+{
+    return function_exists('mb_strlen') ? mb_strlen($value) : strlen($value);
+}
+
+function springapex_admin_substr(string $value, int $start, ?int $length = null): string
+{
+    return function_exists('mb_substr')
+        ? mb_substr($value, $start, $length)
+        : substr($value, $start, $length ?? PHP_INT_MAX);
+}
+
+function springapex_admin_strtolower(string $value): string
+{
+    return function_exists('mb_strtolower') ? mb_strtolower($value) : strtolower($value);
+}
+
+/**
  * Flatten any stored value (scalar, list, or nested repeater rows) into one
  * searchable string, so searching the content — not just the label — works.
  */
@@ -83,11 +105,11 @@ function springapex_admin_search_index(?string $only_screen = null): array
 
                 $content = springapex_admin_search_stringify(springapex_get($path));
                 $snippet = $content;
-                if (mb_strlen($snippet) > 90) {
-                    $snippet = mb_substr($snippet, 0, 90) . '…';
+                if (springapex_admin_strlen($snippet) > 90) {
+                    $snippet = springapex_admin_substr($snippet, 0, 90) . '…';
                 }
 
-                $haystack = mb_strtolower(trim(
+                $haystack = springapex_admin_strtolower(trim(
                     $label . ' ' . $path . ' ' . $help . ' '
                     . $section_title . ' ' . $screen_label . ' '
                     . $sub_labels . ' ' . $content
