@@ -879,7 +879,7 @@ function springapex_admin_route_options(): array
             '/contact/?intent=drawing' => '联系页 · 打开上传图纸',
         ],
         '页面内锚点' => [
-            '#product-categories' => '产品页 · 跳到产品分类区块',
+            '/products/#product-families' => '产品页 · 跳到产品分类区块',
         ],
     ];
 }

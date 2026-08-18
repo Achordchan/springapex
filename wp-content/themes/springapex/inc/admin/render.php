@@ -206,7 +206,6 @@ function springapex_admin_render_route_field(string $id, string $name, string $v
     $known = in_array($value, springapex_admin_route_values(), true);
     ?>
     <select id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" class="sa-input sa-input--short sa-route">
-        <option value="">（留空 · 不跳转）</option>
         <?php if ($value !== '' && !$known) : ?>
             <option value="<?php echo esc_attr($value); ?>" selected>保留当前：<?php echo esc_html($value); ?></option>
         <?php endif; ?>
