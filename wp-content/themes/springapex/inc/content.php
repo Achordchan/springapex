@@ -327,14 +327,6 @@ function springapex_content(): array
             'verification' => [
                 'image' => 'product-detail/compression-dimension-guide-v2.png',
                 'image_alt' => 'Spring dimension reference diagram with wire diameter, outer diameter and free length callouts',
-                'specs' => [
-                    ['label' => 'Wire Diameter', 'value' => '0.1 – 80 mm'],
-                    ['label' => 'Outer Diameter', 'value' => '1 – 150 mm'],
-                    ['label' => 'Free Length', 'value' => '2 – 600 mm'],
-                    ['label' => 'Material', 'value' => 'Music Wire, Stainless Steel, Alloy & Carbon Steel'],
-                    ['label' => 'Surface Treatment', 'value' => 'Zinc Plating, Passivation, Phosphate, Shot Peening'],
-                    ['label' => 'Ends', 'value' => 'Closed, Closed & Ground, Plain'],
-                ],
             ],
         ],
         'manufacturing_videos' => [

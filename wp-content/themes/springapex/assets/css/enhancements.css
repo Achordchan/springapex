@@ -1546,10 +1546,6 @@
   height: auto;
 }
 
-.sa-evidence__upload {
-  margin-top: 20px;
-}
-
 @media (max-width: 960px) {
   .sa-evidence__custom {
     grid-template-columns: 1fr;

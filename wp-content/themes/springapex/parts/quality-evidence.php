@@ -4,9 +4,12 @@ if (!defined('ABSPATH')) {
 }
 
 $verification = springapex_get('capabilities.verification', []);
-$specs = is_array($verification['specs'] ?? null) ? $verification['specs'] : [];
+$image = (string) ($verification['image'] ?? '');
 $title = (string) ($args['title'] ?? __('Verification matched to your drawing and application.', 'springapex'));
-if (!$specs) {
+$form_action = defined('SPRINGAPEX_PREVIEW')
+    ? springapex_url('/contact/')
+    : admin_url('admin-post.php');
+if (!$image) {
     return;
 }
 ?>
@@ -17,33 +20,81 @@ if (!$specs) {
         <p class="section-kicker"><?php esc_html_e('QUALITY EVIDENCE', 'springapex'); ?></p>
         <h2><?php echo esc_html($title); ?></h2>
       </div>
-      <p><?php esc_html_e('Dimensions, materials and verification scope follow your drawing. The ranges below show what can be customized for each application.', 'springapex'); ?></p>
+      <p><?php esc_html_e('Send a drawing or enter the dimensions you know — engineering confirms geometry, materials and verification scope before quotation.', 'springapex'); ?></p>
     </div>
     <div class="sa-evidence__custom">
       <figure class="sa-evidence__diagram" data-reveal="up">
-        <?php echo springapex_image((string) ($verification['image'] ?? ''), (string) ($verification['image_alt'] ?? __('Spring dimension reference diagram', 'springapex')), [
+        <?php echo springapex_image($image, (string) ($verification['image_alt'] ?? __('Spring dimension reference diagram', 'springapex')), [
             'width' => 960,
             'height' => 960,
             'sizes' => '(max-width: 960px) 100vw, 540px',
         ]); ?>
       </figure>
       <div class="sa-evidence__data" data-reveal="up">
-        <div class="spec-table-wrap">
-          <table class="spec-table">
-            <tbody>
-              <?php foreach ($specs as $row) : ?>
-                <tr>
-                  <th scope="row"><?php echo esc_html((string) $row['label']); ?></th>
-                  <td><?php echo esc_html((string) $row['value']); ?></td>
-                </tr>
-              <?php endforeach; ?>
-            </tbody>
-          </table>
-        </div>
-        <a class="btn btn-primary sa-evidence__upload" href="<?php echo esc_url(springapex_url('/contact/?intent=drawing')); ?>">
-          <?php echo springapex_icon('upload', 'icon icon-sm'); ?>
-          <?php esc_html_e('Upload a PDF Drawing', 'springapex'); ?>
-        </a>
+        <form class="sa-compression-form" data-contact-form data-compression-inquiry method="post" action="<?php echo esc_url($form_action); ?>" enctype="multipart/form-data" novalidate>
+          <input type="hidden" name="action" value="springapex_contact">
+          <?php if (defined('SPRINGAPEX_PREVIEW')) : ?>
+            <input type="hidden" name="springapex_contact_nonce" value="">
+          <?php else : ?>
+            <?php wp_nonce_field('springapex_contact', 'springapex_contact_nonce', false); ?>
+          <?php endif; ?>
+          <input type="hidden" name="intent" value="drawing">
+          <input type="hidden" name="form_context" value="product">
+          <input type="hidden" name="inquiry_type" value="Upload a Drawing" data-inquiry-type>
+          <input type="hidden" name="started_at" value="<?php echo esc_attr((string) time()); ?>" data-form-started-at>
+          <input type="hidden" name="full_name" value="Capabilities inquiry">
+          <label class="honeypot" aria-hidden="true">Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+
+          <div class="sa-compression-form__modes" role="tablist" aria-label="<?php esc_attr_e('How to send requirements', 'springapex'); ?>">
+            <button type="button" class="is-active" role="tab" aria-selected="true" aria-controls="capability-drawing-panel" data-compression-inquiry-mode="drawing"><?php esc_html_e('Upload a Drawing', 'springapex'); ?></button>
+            <button type="button" role="tab" aria-selected="false" aria-controls="capability-dimensions-panel" data-compression-inquiry-mode="dimensions"><?php esc_html_e('Enter Dimensions Manually', 'springapex'); ?></button>
+          </div>
+
+          <div class="sa-compression-form__drawing" id="capability-drawing-panel" role="tabpanel" data-compression-drawing-panel>
+            <h3><?php esc_html_e('Upload a technical drawing', 'springapex'); ?></h3>
+            <p><?php esc_html_e('Dimensions are optional when a drawing is provided.', 'springapex'); ?></p>
+            <label class="sa-compression-dropzone" data-compression-dropzone>
+              <div class="sa-compression-dropzone__content">
+                <?php echo springapex_icon('upload', 'icon'); ?>
+                <strong><?php esc_html_e('Drag and drop your files here', 'springapex'); ?></strong>
+                <span><?php esc_html_e('or choose files', 'springapex'); ?></span>
+                <small><?php esc_html_e('Accepted files: DWG, DXF, STEP, PDF, JPG or PNG (max 10 files, 10 MB each)', 'springapex'); ?></small>
+              </div>
+              <ul class="sa-compression-dropzone__files" data-compression-file-list hidden></ul>
+              <input type="file" name="drawing" accept=".pdf,.doc,.docx,.dwg,.dxf,.step,.stp,.iges,.igs,.jpg,.jpeg,.png" multiple data-compression-file-input>
+            </label>
+          </div>
+
+          <div class="sa-compression-form__dimensions" id="capability-dimensions-panel" role="tabpanel" data-compression-dimensions-panel hidden>
+            <h3><?php esc_html_e('Enter the dimensions you know', 'springapex'); ?></h3>
+            <p><?php esc_html_e('All dimensions are optional; engineering will confirm any missing values.', 'springapex'); ?></p>
+            <div class="sa-compression-form__row">
+              <label class="field"><span><?php esc_html_e('Wire diameter (d)', 'springapex'); ?></span><input type="text" name="wire_diameter" inputmode="decimal" maxlength="80" placeholder="e.g. 1.2 mm"></label>
+              <label class="field"><span><?php esc_html_e('Outside diameter (D₀)', 'springapex'); ?></span><input type="text" name="outside_diameter" inputmode="decimal" maxlength="80" placeholder="e.g. 12 mm"></label>
+            </div>
+            <label class="field"><span><?php esc_html_e('Free length (L₀)', 'springapex'); ?></span><input type="text" name="free_length" inputmode="decimal" maxlength="80" placeholder="e.g. 45 mm"></label>
+          </div>
+
+          <div class="sa-compression-form__row">
+            <label class="field"><span><?php esc_html_e('Quantity', 'springapex'); ?></span><input type="text" name="quantity" inputmode="numeric" maxlength="80" placeholder="e.g. 5,000 pcs"></label>
+            <label class="field"><span><?php esc_html_e('Material', 'springapex'); ?></span><select name="material"><option value=""><?php esc_html_e('Select material', 'springapex'); ?></option><option>Music Wire</option><option>Stainless Steel</option><option>Carbon Steel</option><option>Alloy or special material</option><option>Need engineering recommendation</option></select></label>
+          </div>
+          <label class="field"><span><?php esc_html_e('Other requirements', 'springapex'); ?></span><textarea name="message" rows="4" maxlength="5000" placeholder="Coating, load, end type, environment, tolerance, testing, or any additional notes."></textarea></label>
+          <label class="field"><span><?php esc_html_e('Work Email', 'springapex'); ?> *</span><input type="email" name="email" maxlength="190" autocomplete="email" placeholder="name@company.com" required></label>
+          <button class="btn btn-primary btn-block" type="submit" data-submit-button><?php esc_html_e('Send for Engineering Review', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></button>
+          <div class="sa-turnstile-widget">
+            <div
+              class="cf-turnstile"
+              data-sitekey="1x00000000000000000000AA"
+              data-size="flexible"
+              data-theme="light"
+              data-language="en"
+              data-action="contact-inquiry-demo"
+            ></div>
+          </div>
+          <p class="sa-compression-form__privacy"><?php esc_html_e('Your file and project details are used only to review this inquiry.', 'springapex'); ?></p>
+          <p class="form-status" data-form-status role="status" aria-live="polite" hidden></p>
+        </form>
       </div>
     </div>
   </div>
