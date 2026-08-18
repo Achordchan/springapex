@@ -156,6 +156,40 @@ function springapex_register_post_types(): void
 
 add_action('init', 'springapex_register_post_types');
 
+/**
+ * Structured content types (product / solution / case) render into a fixed theme
+ * layout, so their body only needs plain rich text and images — not the full
+ * Gutenberg block palette. Curating the inserter to a short, relevant set removes
+ * the "wall of modules" that makes adding an entry confusing, while the structured
+ * fields live in the meta box below.
+ *
+ * This only limits what can be INSERTED; any block already in existing content
+ * keeps rendering and stays editable. News keeps the full editor (it is a blog).
+ *
+ * @param bool|string[] $allowed
+ * @return bool|string[]
+ */
+function springapex_curated_block_types(mixed $allowed, WP_Block_Editor_Context $context): mixed
+{
+    $post = $context->post ?? null;
+    if (!($post instanceof WP_Post)) {
+        return $allowed;
+    }
+    if (!in_array($post->post_type, ['spring_product', 'spring_solution', 'spring_case'], true)) {
+        return $allowed;
+    }
+
+    return [
+        'core/paragraph',
+        'core/heading',
+        'core/list',
+        'core/list-item',
+        'core/image',
+        'core/quote',
+    ];
+}
+add_filter('allowed_block_types_all', 'springapex_curated_block_types', 10, 2);
+
 function springapex_inquiry_primitive_capabilities(): array
 {
     return [
