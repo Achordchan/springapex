@@ -653,12 +653,12 @@ function springapex_admin_screens(): array
                 ],
                 [
                     'title' => '全球联系网络',
-                    'desc' => '联系页下方的全球网络板块。地图上标记点的位置是版式坐标，不在这里改。',
+                    'desc' => '联系页下方的全球网络板块。地图现在是可缩放拖动的真实地图，标记点按下方填写的经纬度定位。',
                     'fields' => [
                         ['path' => 'contact_network.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => '全大写的一行小字。'],
                         ['path' => 'contact_network.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
                         ['path' => 'contact_network.facility_image', 'label' => '厂区图', 'type' => 'image', 'help' => '标题旁的厂区实景。'],
-                        ['path' => 'contact_network.map_image', 'label' => '世界地图底图', 'type' => 'image', 'help' => '标记点叠加在这张底图上。'],
+                        ['path' => 'contact_network.map_image', 'label' => '地图占位图（无脚本兜底）', 'type' => 'image', 'help' => '仅当访客浏览器禁用 JavaScript 时，用这张静态图代替可交互地图。'],
                         ['path' => 'contact_network.headquarters.title', 'label' => '总部简介标题', 'type' => 'text', 'help' => ''],
                         ['path' => 'contact_network.headquarters.location', 'label' => '总部所在地', 'type' => 'text', 'help' => '留空则不显示这行。'],
                         ['path' => 'contact_network.headquarters.text', 'label' => '总部简介正文', 'type' => 'textarea', 'help' => ''],
@@ -672,6 +672,21 @@ function springapex_admin_screens(): array
                                 ['path' => 'icon', 'label' => '图标', 'type' => 'icon', 'help' => ''],
                                 ['path' => 'value', 'label' => '数值', 'type' => 'text', 'help' => ''],
                                 ['path' => 'label', 'label' => '名称', 'type' => 'text', 'help' => ''],
+                            ],
+                        ],
+                        [
+                            'path' => 'contact_network.markers',
+                            'type' => 'repeater',
+                            'label' => '地图标记点',
+                            'item_label' => '标记点',
+                            'title_key' => 'label',
+                            'fields' => [
+                                ['path' => 'label', 'label' => '标签文字', 'type' => 'text', 'help' => '地图上点旁边常显的文字，例如 Europe · 7 partners。'],
+                                ['path' => 'lat', 'label' => '纬度 Lat', 'type' => 'text', 'help' => '十进制，例如 34.1560；南纬为负数。在 Google/高德地图右键“这是哪里”可取。'],
+                                ['path' => 'lng', 'label' => '经度 Lng', 'type' => 'text', 'help' => '十进制，例如 117.1060；西经为负数。留空或非数字则该点不显示。'],
+                                ['path' => 'address', 'label' => '弹窗地址', 'type' => 'text', 'help' => '点击标记后弹窗里显示的一行地址，可留空。'],
+                                ['path' => 'label_side', 'label' => '标签方向', 'type' => 'text', 'help' => 'left / right / top / bottom，控制标签在点的哪一侧，留空为 right。'],
+                                ['path' => 'headquarters', 'label' => '是否总部', 'type' => 'text', 'help' => '总部点填 1（显示更大更深的点），其他留空。'],
                             ],
                         ],
                         [

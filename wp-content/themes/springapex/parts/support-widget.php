@@ -68,10 +68,10 @@ $form_action = defined('SPRINGAPEX_PREVIEW')
         <div class="support-turnstile-widget">
           <div
             class="cf-turnstile"
-            data-sitekey="1x00000000000000000000AA"
+            data-sitekey="<?php echo esc_attr(springapex_turnstile_site_key()); ?>"
             data-theme="light"
             data-language="en"
-            data-action="quick-inquiry-demo"
+            data-action="quick-inquiry"
           ></div>
         </div>
         <p class="form-status support-form-status" data-form-status role="status" aria-live="polite" hidden></p>
@@ -134,4 +134,3 @@ $form_action = defined('SPRINGAPEX_PREVIEW')
     <?php endif; ?>
   </div>
 </aside>
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>

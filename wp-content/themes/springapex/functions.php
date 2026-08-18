@@ -24,6 +24,7 @@ require_once SPRINGAPEX_DIR . '/inc/solution-meta.php';
 require_once SPRINGAPEX_DIR . '/inc/news-meta.php';
 require_once SPRINGAPEX_DIR . '/inc/customizer.php';
 require_once SPRINGAPEX_DIR . '/inc/contact.php';
+require_once SPRINGAPEX_DIR . '/inc/turnstile.php';
 require_once SPRINGAPEX_DIR . '/inc/seed.php';
 require_once SPRINGAPEX_DIR . '/inc/setup.php';
 

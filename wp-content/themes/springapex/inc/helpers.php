@@ -358,6 +358,10 @@ function springapex_contact_status_message(string $status): array
             'type' => 'error',
             'message' => __('Too many requests were submitted. Please wait before trying again.', 'springapex'),
         ],
+        'captcha' => [
+            'type' => 'error',
+            'message' => __('The anti-spam check could not be verified. Please try again.', 'springapex'),
+        ],
         'upload' => [
             'type' => 'error',
             'message' => __('The supporting file could not be accepted. Check its format and size, then try again.', 'springapex'),

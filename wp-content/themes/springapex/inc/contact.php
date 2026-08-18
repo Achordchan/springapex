@@ -52,6 +52,7 @@ function springapex_handle_contact_post(): void
     if (is_wp_error($result)) {
         $status = match ($result->get_error_code()) {
             'springapex_invalid' => 'invalid',
+            'springapex_turnstile' => 'captcha',
             'springapex_rate_limit' => 'rate',
             'springapex_upload_protection' => 'upload_unavailable',
             'springapex_upload', 'springapex_upload_size', 'springapex_upload_type', 'springapex_upload_storage' => 'upload',
@@ -76,6 +77,11 @@ function springapex_process_contact_submission(): array|WP_Error
     $started_at = absint(springapex_request_scalar($_POST['started_at'] ?? '0'));
     if ($honeypot !== '' || $started_at < 1 || (time() - $started_at) < 2) {
         return springapex_contact_error('springapex_invalid', __('Unable to submit this request.', 'springapex'), 400);
+    }
+
+    $turnstile = springapex_verify_turnstile();
+    if (is_wp_error($turnstile)) {
+        return $turnstile;
     }
 
     $name = springapex_limited_text($_POST['full_name'] ?? '', 120);
