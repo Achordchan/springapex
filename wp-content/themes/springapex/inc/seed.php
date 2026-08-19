@@ -147,8 +147,9 @@ function springapex_seed_site_locked(): bool
     $privacy_id = springapex_seed_page('Privacy Policy', 'privacy', '', 'page-privacy.php', true);
     $terms_id = springapex_seed_page('Terms of Use', 'terms', '', 'page-terms.php', true);
     $sitemap_id = springapex_seed_page('Sitemap', 'sitemap', '', 'page-sitemap.php', true);
-    // 表单提交成功后的落地页（域名/success），便于统计转化。
-    $success_page_id = springapex_seed_page('Thank You', 'success', '', 'page-success.php', true);
+    // 注意：/success 落地页不 seed WP 页面，改由主题 template_redirect 路由渲染
+    // （见 inc/setup.php），避免撞运营者已有的 success 页、也免去部署时的建页/
+    // 时序依赖。模板内容写死、不吃 the_content，无页面也不损失可编辑性。
 
     $front_page_ready = true;
     if (is_int($home_id) && $home_id > 0 && (int) get_option('page_on_front') === 0) {
@@ -168,8 +169,7 @@ function springapex_seed_site_locked(): bool
         $resources_id !== 0 &&
         $privacy_id !== 0 &&
         $terms_id !== 0 &&
-        $sitemap_id !== 0 &&
-        $success_page_id !== 0;
+        $sitemap_id !== 0;
     $success = springapex_seed_products($allow_create) && $success;
     $success = springapex_seed_solutions($allow_create) && $success;
     $success = springapex_seed_news(true) && $success;
@@ -714,6 +714,15 @@ function springapex_seed_primary_menu_items(int $menu_id, bool $allow_create = t
             }
             // 保留原有排序：wp_update_nav_menu_item 不带 position 会把该项重排到末尾。
             $args['menu-item-position'] = (int) $match->menu_order;
+            // 携带原有展示属性：wp_update_nav_menu_item 对未传字段填空默认，
+            // 否则会清掉运营者给该项加的 CSS class / title 属性 / XFN / 描述 / target。
+            $args['menu-item-attr-title'] = (string) $match->attr_title;
+            $args['menu-item-target'] = (string) $match->target;
+            $args['menu-item-classes'] = is_array($match->classes)
+                ? implode(' ', $match->classes)
+                : (string) $match->classes;
+            $args['menu-item-xfn'] = (string) $match->xfn;
+            $args['menu-item-description'] = (string) $match->description;
             $updated = wp_update_nav_menu_item($menu_id, (int) $match->ID, $args);
             if (is_wp_error($updated) || (int) $updated <= 0) {
                 return false;

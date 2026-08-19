@@ -244,11 +244,11 @@ add_action('wp_enqueue_scripts', static function (): void {
     ]);
 });
 
-// Fallback so /success/ renders even before the seeded page exists — e.g. the
-// window right after a file-sync deploy, before an admin has triggered the
-// version-gated reseed. Without it, non-widget form submissions would redirect
-// to a 404 during that window. Once the page is seeded, is_404() is false here
-// and the normal page-success.php template renders instead.
+// /success is served by the theme, not a seeded WP page — so it works the
+// moment the code is deployed (no seed/flush timing) and never adopts or
+// clobbers an operator's own page at that slug. If such a page exists, WP
+// resolves it (is_404() false) and it renders instead; otherwise this handler
+// renders the thank-you template for the form-success redirect target.
 add_action('template_redirect', static function (): void {
     if (is_admin() || !is_404()) {
         return;
