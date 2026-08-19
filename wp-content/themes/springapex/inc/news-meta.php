@@ -187,9 +187,16 @@ function springapex_news_parse_date_label(string $label): array
         return $time !== false ? gmdate('Y-m-d', $time) : '';
     };
 
-    // June 30 – July 3, 2024（跨月）
+    // June 30 – July 3, 2024（跨月）；开始日若晚于结束日，则为跨年范围。
     if (preg_match('/^(\p{L}+ \d{1,2})\s*[–-]\s*(\p{L}+ \d{1,2}),\s*(\d{4})$/u', $label, $m)) {
-        return [$to_day($m[1] . ', ' . $m[3]), $to_day($m[2] . ', ' . $m[3])];
+        $end = $to_day($m[2] . ', ' . $m[3]);
+        $start = $to_day($m[1] . ', ' . $m[3]);
+        // 显示文字只在末尾保留结束年份；例如 December 31 – January 2, 2027
+        // 的开始年份应回推为 2026。
+        if ($start !== '' && $end !== '' && $start > $end) {
+            $start = $to_day($m[1] . ', ' . ((int) $m[3] - 1));
+        }
+        return [$start, $end];
     }
     // June 17–20, 2024（同月省略写法）
     if (preg_match('/^(\p{L}+) (\d{1,2})\s*[–-]\s*(\d{1,2}),\s*(\d{4})$/u', $label, $m)) {
