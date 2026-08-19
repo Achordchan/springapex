@@ -60,69 +60,69 @@ function springapex_render_form_settings_page(): void
         } else {
             set_theme_mod('springapex_inquiry_email', $recipient);
 
-            update_option('springapex_turnstile_site_key', sanitize_text_field((string) wp_unslash($_POST['springapex_turnstile_site_key'] ?? '')), false);
-            update_option('springapex_turnstile_secret', sanitize_text_field((string) wp_unslash($_POST['springapex_turnstile_secret'] ?? '')), false);
+        update_option('springapex_turnstile_site_key', sanitize_text_field((string) wp_unslash($_POST['springapex_turnstile_site_key'] ?? '')), false);
+        update_option('springapex_turnstile_secret', sanitize_text_field((string) wp_unslash($_POST['springapex_turnstile_secret'] ?? '')), false);
 
-            // 三表单 schema：把提交的字段卡片数组规范化后整体入库。
-            $types = springapex_form_field_types();
-            $defaults = springapex_form_schema_defaults();
-            $system_field_ids = springapex_form_system_fields();
-            $submitted = isset($_POST['schema']) && is_array($_POST['schema']) ? wp_unslash($_POST['schema']) : [];
-            $schema = [];
-            foreach ($defaults as $form => $form_defaults) {
-                $entry = ['fields' => []];
-                if (isset($form_defaults['enabled'])) {
-                    $entry['enabled'] = !empty($submitted[$form]['enabled']);
+        // 三表单 schema：把提交的字段卡片数组规范化后整体入库。
+        $types = springapex_form_field_types();
+        $defaults = springapex_form_schema_defaults();
+        $system_field_ids = springapex_form_system_fields();
+        $submitted = isset($_POST['schema']) && is_array($_POST['schema']) ? wp_unslash($_POST['schema']) : [];
+        $schema = [];
+        foreach ($defaults as $form => $form_defaults) {
+            $entry = ['fields' => []];
+            if (isset($form_defaults['enabled'])) {
+                $entry['enabled'] = !empty($submitted[$form]['enabled']);
+            }
+            $entry['turnstile'] = !empty($submitted[$form]['turnstile']);
+
+            $defaults_by_id = [];
+            foreach ($form_defaults['fields'] as $field) {
+                $defaults_by_id[$field['id']] = $field;
+            }
+
+            $rows = isset($submitted[$form]['fields']) && is_array($submitted[$form]['fields'])
+                ? array_values($submitted[$form]['fields'])
+                : [];
+            $used_ids = [];
+            foreach ($rows as $row) {
+                if (!is_array($row)) {
+                    continue;
                 }
-                $entry['turnstile'] = !empty($submitted[$form]['turnstile']);
-
-                $defaults_by_id = [];
-                foreach ($form_defaults['fields'] as $field) {
-                    $defaults_by_id[$field['id']] = $field;
-                }
-
-                $rows = isset($submitted[$form]['fields']) && is_array($submitted[$form]['fields'])
-                    ? array_values($submitted[$form]['fields'])
-                    : [];
-                $used_ids = [];
-                foreach ($rows as $row) {
-                    if (!is_array($row)) {
-                        continue;
-                    }
-                    // select 选项以 textarea 一行一项提交，转回关联数组。
-                    if (($row['type'] ?? '') === 'select') {
-                        $options = [];
-                        foreach (preg_split('/\r\n|\r|\n/', (string) ($row['options'] ?? '')) ?: [] as $line) {
-                            $line = trim($line);
-                            if ($line !== '') {
-                                $options[$line] = $line;
-                            }
+                // select 选项以 textarea 一行一项提交，转回关联数组。
+                if (($row['type'] ?? '') === 'select') {
+                    $options = [];
+                    foreach (preg_split('/\r\n|\r|\n/', (string) ($row['options'] ?? '')) ?: [] as $line) {
+                        $line = trim($line);
+                        if ($line !== '') {
+                            $options[$line] = $line;
                         }
-                        $row['options'] = $options;
                     }
-                    $field = springapex_normalize_form_field($row, $defaults_by_id, $types);
-                    if ($field === null || isset($used_ids[$field['id']])) {
-                        continue;
-                    }
-                    $used_ids[$field['id']] = true;
+                    $row['options'] = $options;
+                }
+                $field = springapex_normalize_form_field($row, $defaults_by_id, $types);
+                if ($field === null || isset($used_ids[$field['id']])) {
+                    continue;
+                }
+                $used_ids[$field['id']] = true;
+                $entry['fields'][] = $field;
+            }
+
+            // 仅系统字段（姓名/邮箱/留言）缺失时补回——询盘成立的基础，不可删除；
+            // 其余默认字段允许运营者删除，不回填（与前台渲染同一规则）。
+            foreach ($form_defaults['fields'] as $field) {
+                if (!isset($used_ids[$field['id']]) && array_key_exists($field['id'], $system_field_ids)) {
                     $entry['fields'][] = $field;
                 }
-
-                // 仅系统字段（姓名/邮箱/留言）缺失时补回——询盘成立的基础，不可删除；
-                // 其余默认字段允许运营者删除，不回填（与前台渲染同一规则）。
-                foreach ($form_defaults['fields'] as $field) {
-                    if (!isset($used_ids[$field['id']]) && array_key_exists($field['id'], $system_field_ids)) {
-                        $entry['fields'][] = $field;
-                    }
-                }
-
-                $schema[$form] = $entry;
             }
-            update_option('springapex_form_schema', $schema, false);
-            // 上一代配置退役，避免两套真相。
-            delete_option('springapex_form_config');
-            delete_option('springapex_form_fields');
-            $saved = true;
+
+            $schema[$form] = $entry;
+        }
+        update_option('springapex_form_schema', $schema, false);
+        // 上一代配置退役，避免两套真相。
+        delete_option('springapex_form_config');
+        delete_option('springapex_form_fields');
+        $saved = true;
         }
     }
 
