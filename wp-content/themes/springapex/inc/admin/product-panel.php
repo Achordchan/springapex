@@ -85,8 +85,14 @@ function springapex_render_product_panel(object $post): void
             }
             $image_id = (int) ($row['image_id'] ?? 0);
             $image = trim((string) ($row['image'] ?? ''));
-            if ($image_id > 0 && get_post_type($image_id) !== 'attachment') {
+            if ($image_id > 0 && wp_get_attachment_image_url($image_id, 'medium') === false) {
                 $image_id = 0;
+            }
+            if (
+                $image !== '' &&
+                !is_file(SPRINGAPEX_DIR . '/assets/images/' . ltrim($image, '/'))
+            ) {
+                $image = '';
             }
             if ($image_id > 0 || $image !== '') {
                 $normalized[] = ['image_id' => (string) $image_id, 'image' => $image];
