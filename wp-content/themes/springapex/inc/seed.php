@@ -627,11 +627,17 @@ function springapex_seed_menu_item_args(array $spec): array
 }
 
 /**
- * 校准主菜单顶层项。幂等：已存在按标题匹配，只把归档项(Products/Industries)
- * 就地纠正为 post_type_archive 类型，其余普通链接项不覆盖运营者的手工改动。
- * 对已存在的站点也会跑（自愈早期 seed 写死的 `?post_type=` 查询串链接）。
+ * 校准主菜单顶层项。
+ *
+ * 升级路径（$allow_create=false，已初始化站点每次版本重跑）只做**归档项自愈**：
+ * 把早期 seed 写死成 `?post_type=` 查询串的 Products/Industries 就地纠正为
+ * post_type_archive 类型，保留排序。绝不创建缺失项、不改名，以免把运营者删过/
+ * 改过的默认项重新加回（与子菜单 seeding 同一保守原则）。
+ *
+ * 创建路径（$allow_create=true，首次建/收编菜单）才全量：迁移旧的
+ * “View Our Catalog” 为 News、补齐缺失的默认顶层项。
  */
-function springapex_seed_primary_menu_items(int $menu_id): bool
+function springapex_seed_primary_menu_items(int $menu_id, bool $allow_create = true): bool
 {
     // 指向 CPT 归档的项用 post_type_archive 类型，URL 由 WP 用
     // get_post_type_archive_link() 动态渲染——永远是 pretty、永远跟当前站点域名，
@@ -652,19 +658,32 @@ function springapex_seed_primary_menu_items(int $menu_id): bool
     }
     $existing = $existing ?: [];
 
-    foreach ($existing as $existing_item) {
-        $is_catalog_item = (string) $existing_item->title === 'View Our Catalog'
-            || str_contains((string) $existing_item->url, '/resources/#catalog-download');
-        if (!$is_catalog_item) {
-            continue;
+    // 旧 “View Our Catalog” → News 属首次建/收编时的一次性迁移，只在创建路径跑。
+    if ($allow_create) {
+        $renamed_any = false;
+        foreach ($existing as $existing_item) {
+            $is_catalog_item = (string) $existing_item->title === 'View Our Catalog'
+                || str_contains((string) $existing_item->url, '/resources/#catalog-download');
+            if (!$is_catalog_item) {
+                continue;
+            }
+            $updated = wp_update_nav_menu_item($menu_id, (int) $existing_item->ID, [
+                'menu-item-title' => 'News',
+                'menu-item-url' => home_url('/news/'),
+                'menu-item-status' => 'publish',
+            ]);
+            if (is_wp_error($updated) || (int) $updated <= 0) {
+                return false;
+            }
+            $renamed_any = true;
         }
-        $updated = wp_update_nav_menu_item($menu_id, (int) $existing_item->ID, [
-            'menu-item-title' => 'News',
-            'menu-item-url' => home_url('/news/'),
-            'menu-item-status' => 'publish',
-        ]);
-        if (is_wp_error($updated) || (int) $updated <= 0) {
-            return false;
+        // 改名后重取，否则下面的 News 规格仍看到旧标题、匹配失败而重复建项。
+        if ($renamed_any) {
+            $existing = wp_get_nav_menu_items($menu_id);
+            if (is_wp_error($existing)) {
+                return false;
+            }
+            $existing = $existing ?: [];
         }
     }
 
@@ -697,6 +716,11 @@ function springapex_seed_primary_menu_items(int $menu_id): bool
             if (is_wp_error($updated) || (int) $updated <= 0) {
                 return false;
             }
+            continue;
+        }
+
+        // 升级路径不补默认项：运营者删/改过的项不该被重新加回（避免重复）。
+        if (!$allow_create) {
             continue;
         }
 
@@ -741,7 +765,8 @@ function springapex_seed_primary_menu(bool $allow_create = true): bool
             $footer_id = $primary_id;
         }
 
-        $items_seeded = springapex_seed_primary_menu_items($primary_id);
+        // 已初始化站点：只自愈归档项，绝不补建/改名（保留运营者的增删改）。
+        $items_seeded = springapex_seed_primary_menu_items($primary_id, false);
         $children_seeded = springapex_seed_primary_menu_children($primary_id);
 
         $saved_locations = get_theme_mod('nav_menu_locations', []);
@@ -807,7 +832,7 @@ function springapex_seed_primary_menu(bool $allow_create = true): bool
         return false;
     }
 
-    if (!springapex_seed_primary_menu_items($menu_id)) {
+    if (!springapex_seed_primary_menu_items($menu_id, $allow_create)) {
         return false;
     }
 
