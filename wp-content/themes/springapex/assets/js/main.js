@@ -27,7 +27,10 @@
 
     const root = document.documentElement;
     const scrollPaddingTop = Number.parseFloat(window.getComputedStyle(root).scrollPaddingTop) || 0;
-    const targetTop = target.getBoundingClientRect().top + window.scrollY - scrollPaddingTop;
+    // 产品详情页的吸顶补偿记在目标自身的 scroll-margin-top 上（root padding 已归零），
+    // 这里必须一并读取，否则深链落点会被吸顶栏盖住。
+    const scrollMarginTop = Number.parseFloat(window.getComputedStyle(target).scrollMarginTop) || 0;
+    const targetTop = target.getBoundingClientRect().top + window.scrollY - scrollPaddingTop - scrollMarginTop;
     const previousScrollBehavior = root.style.scrollBehavior;
 
     root.style.scrollBehavior = 'auto';
@@ -59,7 +62,7 @@
 
     const menuFocusables = () => [
       toggle,
-      ...mobileNav.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled)], [tabindex]:not([tabindex="-1"])'),
+      ...mobileNav.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'),
     ].filter((element) => !element.hidden);
 
     // 面板顶部要对齐 header 的实际渲染底边：WP 管理栏（移动端 46px）等
