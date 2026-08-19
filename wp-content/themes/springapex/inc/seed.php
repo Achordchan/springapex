@@ -950,11 +950,23 @@ function springapex_seed_migrate_contact_network(): bool
     $default_cn = (array) ($defaults['contact_network'] ?? []);
     $changed = false;
 
-    // 区域：移除占位 other-regions；若缺 middle-east 则从默认补上。
+    // 区域：仅移除**未改动的**占位 other-regions（运营者若保留 slug 却填了真实
+    // 经销商数据，则保留），若缺 middle-east 则从默认补上。
     if (isset($cn['regions']) && is_array($cn['regions'])) {
         $regions = array_values(array_filter(
             $cn['regions'],
-            static fn($r): bool => !(is_array($r) && ($r['slug'] ?? '') === 'other-regions')
+            static function ($r): bool {
+                if (!is_array($r) || ($r['slug'] ?? '') !== 'other-regions') {
+                    return true; // 保留非占位区域
+                }
+                // 仅当仍是 seeded 占位（唯一一条 Global programs / ApexSpring）才移除。
+                $locations = is_array($r['locations'] ?? null) ? $r['locations'] : [];
+                $only = count($locations) === 1 && is_array($locations[0]) ? $locations[0] : null;
+                $is_seeded_placeholder = $only !== null
+                    && ($only['name'] ?? '') === 'Global programs'
+                    && ($only['company'] ?? '') === 'ApexSpring';
+                return !$is_seeded_placeholder;
+            }
         ));
         $has_me = false;
         foreach ($regions as $r) {
@@ -1000,6 +1012,12 @@ function springapex_seed_migrate_contact_network(): bool
     if ($changed) {
         $overrides['contact_network'] = $cn;
         springapex_content_store_overrides($overrides);
+        // store 助手返回 void：写后校验确实持久化，否则返回 false 让本次 seed
+        // 不记版本、后续 admin 请求重试，避免 override 永远停留在旧数据。
+        $saved = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, []);
+        if (!is_array($saved) || ($saved['contact_network'] ?? null) !== $cn) {
+            return false;
+        }
     }
 
     return true;
