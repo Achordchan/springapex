@@ -175,6 +175,7 @@ function springapex_seed_site_locked(): bool
     $success = springapex_seed_news(true) && $success;
     $success = springapex_seed_primary_menu($allow_create) && $success;
     $success = springapex_seed_capabilities_menu_url() && $success;
+    $success = springapex_seed_migrate_contact_network() && $success;
 
     if (!$success) {
         return springapex_seed_failure('content');
@@ -702,11 +703,12 @@ function springapex_seed_primary_menu_items(int $menu_id, bool $allow_create = t
         }
 
         if ($match) {
-            // 自愈：早期 seed 把归档项存成了自定义链接 + `?post_type=` 查询串。
-            // 仅当归档项类型/对象不符时才就地纠正，不覆盖普通链接项的手工改动。
+            // 自愈：仅纠正**早期 seed 写死的 legacy 查询串链接**
+            // （URL 含 `post_type=<对象>`）。运营者若把同名项故意改成自定义
+            // 落地页/外链（无该签名），保持不动。
             $needs_fix = !empty($spec['archive'])
-                && ((string) $match->type !== 'post_type_archive'
-                    || (string) $match->object !== $spec['archive']);
+                && (string) $match->type !== 'post_type_archive'
+                && str_contains((string) $match->url, 'post_type=' . $spec['archive']);
             if (!$needs_fix) {
                 continue;
             }
@@ -919,6 +921,85 @@ function springapex_seed_primary_menu_children(int $menu_id): bool
                 return false;
             }
         }
+    }
+
+    return true;
+}
+
+/**
+ * 迁移已保存的联系页覆盖数据。
+ *
+ * contact_network.markers / regions 是 list，一旦后台保存过就整体替换默认值，
+ * 纯代码改默认对这类站点不生效。这里在版本重跑时把「中东经销商」补进已存的
+ * override、并移除占位的 Other Regions，新增条目直接取自当前默认值以免重复维护。
+ * 无 contact_network override 的站点（默认值已含新数据）直接跳过。幂等。
+ */
+function springapex_seed_migrate_contact_network(): bool
+{
+    if (!function_exists('get_option') || !function_exists('springapex_content_store_overrides')) {
+        return true;
+    }
+
+    $overrides = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, []);
+    if (!is_array($overrides) || !isset($overrides['contact_network']) || !is_array($overrides['contact_network'])) {
+        return true;
+    }
+
+    $cn = $overrides['contact_network'];
+    $defaults = springapex_content_enhancements();
+    $default_cn = (array) ($defaults['contact_network'] ?? []);
+    $changed = false;
+
+    // 区域：移除占位 other-regions；若缺 middle-east 则从默认补上。
+    if (isset($cn['regions']) && is_array($cn['regions'])) {
+        $regions = array_values(array_filter(
+            $cn['regions'],
+            static fn($r): bool => !(is_array($r) && ($r['slug'] ?? '') === 'other-regions')
+        ));
+        $has_me = false;
+        foreach ($regions as $r) {
+            if (is_array($r) && ($r['slug'] ?? '') === 'middle-east') {
+                $has_me = true;
+                break;
+            }
+        }
+        if (!$has_me) {
+            foreach ((array) ($default_cn['regions'] ?? []) as $r) {
+                if (is_array($r) && ($r['slug'] ?? '') === 'middle-east') {
+                    $regions[] = $r;
+                    break;
+                }
+            }
+        }
+        if ($regions !== $cn['regions']) {
+            $cn['regions'] = $regions;
+            $changed = true;
+        }
+    }
+
+    // 地图点：若缺沙特点则从默认补上。
+    if (isset($cn['markers']) && is_array($cn['markers'])) {
+        $has_sa = false;
+        foreach ($cn['markers'] as $m) {
+            if (is_array($m) && str_contains((string) ($m['label'] ?? ''), 'Saudi Arabia')) {
+                $has_sa = true;
+                break;
+            }
+        }
+        if (!$has_sa) {
+            foreach ((array) ($default_cn['markers'] ?? []) as $m) {
+                if (is_array($m) && str_contains((string) ($m['label'] ?? ''), 'Saudi Arabia')) {
+                    $cn['markers'][] = $m;
+                    $changed = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    if ($changed) {
+        $overrides['contact_network'] = $cn;
+        springapex_content_store_overrides($overrides);
     }
 
     return true;
