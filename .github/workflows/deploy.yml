@@ -17,7 +17,7 @@ jobs:
     name: Verify production code
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -46,7 +46,7 @@ jobs:
       DEPLOY_USER: ${{ secrets.SPRINGAPEX_DEPLOY_USER }}
       DEPLOY_KEY: ${{ secrets.SPRINGAPEX_DEPLOY_SSH_KEY }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Validate deployment credentials
         shell: bash
