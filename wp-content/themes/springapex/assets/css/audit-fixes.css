@@ -104,6 +104,12 @@
   scroll-margin-top: calc(var(--sa-product-tabs-height) + var(--sa-header-height) + 16px);
 }
 
+/* 产品详情页：上面的 scroll-margin 已全额补偿吸顶栈（header+tabs），
+   这里归零 html 的全局 scroll-padding，避免同一栈被补两次、锚点落点偏低。 */
+html:has(.sa-compression-detail) {
+  scroll-padding-top: 0;
+}
+
 .site-header {
   background: rgba(255, 255, 255, .985);
   backdrop-filter: blur(12px);

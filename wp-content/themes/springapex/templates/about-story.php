@@ -114,7 +114,7 @@ get_template_part('parts/why-apexspring');
             ), [
                 'width' => 900,
                 'height' => 1222,
-                'sizes' => '(max-width: 760px) 78vw, 34vw',
+                'sizes' => '(max-width: 760px) 150px, 34vw',
             ]); ?>
           </div>
           <div class="sa-team__founder-caption">

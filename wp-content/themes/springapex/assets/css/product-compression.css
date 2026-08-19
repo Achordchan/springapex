@@ -83,6 +83,8 @@
   color: var(--sa-text-2, #4b5563);
   font-size: 16px;
   line-height: 1.66;
+  /* 手机满宽时避免句尾孤词单独掉行（如 performance.）。 */
+  text-wrap: pretty;
 }
 
 .sa-compression-detail .sa-compression-hero__facts {
@@ -971,7 +973,29 @@
   .sa-compression-hero__inner {
     min-height: 0;
     grid-template-columns: 1fr;
-    gap: 32px;
+    gap: 14px;
+  }
+
+  /* 手机首屏顺序：面包屑+标题 → 图片与缩略图 → 导语/规格/操作。
+     把文案块展开成网格项后用 order 重排，桌面双栏不受影响。 */
+  .sa-compression-hero__copy {
+    display: contents;
+  }
+
+  .sa-compression-hero__media {
+    order: 2;
+    grid-template-columns: minmax(0, 1fr) 82px;
+    gap: 16px;
+  }
+
+  .sa-compression-hero__lede,
+  .sa-compression-hero__facts {
+    order: 3;
+  }
+
+  .sa-compression-hero__actions,
+  .sa-compression-hero__note {
+    order: 4;
   }
 
   .sa-compression-breadcrumb {
@@ -980,11 +1004,6 @@
 
   .sa-compression-hero h1 {
     font-size: clamp(38px, 10vw, 54px);
-  }
-
-  .sa-compression-hero__media {
-    grid-template-columns: minmax(0, 1fr) 82px;
-    gap: 16px;
   }
 
   .sa-compression-hero__primary {
@@ -1002,6 +1021,20 @@
   .sa-compression-review__diagram {
     border-right: 0;
     border-bottom: 1px solid #e2e7ed;
+  }
+
+  /* 手机上表单是主角：说明栏收成一句引导，隐藏清单/示意图等重内容
+     （文字密度与层级问题），两套 guide 高度对齐后，
+     切换「图纸 / 尺寸」标签时表单不再上下跳动。 */
+  .sa-compression-review__guide .sa-compression-review__checklist,
+  .sa-compression-review__guide .sa-compression-review__dimension-list,
+  .sa-compression-review__guide .sa-compression-review__dimension-figure,
+  .sa-compression-review__guide-note {
+    display: none;
+  }
+
+  .sa-compression-review__guide {
+    min-height: 96px;
   }
 
   .sa-compression-review__diagram h2 {
@@ -1053,34 +1086,51 @@
     font-size: 15px;
   }
 
+  /* 640px 以下不再三列硬挤（每列仅约 109px）：每条规格一行，
+     标签在左、数值在右，与首页 ABOUT facts 的移动端形态一致。 */
   .sa-compression-detail .sa-compression-hero__facts {
-    gap: 0;
+    grid-template-columns: 1fr;
+    padding: 13px 0;
   }
 
   .sa-compression-hero__facts > div {
-    padding-right: 10px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 13px 0;
   }
 
   .sa-compression-hero__facts > div + div {
-    padding-left: 10px;
+    padding-left: 0;
+    border-left: 0;
+    border-top: 1px solid #e6eaf0;
   }
 
   .sa-compression-hero__facts dt {
-    font-size: 10px;
+    margin-bottom: 0;
+    font-size: 11px;
   }
 
   .sa-compression-hero__facts dd {
-    font-size: 13px;
+    font-size: 15px;
+    text-align: right;
   }
 
+  /* 两个操作按钮手机上并排：各占一半、内容居中。 */
   .sa-compression-hero__actions {
     align-items: stretch;
-    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 8px;
   }
 
   .sa-compression-hero__actions .btn {
     justify-content: center;
-    width: 100%;
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: 10px;
+    font-size: 12.5px;
+    white-space: nowrap;
   }
 
   .sa-compression-hero__media {
@@ -1136,21 +1186,26 @@
   }
 
   .sa-compression-form__row,
-  .sa-compression-quality__gallery,
   .sa-compression-quality__steps,
-  .sa-compression-delivery__grid,
   .sa-compression-documents__grid {
     grid-template-columns: 1fr;
   }
 
+  /* 质量图廊：大图满宽，两张带说明的小图并排——
+     恢复桌面「一大两小」的层级，避免三张满宽大图单调堆叠。 */
   .sa-compression-quality__gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-rows: none;
   }
 
-  .sa-compression-quality__gallery figure,
-  .sa-compression-quality__gallery figure.is-large {
-    height: 260px;
+  .sa-compression-quality__gallery figure {
+    height: 180px;
     grid-row: auto;
+  }
+
+  .sa-compression-quality__gallery figure.is-large {
+    grid-column: 1 / -1;
+    height: 240px;
   }
 
   .sa-compression-quality__steps li::after {
@@ -1161,8 +1216,30 @@
     padding-top: 0;
   }
 
+  /* 发货卡片：手机改为横向滑动轮播（scroll-snap），每张约 78% 屏宽、
+     露出下一张边缘作为可滑动提示。 */
+  .sa-compression-delivery__grid {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+    scroll-padding-inline-start: 16px;
+  }
+
+  .sa-compression-delivery__grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sa-compression-delivery__grid article {
+    flex: 0 0 78%;
+    scroll-snap-align: start;
+  }
+
   .sa-compression-delivery__grid figure {
-    height: 240px;
+    height: 210px;
   }
 
   .sa-compression-final-cta__inner {

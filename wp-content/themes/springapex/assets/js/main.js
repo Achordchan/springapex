@@ -59,11 +59,26 @@
 
     const menuFocusables = () => [
       toggle,
-      ...mobileNav.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'),
+      ...mobileNav.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled)], [tabindex]:not([tabindex="-1"])'),
     ].filter((element) => !element.hidden);
 
+    // 面板顶部要对齐 header 的实际渲染底边：WP 管理栏（移动端 46px）等
+    // 顶部元素会把 sticky header 推到 --sa-header-height 常量之外，写死的
+    // top 会让面板钻进 header 底下、遮住第一项（Home）。
+    const alignMobileNav = () => {
+      const bottom = Math.round(header.getBoundingClientRect().bottom);
+      mobileNav.style.top = `${bottom}px`;
+      mobileNav.style.maxHeight = `calc(100dvh - ${bottom}px)`;
+    };
+
     const setMenu = (open, restoreFocus = true) => {
-      if (open) menuReturnFocus = document.activeElement;
+      if (open) {
+        menuReturnFocus = document.activeElement;
+        alignMobileNav();
+      } else {
+        mobileNav.style.top = '';
+        mobileNav.style.maxHeight = '';
+      }
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
       toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
       mobileNav.hidden = !open;
@@ -115,6 +130,8 @@
           const desktopFocusTarget = header.querySelector('.quote-btn');
           if (desktopFocusTarget) desktopFocusTarget.focus({ preventScroll: true });
         }
+      } else if (toggle.getAttribute('aria-expanded') === 'true') {
+        alignMobileNav();
       }
     });
   }

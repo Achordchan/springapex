@@ -1518,8 +1518,9 @@
     gap: 18px;
   }
 
+  /* 手机上整个版块收小：去掉说明文案与侧标签，只留图标 + 平台名。 */
   .sa-social-hub__head {
-    margin-bottom: 34px;
+    margin-bottom: 18px;
   }
 
   .sa-social-hub__head h2 {
@@ -1527,46 +1528,58 @@
   }
 
   .sa-social-hub__head > p:last-child {
-    font-size: 15px;
+    display: none;
   }
 
   .sa-social-hub__rail {
-    grid-template-columns: 42px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .sa-social-hub__label {
-    min-height: 0;
+    display: none;
   }
 
   .sa-social-hub__items {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .sa-social-hub__item {
-    min-height: 116px;
-    padding: 20px 18px;
-    grid-template-columns: 58px minmax(0, 1fr) 18px;
-    gap: 14px;
+    min-height: 64px;
+    padding: 12px 14px;
+    grid-template-columns: 40px minmax(0, 1fr) 18px;
+    gap: 12px;
   }
 
+  /* 2×2 网格的分隔线：右列左边框、下排上边框。 */
   .sa-social-hub__item + .sa-social-hub__item {
-    border-top: 1px solid var(--sa-border);
+    border-top: 0;
     border-left: 0;
   }
 
+  .sa-social-hub__item:nth-child(even) {
+    border-left: 1px solid var(--sa-border);
+  }
+
+  .sa-social-hub__item:nth-child(n + 3) {
+    border-top: 1px solid var(--sa-border);
+  }
+
   .sa-social-hub__icon {
-    width: 58px;
-    height: 58px;
+    width: 40px;
+    height: 40px;
   }
 
   .sa-social-hub__icon img {
-    width: 25px;
-    height: 25px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .sa-social-hub__copy strong {
+    font-size: 15px;
   }
 
   .sa-social-hub__copy small {
-    max-width: none;
-    font-size: 14px;
+    display: none;
   }
 
 }

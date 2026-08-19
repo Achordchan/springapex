@@ -271,7 +271,6 @@
   }
 
   .sa-route-about .sa-team__eyebrow {
-    max-width: 26ch;
     font-size: 10px;
     letter-spacing: .16em;
   }
@@ -294,8 +293,17 @@
     font-size: .76em;
   }
 
+  /* 手机上照片整体缩小：不再整幅铺满容器，改为与桌面同尺度的
+     150px 窄条肖像卡、居中放置，姓名/头衔落到照片下方。 */
+  .sa-route-about .sa-team__founder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
   .sa-route-about .sa-team__founder-media {
-    height: min(102vw, 390px);
+    width: 150px;
+    height: 205px;
   }
 
   .sa-route-about .sa-team__founder-media img {
@@ -303,9 +311,9 @@
   }
 
   .sa-route-about .sa-team__founder-caption {
-    right: 12px;
-    bottom: 12px;
-    padding: 10px 12px;
+    position: static;
+    width: 150px;
+    padding: 10px 0 0;
     grid-template-columns: 20px minmax(0, 1fr);
     gap: 9px;
   }
@@ -360,10 +368,6 @@
 @media (max-width: 420px) {
   .sa-route-about .sa-team__statement h2 {
     font-size: 29px;
-  }
-
-  .sa-route-about .sa-team__founder-media {
-    height: 340px;
   }
 }
 
