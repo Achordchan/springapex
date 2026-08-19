@@ -180,7 +180,11 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
                           </header>
                           <?php if (!empty($location['company'])) : ?><p class="sa-contact-regions__company"><?php echo esc_html((string) $location['company']); ?></p><?php endif; ?>
                           <?php if (!empty($location['address'])) : ?>
-                            <p class="sa-contact-regions__address"><?php echo springapex_icon('map-pin', 'icon icon-sm'); ?><span><?php echo esc_html((string) $location['address']); ?></span></p>
+                            <?php
+                            $map_query = trim(trim((string) ($location['company'] ?? '')) . ' ' . trim((string) $location['address']));
+                            $map_href = 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($map_query);
+                            ?>
+                            <a class="sa-contact-regions__address" href="<?php echo esc_url($map_href); ?>" target="_blank" rel="noopener noreferrer" title="<?php esc_attr_e('Open in Google Maps', 'springapex'); ?>"><?php echo springapex_icon('map-pin', 'icon icon-sm'); ?><span><?php echo esc_html((string) $location['address']); ?></span></a>
                           <?php endif; ?>
                           <div class="sa-contact-regions__links">
                             <?php if (!empty($location['email'])) : ?>
@@ -240,26 +244,8 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
           <input type="hidden" name="started_at" value="<?php echo esc_attr((string) time()); ?>" data-form-started-at>
           <label class="honeypot" aria-hidden="true">Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
 
-          <label class="field">
-            <span><?php esc_html_e('Name', 'springapex'); ?> *</span>
-            <input type="text" name="full_name" maxlength="120" autocomplete="name" placeholder="<?php esc_attr_e('Enter your name', 'springapex'); ?>" required>
-          </label>
-          <label class="field">
-            <span><?php esc_html_e('Phone or WhatsApp', 'springapex'); ?> *</span>
-            <input type="tel" name="phone" maxlength="80" autocomplete="tel" placeholder="<?php esc_attr_e('Enter phone or WhatsApp number', 'springapex'); ?>" required>
-          </label>
-          <label class="field">
-            <span><?php esc_html_e('Company', 'springapex'); ?></span>
-            <input type="text" name="company" maxlength="160" autocomplete="organization" placeholder="<?php esc_attr_e('Enter your company name', 'springapex'); ?>">
-          </label>
-          <label class="field">
-            <span><?php esc_html_e('Work email', 'springapex'); ?> *</span>
-            <input type="email" name="email" maxlength="190" autocomplete="email" placeholder="<?php esc_attr_e('Enter your work email', 'springapex'); ?>" required>
-          </label>
-          <label class="field">
-            <span><?php esc_html_e('Country', 'springapex'); ?> *</span>
-            <input type="text" name="country" maxlength="100" autocomplete="country-name" placeholder="<?php esc_attr_e('Enter your country', 'springapex'); ?>" required>
-          </label>
+          <?php // 联系页主表单的字段区：结构存于「表单设置」，按 schema 动态渲染。
+          springapex_render_form_schema_fields('contact'); ?>
           <label class="field">
             <span><?php esc_html_e('How can we help?', 'springapex'); ?> *</span>
             <select name="inquiry_type" data-inquiry-type required>
@@ -326,6 +312,7 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
           <button class="btn btn-primary btn-block" type="submit" data-submit-button>
             <span><?php esc_html_e('Send Inquiry', 'springapex'); ?></span> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
           </button>
+          <?php if (springapex_form_turnstile_enabled('contact')) : ?>
           <div class="sa-turnstile-widget">
             <div
               class="cf-turnstile"
@@ -337,6 +324,7 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
             ></div>
             <?php echo springapex_turnstile_noscript(); ?>
           </div>
+          <?php endif; ?>
           <p class="form-status<?php echo !empty($status['type']) ? ' is-' . esc_attr((string) $status['type']) : ''; ?>" data-form-status role="status" aria-live="polite" <?php echo $status ? '' : 'hidden'; ?>><?php echo $status ? esc_html((string) $status['message']) : ''; ?></p>
         </form>
 

@@ -15,7 +15,7 @@ if (!in_array(PHP_SAPI, ['cli', 'cli-server'], true)) {
 
 defined('ABSPATH') || define('ABSPATH', __DIR__ . '/');
 defined('SPRINGAPEX_PREVIEW') || define('SPRINGAPEX_PREVIEW', true);
-defined('SPRINGAPEX_VERSION') || define('SPRINGAPEX_VERSION', '2.9.47');
+defined('SPRINGAPEX_VERSION') || define('SPRINGAPEX_VERSION', '2.9.80');
 defined('SPRINGAPEX_DIR') || define('SPRINGAPEX_DIR', dirname(__DIR__));
 defined('SPRINGAPEX_URI') || define('SPRINGAPEX_URI', '');
 
@@ -87,6 +87,11 @@ function wp_unslash(mixed $value): mixed
     }
     return is_string($value) ? stripslashes($value) : $value;
 }
+
+// 无 WP 的预览里没有 options 表：表单 schema 与主题设置回退到默认值，
+// 这样 contact / product / 快速询盘窗按内置默认字段渲染（与线上现状一致）。
+function get_option(string $option, mixed $default = false): mixed { return $default; }
+function get_theme_mod(string $name, mixed $default = false): mixed { return $default; }
 
 function springapex_preview_query_value(string $key): string
 {

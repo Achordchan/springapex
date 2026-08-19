@@ -442,6 +442,154 @@
     });
   }
 
+  // Apple 风格滚动驱动横滑：竖向滚到此处时文案+卡片条+进度点整体钉住
+  // （垂直居中），竖滚进度写入视口的原生 scrollLeft，滑到头恢复竖滚。
+  // 用原生滚动而非 transform：手动左右滑动始终可用，且行程与卡片实际
+  // 宽度同源（末卡必完整到位）。仅在 ≤760 且未减少动态时启用。
+  function initHorizontalScrollSections() {
+    const sections = Array.from(document.querySelectorAll('[data-horizontal-scroll]'));
+    if (!sections.length) return;
+
+    const mq = window.matchMedia('(max-width: 760px)');
+    const disposers = [];
+
+    const teardown = () => {
+      disposers.splice(0).forEach((dispose) => dispose());
+      for (const section of sections) {
+        section.classList.remove('is-scroll-linked');
+        const pin = section.querySelector('[data-horizontal-pin]');
+        if (pin instanceof HTMLElement) pin.style.top = '';
+        const viewport = section.querySelector('[data-horizontal-viewport]');
+        if (!(viewport instanceof HTMLElement)) continue;
+        viewport.scrollLeft = 0;
+        const dots = Array.from(viewport.querySelectorAll('[data-horizontal-dots] span'));
+        dots.forEach((dot, index) => dot.classList.toggle('is-active', index === 0));
+        const holder = pin instanceof HTMLElement ? pin.parentElement : viewport.parentElement;
+        if (holder instanceof HTMLElement) holder.style.height = '';
+      }
+    };
+
+    const setup = () => {
+      teardown();
+      if (!mq.matches || reduceMotion) return;
+
+      for (const section of sections) {
+        const pin = section.querySelector('[data-horizontal-pin]');
+        const viewport = section.querySelector('[data-horizontal-viewport]');
+        if (!(pin instanceof HTMLElement) || !(viewport instanceof HTMLElement)) continue;
+
+        // 先挂载滚动驱动布局，再按该布局量行程（sticky 的活动范围是
+        // pin 的父级容器，钉住期间需要与行程等长的竖向滚动距离）。
+        section.classList.add('is-scroll-linked');
+        const extra = viewport.scrollWidth - viewport.clientWidth;
+        if (extra <= 8) {
+          section.classList.remove('is-scroll-linked');
+          continue;
+        }
+        const holder = pin.parentElement;
+        if (holder instanceof HTMLElement) {
+          const naturalHeight = holder.offsetHeight;
+          holder.style.height = `${naturalHeight + extra}px`;
+        }
+
+        // 文案 + 卡片轨 + 进度点整体在视口内垂直居中：
+        // 钉住期间上下留白对称，不让下方出现一片突兀的空白。
+        pin.style.top = `${Math.max(12, Math.round((window.innerHeight - pin.offsetHeight) / 2))}px`;
+
+        const dots = Array.from(viewport.querySelectorAll('[data-horizontal-dots] span'));
+        let activeDot = 0;
+        let ticking = false;
+        // 进度模型：rail 位置 = clamp(页面进度 + progressOffset)。
+        // 手势横滑不改页面滚动（iOS 手势期间会冻结程序化滚页，双向
+        // scrollBy 在真机上推不动、落定后还会回跳），只记 progressOffset；
+        // 手势落定时把当前 rail 位置折算成新基准，竖滚从此无缝续走。
+        // 手势与惯性期间（userDriving）公式侧不回写，避免逐帧互掰抖动。
+        let writing = false;
+        let userDriving = false;
+        let settleTimer = 0;
+        let progressOffset = 0;
+        let lastSyncedLeft = viewport.scrollLeft;
+        const rawProgress = () => {
+          const top = holder instanceof HTMLElement
+            ? holder.getBoundingClientRect().top
+            : pin.getBoundingClientRect().top;
+          return -top / extra; // 未截断，负值代表还在旅程上方
+        };
+        const markUserScroll = () => {
+          userDriving = true;
+          window.clearTimeout(settleTimer);
+          settleTimer = window.setTimeout(() => {
+            userDriving = false;
+            // 手势落定：把手动位置折算为映射基准，竖滚从这里续走。
+            progressOffset = (viewport.scrollLeft / extra) - rawProgress();
+            lastSyncedLeft = viewport.scrollLeft;
+            update();
+          }, 140);
+        };
+        const onViewportScroll = () => {
+          if (writing) {
+            window.requestAnimationFrame(() => { writing = false; });
+            return;
+          }
+          lastSyncedLeft = viewport.scrollLeft;
+          markUserScroll();
+        };
+        viewport.addEventListener('scroll', onViewportScroll, { passive: true });
+        disposers.push(() => viewport.removeEventListener('scroll', onViewportScroll));
+        disposers.push(() => window.clearTimeout(settleTimer));
+
+        const update = () => {
+          ticking = false;
+          const raw = rawProgress();
+          // 滚回旅程上方（或刚进入）时清零手势偏移，重新进入从头开始。
+          if (raw <= 0) {
+            progressOffset = 0;
+          }
+          const progress = Math.min(1, Math.max(0, raw + progressOffset));
+          if (!userDriving) {
+            const target = Math.round(progress * extra);
+            if (target !== lastSyncedLeft) {
+              writing = true;
+              lastSyncedLeft = target;
+              viewport.scrollLeft = target;
+            }
+          }
+          if (dots.length > 1) {
+            const next = Math.round(progress * (dots.length - 1));
+            if (next !== activeDot) {
+              dots[activeDot]?.classList.remove('is-active');
+              dots[next]?.classList.add('is-active');
+              activeDot = next;
+            }
+          }
+        };
+        const onScroll = () => {
+          if (!ticking) {
+            ticking = true;
+            window.requestAnimationFrame(update);
+          }
+        };
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        disposers.push(() => window.removeEventListener('scroll', onScroll));
+        update();
+      }
+    };
+
+    let resizeTimer = 0;
+    const onResize = () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(setup, 150);
+    };
+    window.addEventListener('resize', onResize);
+    if (typeof mq.addEventListener === 'function') {
+      mq.addEventListener('change', setup);
+    } else {
+      mq.addListener(setup);
+    }
+    setup();
+  }
+
   function initProductTabs() {
     const nav = document.querySelector('[data-product-tabs]');
     if (!nav) return;
@@ -1093,6 +1241,7 @@
     initMobileSubmenus();
     initReveal();
     initCounters();
+    initHorizontalScrollSections();
     initProductTabs();
     initContactForms();
     initSupportWidget();

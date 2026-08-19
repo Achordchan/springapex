@@ -82,7 +82,15 @@ function springapex_process_contact_submission(): array|WP_Error
         return springapex_contact_error('springapex_invalid', __('Unable to submit this request.', 'springapex'), 400);
     }
 
-    $turnstile = springapex_verify_turnstile();
+    // 表单上下文（quick / full / product …）映射到「表单设置」的配置键，
+    // 必填与人机验证均按表单取值，与渲染侧同源。form_context 必须在此处先取，
+    // 下面的 Turnstile 与 schema 校验都依赖它。
+    $form_context = sanitize_key(springapex_request_scalar($_POST['form_context'] ?? 'full'));
+    $form_key = $form_context === 'quick' ? 'quick' : ($form_context === 'full' ? 'contact' : 'product');
+
+    // Turnstile 按表单开关校验（springapex_form_turnstile_enabled 同时
+    // 控制前台渲染；密钥未配置时全局禁用）。
+    $turnstile = springapex_verify_turnstile($form_key);
     if (is_wp_error($turnstile)) {
         return $turnstile;
     }
@@ -106,7 +114,6 @@ function springapex_process_contact_submission(): array|WP_Error
     $material = springapex_limited_text($_POST['material'] ?? '', 120);
     $operating_environment = springapex_limited_text($_POST['operating_environment'] ?? '', 240);
     $intent = sanitize_key(springapex_request_scalar($_POST['intent'] ?? ''));
-    $form_context = sanitize_key(springapex_request_scalar($_POST['form_context'] ?? 'full'));
     $product = sanitize_title(springapex_request_scalar($_POST['product'] ?? ''));
     $industry = sanitize_title(springapex_request_scalar($_POST['industry'] ?? ''));
     // Source page: the hidden `source` field carries the queried page/post ID
@@ -123,18 +130,88 @@ function springapex_process_contact_submission(): array|WP_Error
     // and /products/compression-springs/).
     $source_path = $source_url !== '' ? (string) (wp_parse_url($source_url, PHP_URL_PATH) ?: '') : '';
     $allowed_types = springapex_get('contact.inquiry_types', []);
+
+    // Schema 字段：渲染名 springapex_field_{id} → 值按类型校验后收集。
+    // 固定语义 id（name/email/message/phone/company/country）写回上方核心变量，
+    // 保持询盘标题、通知抬头、详情专用列与列表过滤不变；其余（运营者新增的）
+    // 自定义字段整包存 meta，询盘详情/邮件按 label 动态展示。
+    $schema = springapex_form_schema();
+    $schema_fields = $schema[$form_key]['fields'] ?? [];
+    $custom_fields = [];
+    $schema_missing = [];
+    foreach ($schema_fields as $field) {
+        $trimmed = springapex_request_scalar($_POST['springapex_field_' . $field['id']] ?? '');
+        if ($trimmed === '') {
+            if (!empty($field['required'])) {
+                $schema_missing[] = (string) $field['label'];
+            }
+            continue;
+        }
+        // 按类型校验；不合规当作缺失（前台已有原生校验，这里是服务端兜底）。
+        if ($field['type'] === 'email' && !is_email($trimmed)) {
+            $schema_missing[] = (string) $field['label'];
+            continue;
+        }
+        if ($field['type'] === 'number' && !is_numeric($trimmed)) {
+            $schema_missing[] = (string) $field['label'];
+            continue;
+        }
+        if ($field['type'] === 'url' && esc_url_raw($trimmed) === '') {
+            $schema_missing[] = (string) $field['label'];
+            continue;
+        }
+        if ($field['type'] === 'select' && !isset($field['options'][$trimmed])) {
+            // 提交的选项不在白名单：必填则报缺失，否则丢弃。
+            if (!empty($field['required'])) {
+                $schema_missing[] = (string) $field['label'];
+            }
+            continue;
+        }
+        // 固定语义 id 写回核心变量（各自的历史长度上限）。
+        switch ($field['id']) {
+            case 'name':
+                $name = springapex_limited_text($trimmed, 120);
+                break;
+            case 'email':
+                $email = sanitize_email($trimmed);
+                break;
+            case 'message':
+                $message = springapex_limited_textarea($trimmed, 5000);
+                break;
+            case 'phone':
+                $phone = springapex_limited_text($trimmed, 80);
+                break;
+            case 'company':
+                $company = springapex_limited_text($trimmed, 160);
+                break;
+            case 'country':
+                $country = springapex_limited_text($trimmed, 100);
+                break;
+            default:
+                $custom_fields[(string) $field['label']] = $field['type'] === 'textarea'
+                    ? springapex_limited_textarea($trimmed, 5000)
+                    : springapex_limited_text($trimmed, 240);
+                break;
+        }
+    }
+
+    // 姓名可按表单关闭：关闭且为空时用邮箱前缀兜底，询盘标题不至于空白。
+    if ($name === '') {
+        $at = strpos($email, '@');
+        $name = $at !== false ? substr($email, 0, $at) : 'Visitor';
+    }
+
     if (
-        $name === '' ||
         !is_email($email) ||
-        (!in_array($form_context, ['quick', 'product'], true) && ($phone === '' || $country === '')) ||
-        ($form_context === 'quick' && $message === '') ||
+        $schema_missing !== [] ||
         $type === '' ||
         !is_array($allowed_types) ||
         !in_array($type, $allowed_types, true)
     ) {
+        $detail = $schema_missing !== [] ? ' (' . implode(', ', array_slice($schema_missing, 0, 4)) . ')' : '';
         return springapex_contact_error(
             'springapex_invalid',
-            __('Please complete the required fields with a valid email address.', 'springapex'),
+            sprintf('%s%s', __('Please complete the required fields with a valid email address.', 'springapex'), esc_html($detail)),
             422
         );
     }
@@ -201,6 +278,10 @@ function springapex_process_contact_submission(): array|WP_Error
         '_springapex_document' => sanitize_key(springapex_request_scalar($_POST['document'] ?? '')),
         '_springapex_mail_sent' => 'pending',
     ];
+    // 自定义字段（表单设置新增的）：label => value，询盘详情与邮件动态展示。
+    if ($custom_fields !== []) {
+        $meta['_springapex_custom_fields'] = $custom_fields;
+    }
     foreach ($meta as $key => $value) {
         if (!springapex_contact_update_meta((int) $inquiry_id, $key, $value)) {
             wp_delete_post((int) $inquiry_id, true);
@@ -239,7 +320,12 @@ function springapex_process_contact_submission(): array|WP_Error
 
     $recipient = springapex_inquiry_recipient();
     $subject = sprintf('[ApexSpring] %s inquiry from %s', $type, $name);
-    $body = implode("\n", [
+    // 运营者在「表单设置」新增的自定义字段：按 label 追加到通知正文。
+    $custom_lines = [];
+    foreach ($custom_fields as $label => $value) {
+        $custom_lines[] = sprintf('%s: %s', (string) $label, (string) $value);
+    }
+    $body = implode("\n", array_merge([
         "Name: {$name}",
         "Email: {$email}",
         "Company: {$company}",
@@ -255,6 +341,7 @@ function springapex_process_contact_submission(): array|WP_Error
         "Intent: {$intent}",
         "Product: {$product}",
         "Industry: {$industry}",
+    ], $custom_lines, [
         'Document: ' . sanitize_key(springapex_request_scalar($_POST['document'] ?? '')),
         'Drawings: ' . ($private_files
             ? implode(', ', array_map(static fn(array $file): string => (string) ($file['original_name'] ?? ''), $private_files))
@@ -263,7 +350,7 @@ function springapex_process_contact_submission(): array|WP_Error
         $message,
         '',
         'Inquiry record: ' . admin_url('post.php?post=' . (int) $inquiry_id . '&action=edit'),
-    ]);
+    ]));
     $headers = ['Content-Type: text/plain; charset=UTF-8', "Reply-To: {$name} <{$email}>"];
     $attachments = [];
     foreach ($private_files as $private_file) {

@@ -13,6 +13,9 @@ if (!function_exists('springapex_url')) {
 
 require SPRINGAPEX_DIR . '/inc/content.php';
 require SPRINGAPEX_DIR . '/inc/helpers.php';
+// 表单 schema：contact / product / 快速询盘窗按同一份 schema 动态渲染字段，
+// 预览用默认 schema（get_option 桩回退），呈现与线上一致的默认字段。
+require SPRINGAPEX_DIR . '/inc/form-schema.php';
 
 $route = springapex_preview_route();
 $_GET['sa_page'] = $route === 'home' ? '' : $route;

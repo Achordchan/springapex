@@ -33,7 +33,10 @@ function springapex_register_post_types(): void
         'has_archive' => 'products',
         'rewrite' => ['slug' => 'products', 'with_front' => false],
         'menu_icon' => 'dashicons-editor-contract',
-        'supports' => ['title', 'editor', 'excerpt', 'thumbnail', 'page-attributes'],
+        // editor 支持已移除：正文编辑器渲染在「产品数据」面板的
+        // 「详情正文」标签里（inc/admin/product-panel.php），表单字段
+        // 仍是 content，保存路径不变。
+        'supports' => ['title', 'excerpt', 'thumbnail', 'page-attributes'],
     ]);
 
     register_post_type('spring_solution', [
@@ -55,7 +58,8 @@ function springapex_register_post_types(): void
         'has_archive' => 'solutions',
         'rewrite' => ['slug' => 'solutions', 'with_front' => false],
         'menu_icon' => 'dashicons-admin-site-alt3',
-        'supports' => ['title', 'editor', 'excerpt', 'thumbnail', 'page-attributes'],
+        // editor 已移除：方案的 post_content 前台从不渲染，编辑器只是占位。
+        'supports' => ['title', 'excerpt', 'thumbnail', 'page-attributes'],
     ]);
 
     register_post_type('spring_case', [
@@ -77,7 +81,8 @@ function springapex_register_post_types(): void
         'has_archive' => 'case-studies',
         'rewrite' => ['slug' => 'case-studies', 'with_front' => false],
         'menu_icon' => 'dashicons-portfolio',
-        'supports' => ['title', 'editor', 'excerpt', 'thumbnail', 'page-attributes'],
+        // editor/excerpt 由「案例内容」面板维护（inc/admin/case-panel.php）。
+        'supports' => ['title', 'thumbnail', 'page-attributes'],
     ]);
 
     register_post_type('spring_news', [
@@ -98,8 +103,8 @@ function springapex_register_post_types(): void
         'show_in_rest' => true,
         'has_archive' => 'news',
         'rewrite' => ['slug' => 'news', 'with_front' => false],
-        'menu_icon' => 'dashicons-megaphone',
-        'supports' => ['title', 'editor', 'excerpt', 'thumbnail', 'page-attributes'],
+        // editor 挪进「新闻内容」面板、excerpt 前台不用（inc/news-meta.php）。
+        'supports' => ['title', 'thumbnail', 'page-attributes'],
     ]);
 
     register_taxonomy('spring_news_type', ['spring_news'], [
@@ -145,7 +150,10 @@ function springapex_register_post_types(): void
         'rewrite' => false,
         'query_var' => false,
         'menu_icon' => 'dashicons-email-alt2',
-        'supports' => ['title', 'editor'],
+        // 询盘是访客提交的只读数据：post.php 上只有「询盘内容」只读面板
+        //（inc/admin/inquiry-view.php），没有可编辑字段。注意必须是 false——
+        // 空数组会被核心回落成默认的 title+editor。
+        'supports' => false,
         'capability_type' => ['spring_inquiry', 'spring_inquiries'],
         'capabilities' => [
             'create_posts' => 'do_not_allow',
@@ -240,12 +248,15 @@ add_action('admin_init', static function (): void {
 add_action('add_meta_boxes_spring_product', static function (): void {
     add_meta_box(
         'springapex-product-details',
-        '这个产品页面的内容',
-        'springapex_render_product_meta_box',
+        '产品数据',
+        'springapex_render_product_panel',
         'spring_product',
         'normal',
         'high'
     );
+    // 画廊是唯一图片来源（第一张自动同步特色图像），原生特色图像框只会
+    // 制造第二个事实来源，藏掉。
+    remove_meta_box('postimagediv', 'spring_product', 'side');
 });
 
 /**
@@ -276,80 +287,6 @@ function springapex_product_row_meta_keys(): array
     ];
 }
 
-function springapex_render_product_meta_box(object $post): void
-{
-    wp_nonce_field('springapex_save_product', 'springapex_product_nonce');
-
-    $post_id = (int) $post->ID;
-    // Same rule as the front end (springapex_product_from_post): a key that was never
-    // saved shows the seed value. Reading get_post_meta() straight would render every
-    // untouched product as an empty screen, and the first save would then wipe content
-    // the operator can see on the public page but never had in front of them.
-    $seed = springapex_product_seed((string) ($post->post_name ?? '')) ?? [];
-    $value = static function (string $key, mixed $fallback) use ($post_id): mixed {
-        return metadata_exists('post', $post_id, $key) ? get_post_meta($post_id, $key, true) : $fallback;
-    };
-
-    $subtitle = (string) $value('_springapex_subtitle', $seed['subtitle'] ?? '');
-    $featured = (bool) $value('_springapex_featured', !empty($seed['featured']));
-
-    $sets = springapex_product_row_sets();
-    $seed_keys = [
-        'springapex_gallery' => 'gallery',
-        'springapex_specs' => 'specs',
-    ];
-    $rows = [];
-    $thumbnail_id = (int) get_post_thumbnail_id($post_id);
-    foreach (springapex_product_row_meta_keys() as $field => $meta_key) {
-        if ($field === 'springapex_gallery' && !metadata_exists('post', $post_id, $meta_key)) {
-            $rows[$field] = $thumbnail_id > 0
-                ? [['image_id' => $thumbnail_id, 'image' => '']]
-                : (array) ($seed[$seed_keys[$field]] ?? []);
-            continue;
-        }
-        $rows[$field] = (array) $value($meta_key, $seed[$seed_keys[$field]] ?? []);
-    }
-    // A product always has at least its main image, so the gallery is never left
-    // blank: an empty saved gallery (e.g. saved before galleries existed) falls
-    // back to the Featured Image, then the preset product image. This also
-    // self-heals — the fallback row is submitted on the next save.
-    if (empty($rows['springapex_gallery'])) {
-        if ($thumbnail_id > 0) {
-            $rows['springapex_gallery'] = [['image_id' => $thumbnail_id, 'image' => '']];
-        } elseif (!empty($seed['image'])) {
-            $rows['springapex_gallery'] = [['image' => (string) $seed['image']]];
-        }
-    }
-    ?>
-    <p class="description">
-      这个产品详情页显示这几项：<strong>产品名</strong>用上方的标题，<strong>正文</strong>在上方的编辑器里写。下面几项显示在页面顶部，文字会原样出现在英文前台，请用英文填写。
-    </p>
-    <h3>产品图</h3>
-    <?php springapex_render_row_editor(
-        'springapex_gallery',
-        $rows['springapex_gallery'],
-        $sets['springapex_gallery'],
-        '第一张显示为页面顶部的大图，其余作为可切换的缩略图。用「上移/下移」调整顺序，第一张就是主图（同时用作产品列表和分享缩略图）。建议正方形、白底、1200×1200。'
-    ); ?>
-    <p>
-      <label for="springapex-subtitle"><strong>标题下的一句话</strong></label><br>
-      <textarea class="widefat" rows="2" id="springapex-subtitle" name="springapex_subtitle"><?php echo esc_textarea($subtitle); ?></textarea>
-      <span class="description">显示在产品名下方的一行介绍语。</span>
-    </p>
-
-    <h3>顶部关键参数</h3>
-    <?php springapex_render_row_editor(
-        'springapex_specs',
-        $rows['springapex_specs'],
-        $sets['springapex_specs'],
-        '显示在页面顶部的三个数据框（前 3 行生效，多余的不显示）。左边是项目名（例如 Wire Diameter），右边是数值或范围（例如 0.1 – 60 mm）。'
-    ); ?>
-
-    <p>
-      <label><input type="checkbox" name="springapex_featured" value="1" <?php checked($featured); ?>> 在首页的「Featured Products」里显示这个产品</label>
-    </p>
-    <?php
-}
 
 function springapex_admin_request_scalar(mixed $value): string
 {

@@ -423,6 +423,20 @@
   color: var(--sa-text-2);
   font-size: 12px;
   line-height: 1.55;
+  text-decoration: none;
+  transition: color .2s var(--sa-ease);
+}
+
+/* 地址行是 Google Maps 链接：悬停/聚焦给出主色与下划线提示可点。 */
+.sa-contact-regions__address:hover,
+.sa-contact-regions__address:focus-visible {
+  color: var(--sa-primary);
+}
+
+.sa-contact-regions__address:hover span,
+.sa-contact-regions__address:focus-visible span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .sa-contact-regions__address .icon {

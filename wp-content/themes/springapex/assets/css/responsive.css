@@ -545,10 +545,64 @@
   .pillar-grid,
   .application-grid,
   .product-grid,
-  .solutions-grid,
-  .stats-row,
-  .capabilities-list {
+  .stats-row {
     grid-template-columns: 1fr;
+  }
+
+  /* 能力卡：手机一排两个（2×2 收口），图标与字号相应收紧。 */
+  .capabilities-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .capability-item {
+    padding: 16px 14px;
+  }
+
+  .capability-item h3 {
+    margin-top: 14px;
+    font-size: 15px;
+  }
+
+  .capability-item p {
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .capability-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .capability-icon .icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .capability-item__top {
+    gap: 10px;
+  }
+
+  /* 方案/案例列表卡：手机保持一排两个（4:3 媒体块窄卡刚好），
+     内边距与字号相应收紧。 */
+  .solutions-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .solution-meta {
+    min-height: 72px;
+    padding: 12px 13px;
+    gap: 8px;
+  }
+
+  .solution-meta strong {
+    font-size: 15px;
+  }
+
+  .solution-meta small {
+    margin-top: 3px;
+    font-size: 12px;
   }
 
   .pillar-card,
@@ -707,9 +761,17 @@
     font-size: 26px;
   }
 
-  .help-media,
+  /* 底部 CTA：媒体层原为 absolute 满铺背景（旧方案靠 top:190px 下移取景，
+     文案仍会压图）。改为常规流上下堆叠，图片作 16:7 内容块垫在文案下。 */
+  .bottom-cta-inner {
+    min-height: 0;
+    grid-template-columns: 1fr;
+  }
+
   .bottom-cta-media {
-    top: 190px;
+    position: relative;
+    inset: auto;
+    aspect-ratio: 16 / 7;
   }
 
   .sa-route-products .help-band-inner,

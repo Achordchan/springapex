@@ -1,0 +1,118 @@
+/* 表单字段构建器（表单设置页）。 */
+
+.springapex-form-builder {
+  margin: 28px 0 8px;
+  padding: 18px 20px 20px;
+  border: 1px solid #dcdcde;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.springapex-form-builder > .title {
+  margin: 0 0 12px;
+}
+
+.form-builder-flags {
+  display: flex;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.form-builder-flags label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.builder-field {
+  position: relative;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border: 1px solid #dcdcde;
+  border-left: 3px solid #2271b1;
+  border-radius: 6px;
+  background: #f9f9fa;
+}
+
+.builder-field.is-dragging {
+  opacity: .45;
+}
+
+.builder-field.is-drop-target {
+  border-color: #2271b1;
+  box-shadow: 0 0 0 2px rgba(34, 113, 177, .2);
+}
+
+.builder-field__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.builder-field__drag {
+  color: #8c8f94;
+  cursor: grab;
+  font-size: 15px;
+}
+
+.builder-field__type {
+  padding: 1px 8px;
+  border-radius: 9px;
+  background: #e7f1f8;
+  color: #2271b1;
+  font-size: 11.5px;
+}
+
+.builder-field__system {
+  padding: 1px 8px;
+  border-radius: 9px;
+  background: #f0f0f1;
+  color: #646970;
+  font-size: 11.5px;
+}
+
+.builder-field__remove {
+  margin-left: auto;
+  color: #d63638;
+  cursor: pointer;
+}
+
+.builder-field__grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.builder-field__grid label {
+  display: block;
+  font-size: 12px;
+  color: #50575e;
+}
+
+.builder-field__grid input[type="text"],
+.builder-field__grid select,
+.builder-field__grid textarea {
+  width: 100%;
+  margin: 3px 0 0;
+}
+
+.builder-field__required {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 6px;
+  white-space: nowrap;
+}
+
+.builder-field__options {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 1100px) {
+  .builder-field__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

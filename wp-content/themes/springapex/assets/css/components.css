@@ -576,6 +576,28 @@ body.menu-open {
   color: var(--sa-text-muted);
 }
 
+/* 表单构建器渲染的字段组：整行字段跨两列，半行字段各占一列。
+   窄屏统一回退整行。三个前台表单（.field / .support-field）共用。 */
+.sa-schema-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.sa-schema-fields > * {
+  grid-column: 1 / -1;
+}
+
+.sa-schema-fields > .is-half {
+  grid-column: span 1;
+}
+
+@media (max-width: 600px) {
+  .sa-schema-fields > .is-half {
+    grid-column: 1 / -1;
+  }
+}
+
 .file-field {
   padding: 13px 15px;
   border: 1px dashed var(--sa-border-strong);

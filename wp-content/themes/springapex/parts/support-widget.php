@@ -18,6 +18,11 @@ $hours = trim((string) ($brand['hours'] ?? ''));
 $form_action = defined('SPRINGAPEX_PREVIEW')
     ? springapex_url('/contact/')
     : admin_url('admin-post.php');
+
+// 「表单设置」可整体停用快速询盘浮动窗。
+if (!springapex_form_enabled('quick')) {
+    return;
+}
 ?>
 <aside class="support-widget" data-support-widget aria-label="<?php esc_attr_e('Customer support', 'springapex'); ?>">
   <section class="support-panel" id="springapex-support-panel" data-support-panel hidden>
@@ -49,22 +54,14 @@ $form_action = defined('SPRINGAPEX_PREVIEW')
         <input type="hidden" name="started_at" value="<?php echo esc_attr((string) time()); ?>" data-form-started-at>
         <label class="honeypot" aria-hidden="true">Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
 
-        <label class="support-field">
-          <span><?php esc_html_e('Name', 'springapex'); ?></span>
-          <input type="text" name="full_name" maxlength="120" autocomplete="name" required data-support-first-field>
-        </label>
-        <label class="support-field">
-          <span><?php esc_html_e('Work email', 'springapex'); ?></span>
-          <input type="email" name="email" maxlength="190" autocomplete="email" required>
-        </label>
-        <label class="support-field">
-          <span><?php esc_html_e('What spring or application do you need?', 'springapex'); ?></span>
-          <textarea name="message" rows="3" maxlength="1500" required></textarea>
-        </label>
+        <?php // 快速询盘窗的字段区：结构存于「表单设置」，按 schema 渲染；
+        // 首字段带 data-support-first-field，面板打开时自动聚焦。
+        springapex_render_form_schema_fields('quick', 'support-field', 'data-support-first-field'); ?>
         <button class="btn btn-primary support-submit" type="submit" data-submit-button>
           <span><?php esc_html_e('Send Inquiry', 'springapex'); ?></span>
           <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
         </button>
+        <?php if (springapex_form_turnstile_enabled('quick')) : ?>
         <div class="support-turnstile-widget">
           <div
             class="cf-turnstile"
@@ -75,6 +72,7 @@ $form_action = defined('SPRINGAPEX_PREVIEW')
           ></div>
           <?php echo springapex_turnstile_noscript(); ?>
         </div>
+        <?php endif; ?>
         <p class="form-status support-form-status" data-form-status role="status" aria-live="polite" hidden></p>
       </form>
 

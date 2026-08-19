@@ -1,0 +1,44 @@
+/* 面板编辑器（tinyMCE）里的内容样式：让图库区块等以接近前台的形态
+   展示，编辑人员在编辑器里看到的两列图廊与公开页一致。
+   仅通过 mce_css 挂到面板编辑器的 iframe，不影响站点任何样式。 */
+
+body#tinymce {
+  padding: 14px 18px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* 图库区块：前台是两列网格（columns-2），编辑器里同样排两列。 */
+figure.wp-block-gallery {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+
+figure.wp-block-gallery > figure {
+  margin: 0;
+}
+
+figure.wp-block-gallery img {
+  width: 100%;
+  height: auto;
+}
+
+/* 单张图片块与前台观感对齐。 */
+figure.wp-block-image {
+  margin: 20px 0;
+}
+
+figure.wp-block-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+figcaption {
+  margin-top: 6px;
+  color: #646970;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
