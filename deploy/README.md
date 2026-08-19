@@ -24,6 +24,15 @@ docker compose --env-file .env -f compose.yml --profile tools run --rm cli core 
 docker compose --env-file .env -f compose.yml --profile tools run --rm cli option get home
 ```
 
+生产默认禁止在线修改程序文件。只在安装受信任的 WordPress 语言包时，给当次 CLI 容器传入一次性开关：
+
+```bash
+docker compose --env-file .env -f compose.yml --profile tools run --rm \
+  -e SPRINGAPEX_ALLOW_FILE_MODS=1 cli language core install zh_CN --activate
+```
+
+结束后不在 `.env` 中保留该开关，Web 容器仍会定义 `DISALLOW_FILE_MODS=true`。
+
 Before any database URL change:
 
 ```bash
