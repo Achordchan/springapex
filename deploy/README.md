@@ -33,6 +33,18 @@ docker compose --env-file .env -f compose.yml --profile tools run --rm \
 
 结束后不在 `.env` 中保留该开关，Web 容器仍会定义 `DISALLOW_FILE_MODS=true`。
 
+## 临时调试保护
+
+线上调试阶段启用三层保护：
+
+1. Nginx HTTPS server 使用 `auth_basic` 和 `/etc/nginx/.htpasswd-springapex`。
+2. HTTP/HTTPS 响应都返回 `X-Robots-Tag: noindex, nofollow, noarchive`。
+3. WordPress `blog_public` 选项设为 `0`。
+
+`/.well-known/acme-challenge/` 仍保持无鉴权，保证 Certbot 自动续期。GitHub Actions 的健康检查通过 `springapex-deploy-command` 直接访问 `127.0.0.1:38100`，不依赖共享预览密码。
+
+正式开放前需同时完成：移除 Nginx `auth_basic`、移除 `X-Robots-Tag`、将 `blog_public` 恢复为 `1`，然后执行 Nginx 语法检查和公网验收。
+
 Before any database URL change:
 
 ```bash

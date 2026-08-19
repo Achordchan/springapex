@@ -10,10 +10,10 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
         exec /usr/bin/rrsync -wo /srv/springapex/wordpress/wp-content
         ;;
     springapex-health)
-        if /usr/bin/curl -fsS --resolve web.apex-springs.com:443:127.0.0.1 https://web.apex-springs.com/ >/dev/null 2>&1; then
-            exit 0
-        fi
-        exec /usr/bin/curl -fsS -H 'Host: web.apex-springs.com' http://127.0.0.1/ >/dev/null
+        exec /usr/bin/curl -fsS \
+            -H 'Host: web.apex-springs.com' \
+            -H 'X-Forwarded-Proto: https' \
+            http://127.0.0.1:38100/ >/dev/null
         ;;
     *)
         echo 'This key can only deploy SpringApex code or run its health check.' >&2
