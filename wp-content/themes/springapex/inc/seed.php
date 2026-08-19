@@ -628,6 +628,36 @@ function springapex_seed_menu_item_args(array $spec): array
 }
 
 /**
+ * 判断菜单项 URL 是否为早期 seed 写死的 legacy 归档查询串：
+ * 同站（host/port 一致，scheme 不比，容忍 HTTP→HTTPS 迁移）、根路径、
+ * 查询串恰好只有 post_type=<对象>。
+ * 运营者自定义的 URL——带其它查询参数（&view=…）、别的路径、或指向
+ * 外部站——即使恰含同段子串也不算（str_contains 会把
+ * `?post_type=spring_product_reviews`、外站同参数误判成 legacy）。
+ */
+function springapex_seed_is_legacy_archive_url(string $url, string $archive): bool
+{
+    $parts = parse_url($url);
+    $home = parse_url(home_url('/'));
+    if (!is_array($parts) || !is_array($home) || !isset($parts['host'], $home['host'])) {
+        return false;
+    }
+    if (strcasecmp($parts['host'], $home['host']) !== 0
+        || (int) ($parts['port'] ?? 0) !== (int) ($home['port'] ?? 0)) {
+        return false;
+    }
+    if (trim((string) ($parts['path'] ?? ''), '/') !== '') {
+        return false;
+    }
+    if (!isset($parts['query'])) {
+        return false;
+    }
+    parse_str($parts['query'], $query);
+
+    return count($query) === 1 && ($query['post_type'] ?? '') === $archive;
+}
+
+/**
  * 校准主菜单顶层项。
  *
  * 升级路径（$allow_create=false，已初始化站点每次版本重跑）只做**归档项自愈**：
@@ -703,12 +733,12 @@ function springapex_seed_primary_menu_items(int $menu_id, bool $allow_create = t
         }
 
         if ($match) {
-            // 自愈：仅纠正**早期 seed 写死的 legacy 查询串链接**
-            // （URL 含 `post_type=<对象>`）。运营者若把同名项故意改成自定义
-            // 落地页/外链（无该签名），保持不动。
+            // 自愈：仅纠正**早期 seed 写死的 legacy 归档查询串**（同站根路径、
+            // 查询串恰好只有 post_type=<对象>，见匹配函数注释）。运营者若把
+            // 同名项改成自定义 URL，保持不动。
             $needs_fix = !empty($spec['archive'])
                 && (string) $match->type !== 'post_type_archive'
-                && str_contains((string) $match->url, 'post_type=' . $spec['archive']);
+                && springapex_seed_is_legacy_archive_url((string) $match->url, (string) $spec['archive']);
             if (!$needs_fix) {
                 continue;
             }
