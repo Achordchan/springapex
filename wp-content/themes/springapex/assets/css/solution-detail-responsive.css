@@ -133,7 +133,7 @@
   .sa-industry-hero__actions .btn,
   .sa-industry-hero__actions .text-link {
     width: 100%;
-    justify-content: space-between;
+    justify-content: center;
   }
 
   .sa-industry-inputs__grid,

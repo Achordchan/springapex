@@ -7,6 +7,9 @@
 .sa-product-editor-details__content {
   display: flow-root;
   color: var(--sa-text-2, #4b5563);
+  /* 全局 .entry-content 带 margin-top: 34px，是给「标题+正文」结构用的；
+     这里正文直接贴着区块 padding，再叠 34px 就成了文案上方的大段死白。 */
+  margin-top: 0;
 }
 
 .sa-product-editor-details__content > :first-child {

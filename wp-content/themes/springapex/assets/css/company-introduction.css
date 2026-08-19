@@ -222,15 +222,29 @@
     grid-template-columns: 1fr;
   }
 
+  /* 手机上不再逐行堆叠成 6 行：每条事实一行，标签在左、数值在右。 */
   .sa-company-intro__facts > div,
   .sa-company-intro__facts > div:first-child {
-    padding: 14px 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 13px 0;
     border-left: 0;
     border-bottom: 1px solid var(--sa-border);
   }
 
   .sa-company-intro__facts > div:last-child {
     border-bottom: 0;
+  }
+
+  .sa-company-intro__facts dt {
+    flex: none;
+  }
+
+  .sa-company-intro__facts dd {
+    margin-top: 0;
+    text-align: right;
   }
 }
 

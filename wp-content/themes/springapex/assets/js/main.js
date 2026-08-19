@@ -27,7 +27,10 @@
 
     const root = document.documentElement;
     const scrollPaddingTop = Number.parseFloat(window.getComputedStyle(root).scrollPaddingTop) || 0;
-    const targetTop = target.getBoundingClientRect().top + window.scrollY - scrollPaddingTop;
+    // 产品详情页的吸顶补偿记在目标自身的 scroll-margin-top 上（root padding 已归零），
+    // 这里必须一并读取，否则深链落点会被吸顶栏盖住。
+    const scrollMarginTop = Number.parseFloat(window.getComputedStyle(target).scrollMarginTop) || 0;
+    const targetTop = target.getBoundingClientRect().top + window.scrollY - scrollPaddingTop - scrollMarginTop;
     const previousScrollBehavior = root.style.scrollBehavior;
 
     root.style.scrollBehavior = 'auto';
@@ -62,8 +65,23 @@
       ...mobileNav.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'),
     ].filter((element) => !element.hidden);
 
+    // 面板顶部要对齐 header 的实际渲染底边：WP 管理栏（移动端 46px）等
+    // 顶部元素会把 sticky header 推到 --sa-header-height 常量之外，写死的
+    // top 会让面板钻进 header 底下、遮住第一项（Home）。
+    const alignMobileNav = () => {
+      const bottom = Math.round(header.getBoundingClientRect().bottom);
+      mobileNav.style.top = `${bottom}px`;
+      mobileNav.style.maxHeight = `calc(100dvh - ${bottom}px)`;
+    };
+
     const setMenu = (open, restoreFocus = true) => {
-      if (open) menuReturnFocus = document.activeElement;
+      if (open) {
+        menuReturnFocus = document.activeElement;
+        alignMobileNav();
+      } else {
+        mobileNav.style.top = '';
+        mobileNav.style.maxHeight = '';
+      }
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
       toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
       mobileNav.hidden = !open;
@@ -115,6 +133,8 @@
           const desktopFocusTarget = header.querySelector('.quote-btn');
           if (desktopFocusTarget) desktopFocusTarget.focus({ preventScroll: true });
         }
+      } else if (toggle.getAttribute('aria-expanded') === 'true') {
+        alignMobileNav();
       }
     });
   }

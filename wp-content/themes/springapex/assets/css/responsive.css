@@ -561,6 +561,12 @@
     background: var(--sa-surface);
   }
 
+  /* 卡片塌成全宽单列后，卡内段落不再沿用桌面窄卡设定的 30ch 行长，
+     否则短文案缩在卡片左侧、右侧大片留白。 */
+  .capability-item p {
+    max-width: none;
+  }
+
   .pillar-card:hover,
   .stat-item:hover {
     transform: none;
