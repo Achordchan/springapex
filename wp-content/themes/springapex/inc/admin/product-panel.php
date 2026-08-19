@@ -75,18 +75,35 @@ function springapex_render_product_panel(object $post): void
     $subtitle = (string) $value('_springapex_subtitle', $seed['subtitle'] ?? '');
     $featured = (bool) $value('_springapex_featured', !empty($seed['featured']));
 
-    // 已保存画廊先规范化；元数据缺失、为空或损坏时，都回退到与前台
-    // 相同的 特色图像 → seed 画廊，避免编辑面板与公开页显示不一致。
+    // 与前台 springapex_product_from_post() 使用相同的有效性口径：
+    // 已删除的附件、空行和损坏行不应阻止特色图 / seed 画廊兜底。
+    $normalize_gallery = static function (array $rows): array {
+        $normalized = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $image_id = (int) ($row['image_id'] ?? 0);
+            $image = trim((string) ($row['image'] ?? ''));
+            if ($image_id > 0 && get_post_type($image_id) !== 'attachment') {
+                $image_id = 0;
+            }
+            if ($image_id > 0 || $image !== '') {
+                $normalized[] = ['image_id' => (string) $image_id, 'image' => $image];
+            }
+        }
+        return $normalized;
+    };
+
     $thumbnail_id = (int) get_post_thumbnail_id($post_id);
     $gallery = metadata_exists('post', $post_id, '_springapex_gallery')
-        ? (array) $value('_springapex_gallery', [])
+        ? $normalize_gallery((array) $value('_springapex_gallery', []))
         : [];
-    $gallery = array_values(array_filter($gallery, 'is_array'));
+    if ($gallery === [] && $thumbnail_id > 0) {
+        $gallery = $normalize_gallery([['image_id' => (string) $thumbnail_id, 'image' => '']]);
+    }
     if ($gallery === []) {
-        $gallery = $thumbnail_id > 0
-            ? [['image_id' => (string) $thumbnail_id, 'image' => '']]
-            : (array) ($seed['gallery'] ?? []);
-        $gallery = array_values(array_filter($gallery, 'is_array'));
+        $gallery = $normalize_gallery((array) ($seed['gallery'] ?? []));
     }
 
     $specs = (array) $value('_springapex_specs', $seed['specs'] ?? []);
