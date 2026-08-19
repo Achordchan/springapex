@@ -659,10 +659,33 @@
           const message = payload.data && payload.data.message ? payload.data.message : 'Unable to submit right now.';
           throw new Error(message);
         }
-        showStatus(payload.data.message || 'Thank you. Your request has been received.', 'success');
-        form.reset();
-        if (startedAt) startedAt.value = String(Math.floor(Date.now() / 1000));
-        syncDrawingUpload();
+        const successMode = form.dataset.success || 'redirect';
+        if (successMode === 'inline') {
+          // Quick inquiry widget: stay in the popup and swap the form for an
+          // in-panel thank-you screen (see parts/support-widget.php).
+          const panelBody = form.closest('.support-panel-body');
+          const thankyou = panelBody ? panelBody.querySelector('[data-support-thankyou]') : null;
+          if (thankyou instanceof HTMLElement && panelBody) {
+            panelBody.classList.add('is-submitted');
+            thankyou.hidden = false;
+            form.reset();
+            if (startedAt) startedAt.value = String(Math.floor(Date.now() / 1000));
+            syncDrawingUpload();
+            const resetButton = panelBody.querySelector('[data-support-reset]');
+            if (resetButton instanceof HTMLElement) resetButton.focus({ preventScroll: true });
+          } else {
+            showStatus(payload.data.message || 'Thank you. Your request has been received.', 'success');
+            form.reset();
+            if (startedAt) startedAt.value = String(Math.floor(Date.now() / 1000));
+            syncDrawingUpload();
+          }
+        } else {
+          // Every other form redirects to the /success landing page so the
+          // conversion is trackable by URL. Do it before the form resets.
+          const successUrl = config.successUrl || (config.homeUrl ? `${config.homeUrl}success/` : '/success/');
+          window.location.assign(successUrl);
+          return;
+        }
       } catch (error) {
         showStatus(error instanceof Error ? error.message : 'Unable to submit right now.', 'error');
       } finally {
@@ -682,6 +705,21 @@
         }
       }
       });
+
+      // Quick inquiry widget: "Send another inquiry" returns from the
+      // thank-you screen to a fresh form.
+      const supportReset = form.closest('.support-panel-body')?.querySelector('[data-support-reset]');
+      if (supportReset instanceof HTMLElement) {
+        supportReset.addEventListener('click', () => {
+          const panelBody = form.closest('.support-panel-body');
+          const thankyou = panelBody ? panelBody.querySelector('[data-support-thankyou]') : null;
+          if (thankyou instanceof HTMLElement) thankyou.hidden = true;
+          if (panelBody) panelBody.classList.remove('is-submitted');
+          if (status) status.hidden = true;
+          const firstField = form.querySelector('[data-support-first-field]') || form.querySelector('input:not([type="hidden"]), textarea');
+          if (firstField instanceof HTMLElement) firstField.focus({ preventScroll: true });
+        });
+      }
 
       form.addEventListener('input', (event) => {
         const field = event.target;

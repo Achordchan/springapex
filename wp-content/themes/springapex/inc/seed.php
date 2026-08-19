@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-defined('SPRINGAPEX_SEED_VERSION') || define('SPRINGAPEX_SEED_VERSION', '2.7.8');
+defined('SPRINGAPEX_SEED_VERSION') || define('SPRINGAPEX_SEED_VERSION', '2.7.9');
 
 add_action('after_switch_theme', 'springapex_seed_site');
 add_action('admin_notices', 'springapex_seed_admin_notice');
@@ -147,6 +147,9 @@ function springapex_seed_site_locked(): bool
     $privacy_id = springapex_seed_page('Privacy Policy', 'privacy', '', 'page-privacy.php', true);
     $terms_id = springapex_seed_page('Terms of Use', 'terms', '', 'page-terms.php', true);
     $sitemap_id = springapex_seed_page('Sitemap', 'sitemap', '', 'page-sitemap.php', true);
+    // 注意：/success 落地页不 seed WP 页面，改由主题 template_redirect 路由渲染
+    // （见 inc/setup.php），避免撞运营者已有的 success 页、也免去部署时的建页/
+    // 时序依赖。模板内容写死、不吃 the_content，无页面也不损失可编辑性。
 
     $front_page_ready = true;
     if (is_int($home_id) && $home_id > 0 && (int) get_option('page_on_front') === 0) {
@@ -172,6 +175,7 @@ function springapex_seed_site_locked(): bool
     $success = springapex_seed_news(true) && $success;
     $success = springapex_seed_primary_menu($allow_create) && $success;
     $success = springapex_seed_capabilities_menu_url() && $success;
+    $success = springapex_seed_migrate_contact_network() && $success;
 
     if (!$success) {
         return springapex_seed_failure('content');
@@ -600,6 +604,180 @@ function springapex_seed_news(bool $allow_create = true): bool
     return $success;
 }
 
+/**
+ * 把一条主菜单项声明转成 wp_update_nav_menu_item() 的参数。
+ * 带 'archive' 的用 post_type_archive 类型（URL 动态渲染）；否则是自定义链接。
+ */
+function springapex_seed_menu_item_args(array $spec): array
+{
+    if (!empty($spec['archive'])) {
+        return [
+            'menu-item-title' => $spec['title'],
+            'menu-item-type' => 'post_type_archive',
+            'menu-item-object' => $spec['archive'],
+            'menu-item-status' => 'publish',
+        ];
+    }
+
+    return [
+        'menu-item-title' => $spec['title'],
+        'menu-item-url' => $spec['url'],
+        'menu-item-type' => 'custom',
+        'menu-item-status' => 'publish',
+    ];
+}
+
+/**
+ * 判断菜单项 URL 是否为早期 seed 写死的 legacy 归档查询串：
+ * 与 home_url('/') 解析结果同 host/port（scheme 不比，容忍 HTTP→HTTPS
+ * 迁移）、同路径（支持装在子目录的站点，如 /wordpress/）、查询串恰好
+ * 只有 post_type=<对象> 一个参数、且无 fragment 等其它成分。
+ * 运营者自定义的 URL——带其它查询参数（&view=…）或锚点（#catalog）、
+ * 别的路径、或指向外部站——即使恰含同段子串也不算（str_contains 会把
+ * `?post_type=spring_product_reviews`、外站同参数误判成 legacy）。
+ */
+function springapex_seed_is_legacy_archive_url(string $url, string $archive): bool
+{
+    $parts = parse_url($url);
+    $home = parse_url(home_url('/'));
+    if (!is_array($parts) || !is_array($home) || !isset($parts['host'], $home['host'])) {
+        return false;
+    }
+    if (strcasecmp($parts['host'], $home['host']) !== 0
+        || (int) ($parts['port'] ?? 0) !== (int) ($home['port'] ?? 0)) {
+        return false;
+    }
+    if (trim((string) ($parts['path'] ?? ''), '/') !== trim((string) ($home['path'] ?? ''), '/')) {
+        return false;
+    }
+    if (isset($parts['fragment'])) {
+        return false;
+    }
+    if (!isset($parts['query'])) {
+        return false;
+    }
+    parse_str($parts['query'], $query);
+
+    return count($query) === 1 && ($query['post_type'] ?? '') === $archive;
+}
+
+/**
+ * 校准主菜单顶层项。
+ *
+ * 升级路径（$allow_create=false，已初始化站点每次版本重跑）只做**归档项自愈**：
+ * 把早期 seed 写死成 `?post_type=` 查询串的 Products/Industries 就地纠正为
+ * post_type_archive 类型，保留排序。绝不创建缺失项、不改名，以免把运营者删过/
+ * 改过的默认项重新加回（与子菜单 seeding 同一保守原则）。
+ *
+ * 创建路径（$allow_create=true，首次建/收编菜单）才全量：迁移旧的
+ * “View Our Catalog” 为 News、补齐缺失的默认顶层项。
+ */
+function springapex_seed_primary_menu_items(int $menu_id, bool $allow_create = true): bool
+{
+    // 指向 CPT 归档的项用 post_type_archive 类型，URL 由 WP 用
+    // get_post_type_archive_link() 动态渲染——永远是 pretty、永远跟当前站点域名，
+    // 不会 seed 出 `?post_type=` 查询串，也不会把某个环境的域名写死带到别处。
+    $items = [
+        ['title' => 'Home', 'url' => home_url('/')],
+        ['title' => 'About Us', 'url' => home_url('/about/')],
+        ['title' => 'Products', 'archive' => 'spring_product'],
+        ['title' => 'Industries', 'archive' => 'spring_solution'],
+        ['title' => 'Custom Springs', 'url' => home_url('/capabilities/')],
+        ['title' => 'News', 'url' => home_url('/news/')],
+        ['title' => 'Contact', 'url' => home_url('/contact/')],
+    ];
+
+    $existing = wp_get_nav_menu_items($menu_id);
+    if (is_wp_error($existing)) {
+        return false;
+    }
+    $existing = $existing ?: [];
+
+    // 旧 “View Our Catalog” → News 属首次建/收编时的一次性迁移，只在创建路径跑。
+    if ($allow_create) {
+        $renamed_any = false;
+        foreach ($existing as $existing_item) {
+            $is_catalog_item = (string) $existing_item->title === 'View Our Catalog'
+                || str_contains((string) $existing_item->url, '/resources/#catalog-download');
+            if (!$is_catalog_item) {
+                continue;
+            }
+            $updated = wp_update_nav_menu_item($menu_id, (int) $existing_item->ID, [
+                'menu-item-title' => 'News',
+                'menu-item-url' => home_url('/news/'),
+                'menu-item-status' => 'publish',
+            ]);
+            if (is_wp_error($updated) || (int) $updated <= 0) {
+                return false;
+            }
+            $renamed_any = true;
+        }
+        // 改名后重取，否则下面的 News 规格仍看到旧标题、匹配失败而重复建项。
+        if ($renamed_any) {
+            $existing = wp_get_nav_menu_items($menu_id);
+            if (is_wp_error($existing)) {
+                return false;
+            }
+            $existing = $existing ?: [];
+        }
+    }
+
+    foreach ($items as $spec) {
+        $args = springapex_seed_menu_item_args($spec);
+
+        // 只认顶层项：primary 与 footer 复用同一菜单，footer 里有同名子项
+        // （如挂在 Industries 下的子项 Industries），按 parent===0 限定避免误匹配。
+        $match = null;
+        foreach ($existing as $existing_item) {
+            if ((int) $existing_item->menu_item_parent === 0
+                && (string) $existing_item->title === $spec['title']) {
+                $match = $existing_item;
+                break;
+            }
+        }
+
+        if ($match) {
+            // 自愈：仅纠正**早期 seed 写死的 legacy 归档查询串**（同站根路径、
+            // 查询串恰好只有 post_type=<对象>，见匹配函数注释）。运营者若把
+            // 同名项改成自定义 URL，保持不动。
+            $needs_fix = !empty($spec['archive'])
+                && (string) $match->type !== 'post_type_archive'
+                && springapex_seed_is_legacy_archive_url((string) $match->url, (string) $spec['archive']);
+            if (!$needs_fix) {
+                continue;
+            }
+            // 保留原有排序：wp_update_nav_menu_item 不带 position 会把该项重排到末尾。
+            $args['menu-item-position'] = (int) $match->menu_order;
+            // 携带原有展示属性：wp_update_nav_menu_item 对未传字段填空默认，
+            // 否则会清掉运营者给该项加的 CSS class / title 属性 / XFN / 描述 / target。
+            $args['menu-item-attr-title'] = (string) $match->attr_title;
+            $args['menu-item-target'] = (string) $match->target;
+            $args['menu-item-classes'] = is_array($match->classes)
+                ? implode(' ', $match->classes)
+                : (string) $match->classes;
+            $args['menu-item-xfn'] = (string) $match->xfn;
+            $args['menu-item-description'] = (string) $match->description;
+            $updated = wp_update_nav_menu_item($menu_id, (int) $match->ID, $args);
+            if (is_wp_error($updated) || (int) $updated <= 0) {
+                return false;
+            }
+            continue;
+        }
+
+        // 升级路径不补默认项：运营者删/改过的项不该被重新加回（避免重复）。
+        if (!$allow_create) {
+            continue;
+        }
+
+        $item_id = wp_update_nav_menu_item($menu_id, 0, $args);
+        if (is_wp_error($item_id) || (int) $item_id <= 0) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 function springapex_seed_primary_menu(bool $allow_create = true): bool
 {
     $locations = get_theme_mod('nav_menu_locations', []);
@@ -632,12 +810,15 @@ function springapex_seed_primary_menu(bool $allow_create = true): bool
             $footer_id = $primary_id;
         }
 
+        // 已初始化站点：只自愈归档项，绝不补建/改名（保留运营者的增删改）。
+        $items_seeded = springapex_seed_primary_menu_items($primary_id, false);
         $children_seeded = springapex_seed_primary_menu_children($primary_id);
 
         $saved_locations = get_theme_mod('nav_menu_locations', []);
         $saved_footer_id = is_array($saved_locations) ? (int) ($saved_locations['footer'] ?? 0) : 0;
         $saved_footer_menu = $saved_footer_id > 0 ? wp_get_nav_menu_object($saved_footer_id) : false;
-        return $children_seeded &&
+        return $items_seeded &&
+            $children_seeded &&
             is_array($saved_locations) &&
             (int) ($saved_locations['primary'] ?? 0) === $primary_id &&
             $saved_footer_menu &&
@@ -696,59 +877,8 @@ function springapex_seed_primary_menu(bool $allow_create = true): bool
         return false;
     }
 
-    $items = [
-        ['Home', home_url('/')],
-        ['About Us', home_url('/about/')],
-        ['Products', get_post_type_archive_link('spring_product') ?: home_url('/products/')],
-        ['Industries', get_post_type_archive_link('spring_solution') ?: home_url('/solutions/')],
-        ['Custom Springs', home_url('/capabilities/')],
-        ['News', home_url('/news/')],
-        ['Contact', home_url('/contact/')],
-    ];
-
-    $existing = wp_get_nav_menu_items($menu_id);
-    if (is_wp_error($existing)) {
+    if (!springapex_seed_primary_menu_items($menu_id, $allow_create)) {
         return false;
-    }
-    $existing = $existing ?: [];
-
-    foreach ($existing as $existing_item) {
-        $is_catalog_item = (string) $existing_item->title === 'View Our Catalog'
-            || str_contains((string) $existing_item->url, '/resources/#catalog-download');
-        if (!$is_catalog_item) {
-            continue;
-        }
-        $updated = wp_update_nav_menu_item($menu_id, (int) $existing_item->ID, [
-            'menu-item-title' => 'News',
-            'menu-item-url' => home_url('/news/'),
-            'menu-item-status' => 'publish',
-        ]);
-        if (is_wp_error($updated) || (int) $updated <= 0) {
-            return false;
-        }
-    }
-
-    foreach ($items as [$title, $url]) {
-        $already_exists = false;
-        foreach ($existing as $existing_item) {
-            if ((string) $existing_item->title === $title) {
-                $already_exists = true;
-                break;
-            }
-        }
-        if ($already_exists) {
-            continue;
-        }
-
-        $item_id = wp_update_nav_menu_item($menu_id, 0, [
-            'menu-item-title' => $title,
-            'menu-item-url' => $url,
-            'menu-item-status' => 'publish',
-            'menu-item-type' => 'custom',
-        ]);
-        if (is_wp_error($item_id) || (int) $item_id <= 0) {
-            return false;
-        }
     }
 
     if (!springapex_seed_primary_menu_children($menu_id)) {
@@ -837,6 +967,130 @@ function springapex_seed_primary_menu_children(int $menu_id): bool
     }
 
     return true;
+}
+
+/**
+ * 迁移已保存的联系页覆盖数据。
+ *
+ * contact_network.markers / regions 是 list，一旦后台保存过就整体替换默认值，
+ * 纯代码改默认对这类站点不生效。这里在版本重跑时把「中东经销商」补进已存的
+ * override、并移除占位的 Other Regions，新增条目直接取自当前默认值以免重复维护。
+ * 无 contact_network override 的站点（默认值已含新数据）直接跳过。幂等。
+ */
+function springapex_seed_migrate_contact_network(): bool
+{
+    if (!function_exists('get_option') || !function_exists('springapex_content_store_overrides')) {
+        return true;
+    }
+
+    $overrides = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, []);
+    if (!is_array($overrides) || !isset($overrides['contact_network']) || !is_array($overrides['contact_network'])) {
+        return true;
+    }
+
+    $cn = $overrides['contact_network'];
+    $defaults = springapex_content_enhancements();
+    $default_cn = (array) ($defaults['contact_network'] ?? []);
+    $changed = false;
+
+    // 区域：仅移除**未改动的**占位 other-regions（运营者若保留 slug 却填了真实
+    // 经销商数据，则保留），若缺 middle-east 则从默认补上。
+    if (isset($cn['regions']) && is_array($cn['regions'])) {
+        $regions = array_values(array_filter(
+            $cn['regions'],
+            static function ($r): bool {
+                if (!is_array($r) || ($r['slug'] ?? '') !== 'other-regions') {
+                    return true; // 保留非占位区域
+                }
+                // 仅当整个条目仍是 seed 占位原样（任何暴露字段——名称、电话、
+                // 邮箱、地址、说明、网站、区域标签——被改过任一即保留）才移除。
+                return !springapex_seed_is_untouched_other_regions($r);
+            }
+        ));
+        $has_me = false;
+        foreach ($regions as $r) {
+            if (is_array($r) && ($r['slug'] ?? '') === 'middle-east') {
+                $has_me = true;
+                break;
+            }
+        }
+        if (!$has_me) {
+            foreach ((array) ($default_cn['regions'] ?? []) as $r) {
+                if (is_array($r) && ($r['slug'] ?? '') === 'middle-east') {
+                    $regions[] = $r;
+                    break;
+                }
+            }
+        }
+        if ($regions !== $cn['regions']) {
+            $cn['regions'] = $regions;
+            $changed = true;
+        }
+    }
+
+    // 地图点：若缺沙特点则从默认补上。
+    if (isset($cn['markers']) && is_array($cn['markers'])) {
+        $has_sa = false;
+        foreach ($cn['markers'] as $m) {
+            if (is_array($m) && str_contains((string) ($m['label'] ?? ''), 'Saudi Arabia')) {
+                $has_sa = true;
+                break;
+            }
+        }
+        if (!$has_sa) {
+            foreach ((array) ($default_cn['markers'] ?? []) as $m) {
+                if (is_array($m) && str_contains((string) ($m['label'] ?? ''), 'Saudi Arabia')) {
+                    $cn['markers'][] = $m;
+                    $changed = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    if ($changed) {
+        $overrides['contact_network'] = $cn;
+        springapex_content_store_overrides($overrides);
+        // store 助手返回 void：写后校验确实持久化，否则返回 false 让本次 seed
+        // 不记版本、后续 admin 请求重试，避免 override 永远停留在旧数据。
+        $saved = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, []);
+        if (!is_array($saved) || ($saved['contact_network'] ?? null) !== $cn) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * 未改动占位 other-regions 的完整签名（取自 2.7.8 seed 默认值）。
+ * 原始默认没有 website 键，但后台保存会按 schema 规整成空串——两种形态
+ * 都算未改动（比对前统一剥掉空 website）。用 == 比对：忽略键序（保存按
+ * schema 顺序重建键），值仍逐字段全等，任一字段被运营者改过即不匹配。
+ */
+function springapex_seed_is_untouched_other_regions(array $region): bool
+{
+    $untouched = [
+        'label' => 'Other Regions',
+        'slug' => 'other-regions',
+        'locations' => [
+            [
+                'name' => 'Global programs',
+                'detail' => 'Coordinated from Xuzhou, China',
+                'company' => 'ApexSpring',
+                'phone' => '+86 187 9642 2510',
+                'email' => 'victoria@springapex.cn',
+                'address' => 'Xuzhou, Jiangsu Province, China',
+            ],
+        ],
+    ];
+    foreach (array_keys($region['locations'] ?? []) as $i) {
+        if (is_array($region['locations'][$i]) && ($region['locations'][$i]['website'] ?? null) === '') {
+            unset($region['locations'][$i]['website']);
+        }
+    }
+
+    return $region == $untouched;
 }
 
 function springapex_seed_capabilities_menu_url(): bool

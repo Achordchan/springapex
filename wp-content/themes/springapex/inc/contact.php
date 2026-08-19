@@ -61,7 +61,10 @@ function springapex_handle_contact_post(): void
         springapex_redirect_contact_status($status);
     }
 
-    springapex_redirect_contact_status(!empty($result['sent']) ? 'success' : 'saved');
+    // 提交成功统一落到 /success 落地页（含无 JS 回退），便于转化统计。
+    // 邮件即便未即时发出（saved），询盘也已保存，对访客而言同样是成功。
+    wp_safe_redirect(springapex_url('/success/'), 303);
+    exit;
 }
 
 function springapex_redirect_contact_status(string $status): void

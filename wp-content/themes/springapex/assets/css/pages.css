@@ -1647,6 +1647,97 @@ body.drawing-guide-open {
   font-size: 13px;
 }
 
+/* Form success landing page (/success). Self-contained so it does not inherit
+   the generic `.sa-legal-hero span { display:block }` rule. */
+.sa-success-hero {
+  padding: 104px 0 96px;
+  background: var(--sa-surface-soft, #f4f6f4);
+  text-align: center;
+}
+
+.sa-success-hero .sa-legal-container {
+  display: grid;
+  justify-items: center;
+}
+
+.sa-success-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 78px;
+  height: 78px;
+  margin-bottom: 10px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--sa-accent, #1f7a4d) 15%, transparent);
+}
+
+.sa-success-badge .icon {
+  width: 40px;
+  height: 40px;
+}
+
+.sa-success-hero h1 {
+  max-width: 760px;
+  margin: 8px 0 16px;
+  font-size: clamp(34px, 4.4vw, 54px);
+  line-height: 1.05;
+  letter-spacing: -.04em;
+}
+
+.sa-success-lead {
+  max-width: 640px;
+  margin: 0 auto;
+  color: var(--sa-text-muted, #5a665f);
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.sa-success-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.sa-success-direct {
+  margin: 34px 0 0;
+  color: var(--sa-text-muted, #5a665f);
+  font-size: 14px;
+}
+
+.sa-success-contacts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 26px;
+  margin-top: 12px;
+}
+
+.sa-success-contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--sa-text, #17211b);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sa-success-contact:hover {
+  color: var(--sa-accent, #1f7a4d);
+}
+
+.sa-success-contact .icon {
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 640px) {
+  .sa-success-hero {
+    padding: 80px 0 64px;
+  }
+}
+
 .sa-legal-layout {
   display: grid;
   grid-template-columns: 190px minmax(0, 1fr);

@@ -142,6 +142,7 @@ function springapex_content_enhancements(): array
                 ['label' => 'North America · Mexico', 'lat' => '31.3186', 'lng' => '-110.9458', 'address' => 'Nogales, Sonora, Mexico', 'label_side' => 'right', 'headquarters' => ''],
                 ['label' => 'Europe · 7 partners', 'lat' => '51.3402', 'lng' => '7.0436', 'address' => 'Velbert, Germany', 'label_side' => 'right', 'headquarters' => ''],
                 ['label' => 'Asia Pacific · India', 'lat' => '18.6602', 'lng' => '74.1985', 'address' => 'Talegaon Dhamdhere, Pune, India', 'label_side' => 'right', 'headquarters' => ''],
+                ['label' => 'Middle East · Saudi Arabia', 'lat' => '21.4858', 'lng' => '39.1925', 'address' => 'Jeddah, Saudi Arabia', 'label_side' => 'left', 'headquarters' => ''],
                 ['label' => 'Asia Headquarters · Xuzhou', 'lat' => '34.1560', 'lng' => '117.1060', 'address' => 'Tongshan District, Xuzhou, Jiangsu, China', 'label_side' => 'left', 'headquarters' => '1'],
             ],
             'regions' => [
@@ -248,16 +249,15 @@ function springapex_content_enhancements(): array
                     ],
                 ],
                 [
-                    'slug' => 'other-regions',
-                    'label' => 'Other Regions',
+                    'slug' => 'middle-east',
+                    'label' => 'Middle East',
                     'locations' => [
                         [
-                            'name' => 'Global programs',
-                            'detail' => 'Coordinated from Xuzhou, China',
-                            'company' => 'ApexSpring',
-                            'phone' => '+86 187 9642 2510',
-                            'email' => 'victoria@springapex.cn',
-                            'address' => 'Xuzhou, Jiangsu Province, China',
+                            'name' => 'Saudi Arabia',
+                            'company' => 'Environmental & Industrial Technologies Ltd.',
+                            'phone' => '920010904',
+                            'email' => 'info@eit-arabia.com',
+                            'address' => 'Al-Andulus Plaza, 3rd Floor, Suit No.13, 6324 Tabuk Street, AR Ruwais District, Jeddah 23211-3499, Saudi Arabia',
                         ],
                     ],
                 ],
