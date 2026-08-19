@@ -201,7 +201,7 @@ function springapex_render_row_editor_icon(string $id, string $name, string $sel
  *
  * @param array<string, mixed> $row
  */
-function springapex_render_row_editor_image(string $id, string $name, array $row): void
+function springapex_render_row_editor_image(string $id, string $name, array $row, string $help = '不选图片就显示上面选的图标。'): void
 {
     $attachment_id = (int) ($row['image_id'] ?? 0);
     $legacy = (string) ($row['image'] ?? '');
@@ -226,7 +226,7 @@ function springapex_render_row_editor_image(string $id, string $name, array $row
             <button type="button" class="button" data-sa-image-pick>选择图片</button>
             <button type="button" class="button-link" data-sa-image-clear<?php echo $preview === '' ? ' hidden' : ''; ?>>不用图片</button>
         </span>
-        <span class="description">不选图片就显示上面选的图标。</span>
+        <?php if ($help !== '') : ?><span class="description"><?php echo esc_html($help); ?></span><?php endif; ?>
     </div>
     <?php
 }
