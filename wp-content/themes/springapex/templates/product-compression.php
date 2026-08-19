@@ -13,6 +13,11 @@ $traceability_url = springapex_url('/manufacturing-videos/#material-traceability
 $resources_url = springapex_url('/resources/');
 $details_source = trim((string) ($product['overview'] ?? ''));
 $has_product_details = defined('SPRINGAPEX_PREVIEW') || $details_source !== '';
+// Hero copy is driven by the product's own editable fields so every product can
+// reuse this layout: the lede comes from 「小标题」, and the three stat boxes from
+// the first rows of 「技术参数」.
+$hero_lede = trim((string) ($product['subtitle'] ?? ''));
+$hero_facts = array_values(array_filter(array_slice((array) ($product['specs'] ?? []), 0, 3), 'is_array'));
 
 $hero_thumbnails = [
     ['image' => 'product-compression-detail-v4.png', 'alt' => 'Compression spring standing upright'],
@@ -51,12 +56,16 @@ $documents = [
           <span aria-current="page"><?php echo esc_html((string) ($product['title'] ?? 'Compression Springs')); ?></span>
         </nav>
         <h1 id="compression-title"><?php echo esc_html((string) ($product['title'] ?? 'Compression Springs')); ?></h1>
-        <p class="sa-compression-hero__lede"><?php esc_html_e('Engineered to resist axial compression and deliver reliable performance in demanding applications.', 'springapex'); ?></p>
-        <dl class="sa-compression-hero__facts">
-          <div><dt><?php esc_html_e('Wire Diameter', 'springapex'); ?></dt><dd>0.1 – 60 mm</dd></div>
-          <div><dt><?php esc_html_e('Outer Diameter', 'springapex'); ?></dt><dd>1 – 150 mm</dd></div>
-          <div><dt><?php esc_html_e('Free Length', 'springapex'); ?></dt><dd>2 – 600 mm</dd></div>
-        </dl>
+        <?php if ($hero_lede !== '') : ?>
+          <p class="sa-compression-hero__lede"><?php echo esc_html($hero_lede); ?></p>
+        <?php endif; ?>
+        <?php if ($hero_facts) : ?>
+          <dl class="sa-compression-hero__facts">
+            <?php foreach ($hero_facts as $fact) : ?>
+              <div><dt><?php echo esc_html((string) ($fact['label'] ?? '')); ?></dt><dd><?php echo esc_html((string) ($fact['value'] ?? '')); ?></dd></div>
+            <?php endforeach; ?>
+          </dl>
+        <?php endif; ?>
         <div class="sa-compression-hero__actions">
           <a class="btn btn-primary" href="#engineering-review"><?php echo springapex_icon('upload', 'icon icon-sm'); ?> <?php esc_html_e('Upload a Drawing', 'springapex'); ?></a>
           <a class="btn btn-outline" href="#engineering-review" data-compression-mode-link="dimensions"><?php esc_html_e('Enter Dimensions', 'springapex'); ?></a>
