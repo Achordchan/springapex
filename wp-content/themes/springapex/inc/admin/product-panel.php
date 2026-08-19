@@ -75,16 +75,19 @@ function springapex_render_product_panel(object $post): void
     $subtitle = (string) $value('_springapex_subtitle', $seed['subtitle'] ?? '');
     $featured = (bool) $value('_springapex_featured', !empty($seed['featured']));
 
-    // 与旧渲染一致：从未保存过画廊时，回退 特色图像 → seed 画廊。
+    // 已保存画廊先规范化；元数据缺失、为空或损坏时，都回退到与前台
+    // 相同的 特色图像 → seed 画廊，避免编辑面板与公开页显示不一致。
     $thumbnail_id = (int) get_post_thumbnail_id($post_id);
-    if (metadata_exists('post', $post_id, '_springapex_gallery')) {
-        $gallery = (array) $value('_springapex_gallery', []);
-    } elseif ($thumbnail_id > 0) {
-        $gallery = [['image_id' => (string) $thumbnail_id, 'image' => '']];
-    } else {
-        $gallery = (array) ($seed['gallery'] ?? []);
-    }
+    $gallery = metadata_exists('post', $post_id, '_springapex_gallery')
+        ? (array) $value('_springapex_gallery', [])
+        : [];
     $gallery = array_values(array_filter($gallery, 'is_array'));
+    if ($gallery === []) {
+        $gallery = $thumbnail_id > 0
+            ? [['image_id' => (string) $thumbnail_id, 'image' => '']]
+            : (array) ($seed['gallery'] ?? []);
+        $gallery = array_values(array_filter($gallery, 'is_array'));
+    }
 
     $specs = (array) $value('_springapex_specs', $seed['specs'] ?? []);
     $specs = array_values(array_filter($specs, 'is_array'));
