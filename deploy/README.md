@@ -36,4 +36,4 @@ Then run `wp search-replace` first with `--dry-run`, followed by the real comman
 
 ## DNS and TLS
 
-Point the `A` record for `web.apex-springs.com` to `95.169.2.68`. After public DNS resolves to that address, issue the certificate with Certbot and enable the HTTP-to-HTTPS redirect. Update `SPRINGAPEX_SITE_URL` in the root-owned `.env` from `http://web.apex-springs.com` to `https://web.apex-springs.com`, recreate only the `wordpress` service, and run a backed-up WordPress URL replacement from HTTP to HTTPS.
+Point the `A` record for `web.apex-springs.com` to `95.169.2.68`. Use `nginx-web.apex-springs.com.conf` for the initial HTTP/ACME stage. After public DNS resolves, issue the certificate with Certbot webroot mode and install `nginx-web.apex-springs.com.tls.conf` as the active server block. Update `SPRINGAPEX_SITE_URL` in the root-owned `.env` from `http://web.apex-springs.com` to `https://web.apex-springs.com`, recreate only the `wordpress` service, and run a backed-up WordPress URL replacement from HTTP to HTTPS.
