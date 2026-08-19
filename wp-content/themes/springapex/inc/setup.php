@@ -239,6 +239,8 @@ add_action('wp_enqueue_scripts', static function (): void {
         'nonce' => wp_create_nonce('springapex_contact'),
         'maxFileSize' => 10 * MB_IN_BYTES,
         'contactEmail' => $brand['email'] ?? '',
+        // 非弹窗表单提交成功后跳转的落地页，用于转化统计。
+        'successUrl' => home_url('/success/'),
     ]);
 });
 

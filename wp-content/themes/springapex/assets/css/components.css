@@ -1163,6 +1163,52 @@ body.menu-open {
   line-height: 1.55;
 }
 
+/* Quick inquiry: in-panel thank-you screen after a successful submission. */
+.support-panel-body.is-submitted .support-intro,
+.support-panel-body.is-submitted .support-quick-form,
+.support-panel-body.is-submitted .support-full-form-link {
+  display: none;
+}
+
+.support-thankyou {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 20px 6px 10px;
+  text-align: center;
+}
+
+.support-thankyou-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--sa-accent) 14%, transparent);
+}
+
+.support-thankyou-badge .icon {
+  width: 30px;
+  height: 30px;
+}
+
+.support-thankyou-title {
+  margin: 4px 0 0;
+  font-size: 17px;
+}
+
+.support-thankyou-text {
+  margin: 0;
+  color: var(--sa-text-2);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.support-thankyou-again {
+  margin-top: 6px;
+}
+
 .support-contact-link > span:last-child {
   min-width: 0;
 }

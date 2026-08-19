@@ -35,7 +35,7 @@ $form_action = defined('SPRINGAPEX_PREVIEW')
       <div class="support-panel-body">
         <p class="support-intro"><?php esc_html_e('A quick message is enough — we reply within one business day.', 'springapex'); ?></p>
 
-      <form class="support-quick-form" data-contact-form method="post" action="<?php echo esc_url($form_action); ?>">
+      <form class="support-quick-form" data-contact-form data-success="inline" method="post" action="<?php echo esc_url($form_action); ?>">
         <input type="hidden" name="action" value="springapex_contact">
         <?php if (defined('SPRINGAPEX_PREVIEW')) : ?>
           <input type="hidden" name="springapex_contact_nonce" value="">
@@ -82,6 +82,15 @@ $form_action = defined('SPRINGAPEX_PREVIEW')
           <span><?php esc_html_e('Need to upload a drawing? Open the full form', 'springapex'); ?></span>
           <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
         </a>
+
+        <div class="support-thankyou" data-support-thankyou hidden>
+          <span class="support-thankyou-badge" aria-hidden="true"><?php echo springapex_icon('qc', 'icon'); ?></span>
+          <h3 class="support-thankyou-title"><?php esc_html_e('Thank you — message received', 'springapex'); ?></h3>
+          <p class="support-thankyou-text"><?php esc_html_e('Our team will contact you within 24 hours (one business day). Please keep an eye on your inbox.', 'springapex'); ?></p>
+          <button class="btn btn-ghost support-thankyou-again" type="button" data-support-reset>
+            <span><?php esc_html_e('Send another inquiry', 'springapex'); ?></span>
+          </button>
+        </div>
       </div>
     </div>
 

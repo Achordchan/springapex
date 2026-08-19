@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-defined('SPRINGAPEX_SEED_VERSION') || define('SPRINGAPEX_SEED_VERSION', '2.7.8');
+defined('SPRINGAPEX_SEED_VERSION') || define('SPRINGAPEX_SEED_VERSION', '2.7.9');
 
 add_action('after_switch_theme', 'springapex_seed_site');
 add_action('admin_notices', 'springapex_seed_admin_notice');
@@ -147,6 +147,8 @@ function springapex_seed_site_locked(): bool
     $privacy_id = springapex_seed_page('Privacy Policy', 'privacy', '', 'page-privacy.php', true);
     $terms_id = springapex_seed_page('Terms of Use', 'terms', '', 'page-terms.php', true);
     $sitemap_id = springapex_seed_page('Sitemap', 'sitemap', '', 'page-sitemap.php', true);
+    // 表单提交成功后的落地页（域名/success），便于统计转化。
+    springapex_seed_page('Thank You', 'success', '', 'page-success.php', true);
 
     $front_page_ready = true;
     if (is_int($home_id) && $home_id > 0 && (int) get_option('page_on_front') === 0) {
@@ -600,6 +602,112 @@ function springapex_seed_news(bool $allow_create = true): bool
     return $success;
 }
 
+/**
+ * 把一条主菜单项声明转成 wp_update_nav_menu_item() 的参数。
+ * 带 'archive' 的用 post_type_archive 类型（URL 动态渲染）；否则是自定义链接。
+ */
+function springapex_seed_menu_item_args(array $spec): array
+{
+    if (!empty($spec['archive'])) {
+        return [
+            'menu-item-title' => $spec['title'],
+            'menu-item-type' => 'post_type_archive',
+            'menu-item-object' => $spec['archive'],
+            'menu-item-status' => 'publish',
+        ];
+    }
+
+    return [
+        'menu-item-title' => $spec['title'],
+        'menu-item-url' => $spec['url'],
+        'menu-item-type' => 'custom',
+        'menu-item-status' => 'publish',
+    ];
+}
+
+/**
+ * 校准主菜单顶层项。幂等：已存在按标题匹配，只把归档项(Products/Industries)
+ * 就地纠正为 post_type_archive 类型，其余普通链接项不覆盖运营者的手工改动。
+ * 对已存在的站点也会跑（自愈早期 seed 写死的 `?post_type=` 查询串链接）。
+ */
+function springapex_seed_primary_menu_items(int $menu_id): bool
+{
+    // 指向 CPT 归档的项用 post_type_archive 类型，URL 由 WP 用
+    // get_post_type_archive_link() 动态渲染——永远是 pretty、永远跟当前站点域名，
+    // 不会 seed 出 `?post_type=` 查询串，也不会把某个环境的域名写死带到别处。
+    $items = [
+        ['title' => 'Home', 'url' => home_url('/')],
+        ['title' => 'About Us', 'url' => home_url('/about/')],
+        ['title' => 'Products', 'archive' => 'spring_product'],
+        ['title' => 'Industries', 'archive' => 'spring_solution'],
+        ['title' => 'Custom Springs', 'url' => home_url('/capabilities/')],
+        ['title' => 'News', 'url' => home_url('/news/')],
+        ['title' => 'Contact', 'url' => home_url('/contact/')],
+    ];
+
+    $existing = wp_get_nav_menu_items($menu_id);
+    if (is_wp_error($existing)) {
+        return false;
+    }
+    $existing = $existing ?: [];
+
+    foreach ($existing as $existing_item) {
+        $is_catalog_item = (string) $existing_item->title === 'View Our Catalog'
+            || str_contains((string) $existing_item->url, '/resources/#catalog-download');
+        if (!$is_catalog_item) {
+            continue;
+        }
+        $updated = wp_update_nav_menu_item($menu_id, (int) $existing_item->ID, [
+            'menu-item-title' => 'News',
+            'menu-item-url' => home_url('/news/'),
+            'menu-item-status' => 'publish',
+        ]);
+        if (is_wp_error($updated) || (int) $updated <= 0) {
+            return false;
+        }
+    }
+
+    foreach ($items as $spec) {
+        $args = springapex_seed_menu_item_args($spec);
+
+        // 只认顶层项：primary 与 footer 复用同一菜单，footer 里有同名子项
+        // （如挂在 Industries 下的子项 Industries），按 parent===0 限定避免误匹配。
+        $match = null;
+        foreach ($existing as $existing_item) {
+            if ((int) $existing_item->menu_item_parent === 0
+                && (string) $existing_item->title === $spec['title']) {
+                $match = $existing_item;
+                break;
+            }
+        }
+
+        if ($match) {
+            // 自愈：早期 seed 把归档项存成了自定义链接 + `?post_type=` 查询串。
+            // 仅当归档项类型/对象不符时才就地纠正，不覆盖普通链接项的手工改动。
+            $needs_fix = !empty($spec['archive'])
+                && ((string) $match->type !== 'post_type_archive'
+                    || (string) $match->object !== $spec['archive']);
+            if (!$needs_fix) {
+                continue;
+            }
+            // 保留原有排序：wp_update_nav_menu_item 不带 position 会把该项重排到末尾。
+            $args['menu-item-position'] = (int) $match->menu_order;
+            $updated = wp_update_nav_menu_item($menu_id, (int) $match->ID, $args);
+            if (is_wp_error($updated) || (int) $updated <= 0) {
+                return false;
+            }
+            continue;
+        }
+
+        $item_id = wp_update_nav_menu_item($menu_id, 0, $args);
+        if (is_wp_error($item_id) || (int) $item_id <= 0) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 function springapex_seed_primary_menu(bool $allow_create = true): bool
 {
     $locations = get_theme_mod('nav_menu_locations', []);
@@ -632,12 +740,14 @@ function springapex_seed_primary_menu(bool $allow_create = true): bool
             $footer_id = $primary_id;
         }
 
+        $items_seeded = springapex_seed_primary_menu_items($primary_id);
         $children_seeded = springapex_seed_primary_menu_children($primary_id);
 
         $saved_locations = get_theme_mod('nav_menu_locations', []);
         $saved_footer_id = is_array($saved_locations) ? (int) ($saved_locations['footer'] ?? 0) : 0;
         $saved_footer_menu = $saved_footer_id > 0 ? wp_get_nav_menu_object($saved_footer_id) : false;
-        return $children_seeded &&
+        return $items_seeded &&
+            $children_seeded &&
             is_array($saved_locations) &&
             (int) ($saved_locations['primary'] ?? 0) === $primary_id &&
             $saved_footer_menu &&
@@ -696,59 +806,8 @@ function springapex_seed_primary_menu(bool $allow_create = true): bool
         return false;
     }
 
-    $items = [
-        ['Home', home_url('/')],
-        ['About Us', home_url('/about/')],
-        ['Products', get_post_type_archive_link('spring_product') ?: home_url('/products/')],
-        ['Industries', get_post_type_archive_link('spring_solution') ?: home_url('/solutions/')],
-        ['Custom Springs', home_url('/capabilities/')],
-        ['News', home_url('/news/')],
-        ['Contact', home_url('/contact/')],
-    ];
-
-    $existing = wp_get_nav_menu_items($menu_id);
-    if (is_wp_error($existing)) {
+    if (!springapex_seed_primary_menu_items($menu_id)) {
         return false;
-    }
-    $existing = $existing ?: [];
-
-    foreach ($existing as $existing_item) {
-        $is_catalog_item = (string) $existing_item->title === 'View Our Catalog'
-            || str_contains((string) $existing_item->url, '/resources/#catalog-download');
-        if (!$is_catalog_item) {
-            continue;
-        }
-        $updated = wp_update_nav_menu_item($menu_id, (int) $existing_item->ID, [
-            'menu-item-title' => 'News',
-            'menu-item-url' => home_url('/news/'),
-            'menu-item-status' => 'publish',
-        ]);
-        if (is_wp_error($updated) || (int) $updated <= 0) {
-            return false;
-        }
-    }
-
-    foreach ($items as [$title, $url]) {
-        $already_exists = false;
-        foreach ($existing as $existing_item) {
-            if ((string) $existing_item->title === $title) {
-                $already_exists = true;
-                break;
-            }
-        }
-        if ($already_exists) {
-            continue;
-        }
-
-        $item_id = wp_update_nav_menu_item($menu_id, 0, [
-            'menu-item-title' => $title,
-            'menu-item-url' => $url,
-            'menu-item-status' => 'publish',
-            'menu-item-type' => 'custom',
-        ]);
-        if (is_wp_error($item_id) || (int) $item_id <= 0) {
-            return false;
-        }
     }
 
     if (!springapex_seed_primary_menu_children($menu_id)) {
