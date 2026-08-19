@@ -227,14 +227,6 @@ function springapex_product_row_sets(): array
             ['key' => 'label', 'label' => '项目', 'type' => 'text', 'half' => true],
             ['key' => 'value', 'label' => '数值或范围', 'type' => 'text', 'half' => true],
         ],
-        'springapex_materials' => [
-            ['key' => 'title', 'label' => '材料名称', 'type' => 'text', 'half' => true],
-            ['key' => 'icon', 'label' => '图标', 'type' => 'icon', 'half' => true, 'default' => 'spring'],
-        ],
-        'springapex_applications' => [
-            ['key' => 'title', 'label' => '应用场景', 'type' => 'text', 'half' => true],
-            ['key' => 'icon', 'label' => '图标', 'type' => 'icon', 'half' => true, 'default' => 'spring'],
-        ],
     ];
 }
 
@@ -243,8 +235,6 @@ function springapex_product_row_meta_keys(): array
 {
     return [
         'springapex_specs' => '_springapex_specs',
-        'springapex_materials' => '_springapex_materials',
-        'springapex_applications' => '_springapex_applications',
     ];
 }
 
@@ -263,14 +253,11 @@ function springapex_render_product_meta_box(object $post): void
     };
 
     $subtitle = (string) $value('_springapex_subtitle', $seed['subtitle'] ?? '');
-    $catalog_url = (string) $value('_springapex_catalog_url', $seed['catalog_url'] ?? '');
     $featured = (bool) $value('_springapex_featured', !empty($seed['featured']));
 
     $sets = springapex_product_row_sets();
     $seed_keys = [
         'springapex_specs' => 'specs',
-        'springapex_materials' => 'materials',
-        'springapex_applications' => 'applications',
     ];
     $rows = [];
     foreach (springapex_product_row_meta_keys() as $field => $meta_key) {
@@ -278,43 +265,22 @@ function springapex_render_product_meta_box(object $post): void
     }
     ?>
     <p class="description">
-      产品详情的正文、小标题和图片在上面那个编辑器里写。这里填的是结构化的数据，前台会排成表格和卡片。这里的文字会原样出现在前台，所以请用英文填写。
+      这个产品详情页显示这几项：<strong>产品名</strong>用上方的标题；<strong>主图</strong>用右侧的「特色图像」；<strong>正文</strong>在上方的编辑器里写。下面两项显示在页面顶部，文字会原样出现在英文前台，请用英文填写。
     </p>
     <p>
-      <label for="springapex-subtitle"><strong>大标题下的一段话</strong></label><br>
-      <textarea class="widefat" rows="3" id="springapex-subtitle" name="springapex_subtitle"><?php echo esc_textarea($subtitle); ?></textarea>
+      <label for="springapex-subtitle"><strong>标题下的一句话</strong></label><br>
+      <textarea class="widefat" rows="2" id="springapex-subtitle" name="springapex_subtitle"><?php echo esc_textarea($subtitle); ?></textarea>
+      <span class="description">显示在产品名下方的一行介绍语。</span>
     </p>
 
-    <h3>技术参数</h3>
+    <h3>顶部关键参数</h3>
     <?php springapex_render_row_editor(
         'springapex_specs',
         $rows['springapex_specs'],
         $sets['springapex_specs'],
-        '产品页「Specifications」那张表，一条一行。左边是项目名（例如 Wire diameter），右边是数值或范围（例如 0.15 – 12 mm）。'
+        '显示在页面顶部的三个数据框（前 3 行生效，多余的不显示）。左边是项目名（例如 Wire Diameter），右边是数值或范围（例如 0.1 – 60 mm）。'
     ); ?>
 
-    <h3>可用材料</h3>
-    <?php springapex_render_row_editor(
-        'springapex_materials',
-        $rows['springapex_materials'],
-        $sets['springapex_materials'],
-        '显示在产品页「Materials」一节的卡片。'
-    ); ?>
-
-    <h3>应用场景</h3>
-    <?php springapex_render_row_editor(
-        'springapex_applications',
-        $rows['springapex_applications'],
-        $sets['springapex_applications'],
-        '显示在产品页「Applications」一节的卡片。'
-    ); ?>
-
-    <h3>其他</h3>
-    <p>
-      <label for="springapex-catalog"><strong>产品资料下载链接</strong></label><br>
-      <input class="widefat" type="url" id="springapex-catalog" name="springapex_catalog_url" value="<?php echo esc_attr($catalog_url); ?>"><br>
-      <span class="description">填了才会出现下载按钮。先把 PDF 传到「媒体」，再把它的文件网址粘到这里。</span>
-    </p>
     <p>
       <label><input type="checkbox" name="springapex_featured" value="1" <?php checked($featured); ?>> 在首页的「Featured Products」里显示这个产品</label>
     </p>
@@ -338,7 +304,6 @@ add_action('save_post_spring_product', static function (int $post_id): void {
     }
 
     $subtitle = sanitize_textarea_field(springapex_admin_request_scalar($_POST['springapex_subtitle'] ?? ''));
-    $catalog_url = esc_url_raw(springapex_admin_request_scalar($_POST['springapex_catalog_url'] ?? ''));
 
     update_post_meta($post_id, '_springapex_subtitle', $subtitle);
     foreach (springapex_product_row_sets() as $field => $columns) {
@@ -351,6 +316,5 @@ add_action('save_post_spring_product', static function (int $post_id): void {
             $columns
         ));
     }
-    update_post_meta($post_id, '_springapex_catalog_url', $catalog_url);
     update_post_meta($post_id, '_springapex_featured', isset($_POST['springapex_featured']) ? '1' : '0');
 });
