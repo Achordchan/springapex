@@ -1271,6 +1271,18 @@
 
 }
 
+@media (max-width: 400px) {
+  /* 窄屏回退上下堆叠：并排时每个按钮仅约 140px，
+     图标 + 间距 + 不折行的文案放不下，会挤向相邻按钮。 */
+  .sa-compression-hero__actions {
+    flex-direction: column;
+  }
+
+  .sa-compression-hero__actions .btn {
+    width: 100%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sa-compression-thumb,
   .sa-compression-hero__primary img {

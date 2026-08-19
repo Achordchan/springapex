@@ -1585,6 +1585,20 @@
 }
 
 @media (max-width: 420px) {
+  /* 窄屏回退单列：两列时每卡仅约 150px，扣去图标/箭头后
+     文本列不够放平台名，会溢出到箭头或邻卡。 */
+  .sa-social-hub__items {
+    grid-template-columns: 1fr;
+  }
+
+  .sa-social-hub__item:nth-child(even) {
+    border-left: 0;
+  }
+
+  .sa-social-hub__item + .sa-social-hub__item {
+    border-top: 1px solid var(--sa-border);
+  }
+
   .sa-about-subnav__inner {
     min-height: 54px;
     gap: 22px;
