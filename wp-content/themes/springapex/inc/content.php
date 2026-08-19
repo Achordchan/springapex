@@ -542,7 +542,7 @@ function springapex_product_seed(string $slug): ?array
         if (($category['slug'] ?? '') !== $slug) {
             continue;
         }
-        return array_merge($category, $details[$slug] ?? [
+        $seed = array_merge($category, $details[$slug] ?? [
             'subtitle' => $category['desc'] ?? '',
             'overview' => $category['desc'] ?? '',
             'specs' => [],
@@ -550,6 +550,13 @@ function springapex_product_seed(string $slug): ?array
             'applications' => [],
             'catalog_url' => '',
         ]);
+        // Every product's hero gallery defaults to its own product image, so the
+        // backend gallery is never empty and stays in step with the front end.
+        // Products with an explicit gallery (e.g. compression) keep it.
+        if (empty($seed['gallery']) && !empty($seed['image'])) {
+            $seed['gallery'] = [['image' => (string) $seed['image']]];
+        }
+        return $seed;
     }
     return null;
 }
