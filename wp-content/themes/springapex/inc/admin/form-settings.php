@@ -60,8 +60,13 @@ function springapex_render_form_settings_page(): void
         } else {
             set_theme_mod('springapex_inquiry_email', $recipient);
 
-        update_option('springapex_turnstile_site_key', sanitize_text_field((string) wp_unslash($_POST['springapex_turnstile_site_key'] ?? '')), false);
-        update_option('springapex_turnstile_secret', sanitize_text_field((string) wp_unslash($_POST['springapex_turnstile_secret'] ?? '')), false);
+        // 常量锁定的输入为 disabled，不会出现在 POST；此时保留数据库备用值。
+        if (array_key_exists('springapex_turnstile_site_key', $_POST)) {
+            update_option('springapex_turnstile_site_key', sanitize_text_field((string) wp_unslash($_POST['springapex_turnstile_site_key'])), false);
+        }
+        if (array_key_exists('springapex_turnstile_secret', $_POST)) {
+            update_option('springapex_turnstile_secret', sanitize_text_field((string) wp_unslash($_POST['springapex_turnstile_secret'])), false);
+        }
 
         // 三表单 schema：把提交的字段卡片数组规范化后整体入库。
         $types = springapex_form_field_types();

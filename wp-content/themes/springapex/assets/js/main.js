@@ -494,7 +494,8 @@
 
         // 文案 + 卡片轨 + 进度点整体在视口内垂直居中：
         // 钉住期间上下留白对称，不让下方出现一片突兀的空白。
-        pin.style.top = `${Math.max(12, Math.round((window.innerHeight - pin.offsetHeight) / 2))}px`;
+        const stickyTop = Math.max(12, Math.round((window.innerHeight - pin.offsetHeight) / 2));
+        pin.style.top = `${stickyTop}px`;
 
         const dots = Array.from(viewport.querySelectorAll('[data-horizontal-dots] span'));
         let activeDot = 0;
@@ -513,7 +514,7 @@
           const top = holder instanceof HTMLElement
             ? holder.getBoundingClientRect().top
             : pin.getBoundingClientRect().top;
-          return -top / extra; // 未截断，负值代表还在旅程上方
+          return (stickyTop - top) / extra; // 以 sticky 起点为 0，结束点为 1
         };
         const markUserScroll = () => {
           userDriving = true;
