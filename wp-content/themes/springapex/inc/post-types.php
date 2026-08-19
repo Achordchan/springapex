@@ -268,6 +268,18 @@ function springapex_render_product_meta_box(object $post): void
     foreach (springapex_product_row_meta_keys() as $field => $meta_key) {
         $rows[$field] = (array) $value($meta_key, $seed[$seed_keys[$field]] ?? []);
     }
+    // A product always has at least its main image, so the gallery is never left
+    // blank: an empty saved gallery (e.g. saved before galleries existed) falls
+    // back to the Featured Image, then the preset product image. This also
+    // self-heals — the fallback row is submitted on the next save.
+    if (empty($rows['springapex_gallery'])) {
+        $thumbnail_id = (int) get_post_thumbnail_id($post_id);
+        if ($thumbnail_id > 0) {
+            $rows['springapex_gallery'] = [['image_id' => $thumbnail_id, 'image' => '']];
+        } elseif (!empty($seed['image'])) {
+            $rows['springapex_gallery'] = [['image' => (string) $seed['image']]];
+        }
+    }
     ?>
     <p class="description">
       这个产品详情页显示这几项：<strong>产品名</strong>用上方的标题，<strong>正文</strong>在上方的编辑器里写。下面几项显示在页面顶部，文字会原样出现在英文前台，请用英文填写。
