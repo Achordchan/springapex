@@ -29,6 +29,44 @@ if ($hero_gallery === []) {
     $hero_gallery = [$product['image'] ?? 'product-compression-detail-v4.png'];
 }
 $hero_primary_image = $hero_gallery[0];
+$dimension_profiles = [
+    'compression-springs' => [
+        ['name' => 'wire_diameter', 'symbol' => 'd', 'label' => 'Wire diameter', 'description' => 'Thickness of the spring wire', 'placeholder' => 'e.g. 1.2 mm'],
+        ['name' => 'outside_diameter', 'symbol' => 'D0', 'label' => 'Outside diameter', 'description' => 'Maximum diameter across the coil', 'placeholder' => 'e.g. 12 mm'],
+        ['name' => 'free_length', 'symbol' => 'L0', 'label' => 'Free length', 'description' => 'Unloaded overall spring length', 'placeholder' => 'e.g. 45 mm'],
+    ],
+    'extension-springs' => [
+        ['name' => 'wire_diameter', 'symbol' => 'd', 'label' => 'Wire diameter', 'description' => 'Thickness of the spring wire', 'placeholder' => 'e.g. 1.2 mm'],
+        ['name' => 'outside_diameter', 'symbol' => 'D', 'label' => 'Coil outside diameter', 'description' => 'Maximum diameter across the coil', 'placeholder' => 'e.g. 12 mm'],
+        ['name' => 'free_length', 'symbol' => 'L', 'label' => 'Body or overall length', 'description' => 'State whether hooks or loops are included', 'placeholder' => 'e.g. 65 mm overall'],
+    ],
+    'torsion-springs' => [
+        ['name' => 'wire_diameter', 'symbol' => 'd', 'label' => 'Wire diameter', 'description' => 'Thickness of the spring wire', 'placeholder' => 'e.g. 1.0 mm'],
+        ['name' => 'outside_diameter', 'symbol' => 'D', 'label' => 'Coil outside diameter', 'description' => 'Maximum diameter across the coil', 'placeholder' => 'e.g. 15 mm'],
+        ['name' => 'free_length', 'symbol' => 'A', 'label' => 'Leg length or angle', 'description' => 'Include the unloaded leg position if known', 'placeholder' => 'e.g. 30 mm / 90°'],
+    ],
+    'disc-springs' => [
+        ['name' => 'wire_diameter', 'symbol' => 'De', 'label' => 'Outside diameter', 'description' => 'Maximum outside diameter of the disc', 'placeholder' => 'e.g. 40 mm'],
+        ['name' => 'outside_diameter', 'symbol' => 'Di', 'label' => 'Inside diameter', 'description' => 'Diameter of the center opening', 'placeholder' => 'e.g. 20 mm'],
+        ['name' => 'free_length', 'symbol' => 't/h', 'label' => 'Thickness or cone height', 'description' => 'Material thickness and free height if known', 'placeholder' => 'e.g. 2 / 3.5 mm'],
+    ],
+    'wire-forms' => [
+        ['name' => 'wire_diameter', 'symbol' => 'd', 'label' => 'Wire diameter', 'description' => 'Diameter or section of the wire', 'placeholder' => 'e.g. 2 mm'],
+        ['name' => 'outside_diameter', 'symbol' => 'W', 'label' => 'Overall width', 'description' => 'Maximum width of the formed part', 'placeholder' => 'e.g. 35 mm'],
+        ['name' => 'free_length', 'symbol' => 'L', 'label' => 'Overall length', 'description' => 'Maximum end-to-end length', 'placeholder' => 'e.g. 80 mm'],
+    ],
+    'die-springs' => [
+        ['name' => 'wire_diameter', 'symbol' => 'S', 'label' => 'Wire section', 'description' => 'Wire section or duty class if known', 'placeholder' => 'e.g. rectangular / heavy duty'],
+        ['name' => 'outside_diameter', 'symbol' => 'D', 'label' => 'Outside size', 'description' => 'Outside diameter or installed envelope', 'placeholder' => 'e.g. 25 mm'],
+        ['name' => 'free_length', 'symbol' => 'L0', 'label' => 'Free length', 'description' => 'Unloaded overall spring length', 'placeholder' => 'e.g. 100 mm'],
+    ],
+];
+$dimension_fields = $dimension_profiles[$slug] ?? [
+    ['name' => 'wire_diameter', 'symbol' => 'A', 'label' => 'Primary dimension', 'description' => 'The most important size for the part', 'placeholder' => 'e.g. 12 mm'],
+    ['name' => 'outside_diameter', 'symbol' => 'B', 'label' => 'Secondary dimension', 'description' => 'Another critical size or installation limit', 'placeholder' => 'e.g. 30 mm'],
+    ['name' => 'free_length', 'symbol' => 'L', 'label' => 'Overall length', 'description' => 'Maximum end-to-end length if applicable', 'placeholder' => 'e.g. 80 mm'],
+];
+$is_compression_product = $slug === 'compression-springs';
 $quality_steps = [
     ['step' => '1', 'title' => 'Drawing Review', 'text' => 'Drawing, load and material reviewed.'],
     ['step' => '2', 'title' => 'First Article', 'text' => 'Sample dimensions and force verified.'],
@@ -148,19 +186,21 @@ $documents = [
           </div>
 
           <div class="sa-compression-review__guide" data-compression-review-guide="dimensions" hidden>
-            <h3><?php esc_html_e('Three dimensions are enough to start.', 'springapex'); ?></h3>
+            <h3><?php echo esc_html($is_compression_product ? __('Three dimensions are enough to start.', 'springapex') : __('Share the key dimensions you know.', 'springapex')); ?></h3>
             <p><?php esc_html_e('Enter any values you know. Engineering will confirm the remaining geometry before quotation.', 'springapex'); ?></p>
-            <figure class="sa-compression-review__dimension-figure">
-              <?php echo springapex_image('product-detail/compression-dimension-guide-v2.png', __('Standard compression spring showing free length, outside diameter and wire diameter', 'springapex'), [
-                  'width' => 840,
-                  'height' => 350,
-                  'sizes' => '(max-width: 860px) 88vw, 34vw',
-              ]); ?>
-            </figure>
+            <?php if ($is_compression_product) : ?>
+              <figure class="sa-compression-review__dimension-figure">
+                <?php echo springapex_image('product-detail/compression-dimension-guide-v2.png', __('Standard compression spring showing free length, outside diameter and wire diameter', 'springapex'), [
+                    'width' => 840,
+                    'height' => 350,
+                    'sizes' => '(max-width: 860px) 88vw, 34vw',
+                ]); ?>
+              </figure>
+            <?php endif; ?>
             <dl class="sa-compression-review__dimension-list">
-              <div><dt>d</dt><dd><strong><?php esc_html_e('Wire diameter', 'springapex'); ?></strong><span><?php esc_html_e('Thickness of the spring wire', 'springapex'); ?></span></dd></div>
-              <div><dt>D<sub>0</sub></dt><dd><strong><?php esc_html_e('Outside diameter', 'springapex'); ?></strong><span><?php esc_html_e('Maximum diameter across the coil', 'springapex'); ?></span></dd></div>
-              <div><dt>L<sub>0</sub></dt><dd><strong><?php esc_html_e('Free length', 'springapex'); ?></strong><span><?php esc_html_e('Unloaded overall spring length', 'springapex'); ?></span></dd></div>
+              <?php foreach ($dimension_fields as $field) : ?>
+                <div><dt><?php echo esc_html((string) $field['symbol']); ?></dt><dd><strong><?php echo esc_html((string) $field['label']); ?></strong><span><?php echo esc_html((string) $field['description']); ?></span></dd></div>
+              <?php endforeach; ?>
             </dl>
           </div>
         </div>
@@ -176,6 +216,9 @@ $documents = [
           <input type="hidden" name="form_context" value="product">
           <input type="hidden" name="source" value="<?php echo esc_attr((string) get_queried_object_id()); ?>">
           <input type="hidden" name="product" value="<?php echo esc_attr($slug); ?>">
+          <?php foreach ($dimension_fields as $index => $field) : ?>
+            <input type="hidden" name="dimension_label_<?php echo esc_attr((string) ($index + 1)); ?>" value="<?php echo esc_attr((string) $field['label']); ?>">
+          <?php endforeach; ?>
           <input type="hidden" name="inquiry_type" value="Upload a Drawing" data-inquiry-type>
           <input type="hidden" name="started_at" value="<?php echo esc_attr((string) time()); ?>" data-form-started-at>
           <label class="honeypot" aria-hidden="true">Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
@@ -193,10 +236,10 @@ $documents = [
                 <?php echo springapex_icon('upload', 'icon'); ?>
                 <strong><?php esc_html_e('Drag and drop your files here', 'springapex'); ?></strong>
                 <span><?php esc_html_e('or choose files', 'springapex'); ?></span>
-                <small><?php esc_html_e('Accepted files: DWG, DXF, STEP, PDF, JPG or PNG (max 10 files, 10 MB each)', 'springapex'); ?></small>
+                <small><?php esc_html_e('Accepted files: DWG, DXF, STEP, PDF, JPG or PNG (max 10 files, 10 MB total)', 'springapex'); ?></small>
               </div>
               <ul class="sa-compression-dropzone__files" data-compression-file-list hidden></ul>
-              <input type="file" name="drawing" accept=".pdf,.doc,.docx,.dwg,.dxf,.step,.stp,.iges,.igs,.jpg,.jpeg,.png" multiple data-compression-file-input>
+              <input type="file" name="drawing[]" accept=".pdf,.doc,.docx,.dwg,.dxf,.step,.stp,.iges,.igs,.jpg,.jpeg,.png" multiple data-compression-file-input>
             </label>
           </div>
 
@@ -204,10 +247,12 @@ $documents = [
             <h3><?php esc_html_e('Enter the dimensions you know', 'springapex'); ?></h3>
             <p><?php esc_html_e('All dimensions are optional; engineering will confirm any missing values.', 'springapex'); ?></p>
             <div class="sa-compression-form__row">
-              <label class="field"><span><?php esc_html_e('Wire diameter (d)', 'springapex'); ?></span><input type="text" name="wire_diameter" inputmode="decimal" maxlength="80" placeholder="e.g. 1.2 mm"></label>
-              <label class="field"><span><?php esc_html_e('Outside diameter (D₀)', 'springapex'); ?></span><input type="text" name="outside_diameter" inputmode="decimal" maxlength="80" placeholder="e.g. 12 mm"></label>
+              <?php foreach (array_slice($dimension_fields, 0, 2) as $field) : ?>
+                <label class="field"><span><?php echo esc_html((string) $field['label']); ?></span><input type="text" name="<?php echo esc_attr((string) $field['name']); ?>" inputmode="decimal" maxlength="80" placeholder="<?php echo esc_attr((string) $field['placeholder']); ?>"></label>
+              <?php endforeach; ?>
             </div>
-            <label class="field"><span><?php esc_html_e('Free length (L₀)', 'springapex'); ?></span><input type="text" name="free_length" inputmode="decimal" maxlength="80" placeholder="e.g. 45 mm"></label>
+            <?php $last_dimension = $dimension_fields[2]; ?>
+            <label class="field"><span><?php echo esc_html((string) $last_dimension['label']); ?></span><input type="text" name="<?php echo esc_attr((string) $last_dimension['name']); ?>" inputmode="decimal" maxlength="80" placeholder="<?php echo esc_attr((string) $last_dimension['placeholder']); ?>"></label>
           </div>
 
           <div class="sa-compression-form__row">

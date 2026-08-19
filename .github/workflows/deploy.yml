@@ -1,0 +1,92 @@
+name: Deploy SpringApex
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: springapex-production
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify production code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Lint theme PHP files
+        run: |
+          find wp-content/themes/springapex -name '*.php' -print0 \
+            | xargs -0 -n1 -P4 php -l
+
+      - name: Check theme JavaScript syntax
+        run: |
+          node --check wp-content/themes/springapex/assets/js/main.js
+          node --check wp-content/themes/springapex/assets/js/product-compression.js
+          node --check wp-content/themes/springapex/assets/js/row-editor.js
+
+  deploy:
+    name: Deploy theme and managed plugin
+    needs: verify
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      DEPLOY_HOST: ${{ secrets.SPRINGAPEX_DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.SPRINGAPEX_DEPLOY_USER }}
+      DEPLOY_KEY: ${{ secrets.SPRINGAPEX_DEPLOY_SSH_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate deployment credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_KEY"
+
+      - name: Install restricted deployment key
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_KEY" > "$HOME/.ssh/springapex_deploy"
+          chmod 600 "$HOME/.ssh/springapex_deploy"
+          cp deploy/known_hosts "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: Sync SpringApex theme
+        shell: bash
+        run: |
+          set -euo pipefail
+          rsync -az --delete-delay --itemize-changes \
+            -e "ssh -i $HOME/.ssh/springapex_deploy -o IdentitiesOnly=yes" \
+            wp-content/themes/springapex/ \
+            "$DEPLOY_USER@$DEPLOY_HOST:themes/springapex/"
+
+      - name: Sync managed WebP plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+          rsync -az --delete-delay --itemize-changes \
+            -e "ssh -i $HOME/.ssh/springapex_deploy -o IdentitiesOnly=yes" \
+            wp-content/plugins/webp-converter-for-media/ \
+            "$DEPLOY_USER@$DEPLOY_HOST:plugins/webp-converter-for-media/"
+
+      - name: Verify the deployed WordPress response
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/springapex_deploy" -o IdentitiesOnly=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" springapex-health

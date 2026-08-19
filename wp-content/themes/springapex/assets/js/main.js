@@ -571,7 +571,15 @@
         }
       };
 
-      if (fileInput) fileInput.addEventListener('change', updateFileList);
+      if (fileInput) fileInput.addEventListener('change', () => {
+        const selected = Array.from(fileInput.files || []).slice(0, MAX_FILES);
+        if (selected.length !== fileInput.files.length) {
+          const dt = new DataTransfer();
+          selected.forEach(file => dt.items.add(file));
+          fileInput.files = dt.files;
+        }
+        updateFileList();
+      });
 
       const syncDrawingUpload = () => {
         if (!inquiryType || !drawingUpload) return;
@@ -610,9 +618,15 @@
 
       const maxFileSize = Number(config.maxFileSize || 10 * 1024 * 1024);
       if (fileInput && fileInput.files.length) {
-        const oversizedFiles = Array.from(fileInput.files).filter(f => f.size > maxFileSize);
+        const files = Array.from(fileInput.files);
+        const oversizedFiles = files.filter(f => f.size > maxFileSize);
         if (oversizedFiles.length > 0) {
           showStatus(`File${oversizedFiles.length > 1 ? 's' : ''} must be 10 MB or smaller: ${oversizedFiles.map(f => f.name).join(', ')}`, 'error');
+          fileInput.focus();
+          return;
+        }
+        if (files.reduce((total, file) => total + file.size, 0) > maxFileSize) {
+          showStatus('The combined files must be 10 MB or smaller.', 'error');
           fileInput.focus();
           return;
         }

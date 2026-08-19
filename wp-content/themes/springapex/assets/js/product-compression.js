@@ -157,8 +157,13 @@
       };
 
       fileInput.addEventListener('change', () => {
-        const newFiles = Array.from(fileInput.files || []);
-        newFiles.forEach(f => currentFiles.items.add(f));
+        const combined = [
+          ...Array.from(currentFiles.items).map(item => item.getAsFile()).filter(Boolean),
+          ...Array.from(fileInput.files || [])
+        ].slice(0, MAX_FILES);
+        const dt = new DataTransfer();
+        combined.forEach(file => dt.items.add(file));
+        currentFiles = dt;
         fileInput.files = currentFiles.files;
         updateFileList();
       });

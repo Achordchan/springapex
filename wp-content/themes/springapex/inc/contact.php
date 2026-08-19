@@ -94,6 +94,11 @@ function springapex_process_contact_submission(): array|WP_Error
     $wire_diameter = springapex_limited_text($_POST['wire_diameter'] ?? '', 80);
     $outside_diameter = springapex_limited_text($_POST['outside_diameter'] ?? '', 80);
     $free_length = springapex_limited_text($_POST['free_length'] ?? '', 80);
+    $dimension_labels = [
+        springapex_limited_text($_POST['dimension_label_1'] ?? 'Wire diameter', 80) ?: 'Wire diameter',
+        springapex_limited_text($_POST['dimension_label_2'] ?? 'Outside diameter', 80) ?: 'Outside diameter',
+        springapex_limited_text($_POST['dimension_label_3'] ?? 'Free length', 80) ?: 'Free length',
+    ];
     $quantity = springapex_limited_text($_POST['quantity'] ?? '', 80);
     $material = springapex_limited_text($_POST['material'] ?? '', 120);
     $operating_environment = springapex_limited_text($_POST['operating_environment'] ?? '', 240);
@@ -143,9 +148,9 @@ function springapex_process_contact_submission(): array|WP_Error
         );
     }
 
-    $drawing = springapex_validate_drawing_upload();
-    if (is_wp_error($drawing)) {
-        return $drawing;
+    $drawings = springapex_validate_drawing_upload();
+    if (is_wp_error($drawings)) {
+        return $drawings;
     }
 
     if (!post_type_exists('spring_inquiry') && function_exists('springapex_register_post_types')) {
@@ -177,6 +182,9 @@ function springapex_process_contact_submission(): array|WP_Error
         '_springapex_wire_diameter' => $wire_diameter,
         '_springapex_outside_diameter' => $outside_diameter,
         '_springapex_free_length' => $free_length,
+        '_springapex_dimension_label_1' => $dimension_labels[0],
+        '_springapex_dimension_label_2' => $dimension_labels[1],
+        '_springapex_dimension_label_3' => $dimension_labels[2],
         '_springapex_quantity' => $quantity,
         '_springapex_material' => $material,
         '_springapex_operating_environment' => $operating_environment,
@@ -201,12 +209,28 @@ function springapex_process_contact_submission(): array|WP_Error
         }
     }
 
-    $private_file = null;
-    if (is_array($drawing)) {
-        $private_file = springapex_store_private_drawing((int) $inquiry_id, $drawing);
-        if (is_wp_error($private_file)) {
+    $private_files = [];
+    if (is_array($drawings)) {
+        foreach ($drawings as $drawing) {
+            $private_file = springapex_store_private_drawing($drawing);
+            if (!is_wp_error($private_file)) {
+                $private_files[] = $private_file;
+                continue;
+            }
+            springapex_delete_private_files($private_files);
             wp_delete_post((int) $inquiry_id, true);
             return $private_file;
+        }
+        if (
+            $private_files &&
+            (
+                !springapex_contact_update_meta((int) $inquiry_id, '_springapex_private_files', $private_files) ||
+                !springapex_contact_update_meta((int) $inquiry_id, '_springapex_private_file', $private_files[0])
+            )
+        ) {
+            springapex_delete_private_files($private_files);
+            wp_delete_post((int) $inquiry_id, true);
+            return springapex_contact_error('springapex_upload_storage', __('The drawings could not be stored securely.', 'springapex'), 500);
         }
     }
 
@@ -219,9 +243,9 @@ function springapex_process_contact_submission(): array|WP_Error
         "Phone: {$phone}",
         "Country: {$country}",
         "Type: {$type}",
-        "Wire diameter: {$wire_diameter}",
-        "Outside diameter: {$outside_diameter}",
-        "Free length: {$free_length}",
+        "{$dimension_labels[0]}: {$wire_diameter}",
+        "{$dimension_labels[1]}: {$outside_diameter}",
+        "{$dimension_labels[2]}: {$free_length}",
         "Quantity: {$quantity}",
         "Material: {$material}",
         "Operating environment: {$operating_environment}",
@@ -229,7 +253,9 @@ function springapex_process_contact_submission(): array|WP_Error
         "Product: {$product}",
         "Industry: {$industry}",
         'Document: ' . sanitize_key(springapex_request_scalar($_POST['document'] ?? '')),
-        'Drawing: ' . (is_array($private_file) ? (string) ($private_file['original_name'] ?? '') : 'None'),
+        'Drawings: ' . ($private_files
+            ? implode(', ', array_map(static fn(array $file): string => (string) ($file['original_name'] ?? ''), $private_files))
+            : 'None'),
         '',
         $message,
         '',
@@ -237,7 +263,7 @@ function springapex_process_contact_submission(): array|WP_Error
     ]);
     $headers = ['Content-Type: text/plain; charset=UTF-8', "Reply-To: {$name} <{$email}>"];
     $attachments = [];
-    if (is_array($private_file)) {
+    foreach ($private_files as $private_file) {
         $private_path = springapex_private_file_path($private_file);
         if ($private_path !== '') {
             $attachments[] = $private_path;
@@ -409,64 +435,118 @@ function springapex_drawing_canonical_mime(string $extension): string
     };
 }
 
-function springapex_validate_drawing_upload(): array|WP_Error|null
+function springapex_normalize_drawing_uploads(): array|WP_Error
 {
     if (!isset($_FILES['drawing'])) {
-        return null;
+        return [];
     }
 
-    $file = $_FILES['drawing'];
-    if (!is_array($file)) {
+    $field = $_FILES['drawing'];
+    if (!is_array($field) || !array_key_exists('error', $field)) {
         return springapex_contact_error('springapex_upload', __('The file upload did not complete.', 'springapex'), 422);
     }
 
-    if (!array_key_exists('error', $file) || !is_scalar($file['error'])) {
-        return springapex_contact_error('springapex_upload', __('The file upload did not complete.', 'springapex'), 422);
-    }
-    $error = (int) $file['error'];
-    if ($error === UPLOAD_ERR_NO_FILE) {
-        return null;
-    }
-    if ($error !== UPLOAD_ERR_OK) {
-        return springapex_contact_error('springapex_upload', __('The file upload did not complete.', 'springapex'), 422);
-    }
-
-    $name = is_string($file['name'] ?? null) ? $file['name'] : '';
-    $tmp_name = is_string($file['tmp_name'] ?? null) ? $file['tmp_name'] : '';
-    $size = is_scalar($file['size'] ?? null) ? (int) $file['size'] : 0;
-    if ($name === '' || $tmp_name === '' || $size < 1 || !is_uploaded_file($tmp_name) || !is_readable($tmp_name)) {
-        return springapex_contact_error('springapex_upload', __('The file upload did not complete.', 'springapex'), 422);
-    }
-    if ($size > 10 * MB_IN_BYTES) {
-        return springapex_contact_error('springapex_upload_size', __('The uploaded file must be 10 MB or smaller.', 'springapex'), 422);
-    }
-    if (!springapex_private_uploads_are_protected()) {
-        return springapex_private_upload_protection_error();
-    }
-
-    $extension = strtolower((string) pathinfo($name, PATHINFO_EXTENSION));
-    $mime = springapex_drawing_canonical_mime($extension);
-    if ($mime === '' || !springapex_drawing_signature_is_valid($extension, $tmp_name)) {
-        return springapex_contact_error(
-            'springapex_upload_type',
-            __('Use a valid PDF, Word, ZIP, DWG, DXF, STEP, IGES, JPG or PNG file.', 'springapex'),
+    if (!is_array($field['error'])) {
+        return is_scalar($field['error']) ? [$field] : springapex_contact_error(
+            'springapex_upload',
+            __('The file upload did not complete.', 'springapex'),
             422
         );
     }
 
-    return [
-        'file' => $file,
-        'extension' => $extension,
-        'mime' => $mime,
-        'original_name' => sanitize_file_name($name) ?: 'drawing.' . $extension,
-        'size' => $size,
-    ];
+    $count = count($field['error']);
+    if ($count > 10) {
+        return springapex_contact_error('springapex_upload', __('Upload no more than 10 files.', 'springapex'), 422);
+    }
+    if ($count === 0) {
+        return [];
+    }
+
+    $files = [];
+    for ($index = 0; $index < $count; $index++) {
+        $file = [];
+        foreach (['name', 'type', 'tmp_name', 'error', 'size'] as $key) {
+            $values = $field[$key] ?? null;
+            if (!is_array($values) || !array_key_exists($index, $values)) {
+                return springapex_contact_error('springapex_upload', __('The file upload did not complete.', 'springapex'), 422);
+            }
+            $file[$key] = $values[$index];
+        }
+        $files[] = $file;
+    }
+    return $files;
+}
+
+function springapex_validate_drawing_upload(): array|WP_Error|null
+{
+    $files = springapex_normalize_drawing_uploads();
+    if (is_wp_error($files)) {
+        return $files;
+    }
+
+    $validated = [];
+    $total_size = 0;
+    foreach ($files as $file) {
+        if (!is_array($file) || !is_scalar($file['error'] ?? null)) {
+            return springapex_contact_error('springapex_upload', __('The file upload did not complete.', 'springapex'), 422);
+        }
+
+        $error = (int) $file['error'];
+        if ($error === UPLOAD_ERR_NO_FILE) {
+            continue;
+        }
+        if ($error !== UPLOAD_ERR_OK) {
+            return springapex_contact_error('springapex_upload', __('The file upload did not complete.', 'springapex'), 422);
+        }
+
+        $name = is_string($file['name'] ?? null) ? $file['name'] : '';
+        $tmp_name = is_string($file['tmp_name'] ?? null) ? $file['tmp_name'] : '';
+        $size = is_scalar($file['size'] ?? null) ? (int) $file['size'] : 0;
+        if ($name === '' || $tmp_name === '' || $size < 1 || !is_uploaded_file($tmp_name) || !is_readable($tmp_name)) {
+            return springapex_contact_error('springapex_upload', __('The file upload did not complete.', 'springapex'), 422);
+        }
+        $total_size += $size;
+        if ($size > 10 * MB_IN_BYTES || $total_size > 10 * MB_IN_BYTES) {
+            return springapex_contact_error('springapex_upload_size', __('The combined upload must be 10 MB or smaller.', 'springapex'), 422);
+        }
+        if (!springapex_private_uploads_are_protected()) {
+            return springapex_private_upload_protection_error();
+        }
+
+        $extension = strtolower((string) pathinfo($name, PATHINFO_EXTENSION));
+        $mime = springapex_drawing_canonical_mime($extension);
+        if ($mime === '' || !springapex_drawing_signature_is_valid($extension, $tmp_name)) {
+            return springapex_contact_error(
+                'springapex_upload_type',
+                __('Use valid PDF, Word, ZIP, DWG, DXF, STEP, IGES, JPG or PNG files.', 'springapex'),
+                422
+            );
+        }
+
+        $validated[] = [
+            'file' => $file,
+            'extension' => $extension,
+            'mime' => $mime,
+            'original_name' => sanitize_file_name($name) ?: 'drawing.' . $extension,
+            'size' => $size,
+        ];
+    }
+
+    return $validated ?: null;
 }
 
 function springapex_drawing_upload_requested(): bool
 {
-    $file = $_FILES['drawing'] ?? null;
-    return is_array($file) && is_scalar($file['error'] ?? null) && (int) $file['error'] === UPLOAD_ERR_OK;
+    $files = springapex_normalize_drawing_uploads();
+    if (is_wp_error($files)) {
+        return false;
+    }
+    foreach ($files as $file) {
+        if (is_array($file) && is_scalar($file['error'] ?? null) && (int) $file['error'] === UPLOAD_ERR_OK) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function springapex_drawing_signature_is_valid(string $extension, string $path): bool
@@ -593,7 +673,7 @@ function springapex_private_upload_dir(array $uploads): array
     return $uploads;
 }
 
-function springapex_store_private_drawing(int $inquiry_id, array $drawing): array|WP_Error
+function springapex_store_private_drawing(array $drawing): array|WP_Error
 {
     if (!springapex_private_uploads_are_protected()) {
         return springapex_private_upload_protection_error();
@@ -666,10 +746,6 @@ function springapex_store_private_drawing(int $inquiry_id, array $drawing): arra
         'sha256' => $sha256,
     ];
 
-    if (!add_post_meta($inquiry_id, '_springapex_private_file', $metadata, true)) {
-        wp_delete_file($file_path);
-        return springapex_contact_error('springapex_upload_storage', __('The drawing could not be stored securely.', 'springapex'), 500);
-    }
     return $metadata;
 }
 
@@ -697,14 +773,37 @@ function springapex_private_file_path(mixed $metadata): string
     return $file_path;
 }
 
+/** @param array<int, array<string, mixed>> $files */
+function springapex_delete_private_files(array $files): void
+{
+    foreach ($files as $metadata) {
+        $path = springapex_private_file_path($metadata);
+        if ($path !== '') {
+            wp_delete_file($path);
+        }
+    }
+}
+
+/** @return array<int, array<string, mixed>> */
+function springapex_inquiry_private_files(int $inquiry_id): array
+{
+    $files = get_post_meta($inquiry_id, '_springapex_private_files', true);
+    if (is_array($files)) {
+        $files = array_values(array_filter($files, 'is_array'));
+        if ($files) {
+            return $files;
+        }
+    }
+
+    $legacy = get_post_meta($inquiry_id, '_springapex_private_file', true);
+    return is_array($legacy) && !empty($legacy['relative_path']) ? [$legacy] : [];
+}
+
 add_action('before_delete_post', static function (int $post_id): void {
     if (get_post_type($post_id) !== 'spring_inquiry') {
         return;
     }
-    $path = springapex_private_file_path(get_post_meta($post_id, '_springapex_private_file', true));
-    if ($path !== '') {
-        wp_delete_file($path);
-    }
+    springapex_delete_private_files(springapex_inquiry_private_files($post_id));
 });
 
 function springapex_download_inquiry_file(): void
@@ -718,8 +817,10 @@ function springapex_download_inquiry_file(): void
         wp_die(esc_html__('You are not allowed to access this file.', 'springapex'), '', ['response' => 403]);
     }
 
-    check_admin_referer('springapex_download_inquiry_' . $inquiry_id);
-    $metadata = get_post_meta($inquiry_id, '_springapex_private_file', true);
+    $file_index = absint(springapex_request_scalar($_GET['file'] ?? '0'));
+    check_admin_referer('springapex_download_inquiry_' . $inquiry_id . '_' . $file_index);
+    $files = springapex_inquiry_private_files($inquiry_id);
+    $metadata = $files[$file_index] ?? null;
     $path = springapex_private_file_path($metadata);
     if ($path === '') {
         wp_die(esc_html__('The requested file is unavailable.', 'springapex'), '', ['response' => 404]);
@@ -760,7 +861,7 @@ add_filter('manage_spring_inquiry_posts_columns', static function (array $column
         'springapex_type' => __('Type', 'springapex'),
         'springapex_source' => '来源',
         'springapex_specs' => __('Spring Specs', 'springapex'),
-        'springapex_file' => __('Drawing', 'springapex'),
+        'springapex_file' => __('Drawings', 'springapex'),
         'date' => __('Date', 'springapex'),
     ];
 });
@@ -813,11 +914,16 @@ add_action('manage_spring_inquiry_posts_custom_column', static function (string 
         $wire = (string) get_post_meta($post_id, '_springapex_wire_diameter', true);
         $outside = (string) get_post_meta($post_id, '_springapex_outside_diameter', true);
         $length = (string) get_post_meta($post_id, '_springapex_free_length', true);
+        $dimension_labels = [
+            (string) get_post_meta($post_id, '_springapex_dimension_label_1', true) ?: __('Wire', 'springapex'),
+            (string) get_post_meta($post_id, '_springapex_dimension_label_2', true) ?: __('OD', 'springapex'),
+            (string) get_post_meta($post_id, '_springapex_dimension_label_3', true) ?: __('Length', 'springapex'),
+        ];
         $quantity = (string) get_post_meta($post_id, '_springapex_quantity', true);
         $values = array_filter([
-            $wire !== '' ? sprintf(__('Wire: %s', 'springapex'), $wire) : '',
-            $outside !== '' ? sprintf(__('OD: %s', 'springapex'), $outside) : '',
-            $length !== '' ? sprintf(__('Length: %s', 'springapex'), $length) : '',
+            $wire !== '' ? sprintf('%s: %s', $dimension_labels[0], $wire) : '',
+            $outside !== '' ? sprintf('%s: %s', $dimension_labels[1], $outside) : '',
+            $length !== '' ? sprintf('%s: %s', $dimension_labels[2], $length) : '',
             $quantity !== '' ? sprintf(__('Qty: %s', 'springapex'), $quantity) : '',
         ]);
         echo $values ? esc_html(implode(' · ', $values)) : '&mdash;';
@@ -827,16 +933,28 @@ add_action('manage_spring_inquiry_posts_custom_column', static function (string 
         return;
     }
 
-    $metadata = get_post_meta($post_id, '_springapex_private_file', true);
-    if (!is_array($metadata) || empty($metadata['relative_path'])) {
+    $files = springapex_inquiry_private_files($post_id);
+    if (!$files) {
         echo '&mdash;';
         return;
     }
-    $url = wp_nonce_url(
-        admin_url('admin-post.php?action=springapex_download_inquiry_file&inquiry_id=' . $post_id),
-        'springapex_download_inquiry_' . $post_id
-    );
-    printf('<a href="%s">%s</a>', esc_url($url), esc_html__('Download', 'springapex'));
+    foreach ($files as $index => $metadata) {
+        $url = wp_nonce_url(
+            add_query_arg([
+                'action' => 'springapex_download_inquiry_file',
+                'inquiry_id' => $post_id,
+                'file' => $index,
+            ], admin_url('admin-post.php')),
+            'springapex_download_inquiry_' . $post_id . '_' . $index
+        );
+        $label = sanitize_file_name((string) ($metadata['original_name'] ?? ''));
+        printf(
+            '%s<a href="%s">%s</a>',
+            $index > 0 ? '<br>' : '',
+            esc_url($url),
+            esc_html($label !== '' ? $label : sprintf(__('Download %d', 'springapex'), $index + 1))
+        );
+    }
 }, 10, 2);
 
 /**

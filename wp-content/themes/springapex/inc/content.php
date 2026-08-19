@@ -474,7 +474,15 @@ function springapex_product_from_post(object $post): array
     // Hero gallery: ordered rows of {image, image_id}. Falls back to the seed
     // gallery, then to the single primary image, so every product resolves to at
     // least one image.
-    $gallery_raw = $meta_or_seed('_springapex_gallery', $seed['gallery'] ?? []);
+    if (metadata_exists('post', $post_id, '_springapex_gallery')) {
+        $gallery_raw = get_post_meta($post_id, '_springapex_gallery', true);
+    } elseif ($thumbnail_id > 0) {
+        // Gallery support was added after Featured Images. Existing products must
+        // keep their current primary image instead of silently reverting to seed art.
+        $gallery_raw = [['image_id' => $thumbnail_id, 'image' => '']];
+    } else {
+        $gallery_raw = $seed['gallery'] ?? [];
+    }
     $gallery = [];
     foreach ((array) $gallery_raw as $gallery_row) {
         if (!is_array($gallery_row)) {
@@ -482,6 +490,13 @@ function springapex_product_from_post(object $post): array
         }
         $gallery_id = (int) ($gallery_row['image_id'] ?? 0);
         $gallery_file = (string) ($gallery_row['image'] ?? '');
+        if (
+            $gallery_id > 0 &&
+            function_exists('get_post_type') &&
+            get_post_type($gallery_id) !== 'attachment'
+        ) {
+            $gallery_id = 0;
+        }
         if ($gallery_id > 0 || $gallery_file !== '') {
             $gallery[] = ['id' => $gallery_id, 'file' => $gallery_file];
         }

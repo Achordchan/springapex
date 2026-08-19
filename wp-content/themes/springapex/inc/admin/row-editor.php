@@ -145,7 +145,10 @@ function springapex_render_row_editor_row(string $field, ?int $index, array $row
                         break;
 
                     case 'image':
-                        springapex_render_row_editor_image($id($key), $name($key), $row);
+                        $image_help = array_key_exists('help', $column)
+                            ? (string) $column['help']
+                            : '不选图片就显示上面选的图标。';
+                        springapex_render_row_editor_image($id($key), $name($key), $row, $image_help);
                         break;
 
                     case 'products':
@@ -161,7 +164,7 @@ function springapex_render_row_editor_row(string $field, ?int $index, array $row
                         );
                 }
                 ?>
-                <?php if (!empty($column['help'])) : ?>
+                <?php if ($type !== 'image' && !empty($column['help'])) : ?>
                     <span class="description"><?php echo esc_html((string) $column['help']); ?></span>
                 <?php endif; ?>
             </div>
@@ -273,6 +276,7 @@ function springapex_sanitize_row_editor(mixed $submitted, array $columns): array
     }
 
     $first_key = (string) ($columns[0]['key'] ?? '');
+    $first_type = (string) ($columns[0]['type'] ?? 'text');
     $rows = [];
 
     foreach ($submitted as $raw) {
@@ -312,7 +316,11 @@ function springapex_sanitize_row_editor(mixed $submitted, array $columns): array
             }
         }
 
-        if ($first_key !== '' && trim((string) ($row[$first_key] ?? '')) === '') {
+        $has_first_value = $first_key === '' || trim((string) ($row[$first_key] ?? '')) !== '';
+        if ($first_type === 'image' && (int) ($row[$first_key . '_id'] ?? 0) > 0) {
+            $has_first_value = true;
+        }
+        if (!$has_first_value) {
             continue;
         }
         $rows[] = $row;

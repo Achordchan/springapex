@@ -274,8 +274,8 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
                 'visible' => true,
             ]); ?>
             <label class="field file-field" data-drawing-field>
-              <span><?php esc_html_e('Upload files (PDF, Word, CAD, JPG or PNG - max 10 files)', 'springapex'); ?></span>
-              <input type="file" name="drawing" accept=".pdf,.doc,.docx,.dwg,.dxf,.step,.stp,.iges,.igs,.jpg,.jpeg,.png" multiple data-contact-file-input>
+              <span><?php esc_html_e('Upload files (PDF, Word, CAD, JPG or PNG - max 10 files, 10 MB total)', 'springapex'); ?></span>
+              <input type="file" name="drawing[]" accept=".pdf,.doc,.docx,.dwg,.dxf,.step,.stp,.iges,.igs,.jpg,.jpeg,.png" multiple data-contact-file-input>
               <ul class="contact-file-list" data-contact-file-list hidden></ul>
             </label>
           </div>

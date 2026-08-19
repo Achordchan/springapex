@@ -83,10 +83,10 @@ if (!$image) {
               <?php echo springapex_icon('upload', 'icon'); ?>
               <strong><?php esc_html_e('Drag and drop your files here', 'springapex'); ?></strong>
               <span><?php esc_html_e('or choose files', 'springapex'); ?></span>
-              <small><?php esc_html_e('Accepted files: DWG, DXF, STEP, PDF, JPG or PNG (max 10 files, 10 MB each)', 'springapex'); ?></small>
+              <small><?php esc_html_e('Accepted files: DWG, DXF, STEP, PDF, JPG or PNG (max 10 files, 10 MB total)', 'springapex'); ?></small>
             </div>
             <ul class="sa-compression-dropzone__files" data-compression-file-list hidden></ul>
-            <input type="file" name="drawing" accept=".pdf,.doc,.docx,.dwg,.dxf,.step,.stp,.iges,.igs,.jpg,.jpeg,.png" multiple data-compression-file-input>
+            <input type="file" name="drawing[]" accept=".pdf,.doc,.docx,.dwg,.dxf,.step,.stp,.iges,.igs,.jpg,.jpeg,.png" multiple data-compression-file-input>
           </label>
         </div>
 

@@ -85,7 +85,11 @@ wp option update siteurl http://127.0.0.1:9000 && wp option update home http://1
 6. 在服务器上配置可用的 WordPress 邮件发送方式，并实际验证询盘保存、通知邮件和文件上传。
 7. 按下方要求禁止 Web Server 和 CDN 对外访问 `springapex-private` 目录，用真实公网地址验证返回 403 或 404 后，再在 `wp-config.php` 启用私有上传门禁。
 
-Products 与 Solutions 由自定义文章类型归档提供；产品详情使用标准 `single-spring_product.php` 模板。七类产品的 Product Details 均由 WordPress 主编辑器维护标题、段落、图片、图集及其顺序；规格、材料、应用和目录链接在 Product Settings 中维护。
+Products 与 Solutions 由自定义文章类型归档提供；产品详情使用标准 `single-spring_product.php` 模板。七类产品共用同一套详情页版式：正文由 WordPress 主编辑器维护，产品图集、标题下介绍、顶部三项关键参数和首页精选状态由产品编辑页的结构化字段维护。
+
+## 生产部署
+
+生产结构、Nginx 配置、Docker Compose 配置和 GitHub Actions 受限部署说明位于 `deploy/`。推送 `main` 时，工作流会先执行 PHP/JavaScript 语法检查，通过后只同步 SpringApex 主题和仓库管理的 WebP 插件，不会覆盖数据库、上传文件、WordPress 核心或服务器上的其他项目。
 
 ## 内容与询盘
 
@@ -93,7 +97,7 @@ Products 与 Solutions 由自定义文章类型归档提供；产品详情使用
 - `spring_solution` = 行业方案内容，支持标题、正文、摘要、特色图片和排序。
 - `spring_inquiry` = 后台私有询盘记录，不提供前台查询或 REST API；主题默认只给 Administrator 角色授予询盘查看、编辑、下载与删除权限。
 - 联系表单同时支持 JavaScript AJAX 和无 JavaScript `admin-post.php` POST 路径；两者共用 nonce、蜜罐、提交时长、字段白名单、IP 限流和邮箱限流。启用 Cloudflare Turnstile（配置了 `SPRINGAPEX_TURNSTILE_SECRET`）后，因 Turnstile 为 JavaScript 组件，只有 JS 路径能生成校验 token，故提交需要 JavaScript；无 JS 访客会在表单处看到提示并被引导直接联系。未配置 Turnstile 时无 JS 路径照常可用。
-- 上传上限为 10 MB；仅允许 PDF、ZIP、DWG、DXF、STEP、IGES、JPG 和 PNG，服务端同时校验扩展名与文件签名。JPG/PNG 在真实 WordPress 中还会通过核心图片 MIME 检测。
+- 每次询盘最多上传 10 个文件，合计上限 10 MB；仅允许 PDF、Word、ZIP、DWG、DXF、STEP、IGES、JPG 和 PNG，服务端同时校验扩展名与文件签名。JPG/PNG 在真实 WordPress 中还会通过核心图片 MIME 检测。
 - 生产环境需同步设置 PHP `upload_max_filesize=10M`、`post_max_size=12M`，Nginx `client_max_body_size 12m`，并确保 CDN 请求体上限不少于 12 MB；上线时验证 9.9 MB 文件成功、10.1 MB 文件被拒绝。
 - 新图纸不创建媒体库 attachment，不保存公开 URL；文件使用随机名存入 `wp-content/uploads/springapex-private/{year}/{month}/`，数据库只保存私有根目录下的相对路径。
 - 产品与方案在真实 WordPress 中以数据库为准：删除全部内容、清空字段或取消全部精选后，不会再被主题 seed 回退覆盖。seed fallback 仅用于无 WordPress 的本地预览。

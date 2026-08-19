@@ -258,7 +258,7 @@ function springapex_product_row_sets(): array
 {
     return [
         'springapex_gallery' => [
-            ['key' => 'image', 'label' => '图片', 'type' => 'image'],
+            ['key' => 'image', 'label' => '图片', 'type' => 'image', 'help' => '选择媒体库中的产品图片；清空后保存会移除这一张。'],
         ],
         'springapex_specs' => [
             ['key' => 'label', 'label' => '项目', 'type' => 'text', 'half' => true],
@@ -299,7 +299,14 @@ function springapex_render_product_meta_box(object $post): void
         'springapex_specs' => 'specs',
     ];
     $rows = [];
+    $thumbnail_id = (int) get_post_thumbnail_id($post_id);
     foreach (springapex_product_row_meta_keys() as $field => $meta_key) {
+        if ($field === 'springapex_gallery' && !metadata_exists('post', $post_id, $meta_key)) {
+            $rows[$field] = $thumbnail_id > 0
+                ? [['image_id' => $thumbnail_id, 'image' => '']]
+                : (array) ($seed[$seed_keys[$field]] ?? []);
+            continue;
+        }
         $rows[$field] = (array) $value($meta_key, $seed[$seed_keys[$field]] ?? []);
     }
     // A product always has at least its main image, so the gallery is never left
@@ -307,7 +314,6 @@ function springapex_render_product_meta_box(object $post): void
     // back to the Featured Image, then the preset product image. This also
     // self-heals — the fallback row is submitted on the next save.
     if (empty($rows['springapex_gallery'])) {
-        $thumbnail_id = (int) get_post_thumbnail_id($post_id);
         if ($thumbnail_id > 0) {
             $rows['springapex_gallery'] = [['image_id' => $thumbnail_id, 'image' => '']];
         } elseif (!empty($seed['image'])) {
