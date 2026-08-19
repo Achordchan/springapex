@@ -127,6 +127,11 @@ function springapex_content(): array
                 'subtitle' => 'Designed to resist axial compression and deliver reliable performance.',
                 'overview' => 'Compression springs are open-coil helical springs that store energy under axial load and return toward their original length when that load is removed. Diameters, wire sizes, materials, ends and surface treatments can be engineered around the application.',
                 'image' => 'product-compression-detail-v4.png',
+                'gallery' => [
+                    ['image' => 'product-compression-detail-v4.png'],
+                    ['image' => 'product-compression-card-v3.png'],
+                    ['image' => 'quality-inspection-original.jpg'],
+                ],
                 'catalog_url' => '',
                 'specs' => [
                     ['label' => 'Wire Diameter', 'value' => '0.1 – 60 mm'],
@@ -466,6 +471,25 @@ function springapex_product_from_post(object $post): array
     $has_custom_file = (string) $seed_image !== '' && (string) $seed_image !== (string) ($seed['image'] ?? '');
     $listing_image = $thumbnail_id > 0 || $has_custom_file ? $database_image : null;
 
+    // Hero gallery: ordered rows of {image, image_id}. Falls back to the seed
+    // gallery, then to the single primary image, so every product resolves to at
+    // least one image.
+    $gallery_raw = $meta_or_seed('_springapex_gallery', $seed['gallery'] ?? []);
+    $gallery = [];
+    foreach ((array) $gallery_raw as $gallery_row) {
+        if (!is_array($gallery_row)) {
+            continue;
+        }
+        $gallery_id = (int) ($gallery_row['image_id'] ?? 0);
+        $gallery_file = (string) ($gallery_row['image'] ?? '');
+        if ($gallery_id > 0 || $gallery_file !== '') {
+            $gallery[] = ['id' => $gallery_id, 'file' => $gallery_file];
+        }
+    }
+    if ($gallery === []) {
+        $gallery = [$database_image];
+    }
+
     return array_merge($seed, [
         'id' => $post_id,
         'slug' => $slug,
@@ -474,6 +498,7 @@ function springapex_product_from_post(object $post): array
         'subtitle' => (string) $subtitle,
         'overview' => (string) ($post->post_content ?? ''),
         'image' => $database_image,
+        'gallery' => $gallery,
         'category_image' => $listing_image ?? ($seed['category_image'] ?? $database_image),
         'featured_image' => $listing_image ?? ($seed['featured_image'] ?? $database_image),
         'specs' => springapex_parse_meta_rows($specs),
@@ -517,7 +542,7 @@ function springapex_product_seed(string $slug): ?array
         if (($category['slug'] ?? '') !== $slug) {
             continue;
         }
-        return array_merge($category, $details[$slug] ?? [
+        $seed = array_merge($category, $details[$slug] ?? [
             'subtitle' => $category['desc'] ?? '',
             'overview' => $category['desc'] ?? '',
             'specs' => [],
@@ -525,6 +550,13 @@ function springapex_product_seed(string $slug): ?array
             'applications' => [],
             'catalog_url' => '',
         ]);
+        // Every product's hero gallery defaults to its own product image, so the
+        // backend gallery is never empty and stays in step with the front end.
+        // Products with an explicit gallery (e.g. compression) keep it.
+        if (empty($seed['gallery']) && !empty($seed['image'])) {
+            $seed['gallery'] = [['image' => (string) $seed['image']]];
+        }
+        return $seed;
     }
     return null;
 }

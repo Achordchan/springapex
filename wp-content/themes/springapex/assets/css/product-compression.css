@@ -150,6 +150,12 @@
   gap: 24px;
 }
 
+/* Products without a curated multi-image gallery show a single full-width image. */
+.sa-compression-hero__media--single {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
 .sa-compression-hero__primary {
   display: grid;
   min-height: 420px;
