@@ -249,6 +249,9 @@ add_action('wp_enqueue_scripts', static function (): void {
 // clobbers an operator's own page at that slug. If such a page exists, WP
 // resolves it (is_404() false) and it renders instead; otherwise this handler
 // renders the thank-you template for the form-success redirect target.
+// Priority 9 keeps this ahead of redirect_canonical (priority 10, registered
+// by core before the theme), whose 404 permalink guessing could otherwise
+// redirect /success to an unrelated post with a similar slug.
 add_action('template_redirect', static function (): void {
     if (is_admin() || !is_404()) {
         return;
@@ -258,12 +261,21 @@ add_action('template_redirect', static function (): void {
     if ($success_path === '' || $request_path !== $success_path) {
         return;
     }
+    // status_header() alone leaves the 404 query flags in place, which would
+    // leak "Page not found" into the document title and error404 into
+    // body_class() — reset them so the response is treated as a real page.
+    global $wp_query;
+    $wp_query->is_404 = false;
+    $wp_query->is_page = true;
+    add_filter('pre_get_document_title', static function (): string {
+        return __('Thank You', 'springapex') . ' — ' . get_bloginfo('name');
+    });
     status_header(200);
     get_header();
     get_template_part('templates/success');
     get_footer();
     exit;
-});
+}, 9);
 
 add_action('wp_head', static function (): void {
     if (is_admin()) {
