@@ -19,19 +19,16 @@ $has_product_details = defined('SPRINGAPEX_PREVIEW') || $details_source !== '';
 $hero_lede = trim((string) ($product['subtitle'] ?? ''));
 $hero_facts = array_values(array_filter(array_slice((array) ($product['specs'] ?? []), 0, 3), 'is_array'));
 
-// Hero image comes from the product itself so every product reuses this layout.
-// Compression keeps its curated 3-image gallery; other products show their single
-// product image (the thumbnail strip is hidden when there is only one image).
-// springapex_image() accepts either a filename string or the ['id'=>…,'file'=>…]
-// shape that springapex_product() returns, so pass it through without casting.
-$hero_primary_image = $product['image'] ?? 'product-compression-detail-v4.png';
-$hero_thumbnails = $slug === 'compression-springs'
-    ? [
-        ['image' => 'product-compression-detail-v4.png', 'alt' => 'Compression spring standing upright'],
-        ['image' => 'product-compression-card-v3.png', 'alt' => 'Compression spring geometry view'],
-        ['image' => 'quality-inspection-original.jpg', 'alt' => 'Compression spring dimensional inspection'],
-    ]
-    : [];
+// Hero gallery comes from the product's own editable image list, so backend and
+// front end always show the same images. The first image is the big hero picture;
+// the rest become switchable thumbnails (strip hidden when there is only one).
+// Each item is a filename string or the ['id'=>…,'file'=>…] shape that
+// springapex_image() accepts directly.
+$hero_gallery = array_values(array_filter((array) ($product['gallery'] ?? []), static fn ($item): bool => $item !== '' && $item !== []));
+if ($hero_gallery === []) {
+    $hero_gallery = [$product['image'] ?? 'product-compression-detail-v4.png'];
+}
+$hero_primary_image = $hero_gallery[0];
 $quality_steps = [
     ['step' => '1', 'title' => 'Drawing Review', 'text' => 'Drawing, load and material reviewed.'],
     ['step' => '2', 'title' => 'First Article', 'text' => 'Sample dimensions and force verified.'],
@@ -81,7 +78,7 @@ $documents = [
         <p class="sa-compression-hero__note"><?php esc_html_e('Upload a drawing for engineering review. Dimensions are optional when a drawing is provided.', 'springapex'); ?></p>
       </div>
 
-      <div class="sa-compression-hero__media<?php echo count($hero_thumbnails) > 1 ? '' : ' sa-compression-hero__media--single'; ?>" data-compression-hero-gallery>
+      <div class="sa-compression-hero__media<?php echo count($hero_gallery) > 1 ? '' : ' sa-compression-hero__media--single'; ?>" data-compression-hero-gallery>
         <figure class="sa-compression-hero__primary">
           <?php echo springapex_image($hero_primary_image, (string) ($product['title'] ?? 'Product view'), [
               'class' => 'is-active',
@@ -92,11 +89,19 @@ $documents = [
               'fetchpriority' => 'high',
           ]); ?>
         </figure>
-        <?php if (count($hero_thumbnails) > 1) : ?>
+        <?php if (count($hero_gallery) > 1) : ?>
           <div class="sa-compression-hero__thumbs" aria-label="<?php esc_attr_e('Product views', 'springapex'); ?>">
-            <?php foreach ($hero_thumbnails as $index => $item) : ?>
-              <button class="sa-compression-thumb<?php echo $index === 0 ? ' is-active' : ''; ?>" type="button" data-compression-hero-thumb data-image="<?php echo esc_url(springapex_asset('assets/images/' . $item['image'])); ?>" data-alt="<?php echo esc_attr($item['alt']); ?>" aria-label="<?php echo esc_attr(sprintf(__('Show product image %d', 'springapex'), $index + 1)); ?>" aria-pressed="<?php echo $index === 0 ? 'true' : 'false'; ?>">
-                <?php echo springapex_image($item['image'], $item['alt'], ['width' => 180, 'height' => 180, 'sizes' => '88px']); ?>
+            <?php foreach ($hero_gallery as $index => $item) : ?>
+              <?php
+              $thumb_id = is_array($item) ? (int) ($item['id'] ?? 0) : 0;
+              $thumb_file = is_array($item) ? (string) ($item['file'] ?? '') : (string) $item;
+              $thumb_full = $thumb_id > 0
+                  ? (string) wp_get_attachment_image_url($thumb_id, 'full')
+                  : springapex_asset('assets/images/' . ltrim($thumb_file, '/'));
+              $thumb_alt = sprintf('%s %d', (string) ($product['title'] ?? 'Product view'), $index + 1);
+              ?>
+              <button class="sa-compression-thumb<?php echo $index === 0 ? ' is-active' : ''; ?>" type="button" data-compression-hero-thumb data-image="<?php echo esc_url($thumb_full); ?>" data-alt="<?php echo esc_attr($thumb_alt); ?>" aria-label="<?php echo esc_attr(sprintf(__('Show product image %d', 'springapex'), $index + 1)); ?>" aria-pressed="<?php echo $index === 0 ? 'true' : 'false'; ?>">
+                <?php echo springapex_image($item, $thumb_alt, ['width' => 180, 'height' => 180, 'sizes' => '88px']); ?>
               </button>
             <?php endforeach; ?>
           </div>

@@ -223,6 +223,9 @@ add_action('add_meta_boxes_spring_product', static function (): void {
 function springapex_product_row_sets(): array
 {
     return [
+        'springapex_gallery' => [
+            ['key' => 'image', 'label' => '图片', 'type' => 'image'],
+        ],
         'springapex_specs' => [
             ['key' => 'label', 'label' => '项目', 'type' => 'text', 'half' => true],
             ['key' => 'value', 'label' => '数值或范围', 'type' => 'text', 'half' => true],
@@ -234,6 +237,7 @@ function springapex_product_row_sets(): array
 function springapex_product_row_meta_keys(): array
 {
     return [
+        'springapex_gallery' => '_springapex_gallery',
         'springapex_specs' => '_springapex_specs',
     ];
 }
@@ -254,14 +258,10 @@ function springapex_render_product_meta_box(object $post): void
 
     $subtitle = (string) $value('_springapex_subtitle', $seed['subtitle'] ?? '');
     $featured = (bool) $value('_springapex_featured', !empty($seed['featured']));
-    // Product hero image = the WordPress Featured Image. Surface it inline here so
-    // the operator does not have to hunt for the "Featured image" panel in the
-    // block-editor sidebar. Falls back to the seed image only as a preview.
-    $thumbnail_id = (int) get_post_thumbnail_id($post_id);
-    $seed_image_file = (string) ($seed['image'] ?? '');
 
     $sets = springapex_product_row_sets();
     $seed_keys = [
+        'springapex_gallery' => 'gallery',
         'springapex_specs' => 'specs',
     ];
     $rows = [];
@@ -272,12 +272,13 @@ function springapex_render_product_meta_box(object $post): void
     <p class="description">
       这个产品详情页显示这几项：<strong>产品名</strong>用上方的标题，<strong>正文</strong>在上方的编辑器里写。下面几项显示在页面顶部，文字会原样出现在英文前台，请用英文填写。
     </p>
-    <h3>产品主图</h3>
-    <p class="description">显示在产品页顶部的大图。（这就是本产品的「特色图像」，改这里等于改特色图像。）</p>
-    <?php springapex_render_row_editor_image('springapex-product-image', 'springapex_product_image', [
-        'image_id' => $thumbnail_id,
-        'image' => $thumbnail_id > 0 ? '' : $seed_image_file,
-    ], '不选图片就用系统预置的产品图。建议正方形、白底、1200×1200。'); ?>
+    <h3>产品图</h3>
+    <?php springapex_render_row_editor(
+        'springapex_gallery',
+        $rows['springapex_gallery'],
+        $sets['springapex_gallery'],
+        '第一张显示为页面顶部的大图，其余作为可切换的缩略图。用「上移/下移」调整顺序，第一张就是主图（同时用作产品列表和分享缩略图）。建议正方形、白底、1200×1200。'
+    ); ?>
     <p>
       <label for="springapex-subtitle"><strong>标题下的一句话</strong></label><br>
       <textarea class="widefat" rows="2" id="springapex-subtitle" name="springapex_subtitle"><?php echo esc_textarea($subtitle); ?></textarea>
@@ -316,17 +317,6 @@ add_action('save_post_spring_product', static function (int $post_id): void {
 
     $subtitle = sanitize_textarea_field(springapex_admin_request_scalar($_POST['springapex_subtitle'] ?? ''));
 
-    // The inline "产品主图" picker is the post's Featured Image. Only act when the
-    // field is actually submitted, so a partial POST can never clear the image.
-    if (isset($_POST['springapex_product_image_id'])) {
-        $image_id = (int) springapex_admin_request_scalar($_POST['springapex_product_image_id']);
-        if ($image_id > 0 && get_post_type($image_id) === 'attachment') {
-            set_post_thumbnail($post_id, $image_id);
-        } else {
-            delete_post_thumbnail($post_id);
-        }
-    }
-
     update_post_meta($post_id, '_springapex_subtitle', $subtitle);
     foreach (springapex_product_row_sets() as $field => $columns) {
         $meta_key = springapex_product_row_meta_keys()[$field] ?? '';
@@ -339,4 +329,18 @@ add_action('save_post_spring_product', static function (int $post_id): void {
         ));
     }
     update_post_meta($post_id, '_springapex_featured', isset($_POST['springapex_featured']) ? '1' : '0');
+
+    // The first gallery image is the primary; mirror it to the native Featured
+    // Image so product cards and share/OG thumbnails stay in sync. A first image
+    // that is a preset theme file (no attachment) leaves no featured image, and
+    // the front end falls back to that preset — same as before.
+    if (isset($_POST['springapex_gallery'])) {
+        $gallery = get_post_meta($post_id, '_springapex_gallery', true);
+        $primary_id = is_array($gallery) && isset($gallery[0]['image_id']) ? (int) $gallery[0]['image_id'] : 0;
+        if ($primary_id > 0 && get_post_type($primary_id) === 'attachment') {
+            set_post_thumbnail($post_id, $primary_id);
+        } else {
+            delete_post_thumbnail($post_id);
+        }
+    }
 });
