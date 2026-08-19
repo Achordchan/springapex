@@ -148,7 +148,7 @@ function springapex_seed_site_locked(): bool
     $terms_id = springapex_seed_page('Terms of Use', 'terms', '', 'page-terms.php', true);
     $sitemap_id = springapex_seed_page('Sitemap', 'sitemap', '', 'page-sitemap.php', true);
     // 表单提交成功后的落地页（域名/success），便于统计转化。
-    springapex_seed_page('Thank You', 'success', '', 'page-success.php', true);
+    $success_page_id = springapex_seed_page('Thank You', 'success', '', 'page-success.php', true);
 
     $front_page_ready = true;
     if (is_int($home_id) && $home_id > 0 && (int) get_option('page_on_front') === 0) {
@@ -168,7 +168,8 @@ function springapex_seed_site_locked(): bool
         $resources_id !== 0 &&
         $privacy_id !== 0 &&
         $terms_id !== 0 &&
-        $sitemap_id !== 0;
+        $sitemap_id !== 0 &&
+        $success_page_id !== 0;
     $success = springapex_seed_products($allow_create) && $success;
     $success = springapex_seed_solutions($allow_create) && $success;
     $success = springapex_seed_news(true) && $success;

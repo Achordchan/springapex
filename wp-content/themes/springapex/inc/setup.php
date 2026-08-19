@@ -244,6 +244,27 @@ add_action('wp_enqueue_scripts', static function (): void {
     ]);
 });
 
+// Fallback so /success/ renders even before the seeded page exists — e.g. the
+// window right after a file-sync deploy, before an admin has triggered the
+// version-gated reseed. Without it, non-widget form submissions would redirect
+// to a 404 during that window. Once the page is seeded, is_404() is false here
+// and the normal page-success.php template renders instead.
+add_action('template_redirect', static function (): void {
+    if (is_admin() || !is_404()) {
+        return;
+    }
+    $request_path = trim((string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH), '/');
+    $success_path = trim((string) parse_url(home_url('/success/'), PHP_URL_PATH), '/');
+    if ($success_path === '' || $request_path !== $success_path) {
+        return;
+    }
+    status_header(200);
+    get_header();
+    get_template_part('templates/success');
+    get_footer();
+    exit;
+});
+
 add_action('wp_head', static function (): void {
     if (is_admin()) {
         return;
