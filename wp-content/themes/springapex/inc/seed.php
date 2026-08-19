@@ -1002,13 +1002,9 @@ function springapex_seed_migrate_contact_network(): bool
                 if (!is_array($r) || ($r['slug'] ?? '') !== 'other-regions') {
                     return true; // 保留非占位区域
                 }
-                // 仅当仍是 seeded 占位（唯一一条 Global programs / ApexSpring）才移除。
-                $locations = is_array($r['locations'] ?? null) ? $r['locations'] : [];
-                $only = count($locations) === 1 && is_array($locations[0]) ? $locations[0] : null;
-                $is_seeded_placeholder = $only !== null
-                    && ($only['name'] ?? '') === 'Global programs'
-                    && ($only['company'] ?? '') === 'ApexSpring';
-                return !$is_seeded_placeholder;
+                // 仅当整个条目仍是 seed 占位原样（任何暴露字段——名称、电话、
+                // 邮箱、地址、说明、网站、区域标签——被改过任一即保留）才移除。
+                return !springapex_seed_is_untouched_other_regions($r);
             }
         ));
         $has_me = false;
@@ -1064,6 +1060,37 @@ function springapex_seed_migrate_contact_network(): bool
     }
 
     return true;
+}
+
+/**
+ * 未改动占位 other-regions 的完整签名（取自 2.7.8 seed 默认值）。
+ * 原始默认没有 website 键，但后台保存会按 schema 规整成空串——两种形态
+ * 都算未改动（比对前统一剥掉空 website）。用 == 比对：忽略键序（保存按
+ * schema 顺序重建键），值仍逐字段全等，任一字段被运营者改过即不匹配。
+ */
+function springapex_seed_is_untouched_other_regions(array $region): bool
+{
+    $untouched = [
+        'label' => 'Other Regions',
+        'slug' => 'other-regions',
+        'locations' => [
+            [
+                'name' => 'Global programs',
+                'detail' => 'Coordinated from Xuzhou, China',
+                'company' => 'ApexSpring',
+                'phone' => '+86 187 9642 2510',
+                'email' => 'victoria@springapex.cn',
+                'address' => 'Xuzhou, Jiangsu Province, China',
+            ],
+        ],
+    ];
+    foreach (array_keys($region['locations'] ?? []) as $i) {
+        if (is_array($region['locations'][$i]) && ($region['locations'][$i]['website'] ?? null) === '') {
+            unset($region['locations'][$i]['website']);
+        }
+    }
+
+    return $region == $untouched;
 }
 
 function springapex_seed_capabilities_menu_url(): bool
