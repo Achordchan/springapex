@@ -629,10 +629,11 @@ function springapex_seed_menu_item_args(array $spec): array
 
 /**
  * 判断菜单项 URL 是否为早期 seed 写死的 legacy 归档查询串：
- * 同站（host/port 一致，scheme 不比，容忍 HTTP→HTTPS 迁移）、根路径、
- * 查询串恰好只有 post_type=<对象>。
- * 运营者自定义的 URL——带其它查询参数（&view=…）、别的路径、或指向
- * 外部站——即使恰含同段子串也不算（str_contains 会把
+ * 与 home_url('/') 解析结果同 host/port（scheme 不比，容忍 HTTP→HTTPS
+ * 迁移）、同路径（支持装在子目录的站点，如 /wordpress/）、查询串恰好
+ * 只有 post_type=<对象> 一个参数、且无 fragment 等其它成分。
+ * 运营者自定义的 URL——带其它查询参数（&view=…）或锚点（#catalog）、
+ * 别的路径、或指向外部站——即使恰含同段子串也不算（str_contains 会把
  * `?post_type=spring_product_reviews`、外站同参数误判成 legacy）。
  */
 function springapex_seed_is_legacy_archive_url(string $url, string $archive): bool
@@ -646,7 +647,10 @@ function springapex_seed_is_legacy_archive_url(string $url, string $archive): bo
         || (int) ($parts['port'] ?? 0) !== (int) ($home['port'] ?? 0)) {
         return false;
     }
-    if (trim((string) ($parts['path'] ?? ''), '/') !== '') {
+    if (trim((string) ($parts['path'] ?? ''), '/') !== trim((string) ($home['path'] ?? ''), '/')) {
+        return false;
+    }
+    if (isset($parts['fragment'])) {
         return false;
     }
     if (!isset($parts['query'])) {
