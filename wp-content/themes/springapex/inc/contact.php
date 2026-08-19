@@ -188,9 +188,15 @@ function springapex_process_contact_submission(): array|WP_Error
                 $country = springapex_limited_text($trimmed, 100);
                 break;
             default:
-                $custom_fields[(string) $field['label']] = $field['type'] === 'textarea'
+                $custom_value = $field['type'] === 'textarea'
                     ? springapex_limited_textarea($trimmed, 5000)
                     : springapex_limited_text($trimmed, 240);
+                // 以稳定字段 ID 为键，并把可变的展示名称与值一同保存。
+                // 这样两个同名字段也不会相互覆盖。
+                $custom_fields[(string) $field['id']] = [
+                    'label' => (string) $field['label'],
+                    'value' => $custom_value,
+                ];
                 break;
         }
     }
@@ -278,7 +284,7 @@ function springapex_process_contact_submission(): array|WP_Error
         '_springapex_document' => sanitize_key(springapex_request_scalar($_POST['document'] ?? '')),
         '_springapex_mail_sent' => 'pending',
     ];
-    // 自定义字段（表单设置新增的）：label => value，询盘详情与邮件动态展示。
+    // 自定义字段（表单设置新增的）：id => {label, value}，询盘详情与邮件动态展示。
     if ($custom_fields !== []) {
         $meta['_springapex_custom_fields'] = $custom_fields;
     }
@@ -320,10 +326,14 @@ function springapex_process_contact_submission(): array|WP_Error
 
     $recipient = springapex_inquiry_recipient();
     $subject = sprintf('[ApexSpring] %s inquiry from %s', $type, $name);
-    // 运营者在「表单设置」新增的自定义字段：按 label 追加到通知正文。
+    // 运营者在「表单设置」新增的自定义字段：按保存时的 label 追加到通知正文。
     $custom_lines = [];
-    foreach ($custom_fields as $label => $value) {
-        $custom_lines[] = sprintf('%s: %s', (string) $label, (string) $value);
+    foreach ($custom_fields as $custom_field) {
+        $custom_lines[] = sprintf(
+            '%s: %s',
+            (string) ($custom_field['label'] ?? ''),
+            (string) ($custom_field['value'] ?? '')
+        );
     }
     $body = implode("\n", array_merge([
         "Name: {$name}",

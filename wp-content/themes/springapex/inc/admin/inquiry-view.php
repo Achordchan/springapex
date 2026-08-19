@@ -41,6 +41,16 @@ add_action('add_meta_boxes_spring_inquiry', static function (): void {
     );
 });
 
+function springapex_inquiry_mail_status_label(string $status): string
+{
+    return match ($status) {
+        '1', 'sent' => '已发送',
+        '0' => '发送失败',
+        'pending' => '待发送',
+        default => $status,
+    };
+}
+
 add_filter('post_row_actions', static function (array $actions, WP_Post $post): array {
     if ((string) $post->post_type !== 'spring_inquiry') {
         return $actions;
@@ -65,8 +75,10 @@ add_filter('display_post_states', static function (array $post_states, WP_Post $
     }
     unset($post_states['private']);
     $mail = (string) get_post_meta((int) $post->ID, '_springapex_mail_sent', true);
-    if ($mail === 'sent') {
+    if (in_array($mail, ['1', 'sent'], true)) {
         $post_states['springapex_mail'] = '已通知邮件';
+    } elseif ($mail === '0') {
+        $post_states['springapex_mail'] = '<span style="color:#d63638;">邮件发送失败</span>';
     } elseif ($mail === 'pending') {
         $post_states['springapex_mail'] = '<span style="color:#d63638;">待通知</span>';
     }
@@ -96,35 +108,55 @@ function springapex_render_inquiry_view(object $post): void
         '材料' => $m('_springapex_material'),
         '工作环境' => $m('_springapex_operating_environment'),
     ];
+    $mail_status = springapex_inquiry_mail_status_label($m('_springapex_mail_sent'));
     $source = [
         '询盘类型' => $m('_springapex_type'),
         '来源页面' => $m('_springapex_source_url') ?: $m('_springapex_source_path'),
         '相关产品' => $m('_springapex_product'),
         '相关行业' => $m('_springapex_industry'),
         '提交时间' => get_post_time('Y-m-d H:i:s', true, $post),
-        '邮件通知' => $m('_springapex_mail_sent') === 'sent' ? '已发送' : ($m('_springapex_mail_sent') === 'pending' ? '待发送' : $m('_springapex_mail_sent')),
+        '邮件通知' => $mail_status,
     ];
 
-    // 「表单设置」新增的自定义字段：label => value，按运营者配置动态展示。
+    // 新格式为 id => {label, value}；同时兼容此前的 label => value 记录。
+    // 使用行列表而非 label 作为数组键，确保同名字段都能完整展示。
     $custom_raw = get_post_meta($post_id, '_springapex_custom_fields', true);
     $custom = [];
     if (is_array($custom_raw)) {
-        foreach ($custom_raw as $label => $value) {
-            $value = is_scalar($value) ? trim((string) $value) : '';
-            if ((string) $label !== '' && $value !== '') {
-                $custom[(string) $label] = $value;
+        foreach ($custom_raw as $field_id => $stored) {
+            if (is_array($stored)) {
+                $label = trim((string) ($stored['label'] ?? $field_id));
+                $value = is_scalar($stored['value'] ?? null) ? trim((string) $stored['value']) : '';
+            } else {
+                $label = trim((string) $field_id);
+                $value = is_scalar($stored) ? trim((string) $stored) : '';
+            }
+            if ($label !== '' && $value !== '') {
+                $custom[] = ['label' => $label, 'value' => $value];
             }
         }
     }
 
     $render_table = static function (string $title, array $pairs) use ($post_id): void {
-        $rows = array_filter($pairs, static fn (string $v): bool => $v !== '');
+        $rows = [];
+        foreach ($pairs as $label => $stored) {
+            if (is_array($stored)) {
+                $row_label = trim((string) ($stored['label'] ?? ''));
+                $row_value = is_scalar($stored['value'] ?? null) ? trim((string) $stored['value']) : '';
+            } else {
+                $row_label = trim((string) $label);
+                $row_value = is_scalar($stored) ? trim((string) $stored) : '';
+            }
+            if ($row_label !== '' && $row_value !== '') {
+                $rows[] = ['label' => $row_label, 'value' => $row_value];
+            }
+        }
         if (!$rows) {
             return;
         }
         echo '<h3 class="sa-iv__head">', esc_html($title), '</h3><table class="sa-iv__table"><tbody>';
-        foreach ($rows as $label => $value) {
-            echo '<tr><th>', esc_html((string) $label), '</th><td>', esc_html($value), '</td></tr>';
+        foreach ($rows as $row) {
+            echo '<tr><th>', esc_html($row['label']), '</th><td>', esc_html($row['value']), '</td></tr>';
         }
         echo '</tbody></table>';
     };
