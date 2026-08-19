@@ -19,7 +19,7 @@ function springapex_handle_contact_ajax(): void
         wp_send_json_error(['message' => __('Method not allowed.', 'springapex')], 405);
     }
 
-    if (!wp_verify_nonce(springapex_contact_nonce(), 'springapex_contact')) {
+    if (!springapex_verify_contact_form_identity()) {
         wp_send_json_error(['message' => __('The form session expired. Refresh the page and try again.', 'springapex')], 403);
     }
 
@@ -40,7 +40,7 @@ function springapex_handle_contact_post(): void
         springapex_redirect_contact_status('error');
     }
 
-    if (!wp_verify_nonce(springapex_contact_nonce(), 'springapex_contact')) {
+    if (!springapex_verify_contact_form_identity()) {
         wp_die(
             esc_html__('The form session expired. Return to the contact page and try again.', 'springapex'),
             esc_html__('Security check failed', 'springapex'),
@@ -85,8 +85,15 @@ function springapex_process_contact_submission(): array|WP_Error
     // 表单上下文（quick / full / product …）映射到「表单设置」的配置键，
     // 必填与人机验证均按表单取值，与渲染侧同源。form_context 必须在此处先取，
     // 下面的 Turnstile 与 schema 校验都依赖它。
-    $form_context = sanitize_key(springapex_request_scalar($_POST['form_context'] ?? 'full'));
-    $form_key = $form_context === 'quick' ? 'quick' : ($form_context === 'full' ? 'contact' : 'product');
+    $form_context = springapex_contact_form_context();
+    $form_key = springapex_contact_form_key($form_context);
+    if ($form_key === '' || !springapex_form_enabled($form_key)) {
+        return springapex_contact_error(
+            'springapex_invalid',
+            __('This form is unavailable.', 'springapex'),
+            400
+        );
+    }
 
     // Turnstile 按表单开关校验（springapex_form_turnstile_enabled 同时
     // 控制前台渲染；密钥未配置时全局禁用）。
@@ -411,6 +418,34 @@ function springapex_contact_error_status(WP_Error $error): int
 {
     $data = $error->get_error_data();
     return is_array($data) ? (int) ($data['status'] ?? 500) : 500;
+}
+
+function springapex_contact_form_context(): string
+{
+    return sanitize_key(springapex_request_scalar($_POST['form_context'] ?? ''));
+}
+
+function springapex_contact_form_key(string $form_context): string
+{
+    return match ($form_context) {
+        'quick' => 'quick',
+        'full' => 'contact',
+        'product' => 'product',
+        default => '',
+    };
+}
+
+function springapex_verify_contact_form_identity(): bool
+{
+    $form_context = springapex_contact_form_context();
+    if (springapex_contact_form_key($form_context) === '') {
+        return false;
+    }
+
+    return wp_verify_nonce(
+        springapex_contact_nonce(),
+        'springapex_contact_' . $form_context
+    );
 }
 
 function springapex_contact_nonce(): string

@@ -30,7 +30,8 @@
 
   const syncTypeUi = (row) => {
     const type = row.querySelector('[data-field-type]').value;
-    const options = row.querySelector('[data-field-options]');
+    const optionsInput = row.querySelector('[data-field-options]');
+    const options = optionsInput ? optionsInput.closest('.builder-field__options') : null;
     if (options) {
       options.hidden = type !== 'select';
     }
