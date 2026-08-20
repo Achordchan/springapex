@@ -10,6 +10,7 @@ The WordPress HTTP container listens only on `127.0.0.1:38100`; public traffic e
 - `/srv/springapex/wordpress`: WordPress core, uploads and runtime data.
 - `/srv/springapex/wordpress/wp-content/themes/springapex`: deployed from GitHub.
 - `/srv/springapex/wordpress/wp-content/plugins/webp-converter-for-media`: deployed from GitHub.
+- `/srv/springapex/wordpress/wp-content/plugins/wp-mail-smtp`: deployed from GitHub; the directory itself is root-provisioned and owned by `springapex-deploy`（rrsync 无法在 root 属主的 `plugins/` 下新建目录，新增受管插件需先用 root `install -d` 并按 `webp-converter-for-media` 的属主授权）。
 
 The GitHub key is forced through `/usr/local/bin/springapex-deploy-command`. It can only run write-only `rrsync` inside this site's `wp-content` directory or the site health check; it cannot run an interactive shell.
 
