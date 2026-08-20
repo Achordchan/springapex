@@ -758,14 +758,27 @@ function springapex_solutions_sync_pending(): bool
     return false;
 }
 
+/** repeater 图片字段 → [附件ID, 主题文件名]；附件已被删除的数字 ID 归零。 */
+function springapex_solution_sync_image(array $item): array
+{
+    $image = $item['image'] ?? '';
+    $image_id = is_int($image) ? $image : (ctype_digit((string) $image) ? (int) $image : 0);
+    if ($image_id > 0 && function_exists('get_post') && get_post($image_id) === null) {
+        // 附件被永久删除后 ID 永远比对失败、set_post_thumbnail 也无法恢复，
+        // 不归零会陷入每请求取锁重试的死循环。卡片回到无图状态，运营者可
+        // 重选——注意文件名也必须为空，否则数字串会被当主题文件名落进
+        // seed 渲染出坏图。
+        return [0, ''];
+    }
+    return [$image_id, $image_id > 0 ? '' : (string) $image];
+}
+
 /** 单张已标记卡片与 repeater 条目是否有差异（与写入侧同一套比较）。 */
 function springapex_solution_sync_differs(object $post, array $item): bool
 {
     $title = sanitize_text_field((string) ($item['title'] ?? ''));
     $tagline = sanitize_text_field((string) ($item['tagline'] ?? ''));
-    $image = $item['image'] ?? '';
-    $image_id = is_int($image) ? $image : (ctype_digit((string) $image) ? (int) $image : 0);
-    $image_file = $image_id > 0 ? '' : (string) $image;
+    [$image_id, $image_file] = springapex_solution_sync_image($item);
     $post_id = (int) $post->ID;
 
     if ($post->post_status !== 'publish') {
@@ -831,6 +844,19 @@ function springapex_solutions_sync_state(): array
         $next_order = max($next_order, (int) $post->menu_order + 1);
     }
 
+    // 缺失文章的条目若用着 WP 保留 slug（feed/embed 等）或与其他类型已发布
+    // 文章撞名，wp_insert_post 会被 wp_unique_post_slug 改名（feed-2），
+    // 之后每个快照都找不到原 slug → 再插 feed-3……无限繁殖。这种条目
+    // 直接从状态里剔除（稳态零额外查询：只在 slug 缺失时才探测）。
+    foreach (array_keys($items_by_slug) as $missing_slug) {
+        if (isset($posts_by_slug[$missing_slug])) {
+            continue;
+        }
+        if (function_exists('wp_unique_post_slug') && wp_unique_post_slug($missing_slug, 0, 'publish', 'spring_solution', 0) !== $missing_slug) {
+            unset($items_by_slug[$missing_slug]);
+        }
+    }
+
     return [
         'items' => $items_by_slug,
         'posts' => $posts,
@@ -851,11 +877,8 @@ function springapex_sync_solutions_from_content_locked(): void
         $title = sanitize_text_field((string) ($item['title'] ?? ''));
         $tagline = sanitize_text_field((string) ($item['tagline'] ?? ''));
         // 设置页图片字段存「附件 ID（数字）或主题文件名」：数字必须落成
-        // 文章缩略图，塞进 _springapex_seed_image 会被前台当主题文件名
-        // 渲染出 /assets/images/123 之类的坏图。
-        $image = $item['image'] ?? '';
-        $image_id = is_int($image) ? $image : (ctype_digit((string) $image) ? (int) $image : 0);
-        $image_file = $image_id > 0 ? '' : (string) $image;
+        // 文章缩略图（附件已删的归零），文件名才落 seed meta。
+        [$image_id, $image_file] = springapex_solution_sync_image($item);
         $existing = $posts_by_slug[$slug] ?? null;
 
         if ($existing === null) {
