@@ -790,20 +790,20 @@ function springapex_solution_sync_differs(object $post, array $item): bool
     if ((string) $post->post_excerpt !== $tagline) {
         return true;
     }
+    $seed_meta = metadata_exists('post', $post_id, '_springapex_seed_image')
+        ? (string) get_post_meta($post_id, '_springapex_seed_image', true)
+        : null;
+    // seed 必须以「已存在的空串」形式收敛：meta 缺失时前台会回退到
+    // repeater 的原始值（数字串会被当主题文件名渲染出坏图）。
+    if ($seed_meta !== $image_file) {
+        return true;
+    }
     if ($image_id > 0) {
         if ((int) get_post_thumbnail_id($post_id) !== $image_id) {
             return true;
         }
-        if ((string) get_post_meta($post_id, '_springapex_seed_image', true) !== '') {
-            return true;
-        }
-    } else {
-        if ((string) get_post_meta($post_id, '_springapex_seed_image', true) !== $image_file) {
-            return true;
-        }
-        if ((int) get_post_thumbnail_id($post_id) > 0) {
-            return true;
-        }
+    } elseif ((int) get_post_thumbnail_id($post_id) > 0) {
+        return true;
     }
     return false;
 }
@@ -895,9 +895,10 @@ function springapex_sync_solutions_from_content_locked(): void
             }
             if ($image_id > 0) {
                 set_post_thumbnail((int) $post_id, $image_id);
-            } elseif ($image_file !== '') {
-                update_post_meta((int) $post_id, '_springapex_seed_image', $image_file);
             }
+            // seed meta 一律持久化（含空串）：缺失时前台 metadata_exists
+            // 回退会拿 repeater 原始值（数字串 → /assets/images/69 坏图）。
+            update_post_meta((int) $post_id, '_springapex_seed_image', $image_file);
             update_post_meta((int) $post_id, '_springapex_from_content', '1');
         } elseif (get_post_meta((int) $existing->ID, '_springapex_from_content', true) === '1') {
             // 比对后再写：本函数挂在 init 上每个请求都会跑到，无条件
@@ -931,22 +932,21 @@ function springapex_sync_solutions_from_content_locked(): void
                 wp_update_post($changes);
             }
             $existing_id = (int) $existing->ID;
+            $current_seed = metadata_exists('post', $existing_id, '_springapex_seed_image')
+                ? (string) get_post_meta($existing_id, '_springapex_seed_image', true)
+                : null;
+            // seed 的期望值就是派生出的文件名（数字场景为空串）：必须以
+            // 「已存在的空串」收敛，缺失时前台会回退 repeater 原始值。
+            if ($current_seed !== $image_file) {
+                update_post_meta($existing_id, '_springapex_seed_image', $image_file);
+            }
             if ($image_id > 0) {
                 if ((int) get_post_thumbnail_id($existing_id) !== $image_id) {
                     set_post_thumbnail($existing_id, $image_id);
                 }
-                // 主题文件名残留会让 file 槽挂着旧值，清掉保持单一事实。
-                if (get_post_meta($existing_id, '_springapex_seed_image', true) !== '') {
-                    update_post_meta($existing_id, '_springapex_seed_image', '');
-                }
-            } else {
-                if ((string) get_post_meta($existing_id, '_springapex_seed_image', true) !== $image_file) {
-                    update_post_meta($existing_id, '_springapex_seed_image', $image_file);
-                }
+            } elseif ((int) get_post_thumbnail_id($existing_id) > 0) {
                 // 切回主题文件名时清缩略图：image['id'] 优先于 file，不清则永远走旧附件。
-                if ((int) get_post_thumbnail_id($existing_id) > 0) {
-                    delete_post_thumbnail($existing_id);
-                }
+                delete_post_thumbnail($existing_id);
             }
         }
     }
