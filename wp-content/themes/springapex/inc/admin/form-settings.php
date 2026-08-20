@@ -140,6 +140,9 @@ function springapex_render_form_settings_page(): void
             $schema[$form] = $entry;
         }
         update_option('springapex_form_schema', $schema, false);
+        // 本次保存即当前结构版本：防止「首次保存删除默认字段 → 加载迁移
+        // 视为版本落后而复活」的窗口（与加载侧的全新安装盖章双保险）。
+        update_option('springapex_form_schema_version', SPRINGAPEX_FORM_SCHEMA_VERSION, false);
         // 上一代配置退役，避免两套真相。
         delete_option('springapex_form_config');
         delete_option('springapex_form_fields');

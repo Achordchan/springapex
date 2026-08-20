@@ -125,7 +125,9 @@ $documents = [
         <?php endif; ?>
         <div class="sa-compression-hero__actions">
           <a class="btn btn-primary" href="#engineering-review"><?php echo springapex_icon('upload', 'icon icon-sm'); ?> <?php esc_html_e('Upload a Drawing', 'springapex'); ?></a>
-          <a class="btn btn-outline" href="#engineering-review" data-compression-mode-link="dimensions"><?php esc_html_e('Enter Dimensions', 'springapex'); ?></a>
+          <?php if ($dimension_fields !== []) : ?>
+            <a class="btn btn-outline" href="#engineering-review" data-compression-mode-link="dimensions"><?php esc_html_e('Enter Dimensions', 'springapex'); ?></a>
+          <?php endif; ?>
         </div>
         <p class="sa-compression-hero__note"><?php esc_html_e('Upload a drawing for engineering review. Dimensions are optional when a drawing is provided.', 'springapex'); ?></p>
       </div>
@@ -230,8 +232,18 @@ $documents = [
           <input type="hidden" name="form_context" value="product">
           <input type="hidden" name="source" value="<?php echo esc_attr((string) get_queried_object_id()); ?>">
           <input type="hidden" name="product" value="<?php echo esc_attr($slug); ?>">
-          <?php foreach ($dimension_fields as $index => $field) : ?>
-            <input type="hidden" name="dimension_label_<?php echo esc_attr((string) ($index + 1)); ?>" value="<?php echo esc_attr((string) $field['label']); ?>">
+          <?php
+          // 标签按固定语义槽位提交（wire/outside/free = 1/2/3，处理端按槽位
+          // 对应 meta）——过滤删掉前面的映射后不能压实重排，否则保留的值
+          // 会挂到错误的标签上（通知邮件与询盘详情错配）。
+          $dimension_label_slots = ['wire_diameter' => 1, 'outside_diameter' => 2, 'free_length' => 3];
+          foreach ($dimension_fields as $field) :
+              $dimension_slot = $dimension_label_slots[(string) $field['name']] ?? 0;
+              if ($dimension_slot < 1) {
+                  continue;
+              }
+              ?>
+              <input type="hidden" name="dimension_label_<?php echo esc_attr((string) $dimension_slot); ?>" value="<?php echo esc_attr((string) $field['label']); ?>">
           <?php endforeach; ?>
           <?php
           // 尺寸字段被「表单设置」标为必填时：输入框补 required，表单默认落在
@@ -390,7 +402,7 @@ $documents = [
     <div class="container container-wide sa-compression-final-cta__inner" data-reveal="up">
       <div class="sa-compression-final-cta__icon"><?php echo springapex_icon('form'); ?></div>
       <div><h2><?php esc_html_e('Two ways to start the review', 'springapex'); ?></h2><p><?php esc_html_e('Attach the file you already have, or enter the dimensions you know. Both go to the same engineering team.', 'springapex'); ?></p></div>
-      <div class="sa-compression-final-cta__actions"><a class="btn btn-primary" href="#engineering-review"><?php esc_html_e('Upload PDF / CAD', 'springapex'); ?> <?php echo springapex_icon('upload', 'icon icon-sm'); ?></a><a class="btn btn-outline" href="#engineering-review" data-compression-mode-link="dimensions"><?php esc_html_e('Enter Dimensions', 'springapex'); ?></a></div>
+      <div class="sa-compression-final-cta__actions"><a class="btn btn-primary" href="#engineering-review"><?php esc_html_e('Upload PDF / CAD', 'springapex'); ?> <?php echo springapex_icon('upload', 'icon icon-sm'); ?></a><?php if ($dimension_fields !== []) : ?><a class="btn btn-outline" href="#engineering-review" data-compression-mode-link="dimensions"><?php esc_html_e('Enter Dimensions', 'springapex'); ?></a><?php endif; ?></div>
     </div>
   </section>
 </article>

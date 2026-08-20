@@ -106,7 +106,12 @@
     });
 
     root.querySelectorAll('[data-compression-mode-link="dimensions"]').forEach((link) => {
-      link.addEventListener('click', () => activate('dimensions', false));
+      link.addEventListener('click', () => {
+        // 尺寸映射全部被删时面板为空壳：CTA 点击不切换（模板侧也已隐藏链接，
+        // 这里兜底其他入口）。
+        if (!dimensionsPanel.querySelector('input, select, textarea')) return;
+        activate('dimensions', false);
+      });
     });
 
     form.addEventListener('reset', () => {

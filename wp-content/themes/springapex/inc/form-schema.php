@@ -154,6 +154,11 @@ function springapex_form_schema(): array
     }
     $schema_version = (string) get_option('springapex_form_schema_version', '');
     $migrated = false;
+    // 全新安装：option 从未落库，走「未保存」分支不会写版本标记——若不在
+    // 此处盖章，运营者首次保存（可能删除了默认字段）后会被迁移逻辑复活。
+    if ($stored === [] && $schema_version !== SPRINGAPEX_FORM_SCHEMA_VERSION) {
+        update_option('springapex_form_schema_version', SPRINGAPEX_FORM_SCHEMA_VERSION, false);
+    }
 
     $types = springapex_form_field_types();
     $defaults = springapex_form_schema_defaults();
