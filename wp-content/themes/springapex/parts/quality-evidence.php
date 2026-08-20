@@ -60,7 +60,7 @@ if (!$image) {
         <?php if (defined('SPRINGAPEX_PREVIEW')) : ?>
           <input type="hidden" name="springapex_contact_nonce" value="">
         <?php else : ?>
-          <?php wp_nonce_field('springapex_contact', 'springapex_contact_nonce', false); ?>
+          <?php wp_nonce_field('springapex_contact_product', 'springapex_contact_nonce', false); ?>
         <?php endif; ?>
         <input type="hidden" name="intent" value="drawing">
         <input type="hidden" name="form_context" value="product">

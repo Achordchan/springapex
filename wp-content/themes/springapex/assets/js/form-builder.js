@@ -30,21 +30,39 @@
 
   const syncTypeUi = (row) => {
     const type = row.querySelector('[data-field-type]').value;
-    const options = row.querySelector('[data-field-options]');
+    const optionsInput = row.querySelector('[data-field-options]');
+    const options = optionsInput ? optionsInput.closest('.builder-field__options') : null;
     if (options) {
       options.hidden = type !== 'select';
     }
   };
 
   const syncHead = (row) => {
-    const label = row.querySelector('[data-field-label]').value || '（新字段）';
+    const labelInput = row.querySelector('[data-field-label]');
+    const rawLabel = labelInput.value;
+    const label = rawLabel || '（新字段）';
     const idInput = row.querySelector('[data-field-id]');
     row.querySelector('.builder-field__head strong').textContent = label;
     const typeSelect = row.querySelector('[data-field-type]');
     row.querySelector('.builder-field__type').textContent = typeSelect.options[typeSelect.selectedIndex].textContent;
-    if (idInput && idInput.value === '') {
-      const slug = slugify(label);
-      idInput.value = slug ? 'custom_' + slug : 'custom_field';
+    // 新字段的 ID 在名称输入期间持续同步，而不是首个字符后就锁死。
+    // 同时避开当前表单中已有的 ID，防止保存时因重复而静默丢字段。
+    if (idInput && row.dataset.autoFieldId === 'true') {
+      const slug = slugify(rawLabel);
+      const base = slug ? 'custom_' + slug : 'custom_field';
+      const usedIds = new Set(
+        [...row.closest('[data-form-builder]').querySelectorAll('[data-field-id]')]
+          .filter((input) => input !== idInput)
+          .map((input) => input.value)
+          .filter(Boolean)
+      );
+      let candidate = base;
+      let suffix = 2;
+      while (usedIds.has(candidate)) {
+        candidate = `${base}_${suffix}`;
+        suffix += 1;
+      }
+      idInput.value = rawLabel ? candidate : '';
     }
   };
 
@@ -111,6 +129,7 @@
         input.name = input.name.replace('schema[__FORM__]', `schema[${builder.dataset.formBuilder}]`);
       });
       clone.querySelector('[data-field-id]').value = '';
+      clone.dataset.autoFieldId = 'true';
       list.appendChild(clone);
       bindRow(clone);
       reindex(builder);

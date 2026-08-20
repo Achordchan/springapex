@@ -187,9 +187,21 @@ function springapex_news_parse_date_label(string $label): array
         return $time !== false ? gmdate('Y-m-d', $time) : '';
     };
 
-    // June 30 – July 3, 2024（跨月）
+    // January 1, 2026 – January 2, 2027（显式跨年）
+    if (preg_match('/^(\p{L}+ \d{1,2}),\s*(\d{4})\s*[–-]\s*(\p{L}+ \d{1,2}),\s*(\d{4})$/u', $label, $m)) {
+        return [$to_day($m[1] . ', ' . $m[2]), $to_day($m[3] . ', ' . $m[4])];
+    }
+
+    // June 30 – July 3, 2024（跨月）；旧格式若开始日晚于结束日，则为跨年范围。
     if (preg_match('/^(\p{L}+ \d{1,2})\s*[–-]\s*(\p{L}+ \d{1,2}),\s*(\d{4})$/u', $label, $m)) {
-        return [$to_day($m[1] . ', ' . $m[3]), $to_day($m[2] . ', ' . $m[3])];
+        $end = $to_day($m[2] . ', ' . $m[3]);
+        $start = $to_day($m[1] . ', ' . $m[3]);
+        // 显示文字只在末尾保留结束年份；例如 December 31 – January 2, 2027
+        // 的开始年份应回推为 2026。
+        if ($start !== '' && $end !== '' && $start > $end) {
+            $start = $to_day($m[1] . ', ' . ((int) $m[3] - 1));
+        }
+        return [$start, $end];
     }
     // June 17–20, 2024（同月省略写法）
     if (preg_match('/^(\p{L}+) (\d{1,2})\s*[–-]\s*(\d{1,2}),\s*(\d{4})$/u', $label, $m)) {
@@ -232,6 +244,10 @@ function springapex_news_date_label_from_submission(): string
     $end_time = strtotime($end);
     if ($end_time === false || $end_time < $start_time) {
         return gmdate('F j, Y', $start_time);
+    }
+    // 跨年时两端都保留年份，避免长跨度范围无法从显示文字反推开始年份。
+    if (gmdate('Y', $start_time) !== gmdate('Y', $end_time)) {
+        return gmdate('F j, Y', $start_time) . ' – ' . gmdate('F j, Y', $end_time);
     }
     if (gmdate('n Y', $start_time) === gmdate('n Y', $end_time)) {
         return gmdate('F j', $start_time) . '–' . gmdate('j, Y', $end_time);

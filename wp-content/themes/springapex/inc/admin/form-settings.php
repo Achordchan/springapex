@@ -55,15 +55,18 @@ function springapex_render_form_settings_page(): void
         current_user_can('manage_options')
     ) {
         $recipient = sanitize_email((string) wp_unslash($_POST['springapex_inquiry_email'] ?? ''));
-        if ($recipient !== '') {
-            set_theme_mod('springapex_inquiry_email', $recipient);
-            $saved = true;
+        if ($recipient === '' || !is_email($recipient)) {
+            $error = '请输入有效的收件邮箱。';
         } else {
-            $error = '收件邮箱不能为空。';
-        }
+            set_theme_mod('springapex_inquiry_email', $recipient);
 
-        update_option('springapex_turnstile_site_key', sanitize_text_field((string) wp_unslash($_POST['springapex_turnstile_site_key'] ?? '')), false);
-        update_option('springapex_turnstile_secret', sanitize_text_field((string) wp_unslash($_POST['springapex_turnstile_secret'] ?? '')), false);
+        // 常量锁定的输入为 disabled，不会出现在 POST；此时保留数据库备用值。
+        if (array_key_exists('springapex_turnstile_site_key', $_POST)) {
+            update_option('springapex_turnstile_site_key', sanitize_text_field((string) wp_unslash($_POST['springapex_turnstile_site_key'])), false);
+        }
+        if (array_key_exists('springapex_turnstile_secret', $_POST)) {
+            update_option('springapex_turnstile_secret', sanitize_text_field((string) wp_unslash($_POST['springapex_turnstile_secret'])), false);
+        }
 
         // 邮件通知模板：标题/正文清空并保存 = 恢复默认模板（删除存储值）。
         $mail_subject = sanitize_text_field((string) wp_unslash($_POST['springapex_inquiry_mail_subject'] ?? ''));
@@ -139,6 +142,7 @@ function springapex_render_form_settings_page(): void
         delete_option('springapex_form_config');
         delete_option('springapex_form_fields');
         $saved = true;
+        }
     }
 
     $recipient = (string) get_theme_mod('springapex_inquiry_email', (string) get_option('admin_email'));

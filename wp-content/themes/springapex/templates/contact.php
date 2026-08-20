@@ -233,7 +233,7 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
           <?php if (defined('SPRINGAPEX_PREVIEW')) : ?>
             <input type="hidden" name="springapex_contact_nonce" value="">
           <?php else : ?>
-            <?php wp_nonce_field('springapex_contact', 'springapex_contact_nonce', false); ?>
+            <?php wp_nonce_field('springapex_contact_full', 'springapex_contact_nonce', false); ?>
           <?php endif; ?>
           <input type="hidden" name="intent" value="<?php echo esc_attr($intent); ?>">
           <input type="hidden" name="form_context" value="full">

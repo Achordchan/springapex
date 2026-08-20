@@ -75,16 +75,42 @@ function springapex_render_product_panel(object $post): void
     $subtitle = (string) $value('_springapex_subtitle', $seed['subtitle'] ?? '');
     $featured = (bool) $value('_springapex_featured', !empty($seed['featured']));
 
-    // 与旧渲染一致：从未保存过画廊时，回退 特色图像 → seed 画廊。
+    // 与前台 springapex_product_from_post() 使用相同的有效性口径：
+    // 已删除的附件、空行和损坏行不应阻止特色图 / seed 画廊兜底。
+    $normalize_gallery = static function (array $rows): array {
+        $normalized = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $image_id = (int) ($row['image_id'] ?? 0);
+            $image = trim((string) ($row['image'] ?? ''));
+            if ($image_id > 0 && wp_get_attachment_image_url($image_id, 'medium') === false) {
+                $image_id = 0;
+            }
+            if (
+                $image !== '' &&
+                !is_file(SPRINGAPEX_DIR . '/assets/images/' . ltrim($image, '/'))
+            ) {
+                $image = '';
+            }
+            if ($image_id > 0 || $image !== '') {
+                $normalized[] = ['image_id' => (string) $image_id, 'image' => $image];
+            }
+        }
+        return $normalized;
+    };
+
     $thumbnail_id = (int) get_post_thumbnail_id($post_id);
-    if (metadata_exists('post', $post_id, '_springapex_gallery')) {
-        $gallery = (array) $value('_springapex_gallery', []);
-    } elseif ($thumbnail_id > 0) {
-        $gallery = [['image_id' => (string) $thumbnail_id, 'image' => '']];
-    } else {
-        $gallery = (array) ($seed['gallery'] ?? []);
+    $gallery = metadata_exists('post', $post_id, '_springapex_gallery')
+        ? $normalize_gallery((array) $value('_springapex_gallery', []))
+        : [];
+    if ($gallery === [] && $thumbnail_id > 0) {
+        $gallery = $normalize_gallery([['image_id' => (string) $thumbnail_id, 'image' => '']]);
     }
-    $gallery = array_values(array_filter($gallery, 'is_array'));
+    if ($gallery === []) {
+        $gallery = $normalize_gallery((array) ($seed['gallery'] ?? []));
+    }
 
     $specs = (array) $value('_springapex_specs', $seed['specs'] ?? []);
     $specs = array_values(array_filter($specs, 'is_array'));
