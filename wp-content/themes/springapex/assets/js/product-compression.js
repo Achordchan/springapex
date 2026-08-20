@@ -203,7 +203,10 @@
       });
     }
 
-    activate('drawing', false);
+    // 初始化也要用模板声明的初始模式：尺寸字段被设为必填时模板默认落在
+    // dimensions（drawing 按钮已禁用），硬切 drawing 会把必填输入藏回
+    // hidden 面板并让 checkValidity 卡死。
+    activate(initialMode, false);
   }
 
   // The inquiry form also lives outside the compression product page

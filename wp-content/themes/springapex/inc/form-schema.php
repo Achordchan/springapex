@@ -163,6 +163,8 @@ function springapex_form_schema(): array
     $types = springapex_form_field_types();
     $defaults = springapex_form_schema_defaults();
     $schema = [];
+    // 本版本才纳入 schema 管理的字段（见下方迁移逻辑）。
+    $migration_field_ids = ['wire_diameter', 'outside_diameter', 'free_length', 'quantity', 'material', 'operating_environment'];
 
     foreach ($defaults as $form => $form_defaults) {
         $entry = ['fields' => []];
@@ -213,12 +215,14 @@ function springapex_form_schema(): array
             }
         }
 
-        // 一次性迁移：schema 结构版本落后时，把缺失的默认字段补齐并落
-        // 版本标记。旧版本里技术参数写死在模板外、schema 中不存在，
-        // 「缺失」不是运营者删除；迁移后（版本标记已更新）删除照旧生效。
+        // 一次性迁移：schema 结构版本落后时补齐字段并落版本标记。
+        // 只补「本版本才纳入 schema 管理」的 6 个技术参数——PR #8 时代
+        // 它们写死在模板外、schema 中不存在，「缺失」不是删除；
+        // company/phone 等老字段在旧版本里就可删，缺失是升级前的合法
+        // 删除，迁移必须保持原样。迁移后（版本标记已更新）删除照旧生效。
         if ($schema_version !== SPRINGAPEX_FORM_SCHEMA_VERSION) {
             foreach ($form_defaults['fields'] as $field) {
-                if (!isset($seen[$field['id']])) {
+                if (!isset($seen[$field['id']]) && in_array($field['id'], $migration_field_ids, true)) {
                     $entry['fields'][] = $field;
                 }
             }
