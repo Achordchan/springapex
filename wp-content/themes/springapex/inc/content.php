@@ -896,6 +896,12 @@ function springapex_sync_solutions_from_content_locked(): void
                     $changes['post_date'] = current_time('mysql');
                     $changes['post_date_gmt'] = gmdate('Y-m-d H:i:s');
                 }
+                if ($existing->post_status === 'trash') {
+                    // 实测 wp_update_post 脱离 trash 时 WP 核心会剥 __trashed
+                    // 后缀，但显式写回期望 slug 把恢复契约握在自己手里，
+                    // 不依赖核心归一化的实现细节。
+                    $changes['post_name'] = $slug;
+                }
             }
             if ($changes !== []) {
                 $changes['ID'] = (int) $existing->ID;
