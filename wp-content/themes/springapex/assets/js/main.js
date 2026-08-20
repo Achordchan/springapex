@@ -1286,7 +1286,15 @@
       // 之前运行）。
       const hash = window.location.hash;
       if (hash && hash.length > 1) {
-        const hashTarget = document.getElementById(decodeURIComponent(hash.slice(1)));
+        // 坏百分号转义（如 #%E0%A4%A）会让 decodeURIComponent 抛错并炸掉
+        // 整条 onReady 初始化链——与 stabilizeInitialAnchor 同样兜底。
+        let hashId = hash.slice(1);
+        try {
+          hashId = decodeURIComponent(hashId);
+        } catch (error) {
+          hashId = hash.slice(1);
+        }
+        const hashTarget = document.getElementById(hashId);
         if (hashTarget instanceof HTMLElement && hashTarget.classList.contains('is-deferred')) {
           while (hashTarget.classList.contains('is-deferred') && grid.querySelector('.is-deferred')) {
             revealBatch();

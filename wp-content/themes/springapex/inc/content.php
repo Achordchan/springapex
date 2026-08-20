@@ -705,6 +705,12 @@ function springapex_sync_solutions_from_content(): void
     if (defined('SPRINGAPEX_PREVIEW') || !function_exists('get_posts') || !post_type_exists('spring_solution')) {
         return;
     }
+    // 稳态零锁零写：先只读预检（repeater 与文章已一致则直接返回），
+    // 有差异才取 option 锁——取锁本身是插入 option、释放是删除，每个
+    // 请求都跑等于每次页面访问多两笔写库。
+    if (!springapex_solutions_sync_pending()) {
+        return;
+    }
     // 建卡路径非原子（先查 slug 再插入，post_name 无唯一约束）：两个未缓存
     // 的并发请求会各自插入、产出同 slug 的重复卡。整段用 option 锁串行化，
     // 抢不到锁的请求直接跳过（幂等，下个请求会校平）。
@@ -720,14 +726,82 @@ function springapex_sync_solutions_from_content(): void
     }
 }
 
-function springapex_sync_solutions_from_content_locked(): void
+/**
+ * 只读预检：repeater 与同步生成的文章是否存在差异。判断条件必须与
+ * springapex_sync_solutions_from_content_locked() 的写入条件保持一致，
+ * 改一处必须同步另一处。
+ */
+function springapex_solutions_sync_pending(): bool
+{
+    $state = springapex_solutions_sync_state();
+    foreach ($state['items'] as $slug => $item) {
+        $existing = $state['posts_by_slug'][$slug] ?? null;
+        if ($existing === null) {
+            return true;
+        }
+        if (get_post_meta((int) $existing->ID, '_springapex_from_content', true) !== '1') {
+            continue;
+        }
+        if (springapex_solution_sync_differs($existing, $item)) {
+            return true;
+        }
+    }
+    foreach ($state['posts'] as $post) {
+        if (
+            get_post_meta((int) $post->ID, '_springapex_from_content', true) === '1'
+            && !isset($state['items'][$post->post_name])
+            && $post->post_status === 'publish'
+        ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/** 单张已标记卡片与 repeater 条目是否有差异（与写入侧同一套比较）。 */
+function springapex_solution_sync_differs(object $post, array $item): bool
+{
+    $title = sanitize_text_field((string) ($item['title'] ?? ''));
+    $tagline = sanitize_text_field((string) ($item['tagline'] ?? ''));
+    $image = $item['image'] ?? '';
+    $image_id = is_int($image) ? $image : (ctype_digit((string) $image) ? (int) $image : 0);
+    $image_file = $image_id > 0 ? '' : (string) $image;
+    $post_id = (int) $post->ID;
+
+    if ($post->post_status !== 'publish') {
+        return true;
+    }
+    if ($title !== '' && (string) $post->post_title !== $title) {
+        return true;
+    }
+    if ((string) $post->post_excerpt !== $tagline) {
+        return true;
+    }
+    if ($image_id > 0) {
+        if ((int) get_post_thumbnail_id($post_id) !== $image_id) {
+            return true;
+        }
+        if ((string) get_post_meta($post_id, '_springapex_seed_image', true) !== '') {
+            return true;
+        }
+    } else {
+        if ((string) get_post_meta($post_id, '_springapex_seed_image', true) !== $image_file) {
+            return true;
+        }
+        if ((int) get_post_thumbnail_id($post_id) > 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/** repeater 条目与全状态文章（含回收站 desired slug）的只读快照。 */
+function springapex_solutions_sync_state(): array
 {
     $items = springapex_get('solutions.items', []);
     if (!is_array($items)) {
-        return;
+        $items = [];
     }
-    // 注意：空数组（运营者清空了 repeater）不能早退——下方清理逻辑要把
-    // 同步生成的卡片全部转草稿，否则前台残留已删除的卡片。
     $items_by_slug = [];
     foreach ($items as $item) {
         $slug = sanitize_title((string) ($item['slug'] ?? ''));
@@ -736,9 +810,6 @@ function springapex_sync_solutions_from_content_locked(): void
         }
     }
 
-    // slug 查找必须覆盖回收站与各非公开状态：回收站里的文章仍占用 slug，
-    // 漏看会导致每个请求都新建 slug-2/slug-3……无限繁殖；媒体库/面板侧
-    // 把文章设为私有/待发同理。
     $posts = get_posts([
         'post_type' => 'spring_solution',
         'post_status' => ['publish', 'draft', 'private', 'pending', 'future', 'trash'],
@@ -748,9 +819,33 @@ function springapex_sync_solutions_from_content_locked(): void
     $posts_by_slug = [];
     $next_order = 0;
     foreach ($posts as $post) {
-        $posts_by_slug[$post->post_name] = $post;
+        // 回收站会改写 post_name（slug__trashed 后缀）：按 WP 记录的
+        // _wp_desired_post_slug（或去掉后缀）还原期望 slug 再做键，否则
+        // 查找漏配会转而新建替代文章、留下累积的回收站副本。
+        $desired_slug = (string) $post->post_name;
+        if ($post->post_status === 'trash' && str_ends_with($desired_slug, '__trashed')) {
+            $meta_slug = (string) get_post_meta((int) $post->ID, '_wp_desired_post_slug', true);
+            $desired_slug = $meta_slug !== '' ? $meta_slug : substr($desired_slug, 0, -strlen('__trashed'));
+        }
+        $posts_by_slug[$desired_slug] = $post;
         $next_order = max($next_order, (int) $post->menu_order + 1);
     }
+
+    return [
+        'items' => $items_by_slug,
+        'posts' => $posts,
+        'posts_by_slug' => $posts_by_slug,
+        'next_order' => $next_order,
+    ];
+}
+
+function springapex_sync_solutions_from_content_locked(): void
+{
+    $state = springapex_solutions_sync_state();
+    $items_by_slug = $state['items'];
+    $posts = $state['posts'];
+    $posts_by_slug = $state['posts_by_slug'];
+    $next_order = $state['next_order'];
 
     foreach ($items_by_slug as $slug => $item) {
         $title = sanitize_text_field((string) ($item['title'] ?? ''));
