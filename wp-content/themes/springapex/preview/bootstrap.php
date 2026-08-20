@@ -15,7 +15,7 @@ if (!in_array(PHP_SAPI, ['cli', 'cli-server'], true)) {
 
 defined('ABSPATH') || define('ABSPATH', __DIR__ . '/');
 defined('SPRINGAPEX_PREVIEW') || define('SPRINGAPEX_PREVIEW', true);
-defined('SPRINGAPEX_VERSION') || define('SPRINGAPEX_VERSION', '2.9.80');
+defined('SPRINGAPEX_VERSION') || define('SPRINGAPEX_VERSION', '2.9.83');
 defined('SPRINGAPEX_DIR') || define('SPRINGAPEX_DIR', dirname(__DIR__));
 defined('SPRINGAPEX_URI') || define('SPRINGAPEX_URI', '');
 
@@ -92,6 +92,12 @@ function wp_unslash(mixed $value): mixed
 // 这样 contact / product / 快速询盘窗按内置默认字段渲染（与线上现状一致）。
 function get_option(string $option, mixed $default = false): mixed { return $default; }
 function get_theme_mod(string $name, mixed $default = false): mixed { return $default; }
+// 预览是只读的：schema 迁移/版本盖章等写入调用（footer 的快速询盘窗会
+// 触发 schema 加载）一律空操作，否则没有 options 表的预览运行时直接 fatal。
+function update_option(string $option, mixed $value, mixed $autoload = null): bool { return true; }
+function delete_option(string $option): bool { return true; }
+function set_theme_mod(string $name, mixed $value): bool { return true; }
+function remove_theme_mod(string $name): bool { return true; }
 
 function springapex_preview_query_value(string $key): string
 {

@@ -458,6 +458,12 @@
   color: #0786ce;
 }
 
+/* 尺寸参数被设为必填时 drawing 模式被禁用：给出可见的禁用态 */
+.sa-compression-form__modes button[disabled] {
+  color: #b6bec9;
+  cursor: not-allowed;
+}
+
 .sa-compression-form__modes button.is-active::after {
   background: var(--sa-compression-blue);
 }

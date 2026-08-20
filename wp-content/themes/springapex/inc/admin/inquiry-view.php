@@ -41,13 +41,14 @@ add_action('add_meta_boxes_spring_inquiry', static function (): void {
     );
 });
 
+/** 邮件通知状态的统一文案；兼容邮件模板改造前落库的 '1'/'0' 旧值。 */
 function springapex_inquiry_mail_status_label(string $status): string
 {
     return match ($status) {
-        '1', 'sent' => '已发送',
-        '0' => '发送失败',
-        'pending' => '待发送',
-        default => $status,
+        'sent', '1' => '已通知邮件',
+        'pending' => '待通知',
+        'failed', '0' => '邮件发送失败',
+        default => '',
     };
 }
 
@@ -75,12 +76,11 @@ add_filter('display_post_states', static function (array $post_states, WP_Post $
     }
     unset($post_states['private']);
     $mail = (string) get_post_meta((int) $post->ID, '_springapex_mail_sent', true);
-    if (in_array($mail, ['1', 'sent'], true)) {
-        $post_states['springapex_mail'] = '已通知邮件';
-    } elseif ($mail === '0') {
-        $post_states['springapex_mail'] = '<span style="color:#d63638;">邮件发送失败</span>';
-    } elseif ($mail === 'pending') {
-        $post_states['springapex_mail'] = '<span style="color:#d63638;">待通知</span>';
+    $mail_label = springapex_inquiry_mail_status_label($mail);
+    if ($mail_label !== '') {
+        $post_states['springapex_mail'] = in_array($mail, ['pending', 'failed', '0'], true)
+            ? '<span style="color:#d63638;">' . $mail_label . '</span>'
+            : $mail_label;
     }
 
     return $post_states;
@@ -115,7 +115,7 @@ function springapex_render_inquiry_view(object $post): void
         '相关产品' => $m('_springapex_product'),
         '相关行业' => $m('_springapex_industry'),
         '提交时间' => get_post_time('Y-m-d H:i:s', true, $post),
-        '邮件通知' => $mail_status,
+        '邮件通知' => $mail_status ?: '—',
     ];
 
     // 新格式为 id => {label, value}；同时兼容此前的 label => value 记录。

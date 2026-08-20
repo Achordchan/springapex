@@ -66,6 +66,20 @@ $dimension_fields = $dimension_profiles[$slug] ?? [
     ['name' => 'outside_diameter', 'symbol' => 'B', 'label' => 'Secondary dimension', 'description' => 'Another critical size or installation limit', 'placeholder' => 'e.g. 30 mm'],
     ['name' => 'free_length', 'symbol' => 'L', 'label' => 'Overall length', 'description' => 'Maximum end-to-end length if applicable', 'placeholder' => 'e.g. 80 mm'],
 ];
+// 尺寸输入按 schema 成员资格渲染：运营者在「表单设置」删掉某个尺寸映射
+// 后，此处固定面板不再渲染它——否则访客填了值也会被服务端按 schema
+// 丢弃（存库与邮件里均为空）。
+$schema_dimension_ids = array_map(
+    static fn (array $field): string => (string) $field['id'],
+    array_filter(
+        springapex_form_schema()['product']['fields'] ?? [],
+        static fn (array $field): bool => in_array($field['id'], ['wire_diameter', 'outside_diameter', 'free_length'], true)
+    )
+);
+$dimension_fields = array_values(array_filter(
+    $dimension_fields,
+    static fn (array $field): bool => in_array((string) $field['name'], $schema_dimension_ids, true)
+));
 $is_compression_product = $slug === 'compression-springs';
 $quality_steps = [
     ['step' => '1', 'title' => 'Drawing Review', 'text' => 'Drawing, load and material reviewed.'],
@@ -111,7 +125,9 @@ $documents = [
         <?php endif; ?>
         <div class="sa-compression-hero__actions">
           <a class="btn btn-primary" href="#engineering-review"><?php echo springapex_icon('upload', 'icon icon-sm'); ?> <?php esc_html_e('Upload a Drawing', 'springapex'); ?></a>
-          <a class="btn btn-outline" href="#engineering-review" data-compression-mode-link="dimensions"><?php esc_html_e('Enter Dimensions', 'springapex'); ?></a>
+          <?php if ($dimension_fields !== []) : ?>
+            <a class="btn btn-outline" href="#engineering-review" data-compression-mode-link="dimensions"><?php esc_html_e('Enter Dimensions', 'springapex'); ?></a>
+          <?php endif; ?>
         </div>
         <p class="sa-compression-hero__note"><?php esc_html_e('Upload a drawing for engineering review. Dimensions are optional when a drawing is provided.', 'springapex'); ?></p>
       </div>
@@ -216,19 +232,41 @@ $documents = [
           <input type="hidden" name="form_context" value="product">
           <input type="hidden" name="source" value="<?php echo esc_attr((string) get_queried_object_id()); ?>">
           <input type="hidden" name="product" value="<?php echo esc_attr($slug); ?>">
-          <?php foreach ($dimension_fields as $index => $field) : ?>
-            <input type="hidden" name="dimension_label_<?php echo esc_attr((string) ($index + 1)); ?>" value="<?php echo esc_attr((string) $field['label']); ?>">
+          <?php
+          // 标签按固定语义槽位提交（wire/outside/free = 1/2/3，处理端按槽位
+          // 对应 meta）——过滤删掉前面的映射后不能压实重排，否则保留的值
+          // 会挂到错误的标签上（通知邮件与询盘详情错配）。
+          $dimension_label_slots = ['wire_diameter' => 1, 'outside_diameter' => 2, 'free_length' => 3];
+          foreach ($dimension_fields as $field) :
+              $dimension_slot = $dimension_label_slots[(string) $field['name']] ?? 0;
+              if ($dimension_slot < 1) {
+                  continue;
+              }
+              ?>
+              <input type="hidden" name="dimension_label_<?php echo esc_attr((string) $dimension_slot); ?>" value="<?php echo esc_attr((string) $field['label']); ?>">
           <?php endforeach; ?>
-          <input type="hidden" name="inquiry_type" value="Upload a Drawing" data-inquiry-type>
+          <?php
+          // 尺寸字段被「表单设置」标为必填时：输入框补 required，表单默认落在
+          // 「Enter Dimensions」模式（面板初始可见）——必填项藏在 hidden 面板里
+          // 会被 checkValidity 拦住且聚焦不到，访客无从得知缺了什么。
+          $dimension_required = array_intersect(
+              springapex_form_required_ids('product'),
+              array_map(static fn (array $f): string => (string) $f['name'], $dimension_fields)
+          );
+          $dimensions_default = $dimension_required !== [];
+          ?>
+          <input type="hidden" name="inquiry_type" value="<?php echo $dimensions_default ? 'Request a Quote' : 'Upload a Drawing'; ?>" data-inquiry-type>
           <input type="hidden" name="started_at" value="<?php echo esc_attr((string) time()); ?>" data-form-started-at>
           <label class="honeypot" aria-hidden="true">Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
 
           <div class="sa-compression-form__modes" role="tablist" aria-label="<?php esc_attr_e('How to send requirements', 'springapex'); ?>">
-            <button type="button" class="is-active" role="tab" aria-selected="true" aria-controls="compression-drawing-panel" data-compression-inquiry-mode="drawing"><?php esc_html_e('Upload a Drawing', 'springapex'); ?></button>
-            <button type="button" role="tab" aria-selected="false" aria-controls="compression-dimensions-panel" data-compression-inquiry-mode="dimensions"><?php esc_html_e('Enter Dimensions Manually', 'springapex'); ?></button>
+            <button type="button" class="<?php echo $dimensions_default ? '' : 'is-active'; ?>" role="tab" aria-selected="<?php echo $dimensions_default ? 'false' : 'true'; ?>" aria-controls="compression-drawing-panel" data-compression-inquiry-mode="drawing"<?php echo $dimensions_default ? ' disabled title="Required dimensions must be entered directly"' : ''; ?>><?php esc_html_e('Upload a Drawing', 'springapex'); ?></button>
+            <?php if ($dimension_fields !== []) : ?>
+              <button type="button" class="<?php echo $dimensions_default ? 'is-active' : ''; ?>" role="tab" aria-selected="<?php echo $dimensions_default ? 'true' : 'false'; ?>" aria-controls="compression-dimensions-panel" data-compression-inquiry-mode="dimensions"><?php esc_html_e('Enter Dimensions Manually', 'springapex'); ?></button>
+            <?php endif; ?>
           </div>
 
-          <div class="sa-compression-form__drawing" id="compression-drawing-panel" role="tabpanel" data-compression-drawing-panel>
+          <div class="sa-compression-form__drawing" id="compression-drawing-panel" role="tabpanel" data-compression-drawing-panel<?php echo $dimensions_default ? ' hidden' : ''; ?>>
             <h3><?php esc_html_e('Upload a technical drawing', 'springapex'); ?></h3>
             <p><?php esc_html_e('Dimensions are optional when a drawing is provided.', 'springapex'); ?></p>
             <label class="sa-compression-dropzone" data-compression-dropzone>
@@ -243,26 +281,37 @@ $documents = [
             </label>
           </div>
 
-          <div class="sa-compression-form__dimensions" id="compression-dimensions-panel" role="tabpanel" data-compression-dimensions-panel hidden>
-            <h3><?php esc_html_e('Enter the dimensions you know', 'springapex'); ?></h3>
-            <p><?php esc_html_e('All dimensions are optional; engineering will confirm any missing values.', 'springapex'); ?></p>
-            <div class="sa-compression-form__row">
-              <?php foreach (array_slice($dimension_fields, 0, 2) as $field) : ?>
-                <label class="field"><span><?php echo esc_html((string) $field['label']); ?></span><input type="text" name="<?php echo esc_attr((string) $field['name']); ?>" inputmode="decimal" maxlength="80" placeholder="<?php echo esc_attr((string) $field['placeholder']); ?>"></label>
+          <div class="sa-compression-form__dimensions" id="compression-dimensions-panel" role="tabpanel" data-compression-dimensions-panel<?php echo $dimensions_default ? '' : ' hidden'; ?>>
+            <?php if ($dimension_fields !== []) : ?>
+              <h3><?php esc_html_e('Enter the dimensions you know', 'springapex'); ?></h3>
+              <?php if ($dimension_required !== []) : ?>
+                <p><?php esc_html_e('Required dimensions are marked with *; engineering will confirm any missing values.', 'springapex'); ?></p>
+              <?php else : ?>
+                <p><?php esc_html_e('All dimensions are optional; engineering will confirm any missing values.', 'springapex'); ?></p>
+              <?php endif; ?>
+              <?php foreach (array_chunk($dimension_fields, 2) as $dimension_row) : ?>
+                <div class="sa-compression-form__row">
+                  <?php foreach ($dimension_row as $field) : ?>
+                    <?php $is_dimension_required = in_array($field['name'], $dimension_required, true); ?>
+                    <label class="field"><span><?php echo esc_html((string) $field['label']); ?><?php echo $is_dimension_required ? ' *' : ''; ?></span><input type="text" name="springapex_field_<?php echo esc_attr((string) $field['name']); ?>" inputmode="decimal" maxlength="80" placeholder="<?php echo esc_attr((string) $field['placeholder']); ?>"<?php echo $is_dimension_required ? ' required' : ''; ?>></label>
+                  <?php endforeach; ?>
+                </div>
               <?php endforeach; ?>
-            </div>
-            <?php $last_dimension = $dimension_fields[2]; ?>
-            <label class="field"><span><?php echo esc_html((string) $last_dimension['label']); ?></span><input type="text" name="<?php echo esc_attr((string) $last_dimension['name']); ?>" inputmode="decimal" maxlength="80" placeholder="<?php echo esc_attr((string) $last_dimension['placeholder']); ?>"></label>
+            <?php endif; ?>
           </div>
 
-          <div class="sa-compression-form__row">
-            <label class="field"><span><?php esc_html_e('Quantity', 'springapex'); ?></span><input type="text" name="quantity" inputmode="numeric" maxlength="80" placeholder="e.g. 5,000 pcs"></label>
-            <label class="field"><span><?php esc_html_e('Material', 'springapex'); ?></span><select name="material"><option value=""><?php esc_html_e('Select material', 'springapex'); ?></option><option>Music Wire</option><option>Stainless Steel</option><option>Carbon Steel</option><option>Alloy or special material</option><option>Need engineering recommendation</option></select></label>
-          </div>
-          <label class="field"><span><?php esc_html_e('Other requirements', 'springapex'); ?></span><textarea name="message" rows="4" maxlength="5000" placeholder="Coating, load, end type, environment, tolerance, testing, or any additional notes."></textarea></label>
+          <?php
+          // 产品页表单字段按 schema 渲染：
+          // - 尺寸三行在上方 dimensions 面板内（$dimension_profiles 提供产品
+          //   类型感知的标签/占位），此处跳过对应 id 避免重复；
+          // - 其余字段（email/quantity/material/message/自定义）走共享渲染
+          //   函数——必须包在 .sa-schema-fields 网格里，is-half 半宽样式
+          //   只对网格直接子元素生效；email 必填且本页无其他 email 输入，
+          //   绝不能跳过。
+          $skip_ids = array_map(static fn (array $f): string => (string) $f['name'], $dimension_fields);
+          springapex_render_form_schema_fields('product', 'field', '', $skip_ids);
+          ?>
           <input type="hidden" name="full_name" value="Product detail inquiry">
-          <?php // 产品页表单的字段区（默认仅工作邮箱）：结构存于「表单设置」，按 schema 渲染。
-          springapex_render_form_schema_fields('product'); ?>
           <button class="btn btn-primary btn-block" type="submit" data-submit-button><?php esc_html_e('Send for Engineering Review', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></button>
           <?php if (springapex_form_turnstile_enabled('product')) : ?>
           <div class="sa-turnstile-widget">
@@ -336,7 +385,7 @@ $documents = [
     <div class="container container-wide sa-compression-final-cta__inner" data-reveal="up">
       <div class="sa-compression-final-cta__icon"><?php echo springapex_icon('form'); ?></div>
       <div><h2><?php esc_html_e('Two ways to start the review', 'springapex'); ?></h2><p><?php esc_html_e('Attach the file you already have, or enter the dimensions you know. Both go to the same engineering team.', 'springapex'); ?></p></div>
-      <div class="sa-compression-final-cta__actions"><a class="btn btn-primary" href="#engineering-review"><?php esc_html_e('Upload PDF / CAD', 'springapex'); ?> <?php echo springapex_icon('upload', 'icon icon-sm'); ?></a><a class="btn btn-outline" href="#engineering-review" data-compression-mode-link="dimensions"><?php esc_html_e('Enter Dimensions', 'springapex'); ?></a></div>
+      <div class="sa-compression-final-cta__actions"><a class="btn btn-primary" href="#engineering-review"><?php esc_html_e('Upload PDF / CAD', 'springapex'); ?> <?php echo springapex_icon('upload', 'icon icon-sm'); ?></a><?php if ($dimension_fields !== []) : ?><a class="btn btn-outline" href="#engineering-review" data-compression-mode-link="dimensions"><?php esc_html_e('Enter Dimensions', 'springapex'); ?></a><?php endif; ?></div>
     </div>
   </section>
 </article>

@@ -15,6 +15,10 @@ node_modules/
 # 注意：代码入库 ≠ 自动启用，各站仍需在后台启用并跑一次插件设置页。
 /wp-content/plugins/*
 !/wp-content/plugins/webp-converter-for-media/
+!/wp-content/plugins/wp-mail-smtp/
+# WP Mail SMTP 运行时生成的邮件退信日志，不入库
+/wp-content/plugins/wp-mail-smtp/.htaccess
+/wp-content/plugins/wp-mail-smtp/*.log
 /wp-content/uploads/
 # Converter for Media 运行时转换产物（转好的 webp/avif），随上传内容生成，不入库
 /wp-content/uploads-webpc/
@@ -51,3 +55,6 @@ tmp/
 /deploy/data/
 /deploy/wordpress/
 /deploy/backups/
+
+# 客户原始素材包（本地文件，超 GitHub 100MB 限制，不入库）
+/客户提供.zip

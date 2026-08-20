@@ -68,6 +68,20 @@ function springapex_render_form_settings_page(): void
             update_option('springapex_turnstile_secret', sanitize_text_field((string) wp_unslash($_POST['springapex_turnstile_secret'])), false);
         }
 
+        // 邮件通知模板：标题/正文清空并保存 = 恢复默认模板（删除存储值）。
+        $mail_subject = sanitize_text_field((string) wp_unslash($_POST['springapex_inquiry_mail_subject'] ?? ''));
+        $mail_body = sanitize_textarea_field((string) wp_unslash($_POST['springapex_inquiry_mail_body'] ?? ''));
+        if ($mail_subject !== '') {
+            set_theme_mod('springapex_inquiry_mail_subject', $mail_subject);
+        } else {
+            remove_theme_mod('springapex_inquiry_mail_subject');
+        }
+        if ($mail_body !== '') {
+            set_theme_mod('springapex_inquiry_mail_body', $mail_body);
+        } else {
+            remove_theme_mod('springapex_inquiry_mail_body');
+        }
+
         // 三表单 schema：把提交的字段卡片数组规范化后整体入库。
         $types = springapex_form_field_types();
         $defaults = springapex_form_schema_defaults();
@@ -113,10 +127,12 @@ function springapex_render_form_settings_page(): void
                 $entry['fields'][] = $field;
             }
 
-            // 仅系统字段（姓名/邮箱/留言）缺失时补回——询盘成立的基础，不可删除；
-            // 其余默认字段允许运营者删除，不回填（与前台渲染同一规则）。
+            // 仅锁定字段（姓名/邮箱/留言）缺失时补回——询盘成立的基础，
+            // 不可删除；其余默认字段（含技术参数等系统映射字段）允许
+            // 运营者删除，不回填（与前台渲染同一规则）。
+            $locked_field_ids = springapex_form_locked_fields();
             foreach ($form_defaults['fields'] as $field) {
-                if (!isset($used_ids[$field['id']]) && array_key_exists($field['id'], $system_field_ids)) {
+                if (!isset($used_ids[$field['id']]) && in_array($field['id'], $locked_field_ids, true)) {
                     $entry['fields'][] = $field;
                 }
             }
@@ -124,6 +140,9 @@ function springapex_render_form_settings_page(): void
             $schema[$form] = $entry;
         }
         update_option('springapex_form_schema', $schema, false);
+        // 本次保存即当前结构版本：防止「首次保存删除默认字段 → 加载迁移
+        // 视为版本落后而复活」的窗口（与加载侧的全新安装盖章双保险）。
+        update_option('springapex_form_schema_version', SPRINGAPEX_FORM_SCHEMA_VERSION, false);
         // 上一代配置退役，避免两套真相。
         delete_option('springapex_form_config');
         delete_option('springapex_form_fields');
@@ -213,6 +232,30 @@ function springapex_render_form_settings_page(): void
             </td>
           </tr>
         </table>
+
+        <h2 class="title">邮件通知模板</h2>
+        <p class="description">询盘提交后发给运营方的通知邮件（纯文本）。支持下方占位符；清空标题或正文并保存即恢复默认模板。</p>
+        <table class="form-table" role="presentation">
+          <tr>
+            <th scope="row"><label for="springapex_inquiry_mail_subject">邮件标题</label></th>
+            <td><input name="springapex_inquiry_mail_subject" id="springapex_inquiry_mail_subject" type="text" class="large-text" value="<?php echo esc_attr(springapex_inquiry_mail_subject()); ?>"></td>
+          </tr>
+          <tr>
+            <th scope="row"><label for="springapex_inquiry_mail_body">邮件正文</label></th>
+            <td>
+              <textarea name="springapex_inquiry_mail_body" id="springapex_inquiry_mail_body" class="large-text code" rows="14"><?php echo esc_textarea(springapex_inquiry_mail_body()); ?></textarea>
+              <p class="description">访客回复地址（Reply-To）自动设为询盘邮箱，图纸自动作为附件，均无需写进模板。</p>
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">可用占位符</th>
+            <td class="springapex-mail-tokens">
+              <?php foreach (springapex_inquiry_mail_placeholders() as $token => $token_desc) : ?>
+                <span class="springapex-mail-token"><code><?php echo esc_html($token); ?></code><small><?php echo esc_html($token_desc); ?></small></span>
+              <?php endforeach; ?>
+            </td>
+          </tr>
+        </table>
         <?php submit_button('保存设置'); ?>
       </form>
 
@@ -235,6 +278,8 @@ function springapex_render_form_settings_page(): void
 function springapex_render_builder_field_row(string $form, int $index, array $field, array $types, array $system_fields): void
 {
     $is_system = array_key_exists((string) $field['id'], $system_fields);
+    // 映射字段（电话/数量/技术参数等）类型锁定但可删；只有锁定字段不可删。
+    $is_locked = in_array((string) $field['id'], springapex_form_locked_fields(), true);
     $row_id = 'springapex_field_' . uniqid();
     ?>
     <div class="builder-field" data-builder-field draggable="true">
@@ -242,8 +287,8 @@ function springapex_render_builder_field_row(string $form, int $index, array $fi
         <span class="builder-field__drag" aria-hidden="true">⠿</span>
         <strong><?php echo $field['label'] !== '' ? esc_html($field['label']) : '（新字段）'; ?></strong>
         <span class="builder-field__type"><?php echo esc_html($types[$field['type']]['label'] ?? ''); ?></span>
-        <?php if ($is_system) : ?><span class="builder-field__system">系统字段</span><?php endif; ?>
-        <?php if (!$is_system) : ?>
+        <?php if ($is_locked) : ?><span class="builder-field__system">系统字段</span><?php elseif ($is_system) : ?><span class="builder-field__system">映射字段</span><?php endif; ?>
+        <?php if (!$is_locked) : ?>
           <button type="button" class="builder-field__remove" data-builder-remove>删除</button>
         <?php endif; ?>
       </div>

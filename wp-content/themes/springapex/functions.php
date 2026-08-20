@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SPRINGAPEX_VERSION', '2.9.80');
+define('SPRINGAPEX_VERSION', '2.9.83');
 define('SPRINGAPEX_DIR', get_template_directory());
 define('SPRINGAPEX_URI', get_template_directory_uri());
 
@@ -30,6 +30,7 @@ require_once SPRINGAPEX_DIR . '/inc/news-meta.php';
 require_once SPRINGAPEX_DIR . '/inc/customizer.php';
 require_once SPRINGAPEX_DIR . '/inc/form-schema.php';
 require_once SPRINGAPEX_DIR . '/inc/contact.php';
+require_once SPRINGAPEX_DIR . '/inc/mail-template.php';
 require_once SPRINGAPEX_DIR . '/inc/turnstile.php';
 require_once SPRINGAPEX_DIR . '/inc/seed.php';
 require_once SPRINGAPEX_DIR . '/inc/setup.php';

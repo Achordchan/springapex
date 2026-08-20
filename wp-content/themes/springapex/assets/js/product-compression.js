@@ -88,6 +88,11 @@
       });
     };
 
+    // 初始模式由模板决定（尺寸参数被设为必填时模板会禁用 drawing 按钮
+    // 并默认落在 dimensions），reset 应回到初始模式而不是写死的 drawing。
+    const initialActive = buttons.find((button) => button.classList.contains('is-active'));
+    const initialMode = (initialActive instanceof HTMLElement ? initialActive.dataset.compressionInquiryMode : '') || 'drawing';
+
     buttons.forEach((button, index) => {
       button.addEventListener('click', () => activate(button.dataset.compressionInquiryMode || 'drawing', false));
       button.addEventListener('keydown', (event) => {
@@ -95,16 +100,22 @@
         event.preventDefault();
         const step = event.key === 'ArrowRight' ? 1 : -1;
         const target = buttons[(index + step + buttons.length) % buttons.length];
+        if (!(target instanceof HTMLElement) || target.disabled) return;
         activate(target.dataset.compressionInquiryMode || 'drawing', true);
       });
     });
 
     root.querySelectorAll('[data-compression-mode-link="dimensions"]').forEach((link) => {
-      link.addEventListener('click', () => activate('dimensions', false));
+      link.addEventListener('click', () => {
+        // 尺寸映射全部被删时面板为空壳：CTA 点击不切换（模板侧也已隐藏链接，
+        // 这里兜底其他入口）。
+        if (!dimensionsPanel.querySelector('input, select, textarea')) return;
+        activate('dimensions', false);
+      });
     });
 
     form.addEventListener('reset', () => {
-      window.setTimeout(() => activate('drawing', false), 0);
+      window.setTimeout(() => activate(initialMode, false), 0);
     });
 
     if (dropzone instanceof HTMLElement && fileInput instanceof HTMLInputElement) {
@@ -192,7 +203,10 @@
       });
     }
 
-    activate('drawing', false);
+    // 初始化也要用模板声明的初始模式：尺寸字段被设为必填时模板默认落在
+    // dimensions（drawing 按钮已禁用），硬切 drawing 会把必填输入藏回
+    // hidden 面板并让 checkValidity 卡死。
+    activate(initialMode, false);
   }
 
   // The inquiry form also lives outside the compression product page

@@ -39,13 +39,31 @@ function springapex_form_field_types(): array
     ];
 }
 
-/** 系统字段（固定语义）：id => 中文说明。 */
+/** 不可删除、缺失时强制补回的字段（询盘成立的基础），与映射表分离。 */
+function springapex_form_locked_fields(): array
+{
+    return ['name', 'email', 'message'];
+}
+
+/**
+ * 系统字段：id 有固定语义（映射到询盘专用 meta/列），类型锁定。
+ * 注意这只是「映射」集合——可删与否看 springapex_form_locked_fields()。
+ */
 function springapex_form_system_fields(): array
 {
     return [
         'name' => '姓名（映射询盘联系人）',
         'email' => '邮箱（映射询盘邮箱）',
         'message' => '留言正文（映射询盘留言）',
+        'phone' => '电话（映射询盘电话）',
+        'company' => '公司（映射询盘公司）',
+        'country' => '国家/地区（映射询盘国家）',
+        'wire_diameter' => '线径（技术参数，产品页按产品类型换标签）',
+        'outside_diameter' => '外径（技术参数，产品页按产品类型换标签）',
+        'free_length' => '自由长度（技术参数，产品页按产品类型换标签）',
+        'quantity' => '数量',
+        'material' => '材料',
+        'operating_environment' => '工作环境',
     ];
 }
 
@@ -73,7 +91,8 @@ function springapex_form_schema_defaults(): array
             ],
         ],
         'contact' => [
-            // 顺序与线上现状一致：姓名 → 电话 → 公司 → 邮箱 → 国家。
+            // 顺序与线上现状一致：姓名 → 电话 → 公司 → 邮箱 → 国家 →
+            // 技术参数（原「Add project details」折叠区，现按 schema 渲染）。
             'turnstile' => true,
             'fields' => [
                 $common(['id' => 'name', 'label' => 'Name', 'type' => 'text', 'required' => true, 'placeholder' => 'Enter your name']),
@@ -81,12 +100,37 @@ function springapex_form_schema_defaults(): array
                 $common(['id' => 'company', 'label' => 'Company', 'type' => 'text', 'required' => false, 'placeholder' => 'Enter your company name']),
                 $common(['id' => 'email', 'label' => 'Work email', 'type' => 'email', 'required' => true, 'placeholder' => 'Enter your work email']),
                 $common(['id' => 'country', 'label' => 'Country', 'type' => 'text', 'required' => true, 'placeholder' => 'Enter your country']),
+                $common(['id' => 'wire_diameter', 'label' => 'Wire diameter', 'type' => 'text', 'required' => false, 'placeholder' => 'e.g. 1.2 mm', 'width' => 'half']),
+                $common(['id' => 'outside_diameter', 'label' => 'Outside diameter', 'type' => 'text', 'required' => false, 'placeholder' => 'e.g. 12 mm', 'width' => 'half']),
+                $common(['id' => 'free_length', 'label' => 'Free length', 'type' => 'text', 'required' => false, 'placeholder' => 'e.g. 45 mm']),
+                $common(['id' => 'quantity', 'label' => 'Quantity', 'type' => 'text', 'required' => false, 'placeholder' => 'e.g. 10,000 pcs', 'width' => 'half']),
+                $common(['id' => 'material', 'label' => 'Material', 'type' => 'select', 'required' => false, 'placeholder' => 'Select material', 'width' => 'half', 'options' => [
+                    'Music Wire' => 'Music Wire',
+                    'Stainless Steel' => 'Stainless Steel',
+                    'Carbon Steel' => 'Carbon Steel',
+                    'Alloy or special material' => 'Alloy or special material',
+                    'Need engineering recommendation' => 'Need engineering recommendation',
+                ]]),
+                $common(['id' => 'operating_environment', 'label' => 'Operating environment', 'type' => 'text', 'required' => false, 'placeholder' => 'Temperature, moisture, chemicals, indoor or outdoor use']),
+                $common(['id' => 'message', 'label' => 'Additional project information', 'type' => 'textarea', 'required' => false, 'placeholder' => 'Required load, working travel, material, cycle life, tolerances, or any other details.']),
             ],
         ],
         'product' => [
             'turnstile' => true,
             'fields' => [
                 $common(['id' => 'email', 'label' => 'Work Email', 'type' => 'email', 'required' => true, 'placeholder' => 'name@company.com']),
+                $common(['id' => 'wire_diameter', 'label' => 'Wire diameter', 'type' => 'text', 'required' => false, 'placeholder' => 'e.g. 1.2 mm', 'width' => 'half']),
+                $common(['id' => 'outside_diameter', 'label' => 'Outside diameter', 'type' => 'text', 'required' => false, 'placeholder' => 'e.g. 12 mm', 'width' => 'half']),
+                $common(['id' => 'free_length', 'label' => 'Free length', 'type' => 'text', 'required' => false, 'placeholder' => 'e.g. 45 mm']),
+                $common(['id' => 'quantity', 'label' => 'Quantity', 'type' => 'text', 'required' => false, 'placeholder' => 'e.g. 5,000 pcs', 'width' => 'half']),
+                $common(['id' => 'material', 'label' => 'Material', 'type' => 'select', 'required' => false, 'placeholder' => 'Select material', 'width' => 'half', 'options' => [
+                    'Music Wire' => 'Music Wire',
+                    'Stainless Steel' => 'Stainless Steel',
+                    'Carbon Steel' => 'Carbon Steel',
+                    'Alloy or special material' => 'Alloy or special material',
+                    'Need engineering recommendation' => 'Need engineering recommendation',
+                ]]),
+                $common(['id' => 'message', 'label' => 'Other requirements', 'type' => 'textarea', 'required' => false, 'placeholder' => 'Coating, load, end type, environment, tolerance, testing, or any additional notes.']),
             ],
         ],
     ];
@@ -98,16 +142,29 @@ function springapex_form_schema_defaults(): array
  *
  * @return array<string, array<string, mixed>>
  */
+// schema 结构版本：技术参数字段并入 schema 的那次演进。旧版本保存过的
+// 站点靠它触发一次性迁移（见 springapex_form_schema()），迁移后不再补。
+define('SPRINGAPEX_FORM_SCHEMA_VERSION', '2026-08-20-techspecs');
+
 function springapex_form_schema(): array
 {
     $stored = get_option('springapex_form_schema', []);
     if (!is_array($stored)) {
         return springapex_form_schema_defaults();
     }
+    $schema_version = (string) get_option('springapex_form_schema_version', '');
+    $migrated = false;
+    // 全新安装：option 从未落库，走「未保存」分支不会写版本标记——若不在
+    // 此处盖章，运营者首次保存（可能删除了默认字段）后会被迁移逻辑复活。
+    if ($stored === [] && $schema_version !== SPRINGAPEX_FORM_SCHEMA_VERSION) {
+        update_option('springapex_form_schema_version', SPRINGAPEX_FORM_SCHEMA_VERSION, false);
+    }
 
     $types = springapex_form_field_types();
     $defaults = springapex_form_schema_defaults();
     $schema = [];
+    // 本版本才纳入 schema 管理的字段（见下方迁移逻辑）。
+    $migration_field_ids = ['wire_diameter', 'outside_diameter', 'free_length', 'quantity', 'material', 'operating_environment'];
 
     foreach ($defaults as $form => $form_defaults) {
         $entry = ['fields' => []];
@@ -147,15 +204,37 @@ function springapex_form_schema(): array
             $seen[$normalized['id']] = true;
             $entry['fields'][] = $normalized;
         }
-        // 仅系统字段（姓名/邮箱/留言）在缺失时补回——它们是询盘成立的基础，
-        // 不可删除；phone/company/country 等默认字段允许被删掉，不再回填。
+        // 仅锁定字段（姓名/邮箱/留言）在缺失时补回——它们是询盘成立的
+        // 基础，不可删除；其余系统字段（phone/quantity/技术参数等）只做
+        // meta 映射，运营者可删，删了不回填。
+        $locked_fields = springapex_form_locked_fields();
         foreach ($form_defaults['fields'] as $field) {
-            if (!isset($seen[$field['id']]) && array_key_exists($field['id'], springapex_form_system_fields())) {
+            if (!isset($seen[$field['id']]) && in_array($field['id'], $locked_fields, true)) {
+                $seen[$field['id']] = true;
                 $entry['fields'][] = $field;
             }
         }
 
+        // 一次性迁移：schema 结构版本落后时补齐字段并落版本标记。
+        // 只补「本版本才纳入 schema 管理」的 6 个技术参数——PR #8 时代
+        // 它们写死在模板外、schema 中不存在，「缺失」不是删除；
+        // company/phone 等老字段在旧版本里就可删，缺失是升级前的合法
+        // 删除，迁移必须保持原样。迁移后（版本标记已更新）删除照旧生效。
+        if ($schema_version !== SPRINGAPEX_FORM_SCHEMA_VERSION) {
+            foreach ($form_defaults['fields'] as $field) {
+                if (!isset($seen[$field['id']]) && in_array($field['id'], $migration_field_ids, true)) {
+                    $entry['fields'][] = $field;
+                }
+            }
+            $migrated = true;
+        }
+
         $schema[$form] = $entry;
+    }
+
+    if ($migrated) {
+        update_option('springapex_form_schema', $schema, false);
+        update_option('springapex_form_schema_version', SPRINGAPEX_FORM_SCHEMA_VERSION, false);
     }
 
     return $schema;
@@ -324,6 +403,18 @@ function springapex_render_form_schema_field(string $form, array $field, string 
     echo '</label>';
 }
 
+/** 某表单里被运营者标为必填的字段 id 列表（固定结构输入框对齐 schema 用）。 */
+function springapex_form_required_ids(string $form): array
+{
+    $required = [];
+    foreach ((springapex_form_schema()[$form]['fields'] ?? []) as $field) {
+        if (!empty($field['required'])) {
+            $required[] = (string) $field['id'];
+        }
+    }
+    return $required;
+}
+
 /**
  * 渲染某个表单的整组 schema 字段，包在 .sa-schema-fields 网格里（full 跨两列、
  * half 跨一列）。前台三表单都调它替换原先写死的字段区。
@@ -331,10 +422,13 @@ function springapex_render_form_schema_field(string $form, array $field, string 
  * @param string $first_field_attr 附加到第一个字段控件上的属性（快速询盘窗传
  *                                 data-support-first-field 保留自动聚焦）。
  */
-function springapex_render_form_schema_fields(string $form, string $field_class = 'field', string $first_field_attr = ''): void
+function springapex_render_form_schema_fields(string $form, string $field_class = 'field', string $first_field_attr = '', array $skip_ids = []): void
 {
     $schema = springapex_form_schema();
     $fields = $schema[$form]['fields'] ?? [];
+    if ($skip_ids !== []) {
+        $fields = array_values(array_filter($fields, static fn (array $field): bool => !in_array($field['id'], $skip_ids, true)));
+    }
     if ($fields === []) {
         return;
     }

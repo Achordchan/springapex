@@ -194,6 +194,24 @@ function springapex_process_contact_submission(): array|WP_Error
             case 'country':
                 $country = springapex_limited_text($trimmed, 100);
                 break;
+            case 'wire_diameter':
+                $wire_diameter = springapex_limited_text($trimmed, 80);
+                break;
+            case 'outside_diameter':
+                $outside_diameter = springapex_limited_text($trimmed, 80);
+                break;
+            case 'free_length':
+                $free_length = springapex_limited_text($trimmed, 80);
+                break;
+            case 'quantity':
+                $quantity = springapex_limited_text($trimmed, 80);
+                break;
+            case 'material':
+                $material = springapex_limited_text($trimmed, 120);
+                break;
+            case 'operating_environment':
+                $operating_environment = springapex_limited_text($trimmed, 240);
+                break;
             default:
                 $custom_value = $field['type'] === 'textarea'
                     ? springapex_limited_textarea($trimmed, 5000)
@@ -332,42 +350,47 @@ function springapex_process_contact_submission(): array|WP_Error
     }
 
     $recipient = springapex_inquiry_recipient();
-    $subject = sprintf('[ApexSpring] %s inquiry from %s', $type, $name);
-    // 运营者在「表单设置」新增的自定义字段：按保存时的 label 追加到通知正文。
-    $custom_lines = [];
-    foreach ($custom_fields as $custom_field) {
-        $custom_lines[] = sprintf(
-            '%s: %s',
-            (string) ($custom_field['label'] ?? ''),
-            (string) ($custom_field['value'] ?? '')
-        );
+    // 通知邮件模板在「表单设置」维护：占位符替换成询盘真实值；
+    // 块占位符（尺寸/自定义字段）有内容时以换行结尾，空块不占行。
+    // 自定义字段随 main 的 PR #8 格式演进为 id => {label, value} 列表。
+    $dimension_block = '';
+    foreach ([
+        [$dimension_labels[0], $wire_diameter],
+        [$dimension_labels[1], $outside_diameter],
+        [$dimension_labels[2], $free_length],
+    ] as [$dimension_label, $dimension_value]) {
+        $dimension_block .= sprintf("%s: %s\n", $dimension_label, $dimension_value);
     }
-    $body = implode("\n", array_merge([
-        "Name: {$name}",
-        "Email: {$email}",
-        "Company: {$company}",
-        "Phone: {$phone}",
-        "Country: {$country}",
-        "Type: {$type}",
-        "{$dimension_labels[0]}: {$wire_diameter}",
-        "{$dimension_labels[1]}: {$outside_diameter}",
-        "{$dimension_labels[2]}: {$free_length}",
-        "Quantity: {$quantity}",
-        "Material: {$material}",
-        "Operating environment: {$operating_environment}",
-        "Intent: {$intent}",
-        "Product: {$product}",
-        "Industry: {$industry}",
-    ], $custom_lines, [
-        'Document: ' . sanitize_key(springapex_request_scalar($_POST['document'] ?? '')),
-        'Drawings: ' . ($private_files
+    $custom_block = '';
+    foreach ($custom_fields as $custom_field) {
+        $custom_block .= sprintf("%s: %s\n", (string) ($custom_field['label'] ?? ''), (string) ($custom_field['value'] ?? ''));
+    }
+    $mail_vars = [
+        '{name}' => $name,
+        '{email}' => $email,
+        '{company}' => $company,
+        '{phone}' => $phone,
+        '{country}' => $country,
+        '{type}' => $type,
+        '{product}' => $product,
+        '{industry}' => $industry,
+        '{intent}' => $intent,
+        '{quantity}' => $quantity,
+        '{material}' => $material,
+        '{operating_environment}' => $operating_environment,
+        '{dimensions}' => $dimension_block,
+        '{custom_fields}' => $custom_block,
+        '{message}' => $message,
+        '{document}' => sanitize_key(springapex_request_scalar($_POST['document'] ?? '')),
+        '{drawings}' => $private_files
             ? implode(', ', array_map(static fn(array $file): string => (string) ($file['original_name'] ?? ''), $private_files))
-            : 'None'),
-        '',
-        $message,
-        '',
-        'Inquiry record: ' . admin_url('post.php?post=' . (int) $inquiry_id . '&action=edit'),
-    ]));
+            : 'None',
+        '{inquiry_link}' => admin_url('post.php?post=' . (int) $inquiry_id . '&action=edit'),
+        '{site_name}' => wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES),
+        '{site_url}' => home_url('/'),
+    ];
+    $subject = springapex_fill_mail_template(springapex_inquiry_mail_subject(), $mail_vars);
+    $body = springapex_fill_mail_template(springapex_inquiry_mail_body(), $mail_vars);
     $headers = ['Content-Type: text/plain; charset=UTF-8', "Reply-To: {$name} <{$email}>"];
     $attachments = [];
     foreach ($private_files as $private_file) {
@@ -378,7 +401,8 @@ function springapex_process_contact_submission(): array|WP_Error
     }
 
     $sent = $recipient !== '' && wp_mail($recipient, $subject, $body, $headers, $attachments);
-    if (!springapex_contact_update_meta((int) $inquiry_id, '_springapex_mail_sent', $sent ? '1' : '0')) {
+    // 与后台询盘视图（inquiry-view.php）约定的状态值：sent / failed（初始 pending）。
+    if (!springapex_contact_update_meta((int) $inquiry_id, '_springapex_mail_sent', $sent ? 'sent' : 'failed')) {
         springapex_record_contact_admin_warning('mail_status_meta');
     }
 
