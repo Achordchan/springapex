@@ -73,6 +73,18 @@ if (!$image) {
             springapex_form_required_ids('product'),
             ['wire_diameter', 'outside_diameter', 'free_length']
         );
+        // 尺寸输入按 schema 成员资格渲染：映射被运营者删除后不再输出，
+        // 否则访客填了值也会被服务端按 schema 丢弃。
+        $capability_schema_ids = array_map(
+            static fn (array $field): string => (string) $field['id'],
+            springapex_form_schema()['product']['fields'] ?? []
+        );
+        $capability_has_dimension = [
+            'wire_diameter' => in_array('wire_diameter', $capability_schema_ids, true),
+            'outside_diameter' => in_array('outside_diameter', $capability_schema_ids, true),
+            'free_length' => in_array('free_length', $capability_schema_ids, true),
+        ];
+        $capability_any_dimension = array_filter($capability_has_dimension) !== [];
         $capability_dimensions_default = $capability_dimension_required !== [];
         $capability_req = static fn (string $id): string => in_array($id, $capability_dimension_required, true) ? ' required' : '';
         $capability_star = static fn (string $id): string => in_array($id, $capability_dimension_required, true) ? ' *' : '';
@@ -84,7 +96,9 @@ if (!$image) {
 
         <div class="sa-compression-form__modes" role="tablist" aria-label="<?php esc_attr_e('How to send requirements', 'springapex'); ?>">
           <button type="button" class="<?php echo $capability_dimensions_default ? '' : 'is-active'; ?>" role="tab" aria-selected="<?php echo $capability_dimensions_default ? 'false' : 'true'; ?>" aria-controls="capability-drawing-panel" data-compression-inquiry-mode="drawing"<?php echo $capability_dimensions_default ? ' disabled title="Required dimensions must be entered directly"' : ''; ?>><?php esc_html_e('Upload a Drawing', 'springapex'); ?></button>
-          <button type="button" class="<?php echo $capability_dimensions_default ? 'is-active' : ''; ?>" role="tab" aria-selected="<?php echo $capability_dimensions_default ? 'true' : 'false'; ?>" aria-controls="capability-dimensions-panel" data-compression-inquiry-mode="dimensions"><?php esc_html_e('Enter Dimensions Manually', 'springapex'); ?></button>
+          <?php if ($capability_any_dimension) : ?>
+            <button type="button" class="<?php echo $capability_dimensions_default ? 'is-active' : ''; ?>" role="tab" aria-selected="<?php echo $capability_dimensions_default ? 'true' : 'false'; ?>" aria-controls="capability-dimensions-panel" data-compression-inquiry-mode="dimensions"><?php esc_html_e('Enter Dimensions Manually', 'springapex'); ?></button>
+          <?php endif; ?>
         </div>
 
         <div class="sa-compression-form__drawing" id="capability-drawing-panel" role="tabpanel" data-compression-drawing-panel<?php echo $capability_dimensions_default ? ' hidden' : ''; ?>>
@@ -103,17 +117,25 @@ if (!$image) {
         </div>
 
         <div class="sa-compression-form__dimensions" id="capability-dimensions-panel" role="tabpanel" data-compression-dimensions-panel<?php echo $capability_dimensions_default ? '' : ' hidden'; ?>>
-          <h3><?php esc_html_e('Enter the dimensions you know', 'springapex'); ?></h3>
-          <?php if ($capability_dimension_required !== []) : ?>
-            <p><?php esc_html_e('Required dimensions are marked with *; engineering will confirm any missing values.', 'springapex'); ?></p>
-          <?php else : ?>
-            <p><?php esc_html_e('All dimensions are optional; engineering will confirm any missing values.', 'springapex'); ?></p>
+          <?php if ($capability_any_dimension) : ?>
+            <h3><?php esc_html_e('Enter the dimensions you know', 'springapex'); ?></h3>
+            <?php if ($capability_dimension_required !== []) : ?>
+              <p><?php esc_html_e('Required dimensions are marked with *; engineering will confirm any missing values.', 'springapex'); ?></p>
+            <?php else : ?>
+              <p><?php esc_html_e('All dimensions are optional; engineering will confirm any missing values.', 'springapex'); ?></p>
+            <?php endif; ?>
+            <div class="sa-compression-form__row">
+              <?php if ($capability_has_dimension['wire_diameter']) : ?>
+                <label class="field"><span><?php esc_html_e('Wire diameter (d)', 'springapex'); ?><?php echo $capability_star('wire_diameter'); ?></span><input type="text" name="springapex_field_wire_diameter" inputmode="decimal" maxlength="80" placeholder="e.g. 1.2 mm"<?php echo $capability_req('wire_diameter'); ?>></label>
+              <?php endif; ?>
+              <?php if ($capability_has_dimension['outside_diameter']) : ?>
+                <label class="field"><span><?php esc_html_e('Outside diameter (D₀)', 'springapex'); ?><?php echo $capability_star('outside_diameter'); ?></span><input type="text" name="springapex_field_outside_diameter" inputmode="decimal" maxlength="80" placeholder="e.g. 12 mm"<?php echo $capability_req('outside_diameter'); ?>></label>
+              <?php endif; ?>
+            </div>
+            <?php if ($capability_has_dimension['free_length']) : ?>
+              <label class="field"><span><?php esc_html_e('Free length (L₀)', 'springapex'); ?><?php echo $capability_star('free_length'); ?></span><input type="text" name="springapex_field_free_length" inputmode="decimal" maxlength="80" placeholder="e.g. 45 mm"<?php echo $capability_req('free_length'); ?>></label>
+            <?php endif; ?>
           <?php endif; ?>
-          <div class="sa-compression-form__row">
-            <label class="field"><span><?php esc_html_e('Wire diameter (d)', 'springapex'); ?><?php echo $capability_star('wire_diameter'); ?></span><input type="text" name="springapex_field_wire_diameter" inputmode="decimal" maxlength="80" placeholder="e.g. 1.2 mm"<?php echo $capability_req('wire_diameter'); ?>></label>
-            <label class="field"><span><?php esc_html_e('Outside diameter (D₀)', 'springapex'); ?><?php echo $capability_star('outside_diameter'); ?></span><input type="text" name="springapex_field_outside_diameter" inputmode="decimal" maxlength="80" placeholder="e.g. 12 mm"<?php echo $capability_req('outside_diameter'); ?>></label>
-          </div>
-          <label class="field"><span><?php esc_html_e('Free length (L₀)', 'springapex'); ?><?php echo $capability_star('free_length'); ?></span><input type="text" name="springapex_field_free_length" inputmode="decimal" maxlength="80" placeholder="e.g. 45 mm"<?php echo $capability_req('free_length'); ?>></label>
         </div>
 
         <?php

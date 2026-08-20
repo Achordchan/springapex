@@ -142,12 +142,18 @@ function springapex_form_schema_defaults(): array
  *
  * @return array<string, array<string, mixed>>
  */
+// schema 结构版本：技术参数字段并入 schema 的那次演进。旧版本保存过的
+// 站点靠它触发一次性迁移（见 springapex_form_schema()），迁移后不再补。
+define('SPRINGAPEX_FORM_SCHEMA_VERSION', '2026-08-20-techspecs');
+
 function springapex_form_schema(): array
 {
     $stored = get_option('springapex_form_schema', []);
     if (!is_array($stored)) {
         return springapex_form_schema_defaults();
     }
+    $schema_version = (string) get_option('springapex_form_schema_version', '');
+    $migrated = false;
 
     $types = springapex_form_field_types();
     $defaults = springapex_form_schema_defaults();
@@ -197,11 +203,29 @@ function springapex_form_schema(): array
         $locked_fields = springapex_form_locked_fields();
         foreach ($form_defaults['fields'] as $field) {
             if (!isset($seen[$field['id']]) && in_array($field['id'], $locked_fields, true)) {
+                $seen[$field['id']] = true;
                 $entry['fields'][] = $field;
             }
         }
 
+        // 一次性迁移：schema 结构版本落后时，把缺失的默认字段补齐并落
+        // 版本标记。旧版本里技术参数写死在模板外、schema 中不存在，
+        // 「缺失」不是运营者删除；迁移后（版本标记已更新）删除照旧生效。
+        if ($schema_version !== SPRINGAPEX_FORM_SCHEMA_VERSION) {
+            foreach ($form_defaults['fields'] as $field) {
+                if (!isset($seen[$field['id']])) {
+                    $entry['fields'][] = $field;
+                }
+            }
+            $migrated = true;
+        }
+
         $schema[$form] = $entry;
+    }
+
+    if ($migrated) {
+        update_option('springapex_form_schema', $schema, false);
+        update_option('springapex_form_schema_version', SPRINGAPEX_FORM_SCHEMA_VERSION, false);
     }
 
     return $schema;
