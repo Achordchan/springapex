@@ -244,8 +244,19 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
           <input type="hidden" name="started_at" value="<?php echo esc_attr((string) time()); ?>" data-form-started-at>
           <label class="honeypot" aria-hidden="true">Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
 
-          <?php // 联系页主表单的字段区：结构存于「表单设置」，按 schema 动态渲染。
-          springapex_render_form_schema_fields('contact'); ?>
+          <?php // 联系页主表单的基础字段区（姓名/电话/公司/邮箱/国家）：
+          // 按「表单设置」的 schema 渲染；技术参数等其余字段在下方
+          // 「Add project details」折叠区渲染，两处各渲染一次，避免重名字段
+          // 相互覆盖（同名 input 后值覆盖前值，用户先填的会被折叠区空值抹掉）。
+          $basic_ids = ['name', 'phone', 'company', 'email', 'country'];
+          $spec_ids = array_map(
+              static fn (array $f): string => (string) $f['id'],
+              array_filter(
+                  springapex_form_schema()['contact']['fields'] ?? [],
+                  static fn (array $f): bool => !in_array($f['id'], $basic_ids, true)
+              )
+          );
+          springapex_render_form_schema_fields('contact', 'field', '', $spec_ids); ?>
           <label class="field">
             <span><?php esc_html_e('How can we help?', 'springapex'); ?> *</span>
             <select name="inquiry_type" data-inquiry-type required>
@@ -278,11 +289,12 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
                 <legend><?php esc_html_e('Basic spring details', 'springapex'); ?></legend>
                 <p><?php esc_html_e('Share any details you already know. Every field below is optional.', 'springapex'); ?></p>
                 <?php
-                // 技术参数 + 补充说明按 schema 渲染（跳过基础信息字段，
-                // 那些在上方主区域已有 schema 渲染）。
-                $schema = springapex_form_schema();
-                $basic_ids = ['name', 'phone', 'company', 'email', 'country'];
-                $spec_fields = array_filter($schema['contact']['fields'], static fn ($f) => !in_array($f['id'], $basic_ids, true));
+                // 技术参数 + 补充说明按 schema 渲染（$spec_ids 在上方主区域
+                // 渲染时已算好：全部非基础字段，主区域渲染基础、此处渲染其余）。
+                $spec_fields = array_filter(
+                    springapex_form_schema()['contact']['fields'] ?? [],
+                    static fn (array $f): bool => in_array($f['id'], $spec_ids, true)
+                );
                 foreach ($spec_fields as $spec_field) {
                     springapex_render_form_schema_field('contact', $spec_field);
                 }

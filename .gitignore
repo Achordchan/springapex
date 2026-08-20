@@ -55,3 +55,6 @@ tmp/
 /deploy/data/
 /deploy/wordpress/
 /deploy/backups/
+
+# 客户原始素材包（本地文件，超 GitHub 100MB 限制，不入库）
+/客户提供.zip

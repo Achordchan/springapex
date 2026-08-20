@@ -366,10 +366,13 @@ function springapex_render_form_schema_field(string $form, array $field, string 
  * @param string $first_field_attr 附加到第一个字段控件上的属性（快速询盘窗传
  *                                 data-support-first-field 保留自动聚焦）。
  */
-function springapex_render_form_schema_fields(string $form, string $field_class = 'field', string $first_field_attr = ''): void
+function springapex_render_form_schema_fields(string $form, string $field_class = 'field', string $first_field_attr = '', array $skip_ids = []): void
 {
     $schema = springapex_form_schema();
     $fields = $schema[$form]['fields'] ?? [];
+    if ($skip_ids !== []) {
+        $fields = array_values(array_filter($fields, static fn (array $field): bool => !in_array($field['id'], $skip_ids, true)));
+    }
     if ($fields === []) {
         return;
     }

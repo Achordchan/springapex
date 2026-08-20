@@ -102,9 +102,10 @@ if (!$image) {
 
         <?php
         // 能力页表单字段按 schema 渲染（尺寸三行在上方 dimensions 面板内
-        // 已按产品标签渲染，此处跳过 email + 三个尺寸 id 避免重复）。
+        // 已按固定标签渲染，此处跳过三个尺寸 id 避免重复；email 为必填
+        // 字段且本页无其他 email 输入，必须由 schema 渲染出来）。
         $capability_schema = springapex_form_schema();
-        $capability_skip = ['email', 'wire_diameter', 'outside_diameter', 'free_length'];
+        $capability_skip = ['wire_diameter', 'outside_diameter', 'free_length'];
         foreach (($capability_schema['product']['fields'] ?? []) as $capability_field) {
             if (!in_array($capability_field['id'], $capability_skip, true)) {
                 springapex_render_form_schema_field('product', $capability_field);

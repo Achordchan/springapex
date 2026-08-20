@@ -259,11 +259,11 @@ $documents = [
           // 产品页表单字段按 schema 渲染：
           // - 尺寸三行由 $dimension_profiles 提供产品类型感知的标签/占位
           //   （id 对应 schema 的 wire_diameter/outside_diameter/free_length）；
-          // - 其余字段（quantity/material/message/自定义）由 schema 直接渲染；
-          // - email 单独跳过（上方已渲染）。
+          // - 其余字段（email/quantity/material/message/自定义）由 schema 直接渲染；
+          //   email 必填，本页无其他 email 输入，绝不能跳过。
           $product_schema = springapex_form_schema();
           $dimension_names = array_map(static fn ($f) => $f['name'], $dimension_fields);
-          $skip_ids = array_merge(['email'], $dimension_names);
+          $skip_ids = $dimension_names;
           $dimension_by_name = [];
           foreach ($dimension_fields as $dimension_field) {
               $dimension_by_name[$dimension_field['name']] = $dimension_field;
