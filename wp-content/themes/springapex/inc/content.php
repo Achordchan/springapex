@@ -750,7 +750,7 @@ function springapex_solutions_sync_pending(): bool
         if (
             get_post_meta((int) $post->ID, '_springapex_from_content', true) === '1'
             && !isset($state['items'][$post->post_name])
-            && $post->post_status === 'publish'
+            && in_array($post->post_status, ['publish', 'future'], true)
         ) {
             return true;
         }
@@ -890,6 +890,12 @@ function springapex_sync_solutions_from_content_locked(): void
             }
             if ($existing->post_status !== 'publish') {
                 $changes['post_status'] = 'publish';
+                if ($existing->post_status === 'future') {
+                    // 定时发布的 post_date 在未来：不清日期 WP 会把它归一化回
+                    // future，differs() 永远为真 → 每个请求取锁重写到定时点。
+                    $changes['post_date'] = current_time('mysql');
+                    $changes['post_date_gmt'] = gmdate('Y-m-d H:i:s');
+                }
             }
             if ($changes !== []) {
                 $changes['ID'] = (int) $existing->ID;
@@ -920,7 +926,7 @@ function springapex_sync_solutions_from_content_locked(): void
         if (
             get_post_meta((int) $post->ID, '_springapex_from_content', true) === '1'
             && !isset($items_by_slug[$post->post_name])
-            && $post->post_status === 'publish'
+            && in_array($post->post_status, ['publish', 'future'], true)
         ) {
             wp_update_post(['ID' => (int) $post->ID, 'post_status' => 'draft']);
         }
