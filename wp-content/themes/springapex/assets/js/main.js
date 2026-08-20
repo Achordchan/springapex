@@ -1234,6 +1234,48 @@
     window.addEventListener('resize', requestUpdate);
   }
 
+  // 行业方案瀑布流：首屏之外的服务器直出卡片标记 is-deferred（仅 html.js
+  // 下隐藏），滚动接近哨兵时按批显现；卡片图片原生 loading=lazy，字节
+  // 开销始终只发生在可见范围附近。无 JS 时全部直出（SEO 不受损）。
+  function initSolutionsLazyGrid() {
+    document.querySelectorAll('[data-lazy-batch]').forEach((grid) => {
+      if (!(grid instanceof HTMLElement)) return;
+      const sentinel = grid.parentElement?.querySelector('[data-lazy-sentinel]');
+      if (!(sentinel instanceof HTMLElement)) return;
+      const batch = Math.max(1, Number(grid.dataset.lazyBatch) || 6);
+      let observer = null;
+
+      const revealBatch = () => {
+        let revealed = 0;
+        grid.querySelectorAll('.is-deferred').forEach((card) => {
+          if (revealed >= batch) return;
+          card.classList.remove('is-deferred');
+          card.classList.add('is-lazy-revealed');
+          revealed += 1;
+        });
+        if (!grid.querySelector('.is-deferred')) {
+          if (observer) observer.disconnect();
+          window.removeEventListener('scroll', onScroll);
+          sentinel.remove();
+        }
+      };
+
+      // display:none 的卡片不占高度：快速滚动可能一步跨过哨兵（它在视口
+      // 上方、不再产生 intersect 变化），IO 会永远沉默——滚动兜底补显。
+      const onScroll = () => {
+        if (grid.querySelector('.is-deferred') && sentinel.getBoundingClientRect().bottom < 0) {
+          revealBatch();
+        }
+      };
+
+      observer = new IntersectionObserver((entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) revealBatch();
+      }, { rootMargin: '500px 0px' });
+      observer.observe(sentinel);
+      window.addEventListener('scroll', onScroll, { passive: true });
+    });
+  }
+
   onReady(() => {
     stabilizeInitialAnchor();
     initHeader();
@@ -1253,5 +1295,6 @@
     initCertificateCarousels();
     initCertificateViewers();
     initBrandWindow();
+    initSolutionsLazyGrid();
   });
 })();

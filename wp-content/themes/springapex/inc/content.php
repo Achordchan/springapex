@@ -687,6 +687,91 @@ function springapex_solutions(): array
     }, $posts ?: []);
 }
 
+/**
+ * 「网站内容 → 行业方案页」的行业卡片与 spring_solution 文章同步。
+ *
+ * 前台行业列表查的是 CPT（springapex_solutions()），而运营者在设置页
+ * repeater（solutions.items）里新增的卡片历史上只存进内容配置、没有对应
+ * 文章，前台静默丢弃——表现为「后台加了前台还是 6 个」。同步规则：
+ * - repeater 条目没有对应文章 → 创建已发布文章（标题/标语/配图来自条目），
+ *   带 _springapex_from_content 标记，排在现有卡片之后；
+ * - 标记过的卡片跟随 repeater 更新标题/标语/配图；
+ * - repeater 里移除的标记卡片转草稿（前台消失，后台可恢复，不物理删除）。
+ * 六个种子方案不带标记，仍由「行业方案」CPT 面板管理，行为不变。
+ * 挂在 init 上幂等运行，稳态（两边一致时）无任何写入。
+ */
+function springapex_sync_solutions_from_content(): void
+{
+    if (defined('SPRINGAPEX_PREVIEW') || !function_exists('get_posts') || !post_type_exists('spring_solution')) {
+        return;
+    }
+    $items = springapex_get('solutions.items', []);
+    if (!is_array($items) || $items === []) {
+        return;
+    }
+    $items_by_slug = [];
+    foreach ($items as $item) {
+        $slug = sanitize_title((string) ($item['slug'] ?? ''));
+        if ($slug !== '') {
+            $items_by_slug[$slug] = $item;
+        }
+    }
+
+    $posts = get_posts([
+        'post_type' => 'spring_solution',
+        'post_status' => ['publish', 'draft'],
+        'posts_per_page' => -1,
+        'orderby' => ['menu_order' => 'ASC', 'title' => 'ASC'],
+    ]);
+    $posts_by_slug = [];
+    $next_order = 0;
+    foreach ($posts as $post) {
+        $posts_by_slug[$post->post_name] = $post;
+        $next_order = max($next_order, (int) $post->menu_order + 1);
+    }
+
+    foreach ($items_by_slug as $slug => $item) {
+        $title = sanitize_text_field((string) ($item['title'] ?? ''));
+        $tagline = sanitize_text_field((string) ($item['tagline'] ?? ''));
+        $image = (string) ($item['image'] ?? '');
+        $existing = $posts_by_slug[$slug] ?? null;
+
+        if ($existing === null) {
+            $post_id = wp_insert_post([
+                'post_type' => 'spring_solution',
+                'post_status' => 'publish',
+                'post_title' => $title !== '' ? $title : $slug,
+                'post_name' => $slug,
+                'post_excerpt' => $tagline,
+                'menu_order' => $next_order++,
+            ], true);
+            if (is_wp_error($post_id) || (int) $post_id === 0) {
+                continue;
+            }
+            update_post_meta((int) $post_id, '_springapex_seed_image', $image);
+            update_post_meta((int) $post_id, '_springapex_from_content', '1');
+        } elseif (get_post_meta((int) $existing->ID, '_springapex_from_content', true) === '1') {
+            wp_update_post([
+                'ID' => (int) $existing->ID,
+                'post_title' => $title !== '' ? $title : $existing->post_title,
+                'post_excerpt' => $tagline,
+            ]);
+            update_post_meta((int) $existing->ID, '_springapex_seed_image', $image);
+        }
+    }
+
+    foreach ($posts as $post) {
+        if (
+            get_post_meta((int) $post->ID, '_springapex_from_content', true) === '1'
+            && !isset($items_by_slug[$post->post_name])
+            && $post->post_status === 'publish'
+        ) {
+            wp_update_post(['ID' => (int) $post->ID, 'post_status' => 'draft']);
+        }
+    }
+}
+add_action('init', 'springapex_sync_solutions_from_content', 20);
+
 function springapex_case_seed(string $slug): ?array
 {
     foreach (springapex_get('case_studies.items', []) as $item) {
