@@ -1275,6 +1275,10 @@
         }
       };
 
+      // 读屏器/键盘的显式展开入口（虚拟光标不触发 focus，display:none 的
+      // 卡片在其浏览模式下不可达）：点击按钮显现下一批。
+      sentinel.addEventListener('click', revealBatch);
+
       observer = new IntersectionObserver((entries) => {
         if (entries.some((entry) => entry.isIntersecting)) revealBatch();
       }, { rootMargin: '500px 0px' });

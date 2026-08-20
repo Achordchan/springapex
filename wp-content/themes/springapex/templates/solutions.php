@@ -50,7 +50,12 @@ get_template_part('parts/solutions-subnav', null, ['active' => 'industries']);
       <?php endforeach; ?>
     </div>
     <?php if ($has_deferred) : ?>
-      <div class="solutions-grid__sentinel" data-lazy-sentinel aria-hidden="true"></div>
+      <?php // 真实按钮而非纯哨兵：读屏器虚拟光标不做 focus，display:none 的
+            // 延迟卡片在其浏览模式下不可达——渐进披露控件是无障碍的标准形态，
+            // 键盘/读屏用户经此显式展开；指针用户仍有滚动自动显现。 ?>
+      <button type="button" class="btn btn-outline solutions-grid__more" data-lazy-sentinel>
+        <?php esc_html_e('Show more industries', 'springapex'); ?>
+      </button>
     <?php endif; ?>
   </div>
 </section>
