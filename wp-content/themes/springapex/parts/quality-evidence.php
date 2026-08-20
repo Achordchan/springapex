@@ -141,14 +141,10 @@ if (!$image) {
         <?php
         // 能力页表单字段按 schema 渲染（尺寸三行在上方 dimensions 面板内
         // 已按固定标签渲染，此处跳过三个尺寸 id 避免重复；email 为必填
-        // 字段且本页无其他 email 输入，必须由 schema 渲染出来）。
-        $capability_schema = springapex_form_schema();
-        $capability_skip = ['wire_diameter', 'outside_diameter', 'free_length'];
-        foreach (($capability_schema['product']['fields'] ?? []) as $capability_field) {
-            if (!in_array($capability_field['id'], $capability_skip, true)) {
-                springapex_render_form_schema_field('product', $capability_field);
-            }
-        }
+        // 字段且本页无其他 email 输入，必须由 schema 渲染出来）。走共享
+        // 渲染函数以获得 .sa-schema-fields 网格包裹——is-half 半宽样式
+        // 只对网格直接子元素生效。
+        springapex_render_form_schema_fields('product', 'field', '', ['wire_diameter', 'outside_diameter', 'free_length']);
         ?>
         <button class="btn btn-primary btn-block" type="submit" data-submit-button><?php esc_html_e('Send for Engineering Review', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></button>
         <?php if (springapex_form_turnstile_enabled('product')) : ?>

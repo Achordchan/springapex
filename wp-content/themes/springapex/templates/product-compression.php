@@ -302,32 +302,15 @@ $documents = [
 
           <?php
           // 产品页表单字段按 schema 渲染：
-          // - 尺寸三行由 $dimension_profiles 提供产品类型感知的标签/占位
-          //   （id 对应 schema 的 wire_diameter/outside_diameter/free_length）；
-          // - 其余字段（email/quantity/material/message/自定义）由 schema 直接渲染；
-          //   email 必填，本页无其他 email 输入，绝不能跳过。
-          $product_schema = springapex_form_schema();
-          $dimension_names = array_map(static fn ($f) => $f['name'], $dimension_fields);
-          $skip_ids = $dimension_names;
-          $dimension_by_name = [];
-          foreach ($dimension_fields as $dimension_field) {
-              $dimension_by_name[$dimension_field['name']] = $dimension_field;
-          }
+          // - 尺寸三行在上方 dimensions 面板内（$dimension_profiles 提供产品
+          //   类型感知的标签/占位），此处跳过对应 id 避免重复；
+          // - 其余字段（email/quantity/material/message/自定义）走共享渲染
+          //   函数——必须包在 .sa-schema-fields 网格里，is-half 半宽样式
+          //   只对网格直接子元素生效；email 必填且本页无其他 email 输入，
+          //   绝不能跳过。
+          $skip_ids = array_map(static fn (array $f): string => (string) $f['name'], $dimension_fields);
+          springapex_render_form_schema_fields('product', 'field', '', $skip_ids);
           ?>
-          <?php foreach (($product_schema['product']['fields'] ?? []) as $product_field) : ?>
-            <?php if (in_array($product_field['id'], $skip_ids, true)) : ?>
-              <?php continue; ?>
-            <?php endif; ?>
-            <?php
-            // 尺寸字段渲染在 dimensions 面板内，用产品感知标签覆盖 schema 默认。
-            if (isset($dimension_by_name[$product_field['id']])):
-                $override = $dimension_by_name[$product_field['id']];
-                $product_field['label'] = $override['label'];
-                $product_field['placeholder'] = $override['placeholder'];
-            endif;
-            springapex_render_form_schema_field('product', $product_field);
-            ?>
-          <?php endforeach; ?>
           <input type="hidden" name="full_name" value="Product detail inquiry">
           <button class="btn btn-primary btn-block" type="submit" data-submit-button><?php esc_html_e('Send for Engineering Review', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></button>
           <?php if (springapex_form_turnstile_enabled('product')) : ?>
