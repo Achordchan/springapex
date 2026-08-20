@@ -719,9 +719,12 @@ function springapex_sync_solutions_from_content(): void
         }
     }
 
+    // slug 查找必须覆盖回收站与各非公开状态：回收站里的文章仍占用 slug，
+    // 漏看会导致每个请求都新建 slug-2/slug-3……无限繁殖；媒体库/面板侧
+    // 把文章设为私有/待发同理。
     $posts = get_posts([
         'post_type' => 'spring_solution',
-        'post_status' => ['publish', 'draft'],
+        'post_status' => ['publish', 'draft', 'private', 'pending', 'future', 'trash'],
         'posts_per_page' => -1,
         'orderby' => ['menu_order' => 'ASC', 'title' => 'ASC'],
     ]);
@@ -735,7 +738,12 @@ function springapex_sync_solutions_from_content(): void
     foreach ($items_by_slug as $slug => $item) {
         $title = sanitize_text_field((string) ($item['title'] ?? ''));
         $tagline = sanitize_text_field((string) ($item['tagline'] ?? ''));
-        $image = (string) ($item['image'] ?? '');
+        // 设置页图片字段存「附件 ID（数字）或主题文件名」：数字必须落成
+        // 文章缩略图，塞进 _springapex_seed_image 会被前台当主题文件名
+        // 渲染出 /assets/images/123 之类的坏图。
+        $image = $item['image'] ?? '';
+        $image_id = is_int($image) ? $image : (ctype_digit((string) $image) ? (int) $image : 0);
+        $image_file = $image_id > 0 ? '' : (string) $image;
         $existing = $posts_by_slug[$slug] ?? null;
 
         if ($existing === null) {
@@ -750,12 +758,17 @@ function springapex_sync_solutions_from_content(): void
             if (is_wp_error($post_id) || (int) $post_id === 0) {
                 continue;
             }
-            update_post_meta((int) $post_id, '_springapex_seed_image', $image);
+            if ($image_id > 0) {
+                set_post_thumbnail((int) $post_id, $image_id);
+            } elseif ($image_file !== '') {
+                update_post_meta((int) $post_id, '_springapex_seed_image', $image_file);
+            }
             update_post_meta((int) $post_id, '_springapex_from_content', '1');
         } elseif (get_post_meta((int) $existing->ID, '_springapex_from_content', true) === '1') {
             // 比对后再写：本函数挂在 init 上每个请求都会跑到，无条件
             // wp_update_post 会每次推进 post_modified、触发保存钩子、
-            // 失效缓存。恢复场景（曾被移除转草稿后重新加回）要重新发布。
+            // 失效缓存。repeater 行存在即视为这张卡应有状态为 publish
+            // （草稿/私有/待发/回收站一律恢复——想下架请删 repeater 行）。
             $changes = [];
             if ($title !== '' && (string) $existing->post_title !== $title) {
                 $changes['post_title'] = $title;
@@ -763,15 +776,30 @@ function springapex_sync_solutions_from_content(): void
             if ((string) $existing->post_excerpt !== $tagline) {
                 $changes['post_excerpt'] = $tagline;
             }
-            if ($existing->post_status === 'draft') {
+            if ($existing->post_status !== 'publish') {
                 $changes['post_status'] = 'publish';
             }
             if ($changes !== []) {
                 $changes['ID'] = (int) $existing->ID;
                 wp_update_post($changes);
             }
-            if ((string) get_post_meta((int) $existing->ID, '_springapex_seed_image', true) !== $image) {
-                update_post_meta((int) $existing->ID, '_springapex_seed_image', $image);
+            $existing_id = (int) $existing->ID;
+            if ($image_id > 0) {
+                if ((int) get_post_thumbnail_id($existing_id) !== $image_id) {
+                    set_post_thumbnail($existing_id, $image_id);
+                }
+                // 主题文件名残留会让 file 槽挂着旧值，清掉保持单一事实。
+                if (get_post_meta($existing_id, '_springapex_seed_image', true) !== '') {
+                    update_post_meta($existing_id, '_springapex_seed_image', '');
+                }
+            } else {
+                if ((string) get_post_meta($existing_id, '_springapex_seed_image', true) !== $image_file) {
+                    update_post_meta($existing_id, '_springapex_seed_image', $image_file);
+                }
+                // 切回主题文件名时清缩略图：image['id'] 优先于 file，不清则永远走旧附件。
+                if ((int) get_post_thumbnail_id($existing_id) > 0) {
+                    delete_post_thumbnail($existing_id);
+                }
             }
         }
     }
