@@ -706,9 +706,11 @@ function springapex_sync_solutions_from_content(): void
         return;
     }
     $items = springapex_get('solutions.items', []);
-    if (!is_array($items) || $items === []) {
+    if (!is_array($items)) {
         return;
     }
+    // 注意：空数组（运营者清空了 repeater）不能早退——下方清理逻辑要把
+    // 同步生成的卡片全部转草稿，否则前台残留已删除的卡片。
     $items_by_slug = [];
     foreach ($items as $item) {
         $slug = sanitize_title((string) ($item['slug'] ?? ''));
@@ -751,12 +753,26 @@ function springapex_sync_solutions_from_content(): void
             update_post_meta((int) $post_id, '_springapex_seed_image', $image);
             update_post_meta((int) $post_id, '_springapex_from_content', '1');
         } elseif (get_post_meta((int) $existing->ID, '_springapex_from_content', true) === '1') {
-            wp_update_post([
-                'ID' => (int) $existing->ID,
-                'post_title' => $title !== '' ? $title : $existing->post_title,
-                'post_excerpt' => $tagline,
-            ]);
-            update_post_meta((int) $existing->ID, '_springapex_seed_image', $image);
+            // 比对后再写：本函数挂在 init 上每个请求都会跑到，无条件
+            // wp_update_post 会每次推进 post_modified、触发保存钩子、
+            // 失效缓存。恢复场景（曾被移除转草稿后重新加回）要重新发布。
+            $changes = [];
+            if ($title !== '' && (string) $existing->post_title !== $title) {
+                $changes['post_title'] = $title;
+            }
+            if ((string) $existing->post_excerpt !== $tagline) {
+                $changes['post_excerpt'] = $tagline;
+            }
+            if ($existing->post_status === 'draft') {
+                $changes['post_status'] = 'publish';
+            }
+            if ($changes !== []) {
+                $changes['ID'] = (int) $existing->ID;
+                wp_update_post($changes);
+            }
+            if ((string) get_post_meta((int) $existing->ID, '_springapex_seed_image', true) !== $image) {
+                update_post_meta((int) $existing->ID, '_springapex_seed_image', $image);
+            }
         }
     }
 

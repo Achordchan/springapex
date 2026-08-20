@@ -1242,6 +1242,13 @@
       if (!(grid instanceof HTMLElement)) return;
       const sentinel = grid.parentElement?.querySelector('[data-lazy-sentinel]');
       if (!(sentinel instanceof HTMLElement)) return;
+      // 无 IntersectionObserver 的环境（旧内嵌 webview）：CSS 已在 html.js 下
+      // 隐藏延迟卡片，直接全部显现，避免永久隐藏。
+      if (!('IntersectionObserver' in window)) {
+        grid.querySelectorAll('.is-deferred').forEach((card) => card.classList.remove('is-deferred'));
+        sentinel.remove();
+        return;
+      }
       const batch = Math.max(1, Number(grid.dataset.lazyBatch) || 6);
       let observer = null;
 
