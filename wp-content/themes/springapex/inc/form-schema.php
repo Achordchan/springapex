@@ -359,6 +359,18 @@ function springapex_render_form_schema_field(string $form, array $field, string 
     echo '</label>';
 }
 
+/** 某表单里被运营者标为必填的字段 id 列表（固定结构输入框对齐 schema 用）。 */
+function springapex_form_required_ids(string $form): array
+{
+    $required = [];
+    foreach ((springapex_form_schema()[$form]['fields'] ?? []) as $field) {
+        if (!empty($field['required'])) {
+            $required[] = (string) $field['id'];
+        }
+    }
+    return $required;
+}
+
 /**
  * 渲染某个表单的整组 schema 字段，包在 .sa-schema-fields 网格里（full 跨两列、
  * half 跨一列）。前台三表单都调它替换原先写死的字段区。

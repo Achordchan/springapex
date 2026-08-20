@@ -219,16 +219,26 @@ $documents = [
           <?php foreach ($dimension_fields as $index => $field) : ?>
             <input type="hidden" name="dimension_label_<?php echo esc_attr((string) ($index + 1)); ?>" value="<?php echo esc_attr((string) $field['label']); ?>">
           <?php endforeach; ?>
-          <input type="hidden" name="inquiry_type" value="Upload a Drawing" data-inquiry-type>
+          <?php
+          // 尺寸字段被「表单设置」标为必填时：输入框补 required，表单默认落在
+          // 「Enter Dimensions」模式（面板初始可见）——必填项藏在 hidden 面板里
+          // 会被 checkValidity 拦住且聚焦不到，访客无从得知缺了什么。
+          $dimension_required = array_intersect(
+              springapex_form_required_ids('product'),
+              array_map(static fn (array $f): string => (string) $f['name'], $dimension_fields)
+          );
+          $dimensions_default = $dimension_required !== [];
+          ?>
+          <input type="hidden" name="inquiry_type" value="<?php echo $dimensions_default ? 'Request a Quote' : 'Upload a Drawing'; ?>" data-inquiry-type>
           <input type="hidden" name="started_at" value="<?php echo esc_attr((string) time()); ?>" data-form-started-at>
           <label class="honeypot" aria-hidden="true">Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
 
           <div class="sa-compression-form__modes" role="tablist" aria-label="<?php esc_attr_e('How to send requirements', 'springapex'); ?>">
-            <button type="button" class="is-active" role="tab" aria-selected="true" aria-controls="compression-drawing-panel" data-compression-inquiry-mode="drawing"><?php esc_html_e('Upload a Drawing', 'springapex'); ?></button>
-            <button type="button" role="tab" aria-selected="false" aria-controls="compression-dimensions-panel" data-compression-inquiry-mode="dimensions"><?php esc_html_e('Enter Dimensions Manually', 'springapex'); ?></button>
+            <button type="button" class="<?php echo $dimensions_default ? '' : 'is-active'; ?>" role="tab" aria-selected="<?php echo $dimensions_default ? 'false' : 'true'; ?>" aria-controls="compression-drawing-panel" data-compression-inquiry-mode="drawing"><?php esc_html_e('Upload a Drawing', 'springapex'); ?></button>
+            <button type="button" class="<?php echo $dimensions_default ? 'is-active' : ''; ?>" role="tab" aria-selected="<?php echo $dimensions_default ? 'true' : 'false'; ?>" aria-controls="compression-dimensions-panel" data-compression-inquiry-mode="dimensions"><?php esc_html_e('Enter Dimensions Manually', 'springapex'); ?></button>
           </div>
 
-          <div class="sa-compression-form__drawing" id="compression-drawing-panel" role="tabpanel" data-compression-drawing-panel>
+          <div class="sa-compression-form__drawing" id="compression-drawing-panel" role="tabpanel" data-compression-drawing-panel<?php echo $dimensions_default ? ' hidden' : ''; ?>>
             <h3><?php esc_html_e('Upload a technical drawing', 'springapex'); ?></h3>
             <p><?php esc_html_e('Dimensions are optional when a drawing is provided.', 'springapex'); ?></p>
             <label class="sa-compression-dropzone" data-compression-dropzone>
@@ -243,16 +253,24 @@ $documents = [
             </label>
           </div>
 
-          <div class="sa-compression-form__dimensions" id="compression-dimensions-panel" role="tabpanel" data-compression-dimensions-panel hidden>
+          <div class="sa-compression-form__dimensions" id="compression-dimensions-panel" role="tabpanel" data-compression-dimensions-panel<?php echo $dimensions_default ? '' : ' hidden'; ?>>
             <h3><?php esc_html_e('Enter the dimensions you know', 'springapex'); ?></h3>
-            <p><?php esc_html_e('All dimensions are optional; engineering will confirm any missing values.', 'springapex'); ?></p>
+            <?php if ($dimension_required !== []) : ?>
+              <p><?php esc_html_e('Required dimensions are marked with *; engineering will confirm any missing values.', 'springapex'); ?></p>
+            <?php else : ?>
+              <p><?php esc_html_e('All dimensions are optional; engineering will confirm any missing values.', 'springapex'); ?></p>
+            <?php endif; ?>
             <div class="sa-compression-form__row">
               <?php foreach (array_slice($dimension_fields, 0, 2) as $field) : ?>
-                <label class="field"><span><?php echo esc_html((string) $field['label']); ?></span><input type="text" name="springapex_field_<?php echo esc_attr((string) $field['name']); ?>" inputmode="decimal" maxlength="80" placeholder="<?php echo esc_attr((string) $field['placeholder']); ?>"></label>
+                <?php $is_dimension_required = in_array($field['name'], $dimension_required, true); ?>
+                <label class="field"><span><?php echo esc_html((string) $field['label']); ?><?php echo $is_dimension_required ? ' *' : ''; ?></span><input type="text" name="springapex_field_<?php echo esc_attr((string) $field['name']); ?>" inputmode="decimal" maxlength="80" placeholder="<?php echo esc_attr((string) $field['placeholder']); ?>"<?php echo $is_dimension_required ? ' required' : ''; ?>></label>
               <?php endforeach; ?>
             </div>
-            <?php $last_dimension = $dimension_fields[2]; ?>
-            <label class="field"><span><?php echo esc_html((string) $last_dimension['label']); ?></span><input type="text" name="springapex_field_<?php echo esc_attr((string) $last_dimension['name']); ?>" inputmode="decimal" maxlength="80" placeholder="<?php echo esc_attr((string) $last_dimension['placeholder']); ?>"></label>
+            <?php
+            $last_dimension = $dimension_fields[2];
+            $last_dimension_required = in_array($last_dimension['name'], $dimension_required, true);
+            ?>
+            <label class="field"><span><?php echo esc_html((string) $last_dimension['label']); ?><?php echo $last_dimension_required ? ' *' : ''; ?></span><input type="text" name="springapex_field_<?php echo esc_attr((string) $last_dimension['name']); ?>" inputmode="decimal" maxlength="80" placeholder="<?php echo esc_attr((string) $last_dimension['placeholder']); ?>"<?php echo $last_dimension_required ? ' required' : ''; ?>></label>
           </div>
 
           <?php
