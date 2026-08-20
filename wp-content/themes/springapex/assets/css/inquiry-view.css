@@ -1,0 +1,68 @@
+/* 询盘只读视图：客户信息 / 规格 / 来源 / 留言 / 图纸。 */
+
+.sa-iv__head {
+  margin: 22px 0 8px;
+  color: #1d2327;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.sa-iv__head:first-child {
+  margin-top: 4px;
+}
+
+.sa-iv__table {
+  width: 100%;
+  max-width: 760px;
+  border-collapse: collapse;
+}
+
+.sa-iv__table th,
+.sa-iv__table td {
+  padding: 8px 12px 8px 0;
+  border-bottom: 1px solid #f0f0f1;
+  font-size: 13px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.sa-iv__table th {
+  width: 130px;
+  color: #646970;
+  font-weight: 600;
+}
+
+.sa-iv__table td {
+  color: #1d2327;
+  word-break: break-word;
+}
+
+.sa-iv__message {
+  max-width: 760px;
+  padding: 14px 16px;
+  border: 1px solid #dcdcde;
+  border-left: 3px solid #2271b1;
+  border-radius: 6px;
+  background: #f6f7f7;
+  color: #1d2327;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.sa-iv__files {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sa-iv__files li {
+  margin: 4px 0;
+}
+
+.sa-iv__files a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}

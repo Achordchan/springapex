@@ -254,6 +254,7 @@
 @media (max-width: 760px) {
   .sa-route-about .inner-hero .display,
   .sa-route-solutions .inner-hero .display,
+  .sa-route-case-studies .inner-hero .display,
   .sa-route-solution .inner-hero .display,
   .sa-route-capabilities .inner-hero .display,
   .sa-route-news .inner-hero .display,
@@ -354,17 +355,17 @@
     line-height: 1.55;
   }
 
-  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero,
-  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-inner {
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-case-studies, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero,
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-case-studies, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-inner {
     min-height: 0;
   }
 
-  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero {
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-case-studies, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero {
     border-bottom: 1px solid var(--sa-border);
     background: var(--sa-surface);
   }
 
-  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-media {
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-case-studies, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-media {
     position: relative;
     inset: auto;
     width: 100%;
@@ -374,30 +375,30 @@
     border-bottom: 1px solid var(--sa-border);
   }
 
-  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-media picture,
-  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-media img {
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-case-studies, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-media picture,
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-case-studies, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-media img {
     width: 100%;
     height: 100%;
   }
 
-  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-media img {
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-case-studies, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-media img {
     object-fit: cover;
     object-position: center;
   }
 
-  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-media::after {
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-case-studies, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-media::after {
     display: none;
   }
 
-  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-inner {
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-case-studies, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-inner {
     padding-top: 22px;
     padding-bottom: 24px;
     align-items: flex-start;
   }
 
-  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-copy,
-  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .display,
-  :is(.sa-route-about, .sa-route-solutions, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .lede {
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-case-studies, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .inner-hero-copy,
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-case-studies, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .display,
+  :is(.sa-route-about, .sa-route-solutions, .sa-route-case-studies, .sa-route-capabilities, .sa-route-news, .sa-route-contact, .sa-route-resources) .inner-hero .lede {
     color: var(--sa-primary);
   }
 

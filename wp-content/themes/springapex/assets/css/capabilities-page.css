@@ -304,10 +304,84 @@
     font-size: 15px;
   }
 
-  .sa-route-capabilities .sa-process-detail__grid,
   .sa-route-capabilities .sa-evidence__grid {
     margin-top: 26px;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  /* CONTROLLED PROCESS：手机改横滑轮播（与产品页发货卡同款交互），
+     每卡约 78% 屏宽、露出下一张边缘作滑动提示。 */
+  .sa-route-capabilities .sa-process-detail__grid {
+    display: flex;
+    margin-top: 26px;
+    gap: 14px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+    scroll-padding-inline-start: 16px;
+  }
+
+  .sa-route-capabilities .sa-process-detail__grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sa-route-capabilities .sa-process-detail__grid li {
+    flex: 0 0 78%;
+    scroll-snap-align: start;
+  }
+
+  /* 滚动驱动模式（main.js 按 ≤760 且未开启减少动态时挂载）：
+     文案 + 卡片轨 + 进度点整体钉住居中；JS 把竖向滚动进度写入
+     视口的原生 scrollLeft（而非 transform），因此手动左右滑动依然可用，
+     行程口径与卡片实际宽度天然一致（末卡必定完整到位）。 */
+  .sa-route-capabilities .sa-process-detail.is-scroll-linked .sa-process-detail__pin {
+    position: sticky;
+    top: 20vh; /* JS 按视口实际高度居中覆盖 */
+    z-index: 1;
+  }
+
+  .sa-route-capabilities .sa-process-detail.is-scroll-linked .sa-process-detail__viewport {
+    overflow-x: auto;
+    scroll-snap-type: none;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .sa-route-capabilities .sa-process-detail.is-scroll-linked .sa-process-detail__viewport::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sa-route-capabilities .sa-process-detail.is-scroll-linked .sa-process-detail__grid {
+    overflow: visible;
+    scroll-snap-type: none;
+    padding-bottom: 0;
+  }
+
+  .sa-process-detail__dots {
+    display: none;
+  }
+
+  .sa-route-capabilities .sa-process-detail.is-scroll-linked .sa-process-detail__dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding-top: 16px;
+  }
+
+  .sa-route-capabilities .sa-process-detail.is-scroll-linked .sa-process-detail__dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--sa-border-strong, #cbd5e1);
+    transition: width .25s var(--sa-ease, ease), background-color .25s;
+  }
+
+  .sa-route-capabilities .sa-process-detail.is-scroll-linked .sa-process-detail__dots span.is-active {
+    width: 20px;
+    background: var(--sa-primary, #0f172a);
   }
 
   .sa-route-capabilities .sa-process-detail__grid li,
@@ -315,27 +389,59 @@
     min-height: 0;
   }
 
+  /* 审查要素卡：手机 2×2（与能力卡同款窄卡形态：图标置顶、文字下排）。 */
   .sa-route-capabilities .sa-evidence article {
-    padding: 22px;
-    grid-template-columns: 46px minmax(0, 1fr);
-    gap: 16px;
+    display: block;
+    padding: 16px 14px;
   }
 
   .sa-route-capabilities .sa-evidence__icon {
-    width: 46px;
-    height: 46px;
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+  }
+
+  .sa-route-capabilities .sa-evidence article h3 {
+    margin-top: 12px;
+    font-size: 15px;
+  }
+
+  .sa-route-capabilities .sa-evidence article p {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.55;
   }
 
   .sa-route-capabilities .sa-custom-brief__media {
     aspect-ratio: 16 / 10;
   }
 
+  /* PROJECT INPUTS：手机保持 2×2（与能力卡同款窄卡：图标置顶）。 */
   .sa-route-capabilities .sa-custom-brief__items {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
   .sa-route-capabilities .sa-custom-brief__items article {
+    display: block;
     min-height: 0;
+    padding: 14px 12px;
+  }
+
+  .sa-route-capabilities .sa-custom-brief__items article > span {
+    width: 36px;
+    height: 36px;
+  }
+
+  .sa-route-capabilities .sa-custom-brief__items article h3 {
+    margin-top: 10px;
+    font-size: 14.5px;
+  }
+
+  .sa-route-capabilities .sa-custom-brief__items article p {
+    margin-top: 5px;
+    font-size: 12px;
+    line-height: 1.5;
   }
 
   .sa-route-capabilities .sa-custom-brief__action {

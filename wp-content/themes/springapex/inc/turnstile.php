@@ -21,12 +21,18 @@ if (!defined('ABSPATH')) {
 
 /**
  * Public site key rendered into the widget markup. Overridable via constant for
- * staging keys; falls back to the production key.
+ * staging keys; 「表单设置」页写入的 option 次之；falls back to the built-in key.
  */
 function springapex_turnstile_site_key(): string
 {
     if (defined('SPRINGAPEX_TURNSTILE_SITE_KEY') && is_string(SPRINGAPEX_TURNSTILE_SITE_KEY) && SPRINGAPEX_TURNSTILE_SITE_KEY !== '') {
         return SPRINGAPEX_TURNSTILE_SITE_KEY;
+    }
+
+    // 「表单设置」页（inc/admin/form-settings.php）写入的 option 优先于内置密钥。
+    $option = get_option('springapex_turnstile_site_key', '');
+    if (is_string($option) && $option !== '') {
+        return $option;
     }
 
     return '0x4AAAAAAEUKf1Ep7E9Fafsj';
@@ -111,9 +117,13 @@ function springapex_turnstile_hostname_allowlist(): array
  * @return true|WP_Error true when the check passes (or is intentionally skipped),
  *                       WP_Error otherwise.
  */
-function springapex_verify_turnstile(): bool|WP_Error
+function springapex_verify_turnstile(string $form_key = ''): bool|WP_Error
 {
     if (!springapex_turnstile_enabled()) {
+        return true;
+    }
+    // 按表单开关：设置页对每个表单单独启停（渲染侧同源）。
+    if ($form_key !== '' && !springapex_form_turnstile_enabled($form_key)) {
         return true;
     }
 

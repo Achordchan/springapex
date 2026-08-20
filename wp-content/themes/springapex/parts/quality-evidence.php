@@ -60,7 +60,7 @@ if (!$image) {
         <?php if (defined('SPRINGAPEX_PREVIEW')) : ?>
           <input type="hidden" name="springapex_contact_nonce" value="">
         <?php else : ?>
-          <?php wp_nonce_field('springapex_contact', 'springapex_contact_nonce', false); ?>
+          <?php wp_nonce_field('springapex_contact_product', 'springapex_contact_nonce', false); ?>
         <?php endif; ?>
         <input type="hidden" name="intent" value="drawing">
         <input type="hidden" name="form_context" value="product">
@@ -105,8 +105,10 @@ if (!$image) {
           <label class="field"><span><?php esc_html_e('Material', 'springapex'); ?></span><select name="material"><option value=""><?php esc_html_e('Select material', 'springapex'); ?></option><option>Music Wire</option><option>Stainless Steel</option><option>Carbon Steel</option><option>Alloy or special material</option><option>Need engineering recommendation</option></select></label>
         </div>
         <label class="field"><span><?php esc_html_e('Other requirements', 'springapex'); ?></span><textarea name="message" rows="4" maxlength="5000" placeholder="Coating, load, end type, environment, tolerance, testing, or any additional notes."></textarea></label>
-        <label class="field"><span><?php esc_html_e('Work Email', 'springapex'); ?> *</span><input type="email" name="email" maxlength="190" autocomplete="email" placeholder="name@company.com" required></label>
+        <?php // 能力页表单的字段区（默认仅工作邮箱）：结构存于「表单设置」，按 schema 渲染。
+        springapex_render_form_schema_fields('product'); ?>
         <button class="btn btn-primary btn-block" type="submit" data-submit-button><?php esc_html_e('Send for Engineering Review', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></button>
+        <?php if (springapex_form_turnstile_enabled('product')) : ?>
         <div class="sa-turnstile-widget">
           <div
             class="cf-turnstile"
@@ -118,6 +120,7 @@ if (!$image) {
           ></div>
           <?php echo springapex_turnstile_noscript(); ?>
         </div>
+        <?php endif; ?>
         <p class="sa-compression-form__privacy"><?php esc_html_e('Your file and project details are used only to review this inquiry.', 'springapex'); ?></p>
         <p class="form-status" data-form-status role="status" aria-live="polite" hidden></p>
       </form>
