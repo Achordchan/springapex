@@ -1280,10 +1280,35 @@
       }, { rootMargin: '500px 0px' });
       observer.observe(sentinel);
       window.addEventListener('scroll', onScroll, { passive: true });
+
+      // 深链（/solutions/#<slug>）指向隐藏卡片时，先把目标及其之前的批次
+      // 显现出来，锚点定位才能算对位置（本初始化器在 stabilizeInitialAnchor
+      // 之前运行）。
+      const hash = window.location.hash;
+      if (hash && hash.length > 1) {
+        const hashTarget = document.getElementById(decodeURIComponent(hash.slice(1)));
+        if (hashTarget instanceof HTMLElement && hashTarget.classList.contains('is-deferred')) {
+          while (hashTarget.classList.contains('is-deferred') && grid.querySelector('.is-deferred')) {
+            revealBatch();
+          }
+        }
+      }
+
+      // 键盘可达性：display:none 的卡片不在 Tab 序里，正向前进会直接从
+      // 最后一张可见卡跳到 CTA。焦点落在最后一张可见卡上时提前显现下一
+      // 批，Tab 自然续进新卡片。
+      grid.addEventListener('focusin', () => {
+        const visible = grid.querySelectorAll('.solution-card:not(.is-deferred)');
+        const last = visible[visible.length - 1];
+        if (last instanceof HTMLElement && last.contains(document.activeElement)) {
+          revealBatch();
+        }
+      });
     });
   }
 
   onReady(() => {
+    initSolutionsLazyGrid();
     stabilizeInitialAnchor();
     initHeader();
     initProductMenus();
@@ -1302,6 +1327,5 @@
     initCertificateCarousels();
     initCertificateViewers();
     initBrandWindow();
-    initSolutionsLazyGrid();
   });
 })();

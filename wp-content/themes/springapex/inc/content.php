@@ -705,6 +705,23 @@ function springapex_sync_solutions_from_content(): void
     if (defined('SPRINGAPEX_PREVIEW') || !function_exists('get_posts') || !post_type_exists('spring_solution')) {
         return;
     }
+    // 建卡路径非原子（先查 slug 再插入，post_name 无唯一约束）：两个未缓存
+    // 的并发请求会各自插入、产出同 slug 的重复卡。整段用 option 锁串行化，
+    // 抢不到锁的请求直接跳过（幂等，下个请求会校平）。
+    $lock_name = 'springapex_solutions_sync_lock';
+    $lock_token = springapex_acquire_option_lock($lock_name, 30);
+    if ($lock_token === '') {
+        return;
+    }
+    try {
+        springapex_sync_solutions_from_content_locked();
+    } finally {
+        springapex_release_option_lock($lock_name, $lock_token);
+    }
+}
+
+function springapex_sync_solutions_from_content_locked(): void
+{
     $items = springapex_get('solutions.items', []);
     if (!is_array($items)) {
         return;
