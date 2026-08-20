@@ -1,0 +1,22 @@
+/* 第三方插件后台推销清理：仅隐藏营销 UI，不解锁任何付费功能。
+   选择器来自 WP Mail SMTP 4.9 实际页面探测；侧边栏菜单项在
+   inc/admin/admin.php 里按黑名单移除（只删纯推销入口）。 */
+
+/* WP Mail SMTP 免费版：
+   - 顶部 Lite 升级横幅（$50 OFF / upgrade-license-banner）
+   - 页内 upgrade banner 区块
+   - General 页的 License 推销区（标题行 + 粘贴 license key 行）
+   - 页内 tab 导航的 Pro 卖点标签（Email Log / Alerts / Additional
+     Connections / Smart Routing / Email Controls / Get Pro） */
+body[class*="page_wp-mail-smtp"] .wp-mail-smtp-upgrade-license-banner,
+body[class*="page_wp-mail-smtp"] .wp-mail-smtp-upgrade-banner,
+body[class*="page_wp-mail-smtp"] #wp-mail-smtp-setting-row-license-heading,
+body[class*="page_wp-mail-smtp"] #wp-mail-smtp-setting-row-license_key,
+body[class*="page_wp-mail-smtp"] .wp-mail-smtp-page-title a.wp-mail-smtp-tab-logs,
+body[class*="page_wp-mail-smtp"] .wp-mail-smtp-page-title a.wp-mail-smtp-tab-alerts,
+body[class*="page_wp-mail-smtp"] .wp-mail-smtp-page-title a.wp-mail-smtp-tab-connections,
+body[class*="page_wp-mail-smtp"] .wp-mail-smtp-page-title a.wp-mail-smtp-tab-routing,
+body[class*="page_wp-mail-smtp"] .wp-mail-smtp-page-title a.wp-mail-smtp-tab-control,
+body[class*="page_wp-mail-smtp"] .wp-mail-smtp-page-title a.wp-mail-smtp-tab-get-pro {
+  display: none !important;
+}

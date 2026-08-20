@@ -116,3 +116,24 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* 邮件通知模板：占位符速查标签 */
+.springapex-mail-tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.springapex-mail-token {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid #dcdcde;
+  border-radius: 3px;
+  background: #f6f7f7;
+}
+
+.springapex-mail-token small {
+  color: #646970;
+}

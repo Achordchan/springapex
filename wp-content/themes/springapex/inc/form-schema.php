@@ -46,6 +46,15 @@ function springapex_form_system_fields(): array
         'name' => '姓名（映射询盘联系人）',
         'email' => '邮箱（映射询盘邮箱）',
         'message' => '留言正文（映射询盘留言）',
+        'phone' => '电话（映射询盘电话）',
+        'company' => '公司（映射询盘公司）',
+        'country' => '国家/地区（映射询盘国家）',
+        'wire_diameter' => '线径（技术参数，产品页按产品类型换标签）',
+        'outside_diameter' => '外径（技术参数，产品页按产品类型换标签）',
+        'free_length' => '自由长度（技术参数，产品页按产品类型换标签）',
+        'quantity' => '数量',
+        'material' => '材料',
+        'operating_environment' => '工作环境',
     ];
 }
 
@@ -73,7 +82,8 @@ function springapex_form_schema_defaults(): array
             ],
         ],
         'contact' => [
-            // 顺序与线上现状一致：姓名 → 电话 → 公司 → 邮箱 → 国家。
+            // 顺序与线上现状一致：姓名 → 电话 → 公司 → 邮箱 → 国家 →
+            // 技术参数（原「Add project details」折叠区，现按 schema 渲染）。
             'turnstile' => true,
             'fields' => [
                 $common(['id' => 'name', 'label' => 'Name', 'type' => 'text', 'required' => true, 'placeholder' => 'Enter your name']),
@@ -81,12 +91,37 @@ function springapex_form_schema_defaults(): array
                 $common(['id' => 'company', 'label' => 'Company', 'type' => 'text', 'required' => false, 'placeholder' => 'Enter your company name']),
                 $common(['id' => 'email', 'label' => 'Work email', 'type' => 'email', 'required' => true, 'placeholder' => 'Enter your work email']),
                 $common(['id' => 'country', 'label' => 'Country', 'type' => 'text', 'required' => true, 'placeholder' => 'Enter your country']),
+                $common(['id' => 'wire_diameter', 'label' => 'Wire diameter', 'type' => 'text', 'required' => false, 'placeholder' => 'e.g. 1.2 mm', 'width' => 'half']),
+                $common(['id' => 'outside_diameter', 'label' => 'Outside diameter', 'type' => 'text', 'required' => false, 'placeholder' => 'e.g. 12 mm', 'width' => 'half']),
+                $common(['id' => 'free_length', 'label' => 'Free length', 'type' => 'text', 'required' => false, 'placeholder' => 'e.g. 45 mm']),
+                $common(['id' => 'quantity', 'label' => 'Quantity', 'type' => 'text', 'required' => false, 'placeholder' => 'e.g. 10,000 pcs', 'width' => 'half']),
+                $common(['id' => 'material', 'label' => 'Material', 'type' => 'select', 'required' => false, 'placeholder' => 'Select material', 'width' => 'half', 'options' => [
+                    'Music Wire' => 'Music Wire',
+                    'Stainless Steel' => 'Stainless Steel',
+                    'Carbon Steel' => 'Carbon Steel',
+                    'Alloy or special material' => 'Alloy or special material',
+                    'Need engineering recommendation' => 'Need engineering recommendation',
+                ]]),
+                $common(['id' => 'operating_environment', 'label' => 'Operating environment', 'type' => 'text', 'required' => false, 'placeholder' => 'Temperature, moisture, chemicals, indoor or outdoor use']),
+                $common(['id' => 'message', 'label' => 'Additional project information', 'type' => 'textarea', 'required' => false, 'placeholder' => 'Required load, working travel, material, cycle life, tolerances, or any other details.']),
             ],
         ],
         'product' => [
             'turnstile' => true,
             'fields' => [
                 $common(['id' => 'email', 'label' => 'Work Email', 'type' => 'email', 'required' => true, 'placeholder' => 'name@company.com']),
+                $common(['id' => 'wire_diameter', 'label' => 'Wire diameter', 'type' => 'text', 'required' => false, 'placeholder' => 'e.g. 1.2 mm', 'width' => 'half']),
+                $common(['id' => 'outside_diameter', 'label' => 'Outside diameter', 'type' => 'text', 'required' => false, 'placeholder' => 'e.g. 12 mm', 'width' => 'half']),
+                $common(['id' => 'free_length', 'label' => 'Free length', 'type' => 'text', 'required' => false, 'placeholder' => 'e.g. 45 mm']),
+                $common(['id' => 'quantity', 'label' => 'Quantity', 'type' => 'text', 'required' => false, 'placeholder' => 'e.g. 5,000 pcs', 'width' => 'half']),
+                $common(['id' => 'material', 'label' => 'Material', 'type' => 'select', 'required' => false, 'placeholder' => 'Select material', 'width' => 'half', 'options' => [
+                    'Music Wire' => 'Music Wire',
+                    'Stainless Steel' => 'Stainless Steel',
+                    'Carbon Steel' => 'Carbon Steel',
+                    'Alloy or special material' => 'Alloy or special material',
+                    'Need engineering recommendation' => 'Need engineering recommendation',
+                ]]),
+                $common(['id' => 'message', 'label' => 'Other requirements', 'type' => 'textarea', 'required' => false, 'placeholder' => 'Coating, load, end type, environment, tolerance, testing, or any additional notes.']),
             ],
         ],
     ];

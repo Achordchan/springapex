@@ -65,6 +65,20 @@ function springapex_render_form_settings_page(): void
         update_option('springapex_turnstile_site_key', sanitize_text_field((string) wp_unslash($_POST['springapex_turnstile_site_key'] ?? '')), false);
         update_option('springapex_turnstile_secret', sanitize_text_field((string) wp_unslash($_POST['springapex_turnstile_secret'] ?? '')), false);
 
+        // 邮件通知模板：标题/正文清空并保存 = 恢复默认模板（删除存储值）。
+        $mail_subject = sanitize_text_field((string) wp_unslash($_POST['springapex_inquiry_mail_subject'] ?? ''));
+        $mail_body = sanitize_textarea_field((string) wp_unslash($_POST['springapex_inquiry_mail_body'] ?? ''));
+        if ($mail_subject !== '') {
+            set_theme_mod('springapex_inquiry_mail_subject', $mail_subject);
+        } else {
+            remove_theme_mod('springapex_inquiry_mail_subject');
+        }
+        if ($mail_body !== '') {
+            set_theme_mod('springapex_inquiry_mail_body', $mail_body);
+        } else {
+            remove_theme_mod('springapex_inquiry_mail_body');
+        }
+
         // 三表单 schema：把提交的字段卡片数组规范化后整体入库。
         $types = springapex_form_field_types();
         $defaults = springapex_form_schema_defaults();
@@ -206,6 +220,30 @@ function springapex_render_form_settings_page(): void
               <?php else : ?>
                 <input name="springapex_turnstile_secret" id="springapex_turnstile_secret" type="password" class="regular-text code" value="<?php echo esc_attr($secret); ?>" autocomplete="new-password" placeholder="留空则不做人机校验">
               <?php endif; ?>
+            </td>
+          </tr>
+        </table>
+
+        <h2 class="title">邮件通知模板</h2>
+        <p class="description">询盘提交后发给运营方的通知邮件（纯文本）。支持下方占位符；清空标题或正文并保存即恢复默认模板。</p>
+        <table class="form-table" role="presentation">
+          <tr>
+            <th scope="row"><label for="springapex_inquiry_mail_subject">邮件标题</label></th>
+            <td><input name="springapex_inquiry_mail_subject" id="springapex_inquiry_mail_subject" type="text" class="large-text" value="<?php echo esc_attr(springapex_inquiry_mail_subject()); ?>"></td>
+          </tr>
+          <tr>
+            <th scope="row"><label for="springapex_inquiry_mail_body">邮件正文</label></th>
+            <td>
+              <textarea name="springapex_inquiry_mail_body" id="springapex_inquiry_mail_body" class="large-text code" rows="14"><?php echo esc_textarea(springapex_inquiry_mail_body()); ?></textarea>
+              <p class="description">访客回复地址（Reply-To）自动设为询盘邮箱，图纸自动作为附件，均无需写进模板。</p>
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">可用占位符</th>
+            <td class="springapex-mail-tokens">
+              <?php foreach (springapex_inquiry_mail_placeholders() as $token => $token_desc) : ?>
+                <span class="springapex-mail-token"><code><?php echo esc_html($token); ?></code><small><?php echo esc_html($token_desc); ?></small></span>
+              <?php endforeach; ?>
             </td>
           </tr>
         </table>

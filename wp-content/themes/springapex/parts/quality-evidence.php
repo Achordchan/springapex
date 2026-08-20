@@ -94,19 +94,23 @@ if (!$image) {
           <h3><?php esc_html_e('Enter the dimensions you know', 'springapex'); ?></h3>
           <p><?php esc_html_e('All dimensions are optional; engineering will confirm any missing values.', 'springapex'); ?></p>
           <div class="sa-compression-form__row">
-            <label class="field"><span><?php esc_html_e('Wire diameter (d)', 'springapex'); ?></span><input type="text" name="wire_diameter" inputmode="decimal" maxlength="80" placeholder="e.g. 1.2 mm"></label>
-            <label class="field"><span><?php esc_html_e('Outside diameter (D₀)', 'springapex'); ?></span><input type="text" name="outside_diameter" inputmode="decimal" maxlength="80" placeholder="e.g. 12 mm"></label>
+            <label class="field"><span><?php esc_html_e('Wire diameter (d)', 'springapex'); ?></span><input type="text" name="springapex_field_wire_diameter" inputmode="decimal" maxlength="80" placeholder="e.g. 1.2 mm"></label>
+            <label class="field"><span><?php esc_html_e('Outside diameter (D₀)', 'springapex'); ?></span><input type="text" name="springapex_field_outside_diameter" inputmode="decimal" maxlength="80" placeholder="e.g. 12 mm"></label>
           </div>
-          <label class="field"><span><?php esc_html_e('Free length (L₀)', 'springapex'); ?></span><input type="text" name="free_length" inputmode="decimal" maxlength="80" placeholder="e.g. 45 mm"></label>
+          <label class="field"><span><?php esc_html_e('Free length (L₀)', 'springapex'); ?></span><input type="text" name="springapex_field_free_length" inputmode="decimal" maxlength="80" placeholder="e.g. 45 mm"></label>
         </div>
 
-        <div class="sa-compression-form__row">
-          <label class="field"><span><?php esc_html_e('Quantity', 'springapex'); ?></span><input type="text" name="quantity" inputmode="numeric" maxlength="80" placeholder="e.g. 5,000 pcs"></label>
-          <label class="field"><span><?php esc_html_e('Material', 'springapex'); ?></span><select name="material"><option value=""><?php esc_html_e('Select material', 'springapex'); ?></option><option>Music Wire</option><option>Stainless Steel</option><option>Carbon Steel</option><option>Alloy or special material</option><option>Need engineering recommendation</option></select></label>
-        </div>
-        <label class="field"><span><?php esc_html_e('Other requirements', 'springapex'); ?></span><textarea name="message" rows="4" maxlength="5000" placeholder="Coating, load, end type, environment, tolerance, testing, or any additional notes."></textarea></label>
-        <?php // 能力页表单的字段区（默认仅工作邮箱）：结构存于「表单设置」，按 schema 渲染。
-        springapex_render_form_schema_fields('product'); ?>
+        <?php
+        // 能力页表单字段按 schema 渲染（尺寸三行在上方 dimensions 面板内
+        // 已按产品标签渲染，此处跳过 email + 三个尺寸 id 避免重复）。
+        $capability_schema = springapex_form_schema();
+        $capability_skip = ['email', 'wire_diameter', 'outside_diameter', 'free_length'];
+        foreach (($capability_schema['product']['fields'] ?? []) as $capability_field) {
+            if (!in_array($capability_field['id'], $capability_skip, true)) {
+                springapex_render_form_schema_field('product', $capability_field);
+            }
+        }
+        ?>
         <button class="btn btn-primary btn-block" type="submit" data-submit-button><?php esc_html_e('Send for Engineering Review', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></button>
         <?php if (springapex_form_turnstile_enabled('product')) : ?>
         <div class="sa-turnstile-widget">

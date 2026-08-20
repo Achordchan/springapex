@@ -277,36 +277,17 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
               <fieldset class="sa-contact-specs">
                 <legend><?php esc_html_e('Basic spring details', 'springapex'); ?></legend>
                 <p><?php esc_html_e('Share any details you already know. Every field below is optional.', 'springapex'); ?></p>
-                <div class="sa-contact-network__form-row">
-                  <label class="field">
-                    <span><?php esc_html_e('Wire diameter', 'springapex'); ?></span>
-                    <input type="text" name="wire_diameter" maxlength="80" inputmode="decimal" placeholder="<?php esc_attr_e('e.g. 1.2 mm', 'springapex'); ?>">
-                  </label>
-                  <label class="field">
-                    <span><?php esc_html_e('Outside diameter', 'springapex'); ?></span>
-                    <input type="text" name="outside_diameter" maxlength="80" inputmode="decimal" placeholder="<?php esc_attr_e('e.g. 12 mm', 'springapex'); ?>">
-                  </label>
-                </div>
-                <div class="sa-contact-network__form-row">
-                  <label class="field">
-                    <span><?php esc_html_e('Free length', 'springapex'); ?></span>
-                    <input type="text" name="free_length" maxlength="80" inputmode="decimal" placeholder="<?php esc_attr_e('e.g. 45 mm', 'springapex'); ?>">
-                  </label>
-                  <label class="field">
-                    <span><?php esc_html_e('Quantity', 'springapex'); ?></span>
-                    <input type="text" name="quantity" maxlength="80" inputmode="numeric" placeholder="<?php esc_attr_e('e.g. 10,000 pcs', 'springapex'); ?>">
-                  </label>
-                </div>
-                <label class="field">
-                  <span><?php esc_html_e('Operating environment', 'springapex'); ?></span>
-                  <input type="text" name="operating_environment" maxlength="240" placeholder="<?php esc_attr_e('Temperature, moisture, chemicals, indoor or outdoor use', 'springapex'); ?>">
-                </label>
+                <?php
+                // 技术参数 + 补充说明按 schema 渲染（跳过基础信息字段，
+                // 那些在上方主区域已有 schema 渲染）。
+                $schema = springapex_form_schema();
+                $basic_ids = ['name', 'phone', 'company', 'email', 'country'];
+                $spec_fields = array_filter($schema['contact']['fields'], static fn ($f) => !in_array($f['id'], $basic_ids, true));
+                foreach ($spec_fields as $spec_field) {
+                    springapex_render_form_schema_field('contact', $spec_field);
+                }
+                ?>
               </fieldset>
-
-              <label class="field">
-                <span><?php esc_html_e('Additional project information', 'springapex'); ?></span>
-                <textarea name="message" rows="5" maxlength="5000" placeholder="<?php esc_attr_e('Required load, working travel, material, cycle life, tolerances, or any other details.', 'springapex'); ?>"></textarea>
-              </label>
             </div>
           </details>
           <button class="btn btn-primary btn-block" type="submit" data-submit-button>

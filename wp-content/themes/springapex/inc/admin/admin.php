@@ -75,9 +75,51 @@ function springapex_hide_unused_menus(): void
     remove_menu_page('edit-comments.php');
 }
 
+/**
+ * WP Mail SMTP（免费版）侧边栏只留 设置/工具/关于：去掉「Upgrade to Pro」、
+ * 轮换推荐插件与 Pro 功能页入口（Email Log / Email Reports 等）。
+ * 只移除菜单项，不解锁任何付费功能；对应页面直链仍可访问。
+ * 页内横幅的隐藏见 assets/css/admin-polish.css。
+ */
+/**
+ * WP Mail SMTP（免费版）侧边栏去掉纯推销入口：「Upgrade to Pro」（slug 是外链
+ * URL）、轮换的「推荐插件」项（wp-mail-smtp-recommended-*）与两个 Pro 卖点页
+ * （Email Log / Email Reports）。Settings / Tools（含测试邮件）/ About 等功能页
+ * 全部保留——remove_submenu_page 会连带锁住该页的直链访问，不能多删。
+ * 页内横幅与 Pro 标签页的隐藏见 assets/css/admin-polish.css。
+ */
+add_action('admin_menu', 'springapex_trim_wp_mail_smtp_menu', 1000);
+function springapex_trim_wp_mail_smtp_menu(): void
+{
+    if (!isset($GLOBALS['submenu']['wp-mail-smtp'])) {
+        return;
+    }
+    // 该插件注册后 $submenu 键被数字重排，slug 在每项 [2] 位；remove_submenu_page
+    // 会连带锁直链访问，所以只按 slug 黑名单精确删纯推销项。
+    foreach ($GLOBALS['submenu']['wp-mail-smtp'] as $key => $item) {
+        $slug = (string) ($item[2] ?? '');
+        $is_promo = str_starts_with($slug, 'http') ||
+            str_starts_with($slug, 'wp-mail-smtp-recommended-') ||
+            in_array($slug, ['wp-mail-smtp-logs', 'wp-mail-smtp-reports'], true);
+        if ($is_promo) {
+            unset($GLOBALS['submenu']['wp-mail-smtp'][$key]);
+        }
+    }
+}
+
 add_action('admin_enqueue_scripts', 'springapex_admin_assets');
 function springapex_admin_assets(string $hook): void
 {
+    // WP Mail SMTP 页面：第三方后台推销清理（配合 springapex_trim_wp_mail_smtp_menu）。
+    if (str_contains($hook, 'wp-mail-smtp')) {
+        wp_enqueue_style(
+            'springapex-admin-polish',
+            SPRINGAPEX_URI . '/assets/css/admin-polish.css',
+            [],
+            SPRINGAPEX_VERSION
+        );
+    }
+
     if (!str_contains($hook, SPRINGAPEX_ADMIN_SLUG)) {
         return;
     }

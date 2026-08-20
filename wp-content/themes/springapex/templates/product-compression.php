@@ -248,21 +248,42 @@ $documents = [
             <p><?php esc_html_e('All dimensions are optional; engineering will confirm any missing values.', 'springapex'); ?></p>
             <div class="sa-compression-form__row">
               <?php foreach (array_slice($dimension_fields, 0, 2) as $field) : ?>
-                <label class="field"><span><?php echo esc_html((string) $field['label']); ?></span><input type="text" name="<?php echo esc_attr((string) $field['name']); ?>" inputmode="decimal" maxlength="80" placeholder="<?php echo esc_attr((string) $field['placeholder']); ?>"></label>
+                <label class="field"><span><?php echo esc_html((string) $field['label']); ?></span><input type="text" name="springapex_field_<?php echo esc_attr((string) $field['name']); ?>" inputmode="decimal" maxlength="80" placeholder="<?php echo esc_attr((string) $field['placeholder']); ?>"></label>
               <?php endforeach; ?>
             </div>
             <?php $last_dimension = $dimension_fields[2]; ?>
-            <label class="field"><span><?php echo esc_html((string) $last_dimension['label']); ?></span><input type="text" name="<?php echo esc_attr((string) $last_dimension['name']); ?>" inputmode="decimal" maxlength="80" placeholder="<?php echo esc_attr((string) $last_dimension['placeholder']); ?>"></label>
+            <label class="field"><span><?php echo esc_html((string) $last_dimension['label']); ?></span><input type="text" name="springapex_field_<?php echo esc_attr((string) $last_dimension['name']); ?>" inputmode="decimal" maxlength="80" placeholder="<?php echo esc_attr((string) $last_dimension['placeholder']); ?>"></label>
           </div>
 
-          <div class="sa-compression-form__row">
-            <label class="field"><span><?php esc_html_e('Quantity', 'springapex'); ?></span><input type="text" name="quantity" inputmode="numeric" maxlength="80" placeholder="e.g. 5,000 pcs"></label>
-            <label class="field"><span><?php esc_html_e('Material', 'springapex'); ?></span><select name="material"><option value=""><?php esc_html_e('Select material', 'springapex'); ?></option><option>Music Wire</option><option>Stainless Steel</option><option>Carbon Steel</option><option>Alloy or special material</option><option>Need engineering recommendation</option></select></label>
-          </div>
-          <label class="field"><span><?php esc_html_e('Other requirements', 'springapex'); ?></span><textarea name="message" rows="4" maxlength="5000" placeholder="Coating, load, end type, environment, tolerance, testing, or any additional notes."></textarea></label>
+          <?php
+          // 产品页表单字段按 schema 渲染：
+          // - 尺寸三行由 $dimension_profiles 提供产品类型感知的标签/占位
+          //   （id 对应 schema 的 wire_diameter/outside_diameter/free_length）；
+          // - 其余字段（quantity/material/message/自定义）由 schema 直接渲染；
+          // - email 单独跳过（上方已渲染）。
+          $product_schema = springapex_form_schema();
+          $dimension_names = array_map(static fn ($f) => $f['name'], $dimension_fields);
+          $skip_ids = array_merge(['email'], $dimension_names);
+          $dimension_by_name = [];
+          foreach ($dimension_fields as $dimension_field) {
+              $dimension_by_name[$dimension_field['name']] = $dimension_field;
+          }
+          ?>
+          <?php foreach (($product_schema['product']['fields'] ?? []) as $product_field) : ?>
+            <?php if (in_array($product_field['id'], $skip_ids, true)) : ?>
+              <?php continue; ?>
+            <?php endif; ?>
+            <?php
+            // 尺寸字段渲染在 dimensions 面板内，用产品感知标签覆盖 schema 默认。
+            if (isset($dimension_by_name[$product_field['id']])):
+                $override = $dimension_by_name[$product_field['id']];
+                $product_field['label'] = $override['label'];
+                $product_field['placeholder'] = $override['placeholder'];
+            endif;
+            springapex_render_form_schema_field('product', $product_field);
+            ?>
+          <?php endforeach; ?>
           <input type="hidden" name="full_name" value="Product detail inquiry">
-          <?php // 产品页表单的字段区（默认仅工作邮箱）：结构存于「表单设置」，按 schema 渲染。
-          springapex_render_form_schema_fields('product'); ?>
           <button class="btn btn-primary btn-block" type="submit" data-submit-button><?php esc_html_e('Send for Engineering Review', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></button>
           <?php if (springapex_form_turnstile_enabled('product')) : ?>
           <div class="sa-turnstile-widget">
