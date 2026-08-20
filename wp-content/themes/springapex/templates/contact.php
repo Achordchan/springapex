@@ -294,13 +294,14 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
                 <?php
                 // 仅渲染可选技术参数（$spec_optional_ids 上方已算好）；
                 // 必填的已在主区域渲染，此处再渲染会产生重名字段相互覆盖。
-                $spec_fields = array_filter(
-                    springapex_form_schema()['contact']['fields'] ?? [],
-                    static fn (array $f): bool => in_array($f['id'], $spec_optional_ids, true)
-                );
-                foreach ($spec_fields as $spec_field) {
-                    springapex_render_form_schema_field('contact', $spec_field);
-                }
+                // 走共享渲染函数获得 .sa-schema-fields 网格包裹——is-half
+                // 半宽样式只对网格直接子元素生效，否则 Wire/Outside、
+                // Quantity/Material 半宽配对全部变成全宽堆叠。
+                $details_skip_ids = array_values(array_diff(
+                    array_map(static fn (array $f): string => (string) $f['id'], springapex_form_schema()['contact']['fields'] ?? []),
+                    $spec_optional_ids
+                ));
+                springapex_render_form_schema_fields('contact', 'field', '', $details_skip_ids);
                 ?>
               </fieldset>
             </div>
