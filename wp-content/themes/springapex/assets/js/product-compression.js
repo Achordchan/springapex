@@ -88,6 +88,11 @@
       });
     };
 
+    // 初始模式由模板决定（尺寸参数被设为必填时模板会禁用 drawing 按钮
+    // 并默认落在 dimensions），reset 应回到初始模式而不是写死的 drawing。
+    const initialActive = buttons.find((button) => button.classList.contains('is-active'));
+    const initialMode = (initialActive instanceof HTMLElement ? initialActive.dataset.compressionInquiryMode : '') || 'drawing';
+
     buttons.forEach((button, index) => {
       button.addEventListener('click', () => activate(button.dataset.compressionInquiryMode || 'drawing', false));
       button.addEventListener('keydown', (event) => {
@@ -95,6 +100,7 @@
         event.preventDefault();
         const step = event.key === 'ArrowRight' ? 1 : -1;
         const target = buttons[(index + step + buttons.length) % buttons.length];
+        if (!(target instanceof HTMLElement) || target.disabled) return;
         activate(target.dataset.compressionInquiryMode || 'drawing', true);
       });
     });
@@ -104,7 +110,7 @@
     });
 
     form.addEventListener('reset', () => {
-      window.setTimeout(() => activate('drawing', false), 0);
+      window.setTimeout(() => activate(initialMode, false), 0);
     });
 
     if (dropzone instanceof HTMLElement && fileInput instanceof HTMLInputElement) {

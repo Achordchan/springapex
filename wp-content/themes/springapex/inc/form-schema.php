@@ -39,7 +39,16 @@ function springapex_form_field_types(): array
     ];
 }
 
-/** 系统字段（固定语义）：id => 中文说明。 */
+/** 不可删除、缺失时强制补回的字段（询盘成立的基础），与映射表分离。 */
+function springapex_form_locked_fields(): array
+{
+    return ['name', 'email', 'message'];
+}
+
+/**
+ * 系统字段：id 有固定语义（映射到询盘专用 meta/列），类型锁定。
+ * 注意这只是「映射」集合——可删与否看 springapex_form_locked_fields()。
+ */
 function springapex_form_system_fields(): array
 {
     return [
@@ -182,10 +191,12 @@ function springapex_form_schema(): array
             $seen[$normalized['id']] = true;
             $entry['fields'][] = $normalized;
         }
-        // 仅系统字段（姓名/邮箱/留言）在缺失时补回——它们是询盘成立的基础，
-        // 不可删除；phone/company/country 等默认字段允许被删掉，不再回填。
+        // 仅锁定字段（姓名/邮箱/留言）在缺失时补回——它们是询盘成立的
+        // 基础，不可删除；其余系统字段（phone/quantity/技术参数等）只做
+        // meta 映射，运营者可删，删了不回填。
+        $locked_fields = springapex_form_locked_fields();
         foreach ($form_defaults['fields'] as $field) {
-            if (!isset($seen[$field['id']]) && array_key_exists($field['id'], springapex_form_system_fields())) {
+            if (!isset($seen[$field['id']]) && in_array($field['id'], $locked_fields, true)) {
                 $entry['fields'][] = $field;
             }
         }

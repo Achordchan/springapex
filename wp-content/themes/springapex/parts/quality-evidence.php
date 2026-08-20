@@ -83,7 +83,7 @@ if (!$image) {
         <label class="honeypot" aria-hidden="true">Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
 
         <div class="sa-compression-form__modes" role="tablist" aria-label="<?php esc_attr_e('How to send requirements', 'springapex'); ?>">
-          <button type="button" class="<?php echo $capability_dimensions_default ? '' : 'is-active'; ?>" role="tab" aria-selected="<?php echo $capability_dimensions_default ? 'false' : 'true'; ?>" aria-controls="capability-drawing-panel" data-compression-inquiry-mode="drawing"><?php esc_html_e('Upload a Drawing', 'springapex'); ?></button>
+          <button type="button" class="<?php echo $capability_dimensions_default ? '' : 'is-active'; ?>" role="tab" aria-selected="<?php echo $capability_dimensions_default ? 'false' : 'true'; ?>" aria-controls="capability-drawing-panel" data-compression-inquiry-mode="drawing"<?php echo $capability_dimensions_default ? ' disabled title="Required dimensions must be entered directly"' : ''; ?>><?php esc_html_e('Upload a Drawing', 'springapex'); ?></button>
           <button type="button" class="<?php echo $capability_dimensions_default ? 'is-active' : ''; ?>" role="tab" aria-selected="<?php echo $capability_dimensions_default ? 'true' : 'false'; ?>" aria-controls="capability-dimensions-panel" data-compression-inquiry-mode="dimensions"><?php esc_html_e('Enter Dimensions Manually', 'springapex'); ?></button>
         </div>
 

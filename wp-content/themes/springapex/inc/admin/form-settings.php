@@ -127,10 +127,12 @@ function springapex_render_form_settings_page(): void
                 $entry['fields'][] = $field;
             }
 
-            // 仅系统字段（姓名/邮箱/留言）缺失时补回——询盘成立的基础，不可删除；
-            // 其余默认字段允许运营者删除，不回填（与前台渲染同一规则）。
+            // 仅锁定字段（姓名/邮箱/留言）缺失时补回——询盘成立的基础，
+            // 不可删除；其余默认字段（含技术参数等系统映射字段）允许
+            // 运营者删除，不回填（与前台渲染同一规则）。
+            $locked_field_ids = springapex_form_locked_fields();
             foreach ($form_defaults['fields'] as $field) {
-                if (!isset($used_ids[$field['id']]) && array_key_exists($field['id'], $system_field_ids)) {
+                if (!isset($used_ids[$field['id']]) && in_array($field['id'], $locked_field_ids, true)) {
                     $entry['fields'][] = $field;
                 }
             }
@@ -273,6 +275,8 @@ function springapex_render_form_settings_page(): void
 function springapex_render_builder_field_row(string $form, int $index, array $field, array $types, array $system_fields): void
 {
     $is_system = array_key_exists((string) $field['id'], $system_fields);
+    // 映射字段（电话/数量/技术参数等）类型锁定但可删；只有锁定字段不可删。
+    $is_locked = in_array((string) $field['id'], springapex_form_locked_fields(), true);
     $row_id = 'springapex_field_' . uniqid();
     ?>
     <div class="builder-field" data-builder-field draggable="true">
@@ -280,8 +284,8 @@ function springapex_render_builder_field_row(string $form, int $index, array $fi
         <span class="builder-field__drag" aria-hidden="true">⠿</span>
         <strong><?php echo $field['label'] !== '' ? esc_html($field['label']) : '（新字段）'; ?></strong>
         <span class="builder-field__type"><?php echo esc_html($types[$field['type']]['label'] ?? ''); ?></span>
-        <?php if ($is_system) : ?><span class="builder-field__system">系统字段</span><?php endif; ?>
-        <?php if (!$is_system) : ?>
+        <?php if ($is_locked) : ?><span class="builder-field__system">系统字段</span><?php elseif ($is_system) : ?><span class="builder-field__system">映射字段</span><?php endif; ?>
+        <?php if (!$is_locked) : ?>
           <button type="button" class="builder-field__remove" data-builder-remove>删除</button>
         <?php endif; ?>
       </div>
