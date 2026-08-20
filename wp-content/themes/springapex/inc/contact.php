@@ -466,8 +466,8 @@ function springapex_verify_contact_form_identity(): bool
         return false;
     }
 
-    // wp_verify_nonce 返回 int(1/2)|false：合法 nonce 恰好会触发上面的
-    // TypeError（bool 签名 vs int 返回）。PR #8 引入、随本合并修复。
+    // wp_verify_nonce 返回 int(1/2)|false，合法 nonce 恰好触发 bool 签名的
+    // TypeError（PR #8 引入，表单有效提交 500），必须显式强转。
     return (bool) wp_verify_nonce(
         springapex_contact_nonce(),
         'springapex_contact_' . $form_context
