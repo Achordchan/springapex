@@ -1234,7 +1234,93 @@
     window.addEventListener('resize', requestUpdate);
   }
 
+  // 行业方案瀑布流：首屏之外的服务器直出卡片标记 is-deferred（仅 html.js
+  // 下隐藏），滚动接近哨兵时按批显现；卡片图片原生 loading=lazy，字节
+  // 开销始终只发生在可见范围附近。无 JS 时全部直出（SEO 不受损）。
+  function initSolutionsLazyGrid() {
+    document.querySelectorAll('[data-lazy-batch]').forEach((grid) => {
+      if (!(grid instanceof HTMLElement)) return;
+      const sentinel = grid.parentElement?.querySelector('[data-lazy-sentinel]');
+      if (!(sentinel instanceof HTMLElement)) return;
+      // 无 IntersectionObserver 的环境（旧内嵌 webview）：CSS 已在 html.js 下
+      // 隐藏延迟卡片，直接全部显现，避免永久隐藏。
+      if (!('IntersectionObserver' in window)) {
+        grid.querySelectorAll('.is-deferred').forEach((card) => card.classList.remove('is-deferred'));
+        sentinel.remove();
+        return;
+      }
+      const batch = Math.max(1, Number(grid.dataset.lazyBatch) || 6);
+      let observer = null;
+
+      const revealBatch = () => {
+        let revealed = 0;
+        grid.querySelectorAll('.is-deferred').forEach((card) => {
+          if (revealed >= batch) return;
+          card.classList.remove('is-deferred');
+          card.classList.add('is-lazy-revealed');
+          revealed += 1;
+        });
+        if (!grid.querySelector('.is-deferred')) {
+          if (observer) observer.disconnect();
+          window.removeEventListener('scroll', onScroll);
+          sentinel.remove();
+        }
+      };
+
+      // display:none 的卡片不占高度：快速滚动可能一步跨过哨兵（它在视口
+      // 上方、不再产生 intersect 变化），IO 会永远沉默——滚动兜底补显。
+      const onScroll = () => {
+        if (grid.querySelector('.is-deferred') && sentinel.getBoundingClientRect().bottom < 0) {
+          revealBatch();
+        }
+      };
+
+      // 读屏器/键盘的显式展开入口（虚拟光标不触发 focus，display:none 的
+      // 卡片在其浏览模式下不可达）：点击按钮显现下一批。
+      sentinel.addEventListener('click', revealBatch);
+
+      observer = new IntersectionObserver((entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) revealBatch();
+      }, { rootMargin: '500px 0px' });
+      observer.observe(sentinel);
+      window.addEventListener('scroll', onScroll, { passive: true });
+
+      // 深链（/solutions/#<slug>）指向隐藏卡片时，先把目标及其之前的批次
+      // 显现出来，锚点定位才能算对位置（本初始化器在 stabilizeInitialAnchor
+      // 之前运行）。
+      const hash = window.location.hash;
+      if (hash && hash.length > 1) {
+        // 坏百分号转义（如 #%E0%A4%A）会让 decodeURIComponent 抛错并炸掉
+        // 整条 onReady 初始化链——与 stabilizeInitialAnchor 同样兜底。
+        let hashId = hash.slice(1);
+        try {
+          hashId = decodeURIComponent(hashId);
+        } catch (error) {
+          hashId = hash.slice(1);
+        }
+        const hashTarget = document.getElementById(hashId);
+        if (hashTarget instanceof HTMLElement && hashTarget.classList.contains('is-deferred')) {
+          while (hashTarget.classList.contains('is-deferred') && grid.querySelector('.is-deferred')) {
+            revealBatch();
+          }
+        }
+      }
+
+      // 键盘可达性：display:none 的卡片不在 Tab 序里，正向前进会直接从
+      // 最后一张可见卡跳到 CTA。焦点落在最后一张可见卡上时提前显现下一
+      // 批，Tab 自然续进新卡片。
+      grid.addEventListener('focusin', () => {
+        const visible = grid.querySelectorAll('.solution-card:not(.is-deferred)');
+        const last = visible[visible.length - 1];
+        if (last instanceof HTMLElement && last.contains(document.activeElement)) {
+          revealBatch();
+        }
+      });
+    });
+  }
+
   onReady(() => {
+    initSolutionsLazyGrid();
     stabilizeInitialAnchor();
     initHeader();
     initProductMenus();

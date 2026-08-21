@@ -21,9 +21,17 @@ get_template_part('parts/solutions-subnav', null, ['active' => 'industries']);
 
 <section class="section solutions-grid-section" id="solutions-grid">
   <div class="container container-wide">
-    <div class="solutions-grid" data-reveal-group>
-      <?php foreach ($solutions as $solution) : ?>
-        <a class="solution-card" id="<?php echo esc_attr((string) $solution['slug']); ?>" href="<?php echo esc_url(springapex_solution_url($solution)); ?>">
+    <?php
+    // 瀑布流懒加载：首屏直出 6 张（SEO/无 JS 时全部可见——html.js 才隐藏
+    // 延迟卡片），其余随滚动按批显现；卡片图片本身是 loading=lazy，
+    // 真正的字节开销只发生在卡片显现前后。
+    $initial_count = 6;
+    $lazy_batch = 6;
+    $has_deferred = count($solutions) > $initial_count;
+    ?>
+    <div class="solutions-grid" data-reveal-group<?php echo $has_deferred ? ' data-lazy-batch="' . esc_attr((string) $lazy_batch) . '"' : ''; ?>>
+      <?php foreach ($solutions as $index => $solution) : ?>
+        <a class="solution-card<?php echo $index >= $initial_count ? ' is-deferred' : ''; ?>" id="<?php echo esc_attr((string) $solution['slug']); ?>" href="<?php echo esc_url(springapex_solution_url($solution)); ?>">
           <span class="solution-media">
             <?php echo springapex_image($solution['image'] ?? '', (string) $solution['title'], [
                 'width' => 1200,
@@ -41,6 +49,14 @@ get_template_part('parts/solutions-subnav', null, ['active' => 'industries']);
         </a>
       <?php endforeach; ?>
     </div>
+    <?php if ($has_deferred) : ?>
+      <?php // 真实按钮而非纯哨兵：读屏器虚拟光标不做 focus，display:none 的
+            // 延迟卡片在其浏览模式下不可达——渐进披露控件是无障碍的标准形态，
+            // 键盘/读屏用户经此显式展开；指针用户仍有滚动自动显现。 ?>
+      <button type="button" class="btn btn-outline solutions-grid__more" data-lazy-sentinel>
+        <?php esc_html_e('Show more industries', 'springapex'); ?>
+      </button>
+    <?php endif; ?>
   </div>
 </section>
 

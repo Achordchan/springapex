@@ -1900,3 +1900,41 @@ body.drawing-guide-open {
     padding-top: 0;
   }
 }
+
+/* 行业方案瀑布流懒加载：html.js 下首屏外卡片隐藏、滚动按批显现 */
+html.js .solution-card.is-deferred {
+  display: none;
+}
+
+.solution-card.is-lazy-revealed {
+  animation: sa-solution-card-in 0.45s var(--sa-ease) both;
+}
+
+@keyframes sa-solution-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .solution-card.is-lazy-revealed {
+    animation: none;
+  }
+}
+
+/* 「显示更多」按钮（兼滚动哨兵）：仅在 JS 环境显示（无 JS 时卡片全部
+   直出、按钮没有点击处理器，必须藏着）；全部显现后由 JS 移除 */
+.solutions-grid__more {
+  display: none;
+}
+
+html.js .solutions-grid__more {
+  display: block;
+  margin: 32px auto 0;
+}
