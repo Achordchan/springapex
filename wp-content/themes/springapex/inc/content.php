@@ -105,6 +105,9 @@ function springapex_content(): array
                 'image' => 'products-hero-v3.png',
                 'mobile_image' => 'products-hero-mobile-v1.png',
             ],
+            'mega_menu' => [
+                'feature_image' => 'product-compression-menu-v2.png',
+            ],
             'categories' => [
                 ['slug' => 'compression-springs', 'title' => 'Compression Springs', 'image' => 'product-compression-detail-v4.png', 'category_image' => 'product-compression-detail-v4.png', 'featured_image' => 'product-compression-card-v3.png', 'desc' => 'Designed for dependable axial load and return force.'],
                 ['slug' => 'extension-springs', 'title' => 'Extension Springs', 'image' => 'product-extension-v2.png', 'category_image' => 'product-extension-category-v3.png', 'desc' => 'Built to deliver reliable tension and controlled extension.'],

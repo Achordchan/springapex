@@ -5,7 +5,9 @@ if (!defined('ABSPATH')) {
 $nav = springapex_navigation_items();
 $brand = springapex_brand();
 $products = springapex_products();
-$product_menu_feature = $products[0] ?? [];
+$product_menu = springapex_get('products.mega_menu', []);
+$product_menu = is_array($product_menu) ? $product_menu : [];
+$product_menu_feature_image = $product_menu['feature_image'] ?? 'product-compression-menu-v2.png';
 ?>
 <a class="skip-link" href="#main"><?php esc_html_e('Skip to content', 'springapex'); ?></a>
 <header class="site-header" data-header>
@@ -150,12 +152,12 @@ $product_menu_feature = $products[0] ?? [];
             <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
           </a>
         </div>
-        <?php if ($product_menu_feature) : ?>
+        <?php if ($product_menu_feature_image !== '') : ?>
           <div class="products-mega-menu__feature-media">
             <?php
             echo springapex_image(
-                $product_menu_feature['featured_image'] ?? $product_menu_feature['category_image'] ?? $product_menu_feature['image'] ?? '',
-                (string) ($product_menu_feature['title'] ?? __('Featured spring product', 'springapex')),
+                $product_menu_feature_image,
+                __('ApexSpring precision spring product showcase', 'springapex'),
                 [
                     'class' => 'products-mega-menu__feature-image',
                     'sizes' => '340px',

@@ -211,6 +211,13 @@ function springapex_admin_screens(): array
                     'fields' => [],
                 ],
                 [
+                    'title' => '产品大菜单',
+                    'desc' => '页头 Products 展开后左侧的品牌展示图，与单个产品的主图独立。',
+                    'fields' => [
+                        ['path' => 'products.mega_menu.feature_image', 'label' => '左侧展示图', 'type' => 'image', 'help' => '建议使用深色、横版、主体居中的弹簧图。这张图不会随产品主图变化。'],
+                    ],
+                ],
+                [
                     'title' => '产品选型（按受力方向）',
                     'desc' => '产品列表页中部的选型引导板块，帮助客户按受力方向找到对应的弹簧类别。',
                     'fields' => [
@@ -828,6 +835,7 @@ function springapex_admin_image_dimensions_map(): array
         'sustainability.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
 
         // 卡片 / 内容配图
+        'products.mega_menu.feature_image' => '1200 × 700 px（约 12:7，横版）',
         'capabilities.project_brief.image' => '1600 × 900 px（16:9，横版）',
         'manufacturing_process.#.image' => '1600 × 1200 px（4:3，横版实拍）',
         'capabilities.verification.image' => '1680 × 700 px（2.4:1，横版示意图）',
