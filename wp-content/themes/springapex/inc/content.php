@@ -857,11 +857,42 @@ function springapex_solutions_sync_state(): array
         }
     }
 
+    // slug 改名识别：恰好一个缺配条目 + 恰好一个被标记的失配文章，且标题
+    // 完全一致 → 视为运营者改了 slug（重命名保留原帖及其全部文章侧
+    // meta/详情），而不是新建 + 转草稿。多对多或标题不同时不猜，退回
+    // 原行为（新建 + 清理）。
+    $renames = [];
+    // 缺配条目 = items 有而 posts_by_slug 没有的 slug（不是全部条目键）
+    $missing = array_values(array_diff(array_keys($items_by_slug), array_keys($posts_by_slug)));
+    $orphan_ids = [];
+    $desired_by_id = [];
+    foreach ($posts_by_slug as $desired_slug => $post) {
+        $desired_by_id[(int) $post->ID] = $desired_slug;
+    }
+    foreach ($posts as $post) {
+        $is_flagged = get_post_meta((int) $post->ID, '_springapex_from_content', true) === '1';
+        $is_orphan = !isset($items_by_slug[$desired_by_id[(int) $post->ID] ?? '']);
+        if ($is_flagged && $is_orphan && in_array($post->post_status, ['publish', 'future'], true)) {
+            $orphan_ids[] = (int) $post->ID;
+        }
+    }
+    if (count($missing) === 1 && count($orphan_ids) === 1) {
+        $new_slug = $missing[0];
+        $orphan = get_post($orphan_ids[0]);
+        $item = $items_by_slug[$new_slug];
+        if ($orphan !== null
+            && sanitize_text_field((string) ($item['title'] ?? '')) !== ''
+            && sanitize_text_field((string) $orphan->post_title) === sanitize_text_field((string) ($item['title'] ?? ''))) {
+            $renames[$new_slug] = $orphan;
+        }
+    }
+
     return [
         'items' => $items_by_slug,
         'posts' => $posts,
         'posts_by_slug' => $posts_by_slug,
         'next_order' => $next_order,
+        'renames' => $renames,
     ];
 }
 
@@ -872,6 +903,16 @@ function springapex_sync_solutions_from_content_locked(): void
     $posts = $state['posts'];
     $posts_by_slug = $state['posts_by_slug'];
     $next_order = $state['next_order'];
+
+    // 改名配对：重命名保留原帖（文章侧 meta/详情不丢），并让它以新 slug
+    // 参与下方常规字段同步。
+    foreach ($state['renames'] as $new_slug => $orphan) {
+        wp_update_post([
+            'ID' => (int) $orphan->ID,
+            'post_name' => $new_slug,
+        ]);
+        $posts_by_slug[$new_slug] = $orphan;
+    }
 
     foreach ($items_by_slug as $slug => $item) {
         $title = sanitize_text_field((string) ($item['title'] ?? ''));
@@ -952,12 +993,23 @@ function springapex_sync_solutions_from_content_locked(): void
     }
 
     foreach ($posts as $post) {
+        // 用新鲜数据判断：本轮可能刚重命名/更新过这篇文章，旧快照的
+        // post_name/status 会误判（把刚改名的文章转草稿）。
+        $fresh = get_post((int) $post->ID);
+        if ($fresh === null) {
+            continue;
+        }
+        $fresh_slug = (string) $fresh->post_name;
+        if ($fresh->post_status === 'trash' && str_ends_with($fresh_slug, '__trashed')) {
+            $meta_slug = (string) get_post_meta((int) $fresh->ID, '_wp_desired_post_slug', true);
+            $fresh_slug = $meta_slug !== '' ? $meta_slug : substr($fresh_slug, 0 - strlen('__trashed'));
+        }
         if (
-            get_post_meta((int) $post->ID, '_springapex_from_content', true) === '1'
-            && !isset($items_by_slug[$post->post_name])
-            && in_array($post->post_status, ['publish', 'future'], true)
+            get_post_meta((int) $fresh->ID, '_springapex_from_content', true) === '1'
+            && !isset($items_by_slug[$fresh_slug])
+            && in_array($fresh->post_status, ['publish', 'future'], true)
         ) {
-            wp_update_post(['ID' => (int) $post->ID, 'post_status' => 'draft']);
+            wp_update_post(['ID' => (int) $fresh->ID, 'post_status' => 'draft']);
         }
     }
 }

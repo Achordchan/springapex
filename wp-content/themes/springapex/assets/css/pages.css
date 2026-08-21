@@ -1928,8 +1928,13 @@ html.js .solution-card.is-deferred {
   }
 }
 
-/* 「显示更多」按钮（兼滚动哨兵）：全部显现后由 JS 移除 */
+/* 「显示更多」按钮（兼滚动哨兵）：仅在 JS 环境显示（无 JS 时卡片全部
+   直出、按钮没有点击处理器，必须藏着）；全部显现后由 JS 移除 */
 .solutions-grid__more {
+  display: none;
+}
+
+html.js .solutions-grid__more {
   display: block;
   margin: 32px auto 0;
 }
