@@ -166,7 +166,7 @@ function springapex_admin_overview_page(): void
     $elsewhere = [
         ['label' => '顶部导航菜单', 'desc' => '用 WordPress 自带的菜单功能：拖动排序，拖到右边缩进就是二级菜单。', 'url' => 'nav-menus.php'],
         ['label' => '产品条目', 'desc' => '每款产品的参数、材料、适用场景和图纸下载。', 'url' => 'edit.php?post_type=spring_product'],
-        ['label' => '行业方案条目', 'desc' => '每个行业的方案正文和配图。', 'url' => 'edit.php?post_type=spring_solution'],
+        ['label' => '行业方案条目', 'desc' => '行业卡片以及每个行业的详细内容和配图。', 'url' => 'edit.php?post_type=spring_solution'],
         ['label' => '案例条目', 'desc' => '客户案例的正文、图片和相关产品。', 'url' => 'edit.php?post_type=spring_case'],
         ['label' => '新闻文章', 'desc' => '每篇新闻的正文、图集和所属类型。', 'url' => 'edit.php?post_type=spring_news'],
         ['label' => '客户询盘', 'desc' => '客户从联系页提交的询盘和附件。', 'url' => 'edit.php?post_type=spring_inquiry'],

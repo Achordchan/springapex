@@ -98,6 +98,27 @@ function springapex_admin_search_index(?string $only_screen = null): array
             $section_title = (string) ($section['title'] ?? '');
             $anchor = springapex_admin_section_id((string) $screen_key, (int) $i);
 
+            $signpost = is_array($section['signpost'] ?? null) ? $section['signpost'] : [];
+            $signpost_path = sanitize_key((string) ($signpost['path'] ?? ''));
+            $signpost_title = trim((string) ($signpost['title'] ?? ''));
+            if ($signpost_path !== '' && $signpost_title !== '') {
+                $signpost_text = trim((string) ($signpost['text'] ?? ''));
+                $signpost_button = trim((string) ($signpost['button'] ?? ''));
+                $index[] = [
+                    'screen' => (string) $screen_key,
+                    'anchor' => $anchor,
+                    'screenLabel' => $screen_label,
+                    'section' => $section_title,
+                    'label' => $signpost_title,
+                    'path' => $signpost_path,
+                    'snippet' => $signpost_text,
+                    'text' => springapex_admin_strtolower(trim(
+                        $signpost_title . ' ' . $signpost_text . ' ' . $signpost_button . ' '
+                        . $section_title . ' ' . $screen_label
+                    )),
+                ];
+            }
+
             foreach ((array) ($section['fields'] ?? []) as $field) {
                 $path = (string) ($field['path'] ?? '');
                 if ($path === '') {

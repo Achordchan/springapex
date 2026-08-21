@@ -248,7 +248,7 @@ function springapex_admin_screens(): array
         'solutions' => [
             'label' => '行业方案页',
             'title' => '行业方案页',
-            'intro' => '行业方案列表页。每个行业的详细内容请到左侧菜单「Industry Solutions」里编辑。',
+            'intro' => '这里只编辑行业方案列表页和案例页的页面头部。行业卡片及每个行业的详细内容，请到左侧菜单「Industry Solutions」编辑。',
             'preview' => '/solutions/',
             'sections' => [
                 [
@@ -263,22 +263,15 @@ function springapex_admin_screens(): array
                 ],
                 [
                     'title' => '行业卡片',
-                    'desc' => '列表上的行业卡片。',
-                    'fields' => [
-                        [
-                            'path' => 'solutions.items',
-                            'type' => 'repeater',
-                            'label' => '行业',
-                            'item_label' => '行业',
-                            'title_key' => 'title',
-                            'fields' => [
-                                ['path' => 'title', 'label' => '行业名称', 'type' => 'text', 'help' => ''],
-                                ['path' => 'slug', 'label' => '网址标识', 'type' => 'text', 'help' => '小写英文加连字符。'],
-                                ['path' => 'tagline', 'label' => '标语', 'type' => 'text', 'help' => '卡片上的一句短语。'],
-                                ['path' => 'image', 'label' => '配图', 'type' => 'image', 'help' => ''],
-                            ],
-                        ],
+                    'desc' => '这里只说明编辑位置，不再提供重复的卡片表单。',
+                    'signpost' => [
+                        'path' => 'solutions-industry-cards',
+                        'title' => '行业卡片请到「Industry Solutions」编辑',
+                        'text' => '行业名称、网址标识、卡片标语和配图，都由对应的行业方案条目统一管理。',
+                        'button' => '前往 Industry Solutions',
+                        'url' => 'edit.php?post_type=spring_solution',
                     ],
+                    'fields' => [],
                 ],
                 [
                     'title' => '案例页头部',
@@ -828,7 +821,6 @@ function springapex_admin_image_dimensions_map(): array
         'products.categories.#.image' => '1200 × 1200 px（1:1，方形，白底产品图）',
         'products.categories.#.category_image' => '1200 × 1200 px（1:1，方形）',
         'products.categories.#.featured_image' => '1200 × 1200 px（1:1，方形）',
-        'solutions.items.#.image' => '1200 × 900 px（4:3，横版）',
         'capabilities.project_brief.image' => '1600 × 900 px（16:9，横版）',
         'manufacturing_process.#.image' => '1600 × 1200 px（4:3，横版实拍）',
         'capabilities.verification.image' => '1680 × 700 px（2.4:1，横版示意图）',
