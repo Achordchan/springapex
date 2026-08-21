@@ -107,11 +107,13 @@
 
 /* 开关（首页推荐） */
 
-.sa-pp__switch {
+.sa-pp__field > .sa-pp__switch {
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-bottom: 0;
   cursor: pointer;
+  font-weight: 400;
 }
 
 .sa-pp__switch input {

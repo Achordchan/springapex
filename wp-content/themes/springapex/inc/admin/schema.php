@@ -111,21 +111,15 @@ function springapex_admin_screens(): array
                 ],
                 [
                     'title' => '应用领域卡片',
-                    'desc' => '带图片的行业卡片，点击后跳转到对应的行业方案页。',
-                    'fields' => [
-                        [
-                            'path' => 'home.applications',
-                            'type' => 'repeater',
-                            'label' => '应用领域',
-                            'item_label' => '领域',
-                            'title_key' => 'title',
-                            'fields' => [
-                                ['path' => 'title', 'label' => '名称', 'type' => 'text', 'help' => ''],
-                                ['path' => 'slug', 'label' => '对应行业方案', 'type' => 'text', 'help' => '要和「行业方案页」里的标识一致，否则点击会 404。'],
-                                ['path' => 'image', 'label' => '配图', 'type' => 'image', 'help' => '展示实际应用场景。'],
-                            ],
-                        ],
+                    'desc' => '首页自动显示 Industry Solutions 中排在最前的四个行业。',
+                    'signpost' => [
+                        'path' => 'home-industry-solutions',
+                        'title' => '首页行业卡片请到「Industry Solutions」编辑',
+                        'text' => '首页按行业方案后台排序显示前四项，名称、配图和链接都与 Solutions 页保持一致。',
+                        'button' => '前往 Industry Solutions',
+                        'url' => 'edit.php?post_type=spring_solution',
                     ],
+                    'fields' => [],
                 ],
                 [
                     'title' => '生产流程',
@@ -167,7 +161,7 @@ function springapex_admin_screens(): array
         'products' => [
             'label' => '产品页',
             'title' => '产品页',
-            'intro' => '产品列表页的头部和分类卡片。每个产品的详细参数请到左侧菜单「Spring Products」里逐个编辑。',
+            'intro' => '这里编辑产品列表页的页面头部和选型引导。产品卡片及每个产品的详细内容，请到左侧菜单「Spring Products」编辑。',
             'preview' => '/products/',
             'sections' => [
                 [
@@ -184,25 +178,15 @@ function springapex_admin_screens(): array
                 ],
                 [
                     'title' => '产品分类',
-                    'desc' => '这些分类同时出现在产品页、页头的产品大菜单和首页。删除一项前，请先确认没有其他页面链接到它。',
-                    'fields' => [
-                        [
-                            'path' => 'products.categories',
-                            'type' => 'repeater',
-                            'label' => '分类',
-                            'item_label' => '产品分类',
-                            'title_key' => 'title',
-                            'fields' => [
-                                ['path' => 'title', 'label' => '分类名称', 'type' => 'text', 'help' => ''],
-                                ['path' => 'slug', 'label' => '网址标识', 'type' => 'text', 'help' => '小写英文加连字符，改了旧链接会失效。'],
-                                ['path' => 'desc', 'label' => '一句话介绍', 'type' => 'textarea', 'help' => '显示在分类卡片上。'],
-                                ['path' => 'icon', 'label' => '图标', 'type' => 'icon', 'help' => ''],
-                                ['path' => 'image', 'label' => '主图', 'type' => 'image', 'help' => '产品详情页顶部使用。'],
-                                ['path' => 'category_image', 'label' => '列表图', 'type' => 'image', 'help' => '产品列表卡片使用；留空则用主图。'],
-                                ['path' => 'featured_image', 'label' => '大菜单图', 'type' => 'image', 'help' => '页头产品大菜单使用；留空则用列表图。'],
-                            ],
-                        ],
+                    'desc' => '这里只说明编辑位置，不再提供重复的产品表单。',
+                    'signpost' => [
+                        'path' => 'products-categories',
+                        'title' => '产品卡片请到「Spring Products」编辑',
+                        'text' => '产品名称、网址标识、卡片介绍、产品图和首页推荐，都由对应的产品条目统一管理。',
+                        'button' => '前往 Spring Products',
+                        'url' => 'edit.php?post_type=spring_product',
                     ],
+                    'fields' => [],
                 ],
                 [
                     'title' => '产品选型（按受力方向）',
@@ -817,10 +801,6 @@ function springapex_admin_image_dimensions_map(): array
         'resources.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
 
         // 卡片 / 内容配图
-        'home.applications.#.image' => '1200 × 900 px（4:3，横版）',
-        'products.categories.#.image' => '1200 × 1200 px（1:1，方形，白底产品图）',
-        'products.categories.#.category_image' => '1200 × 1200 px（1:1，方形）',
-        'products.categories.#.featured_image' => '1200 × 1200 px（1:1，方形）',
         'capabilities.project_brief.image' => '1600 × 900 px（16:9，横版）',
         'manufacturing_process.#.image' => '1600 × 1200 px（4:3，横版实拍）',
         'capabilities.verification.image' => '1680 × 700 px（2.4:1，横版示意图）',

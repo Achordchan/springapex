@@ -142,7 +142,7 @@ function springapex_render_product_panel(object $post): void
             <label class="sa-pp__switch">
               <input type="checkbox" name="springapex_featured" value="1" <?php checked($featured); ?>>
               <span class="sa-pp__switch-track" aria-hidden="true"></span>
-              <span class="sa-pp__switch-text"><?php esc_html_e('在首页的「Featured Products」里显示这个产品', 'springapex'); ?></span>
+              <span class="sa-pp__switch-text"><?php esc_html_e('在首页的产品推荐区域显示这个产品', 'springapex'); ?></span>
             </label>
           </div>
         </section>

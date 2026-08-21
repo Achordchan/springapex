@@ -5,6 +5,8 @@ if (!defined('ABSPATH')) {
 $home = springapex_get('home', []);
 $hero = $home['hero'] ?? [];
 $hero_lines = preg_split('/\R/', (string) ($hero['title'] ?? '')) ?: [];
+$home_products = springapex_featured_products();
+$home_solutions = array_slice(springapex_solutions(), 0, 4);
 ?>
 <section class="hero hero-home">
   <div class="container container-wide hero-grid hero-grid-home">
@@ -80,12 +82,13 @@ $hero_lines = preg_split('/\R/', (string) ($hero['title'] ?? '')) ?: [];
   </div>
 </section>
 
+<?php if ($home_products) : ?>
 <section class="section sa-home-products">
   <div class="container container-wide">
     <div class="section-head row-between">
       <div class="sa-section-intro">
         <p class="section-kicker"><?php esc_html_e('PRODUCT RANGE', 'springapex'); ?></p>
-        <h2><?php esc_html_e('Six core spring families. Thousands of configurations.', 'springapex'); ?></h2>
+        <h2><?php esc_html_e('Featured spring products for demanding applications.', 'springapex'); ?></h2>
         <p class="sa-section-bridge"><?php esc_html_e('Whether you need a standard compression spring or a complex wire form, start here.', 'springapex'); ?></p>
       </div>
       <a class="text-link" href="<?php echo esc_url(springapex_url('/products/')); ?>">
@@ -93,12 +96,13 @@ $hero_lines = preg_split('/\R/', (string) ($hero['title'] ?? '')) ?: [];
       </a>
     </div>
     <div class="sa-product-grid" data-reveal-group>
-      <?php foreach (array_slice(springapex_products(), 0, 6) as $product) : ?>
+      <?php foreach ($home_products as $product) : ?>
         <?php get_template_part('parts/product-card', null, ['product' => $product]); ?>
       <?php endforeach; ?>
     </div>
   </div>
 </section>
+<?php endif; ?>
 
 <?php get_template_part('parts/company-introduction', null, ['variant' => 'home']); ?>
 
@@ -158,9 +162,9 @@ $hero_lines = preg_split('/\R/', (string) ($hero['title'] ?? '')) ?: [];
       </a>
     </div>
     <div class="application-grid" data-reveal-group>
-      <?php foreach (($home['applications'] ?? []) as $application) : ?>
-        <a class="application-card" href="<?php echo esc_url(springapex_url('/solutions/#' . $application['slug'])); ?>">
-          <?php echo springapex_image((string) $application['image'], (string) $application['title'], [
+      <?php foreach ($home_solutions as $solution) : ?>
+        <a class="application-card" href="<?php echo esc_url(springapex_solution_url($solution)); ?>">
+          <?php echo springapex_image($solution['image'] ?? '', (string) ($solution['title'] ?? ''), [
               'class' => 'application-image',
               'width' => 800,
               'height' => 600,
@@ -168,7 +172,7 @@ $hero_lines = preg_split('/\R/', (string) ($hero['title'] ?? '')) ?: [];
           ]); ?>
           <span class="application-shade" aria-hidden="true"></span>
           <span class="application-meta">
-            <span><?php echo esc_html((string) $application['title']); ?></span>
+            <span><?php echo esc_html((string) ($solution['title'] ?? '')); ?></span>
             <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
           </span>
         </a>

@@ -4,22 +4,8 @@ if (!defined('ABSPATH')) {
 }
 $nav = springapex_navigation_items();
 $brand = springapex_brand();
-$products = array_slice(springapex_products(), 0, 7);
-$product_menu_copy = [
-    'compression-springs' => 'Axial load and return force',
-    'extension-springs' => 'Controlled tension',
-    'torsion-springs' => 'Repeatable rotational torque',
-    'disc-springs' => 'High load in compact spaces',
-    'wire-forms' => 'Formed parts to drawing',
-    'die-springs' => 'Heavy-duty tooling loads',
-    'other-customized-springs' => 'Specialized geometries',
-];
-$product_menu_images = [
-    'torsion-springs' => 'product-torsion-v2.png',
-    'die-springs' => 'product-die-spring-menu-v1.png',
-];
+$products = springapex_products();
 $product_menu_feature = $products[0] ?? [];
-$product_menu_feature_image = 'product-compression-menu-v2.png';
 ?>
 <a class="skip-link" href="#main"><?php esc_html_e('Skip to content', 'springapex'); ?></a>
 <header class="site-header" data-header>
@@ -168,8 +154,8 @@ $product_menu_feature_image = 'product-compression-menu-v2.png';
           <div class="products-mega-menu__feature-media">
             <?php
             echo springapex_image(
-                $product_menu_feature_image,
-                __('Custom precision compression springs manufactured by ApexSpring', 'springapex'),
+                $product_menu_feature['featured_image'] ?? $product_menu_feature['category_image'] ?? $product_menu_feature['image'] ?? '',
+                (string) ($product_menu_feature['title'] ?? __('Featured spring product', 'springapex')),
                 [
                     'class' => 'products-mega-menu__feature-image',
                     'sizes' => '340px',
@@ -184,10 +170,9 @@ $product_menu_feature_image = 'product-compression-menu-v2.png';
 
       <div class="products-mega-menu__index">
         <?php foreach ($products as $product) :
-            $slug = (string) ($product['slug'] ?? '');
             $title = (string) ($product['title'] ?? '');
-            $image = $product_menu_images[$slug] ?? $product['category_image'] ?? $product['image'] ?? '';
-            $summary = (string) ($product_menu_copy[$slug] ?? $product['desc'] ?? '');
+            $image = $product['featured_image'] ?? $product['category_image'] ?? $product['image'] ?? '';
+            $summary = (string) ($product['desc'] ?? '');
         ?>
           <a class="products-mega-menu__item" href="<?php echo esc_url(springapex_product_url($product)); ?>">
             <span class="products-mega-menu__thumb">
