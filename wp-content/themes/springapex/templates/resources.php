@@ -34,14 +34,15 @@ $industry_brochures = [
     'Rail',
     'Energy',
 ];
+$resources_hero = springapex_get('resources.hero', []);
 ?>
 <?php
 get_template_part('parts/inner-hero', null, [
     'variant' => 'resources',
-    'title' => 'Download Center',
-    'subtitle' => 'Company, product and industry brochures in one place.',
-    'image' => 'generated/springapex-resources-hero-v2.webp',
-    'mobile_image' => springapex_get('resources.hero.mobile_image', 'resources-hero-mobile-v1.png'),
+    'title' => $resources_hero['title'] ?? 'Download Center',
+    'subtitle' => $resources_hero['subtitle'] ?? 'Company, product and industry brochures in one place.',
+    'image' => $resources_hero['image'] ?? 'generated/springapex-resources-hero-v2.webp',
+    'mobile_image' => $resources_hero['mobile_image'] ?? 'resources-hero-mobile-v1.png',
     'image_width' => 1890,
     'image_height' => 830,
 ]);

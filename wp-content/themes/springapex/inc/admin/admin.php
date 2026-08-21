@@ -154,12 +154,12 @@ function springapex_admin_overview_page(): void
         [
             'title' => '网站通用',
             'desc' => '影响每一个页面的内容。',
-            'keys' => ['brand'],
+            'keys' => ['brand', 'faq'],
         ],
         [
             'title' => '各个页面',
             'desc' => '按前台导航的顺序排列，改哪一页就点哪一页。',
-            'keys' => ['home', 'products', 'solutions', 'capabilities', 'videos', 'about', 'company', 'news', 'contact'],
+            'keys' => ['home', 'products', 'solutions', 'capabilities', 'videos', 'about', 'company', 'sustainability', 'resources', 'news', 'contact'],
         ],
     ];
 

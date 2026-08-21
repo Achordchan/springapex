@@ -291,9 +291,22 @@ add_action('wp_head', static function (): void {
         'capabilities' => springapex_get('capabilities.hero.image', ''),
         'manufacturing-videos' => springapex_get('manufacturing_videos.hero_image', ''),
         'about' => springapex_get('about.hero.image', 'about-building-v3.png'),
-        'sustainability' => 'home-energy-v2.png',
-        'contact' => springapex_get('contact.hero.image', ''),
-        'resources' => 'generated/springapex-resources-hero-v2.webp',
+        'sustainability' => springapex_get('sustainability.hero.image', 'generated/apexspring-sustainability-wire-lifecycle-v1.png'),
+        'news' => springapex_get('news.hero.image', 'generated/springapex-news-hero-v3.webp'),
+        'contact' => springapex_get('contact_network.facility_image', 'facility-aerial-original.webp'),
+        'resources' => springapex_get('resources.hero.image', 'generated/springapex-resources-hero-v2.webp'),
+    ];
+    $mobile_images = [
+        'home' => springapex_get('home.hero.mobile_image', ''),
+        'products' => springapex_get('products.hero.mobile_image', ''),
+        'solutions' => springapex_get('solutions.hero.mobile_image', ''),
+        'case-studies' => springapex_get('case_studies.hero.mobile_image', ''),
+        'capabilities' => springapex_get('capabilities.hero.mobile_image', ''),
+        'manufacturing-videos' => springapex_get('manufacturing_videos.hero_mobile_image', ''),
+        'about' => springapex_get('about.hero.mobile_image', ''),
+        'sustainability' => springapex_get('sustainability.hero.mobile_image', ''),
+        'news' => springapex_get('news.hero.mobile_image', ''),
+        'resources' => springapex_get('resources.hero.mobile_image', ''),
     ];
     $static_sizes = [
         'home' => '(max-width: 760px) 100vw, 62vw',
@@ -304,9 +317,50 @@ add_action('wp_head', static function (): void {
         'manufacturing-videos' => '100vw',
         'about' => '100vw',
         'sustainability' => '100vw',
+        'news' => '100vw',
         'resources' => '100vw',
-        'contact' => '100vw',
+        'contact' => '(max-width: 980px) 100vw, 50vw',
     ];
+
+    $resolve_preload_image = static function (mixed $image, string $sizes): array {
+        $attachment_id = 0;
+        $fallback = '';
+        if (is_array($image)) {
+            $attachment_id = (int) ($image['id'] ?? 0);
+            $fallback = trim((string) ($image['file'] ?? ''));
+        } elseif (is_int($image) || (is_string($image) && $image !== '' && ctype_digit($image))) {
+            $attachment_id = (int) $image;
+        } elseif (is_string($image)) {
+            $fallback = trim($image);
+        }
+
+        if ($attachment_id > 0 && function_exists('wp_get_attachment_image_url')) {
+            $url = (string) wp_get_attachment_image_url($attachment_id, 'full');
+            if ($url !== '') {
+                $srcset = function_exists('wp_get_attachment_image_srcset')
+                    ? (string) (wp_get_attachment_image_srcset($attachment_id, 'full') ?: '')
+                    : '';
+                return [$url, '', $srcset, $sizes];
+            }
+        }
+        if ($fallback === '') {
+            return ['', '', '', ''];
+        }
+        if (str_starts_with($fallback, 'http://') || str_starts_with($fallback, 'https://')) {
+            return [$fallback, '', '', $sizes];
+        }
+
+        $variants = springapex_static_image_variants($fallback);
+        if ($variants) {
+            return [
+                (string) $variants[0]['url'],
+                (string) $variants[0]['type'],
+                (string) ($variants[0]['srcset'] ?? ''),
+                $sizes,
+            ];
+        }
+        return [springapex_asset('assets/images/' . $fallback), '', '', $sizes];
+    };
 
     $image_url = '';
     $image_type = '';
@@ -368,32 +422,54 @@ add_action('wp_head', static function (): void {
             $image_sizes = '100vw';
         }
     } else {
-        $image = (string) ($images[$route] ?? '');
-        if ($image !== '') {
-            $variants = springapex_static_image_variants($image);
-            if ($variants) {
-                $image_url = (string) $variants[0]['url'];
-                $image_type = (string) $variants[0]['type'];
-                $image_srcset = (string) ($variants[0]['srcset'] ?? '');
-                $image_sizes = (string) ($static_sizes[$route] ?? '100vw');
-            } else {
-                $image_url = springapex_asset('assets/images/' . $image);
-            }
-        }
+        [$image_url, $image_type, $image_srcset, $image_sizes] = $resolve_preload_image(
+            $images[$route] ?? '',
+            (string) ($static_sizes[$route] ?? '100vw')
+        );
     }
 
-    if ($image_url !== '') {
-        $attributes = ' href="' . esc_url($image_url) . '"';
-        if ($image_srcset !== '') {
-            $attributes .= ' imagesrcset="' . esc_attr($image_srcset) . '"';
+    [$mobile_url, $mobile_type, $mobile_srcset, $mobile_sizes] = $resolve_preload_image(
+        $mobile_images[$route] ?? '',
+        '100vw'
+    );
+    $emit_preload = static function (
+        string $url,
+        string $type,
+        string $srcset,
+        string $sizes,
+        string $media = ''
+    ): void {
+        if ($url === '') {
+            return;
         }
-        if ($image_sizes !== '') {
-            $attributes .= ' imagesizes="' . esc_attr($image_sizes) . '"';
+        $attributes = ' href="' . esc_url($url) . '"';
+        if ($srcset !== '') {
+            $attributes .= ' imagesrcset="' . esc_attr($srcset) . '"';
         }
-        if ($image_type !== '') {
-            $attributes .= ' type="' . esc_attr($image_type) . '"';
+        if ($sizes !== '') {
+            $attributes .= ' imagesizes="' . esc_attr($sizes) . '"';
+        }
+        if ($type !== '') {
+            $attributes .= ' type="' . esc_attr($type) . '"';
+        }
+        if ($media !== '') {
+            $attributes .= ' media="' . esc_attr($media) . '"';
         }
         echo '<link rel="preload" as="image"' . $attributes . ' fetchpriority="high">' . "\n";
+    };
+
+    $has_mobile_preload = $mobile_url !== '';
+    if ($has_mobile_preload) {
+        $emit_preload($mobile_url, $mobile_type, $mobile_srcset, $mobile_sizes, '(max-width: 860px)');
+    }
+    if ($image_url !== '') {
+        $emit_preload(
+            $image_url,
+            $image_type,
+            $image_srcset,
+            $image_sizes,
+            $has_mobile_preload ? '(min-width: 860.01px)' : ''
+        );
     }
 }, 2);
 

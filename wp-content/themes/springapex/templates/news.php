@@ -65,7 +65,7 @@ get_template_part('parts/inner-hero', null, [
     'variant' => 'news',
     'title' => springapex_get('news.hero.title', 'News'),
     'subtitle' => springapex_get('news.hero.subtitle', ''),
-    'image' => 'generated/springapex-news-hero-v3.webp',
+    'image' => springapex_get('news.hero.image', 'generated/springapex-news-hero-v3.webp'),
     'mobile_image' => springapex_get('news.hero.mobile_image', 'news-hero-mobile-v1.png'),
     'image_width' => 1890,
     'image_height' => 830,

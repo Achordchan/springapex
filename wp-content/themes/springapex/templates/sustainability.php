@@ -75,22 +75,24 @@ $proof_items[] = [
     'text' => 'Measured targets and reduction results are published only after reviewed records are available.',
     'meta' => '',
 ];
+$sustainability_hero = springapex_get('sustainability.hero', []);
 ?>
 
 <section class="sa-sustainability-hero" aria-labelledby="sa-sustainability-title">
   <div class="sa-sustainability-hero__media" aria-hidden="true">
-    <?php echo springapex_image('generated/apexspring-sustainability-wire-lifecycle-v1.png', '', [
+    <?php echo springapex_image($sustainability_hero['image'] ?? 'generated/apexspring-sustainability-wire-lifecycle-v1.png', '', [
         'width' => 2023,
         'height' => 777,
         'sizes' => '100vw',
         'fetchpriority' => 'high',
+        'mobile_image' => $sustainability_hero['mobile_image'] ?? '',
     ]); ?>
   </div>
   <div class="container container-wide sa-sustainability-hero__inner">
     <div class="sa-sustainability-hero__copy" data-reveal="up">
-      <p class="section-kicker"><?php esc_html_e('SUSTAINABILITY', 'springapex'); ?></p>
-      <h1 id="sa-sustainability-title"><?php esc_html_e('Responsibility in practice.', 'springapex'); ?></h1>
-      <p><?php esc_html_e('From material selection to delivery.', 'springapex'); ?></p>
+      <p class="section-kicker"><?php echo esc_html((string) ($sustainability_hero['eyebrow'] ?? 'SUSTAINABILITY')); ?></p>
+      <h1 id="sa-sustainability-title"><?php echo esc_html((string) ($sustainability_hero['title'] ?? 'Responsibility in practice.')); ?></h1>
+      <p><?php echo esc_html((string) ($sustainability_hero['subtitle'] ?? 'From material selection to delivery.')); ?></p>
     </div>
   </div>
 </section>

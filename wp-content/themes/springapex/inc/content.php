@@ -80,6 +80,7 @@ function springapex_content(): array
                 'video_cta' => ['label' => 'Play a Video', 'youtube_id' => '5LUKHmIHPDY'],
                 'quote_cta' => ['label' => 'Request a Quote', 'href' => '/contact/?intent=quote', 'icon' => 'arrow-right'],
                 'image' => 'hero-spring-v3.png',
+                'mobile_image' => 'hero-spring-mobile-v1.png',
             ],
             'industries' => ['AUTOMOTIVE', 'INDUSTRIAL', 'MEDICAL', 'AEROSPACE', 'RAIL', 'ENERGY'],
             'pillars' => [
@@ -333,6 +334,7 @@ function springapex_content(): array
             'title' => 'See how precision is built.',
             'intro' => 'Explore the processes, inspection and testing behind repeatable spring production.',
             'hero_image' => 'manufacturing-videos/hero-engineering-studio-v2.webp',
+            'hero_mobile_image' => '',
             'featured' => [
                 'category' => 'Manufacturing Process',
                 'title' => 'From Wire to Verified Performance',
@@ -392,16 +394,6 @@ function springapex_content(): array
             ],
         ],
         'contact' => [
-            'hero' => [
-                'title' => 'Contact',
-                'subtitle' => 'Tell us what you need.',
-                'points' => [
-                    ['icon' => 'headset', 'title' => 'Fast, expert support', 'text' => 'Get answers from our engineering team.'],
-                    ['icon' => 'shield', 'title' => 'Confidential & secure', 'text' => 'Your drawings and project details are handled with care.'],
-                ],
-                'image' => 'contact-springs-v2.png',
-                'mobile_image' => 'contact-hero-mobile-v1.png',
-            ],
             'inquiry_types' => ['Request a Quote', 'Upload a Drawing', 'Technical Support', 'Custom Design', 'Catalog / Technical Documents', 'Supplier Qualification', 'Feedback / Suggestions', 'Partnership', 'Other'],
         ],
     ];
