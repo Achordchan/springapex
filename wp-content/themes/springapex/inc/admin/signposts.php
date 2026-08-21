@@ -35,7 +35,7 @@ function springapex_signpost_map(): array
         'page-capabilities.php' => ['capabilities'],
         'page-manufacturing-videos.php' => ['videos'],
         'page-contact.php' => ['contact'],
-        'page-sustainability.php' => ['company'],
+        'page-sustainability.php' => ['sustainability'],
     ];
 }
 

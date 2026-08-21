@@ -15,7 +15,7 @@ if (!in_array(PHP_SAPI, ['cli', 'cli-server'], true)) {
 
 defined('ABSPATH') || define('ABSPATH', __DIR__ . '/');
 defined('SPRINGAPEX_PREVIEW') || define('SPRINGAPEX_PREVIEW', true);
-defined('SPRINGAPEX_VERSION') || define('SPRINGAPEX_VERSION', '2.9.89');
+defined('SPRINGAPEX_VERSION') || define('SPRINGAPEX_VERSION', '2.9.91');
 defined('SPRINGAPEX_DIR') || define('SPRINGAPEX_DIR', dirname(__DIR__));
 defined('SPRINGAPEX_URI') || define('SPRINGAPEX_URI', '');
 
@@ -272,7 +272,7 @@ function wp_head(): void
         'sitemap' => 'Sitemap — ApexSpring',
     ];
     $hero_images = [
-        'home' => 'hero-spring-v2.png',
+        'home' => 'hero-spring-v3.png',
         'products' => 'products-hero-v3.png',
         'solutions' => 'solutions-hero-v2.png',
         'case-studies' => 'solutions-hero-v2.png',
@@ -282,8 +282,8 @@ function wp_head(): void
         'news' => 'generated/springapex-news-hero-v3.webp',
         'news-single' => 'generated/springapex-news-hero-v3.webp',
         'about' => 'about-building-v3.png',
-        'sustainability' => 'home-energy-v2.png',
-        'contact' => 'contact-springs-v2.png',
+        'sustainability' => 'generated/apexspring-sustainability-wire-lifecycle-v1.png',
+        'contact' => 'facility-aerial-original.webp',
         'capabilities' => 'generated/springapex-capabilities-hero-v2.webp',
         'manufacturing-videos' => 'manufacturing-videos/hero-engineering-studio-v2.webp',
         'resources' => 'generated/springapex-resources-hero-v2.webp',

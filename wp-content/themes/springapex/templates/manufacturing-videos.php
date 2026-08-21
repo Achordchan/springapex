@@ -22,6 +22,7 @@ $video_src = $youtube_id !== ''
           'width' => 1800,
           'height' => 584,
           'sizes' => '100vw',
+          'mobile_image' => $video_page['hero_mobile_image'] ?? '',
       ]); ?>
     </figure>
     <div class="container container-wide">

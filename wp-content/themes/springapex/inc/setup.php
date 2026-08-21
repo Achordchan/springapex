@@ -291,9 +291,9 @@ add_action('wp_head', static function (): void {
         'capabilities' => springapex_get('capabilities.hero.image', ''),
         'manufacturing-videos' => springapex_get('manufacturing_videos.hero_image', ''),
         'about' => springapex_get('about.hero.image', 'about-building-v3.png'),
-        'sustainability' => 'home-energy-v2.png',
-        'contact' => springapex_get('contact.hero.image', ''),
-        'resources' => 'generated/springapex-resources-hero-v2.webp',
+        'sustainability' => springapex_get('sustainability.hero.image', 'generated/apexspring-sustainability-wire-lifecycle-v1.png'),
+        'contact' => springapex_get('contact_network.facility_image', 'facility-aerial-original.webp'),
+        'resources' => springapex_get('resources.hero.image', 'generated/springapex-resources-hero-v2.webp'),
     ];
     $static_sizes = [
         'home' => '(max-width: 760px) 100vw, 62vw',
@@ -368,8 +368,17 @@ add_action('wp_head', static function (): void {
             $image_sizes = '100vw';
         }
     } else {
-        $image = (string) ($images[$route] ?? '');
-        if ($image !== '') {
+        $image = $images[$route] ?? '';
+        $image_id = is_int($image) || (is_string($image) && $image !== '' && ctype_digit($image))
+            ? (int) $image
+            : 0;
+        if ($image_id > 0 && function_exists('wp_get_attachment_image_url')) {
+            $image_url = (string) wp_get_attachment_image_url($image_id, 'full');
+            $image_srcset = function_exists('wp_get_attachment_image_srcset')
+                ? (string) (wp_get_attachment_image_srcset($image_id, 'full') ?: '')
+                : '';
+            $image_sizes = (string) ($static_sizes[$route] ?? '100vw');
+        } elseif (is_string($image) && $image !== '') {
             $variants = springapex_static_image_variants($image);
             if ($variants) {
                 $image_url = (string) $variants[0]['url'];

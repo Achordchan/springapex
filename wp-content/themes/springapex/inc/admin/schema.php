@@ -84,7 +84,8 @@ function springapex_admin_screens(): array
                     'fields' => [
                         ['path' => 'home.hero.title', 'label' => '主标题', 'type' => 'textarea', 'help' => '换行的位置就是前台断行的位置。'],
                         ['path' => 'home.hero.subtitle', 'label' => '副标题', 'type' => 'textarea', 'help' => '一到两句话说明公司能做什么。'],
-                        ['path' => 'home.hero.image', 'label' => '首屏配图', 'type' => 'image', 'help' => '建议横版、主体居中、背景干净，宽度不小于 1600px。'],
+                        ['path' => 'home.hero.image', 'label' => '电脑端配图', 'type' => 'image', 'help' => '建议横版、主体居中、背景干净，宽度不小于 1600px。'],
+                        ['path' => 'home.hero.mobile_image', 'label' => '手机端配图', 'type' => 'image', 'help' => '留空则手机上沿用电脑端配图。'],
                         ['path' => 'home.hero.video_cta.label', 'label' => '视频按钮文字', 'type' => 'text', 'help' => '例如 Play a Video。'],
                         ['path' => 'home.hero.video_cta.youtube_id', 'label' => 'YouTube 视频 ID', 'type' => 'youtube', 'help' => '只填 ID，不是整条网址。'],
                         ['path' => 'home.hero.quote_cta.label', 'label' => '询价按钮文字', 'type' => 'text', 'help' => '例如 Request a Quote。'],
@@ -140,7 +141,28 @@ function springapex_admin_screens(): array
                 ],
                 [
                     'title' => '常见问题',
-                    'desc' => '首页底部的常见问题问答，同一组内容也会出现在其它页面的 FAQ 板块。',
+                    'desc' => '这是全站公共问答，同时出现在首页和所有产品详情页。',
+                    'signpost' => [
+                        'path' => 'site-common-faq',
+                        'title' => '常见问答请到「网站通用 → 常见问题」编辑',
+                        'text' => '在总编辑入口修改一次，首页和所有产品详情页会同步更新。',
+                        'button' => '前往常见问题',
+                        'url' => 'admin.php?page=' . SPRINGAPEX_ADMIN_SLUG . '-faq',
+                    ],
+                    'fields' => [],
+                ],
+            ],
+        ],
+
+        'faq' => [
+            'label' => '常见问题',
+            'title' => '全站常见问题',
+            'intro' => '全站公用的问答内容，目前显示在首页和所有产品详情页。',
+            'preview' => '/',
+            'sections' => [
+                [
+                    'title' => '问答内容',
+                    'desc' => '修改后会同时影响首页和产品详情页。',
                     'fields' => [
                         [
                             'path' => 'home_faq',
@@ -380,7 +402,8 @@ function springapex_admin_screens(): array
                         ['path' => 'manufacturing_videos.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => '全大写的一行小字。'],
                         ['path' => 'manufacturing_videos.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
                         ['path' => 'manufacturing_videos.intro', 'label' => '介绍', 'type' => 'textarea', 'help' => ''],
-                        ['path' => 'manufacturing_videos.hero_image', 'label' => '头部配图', 'type' => 'image', 'help' => ''],
+                        ['path' => 'manufacturing_videos.hero_image', 'label' => '电脑端配图', 'type' => 'image', 'help' => ''],
+                        ['path' => 'manufacturing_videos.hero_mobile_image', 'label' => '手机端配图', 'type' => 'image', 'help' => '留空则手机上沿用电脑端配图。'],
                     ],
                 ],
                 [
@@ -593,34 +616,32 @@ function springapex_admin_screens(): array
             ],
         ],
 
-        'contact' => [
-            'label' => '联系页',
-            'title' => '联系页',
-            'intro' => '联系页的头部和询盘表单的选项。收到的询盘在左侧菜单「Inquiries」里查看。',
-            'preview' => '/contact/',
+        'sustainability' => [
+            'label' => '可持续发展页',
+            'title' => '可持续发展页',
+            'intro' => '维护 Sustainability 页的头部文案和电脑端、手机端配图。',
+            'preview' => '/sustainability/',
             'sections' => [
                 [
                     'title' => '页面头部',
                     'desc' => '',
                     'fields' => [
-                        ['path' => 'contact.hero.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
-                        ['path' => 'contact.hero.subtitle', 'label' => '副标题', 'type' => 'textarea', 'help' => ''],
-                        ['path' => 'contact.hero.image', 'label' => '电脑端配图', 'type' => 'image', 'help' => ''],
-                        ['path' => 'contact.hero.mobile_image', 'label' => '手机端配图', 'type' => 'image', 'help' => ''],
-                        [
-                            'path' => 'contact.hero.points',
-                            'type' => 'repeater',
-                            'label' => '承诺条目',
-                            'item_label' => '承诺',
-                            'title_key' => 'title',
-                            'fields' => [
-                                ['path' => 'icon', 'label' => '图标', 'type' => 'icon', 'help' => ''],
-                                ['path' => 'title', 'label' => '标题', 'type' => 'text', 'help' => ''],
-                                ['path' => 'text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
-                            ],
-                        ],
+                        ['path' => 'sustainability.hero.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => '全大写的一行小字。'],
+                        ['path' => 'sustainability.hero.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'sustainability.hero.subtitle', 'label' => '副标题', 'type' => 'textarea', 'help' => ''],
+                        ['path' => 'sustainability.hero.image', 'label' => '电脑端配图', 'type' => 'image', 'help' => ''],
+                        ['path' => 'sustainability.hero.mobile_image', 'label' => '手机端配图', 'type' => 'image', 'help' => '留空则手机上沿用电脑端配图。'],
                     ],
                 ],
+            ],
+        ],
+
+        'contact' => [
+            'label' => '联系页',
+            'title' => '联系页',
+            'intro' => '联系页的标题、厂区图、总部信息、全球网络和询盘选项。收到的询盘在左侧菜单「Inquiries」查看。',
+            'preview' => '/contact/',
+            'sections' => [
                 [
                     'title' => '询盘类型',
                     'desc' => '客户在表单里选择的下拉选项，会原样出现在询盘通知邮件里。',
@@ -701,14 +722,17 @@ function springapex_admin_screens(): array
         'resources' => [
             'label' => '资源下载',
             'title' => '资源下载',
-            'intro' => '这里维护的是一组「资源指引」条目，目前显示在联系页的「图纸准备指引」（取前三条）和站内搜索结果中。注意：资源下载主页（/resources/）的手册列表目前是写死的，不在这里改。',
-            'preview' => '/contact/',
+            'intro' => '维护资源下载页头部，以及联系页「图纸准备指引」和站内搜索使用的资源条目。下载手册列表目前仍由模板管理。',
+            'preview' => '/resources/',
             'sections' => [
                 [
-                    'title' => '手机端头图',
-                    'desc' => '资源下载主页在手机上显示的头图；电脑端头图与文案目前写死在模板里。',
+                    'title' => '页面头部',
+                    'desc' => '',
                     'fields' => [
-                        ['path' => 'resources.hero.mobile_image', 'label' => '手机端配图', 'type' => 'image', 'help' => '手机上单独显示的头图。'],
+                        ['path' => 'resources.hero.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'resources.hero.subtitle', 'label' => '副标题', 'type' => 'textarea', 'help' => ''],
+                        ['path' => 'resources.hero.image', 'label' => '电脑端配图', 'type' => 'image', 'help' => ''],
+                        ['path' => 'resources.hero.mobile_image', 'label' => '手机端配图', 'type' => 'image', 'help' => '留空则手机上沿用电脑端配图。'],
                     ],
                 ],
                 [
@@ -786,19 +810,22 @@ function springapex_admin_image_dimensions_map(): array
         'case_studies.hero.image' => '2400 × 1050 px（16:7，横版宽幅）',
         'capabilities.hero.image' => '2400 × 1050 px（16:7，横版宽幅）',
         'about.hero.image' => '2400 × 1050 px（16:7，横版宽幅）',
-        'contact.hero.image' => '1920 × 1080 px（16:9，横版）',
         'news.hero.image' => '2400 × 1000 px（2.4:1，横版宽幅）',
         'manufacturing_videos.hero_image' => '2400 × 810 px（约 3:1，横版超宽）',
+        'resources.hero.image' => '2400 × 1050 px（16:7，横版宽幅）',
+        'sustainability.hero.image' => '2023 × 777 px（约 2.6:1，横版宽幅）',
 
         // 页面头图 · 手机端（现有图均为 4:3 横版）
+        'home.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
         'products.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
         'solutions.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
         'case_studies.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
         'capabilities.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
         'about.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
         'news.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
-        'contact.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
         'resources.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
+        'manufacturing_videos.hero_mobile_image' => '1200 × 900 px（4:3，横版）',
+        'sustainability.hero.mobile_image' => '1200 × 900 px（4:3，横版）',
 
         // 卡片 / 内容配图
         'capabilities.project_brief.image' => '1600 × 900 px（16:9，横版）',

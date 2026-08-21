@@ -18,7 +18,7 @@ $home_solutions = array_slice(springapex_solutions(), 0, 4);
           'loading' => 'eager',
           'fetchpriority' => 'high',
           'sizes' => '(max-width: 760px) 100vw, 62vw',
-          'mobile_image' => 'hero-spring-mobile-v1.png',
+          'mobile_image' => $hero['mobile_image'] ?? 'hero-spring-mobile-v1.png',
           'mobile_sizes' => '100vw',
           'mobile_breakpoint' => '860px',
       ]); ?>

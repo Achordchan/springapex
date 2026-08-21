@@ -511,15 +511,63 @@ function springapex_image(int|string|array $image, string $alt, array $args = []
     ];
     $args = array_merge($defaults, $args);
 
-    $attachment_id = 0;
-    $fallback      = '';
-    if (is_array($image)) {
-        $attachment_id = (int) ($image['id'] ?? 0);
-        $fallback = (string) ($image['file'] ?? '');
-    } elseif (is_int($image) || ctype_digit((string) $image)) {
-        $attachment_id = (int) $image;
-    } else {
-        $fallback = $image;
+    $split_image_value = static function (mixed $value): array {
+        if (is_array($value)) {
+            return [(int) ($value['id'] ?? 0), trim((string) ($value['file'] ?? ''))];
+        }
+        if (is_int($value) || (is_string($value) && $value !== '' && ctype_digit($value))) {
+            return [(int) $value, ''];
+        }
+        return [0, is_string($value) ? trim($value) : ''];
+    };
+
+    [$attachment_id, $fallback] = $split_image_value($image);
+    [$mobile_attachment_id, $mobile_fallback] = $split_image_value($args['mobile_image']);
+
+    $mobile_sources = '';
+    $mobile_media = '(max-width: ' . preg_replace('/[^0-9a-z.%-]/i', '', (string) $args['mobile_breakpoint']) . ')';
+    $mobile_sizes = $args['mobile_sizes']
+        ? ' sizes="' . esc_attr((string) $args['mobile_sizes']) . '"'
+        : '';
+
+    if (
+        $mobile_attachment_id > 0
+        && !defined('SPRINGAPEX_PREVIEW')
+        && function_exists('wp_get_attachment_image_url')
+    ) {
+        $mobile_url = (string) wp_get_attachment_image_url($mobile_attachment_id, 'full');
+        $mobile_srcset = function_exists('wp_get_attachment_image_srcset')
+            ? (string) wp_get_attachment_image_srcset($mobile_attachment_id, 'full')
+            : '';
+        if ($mobile_url !== '') {
+            $mobile_sources = sprintf(
+                '<source media="%s" srcset="%s"%s>',
+                esc_attr($mobile_media),
+                esc_attr($mobile_srcset !== '' ? $mobile_srcset : $mobile_url),
+                $mobile_sizes
+            );
+        }
+    }
+    if ($mobile_sources === '' && $mobile_fallback !== '') {
+        $mobile_is_url = str_starts_with($mobile_fallback, 'http://') || str_starts_with($mobile_fallback, 'https://');
+        if ($mobile_is_url) {
+            $mobile_sources = sprintf(
+                '<source media="%s" srcset="%s"%s>',
+                esc_attr($mobile_media),
+                esc_attr($mobile_fallback),
+                $mobile_sizes
+            );
+        } else {
+            foreach (springapex_static_image_variants($mobile_fallback) as $variant) {
+                $mobile_sources .= sprintf(
+                    '<source media="%s" srcset="%s" type="%s"%s>',
+                    esc_attr($mobile_media),
+                    esc_attr((string) ($variant['srcset'] ?: $variant['url'])),
+                    esc_attr((string) $variant['type']),
+                    $mobile_sizes
+                );
+            }
+        }
     }
 
     if (
@@ -537,7 +585,12 @@ function springapex_image(int|string|array $image, string $alt, array $args = []
         if ($args['sizes']) {
             $attributes['sizes'] = (string) $args['sizes'];
         }
-        return (string) wp_get_attachment_image($attachment_id, 'full', false, $attributes);
+        $img = (string) wp_get_attachment_image($attachment_id, 'full', false, $attributes);
+        if ($img !== '') {
+            return $mobile_sources === ''
+                ? $img
+                : '<picture class="springapex-picture" style="display:contents">' . $mobile_sources . $img . '</picture>';
+        }
     }
 
     if ($fallback === '') {
@@ -546,11 +599,6 @@ function springapex_image(int|string|array $image, string $alt, array $args = []
 
     $is_url = str_starts_with($fallback, 'http://') || str_starts_with($fallback, 'https://');
     $variants = $is_url ? [] : springapex_static_image_variants($fallback);
-    $mobile_fallback = is_string($args['mobile_image']) ? trim((string) $args['mobile_image']) : '';
-    $mobile_is_url = str_starts_with($mobile_fallback, 'http://') || str_starts_with($mobile_fallback, 'https://');
-    $mobile_variants = $mobile_fallback === '' || $mobile_is_url
-        ? []
-        : springapex_static_image_variants($mobile_fallback);
     $webp_fallback = null;
     foreach ($variants as $variant) {
         if (($variant['type'] ?? '') === 'image/webp') {
@@ -586,35 +634,7 @@ function springapex_image(int|string|array $image, string $alt, array $args = []
     }
 
     $img = '<img ' . implode(' ', $attrs) . '>';
-    if ($is_url) {
-        return $img;
-    }
-
-    $sources = '';
-    if ($mobile_fallback !== '') {
-        $mobile_media = '(max-width: ' . preg_replace('/[^0-9a-z.%-]/i', '', (string) $args['mobile_breakpoint']) . ')';
-        $mobile_sizes = $args['mobile_sizes']
-            ? ' sizes="' . esc_attr((string) $args['mobile_sizes']) . '"'
-            : '';
-        if ($mobile_is_url) {
-            $sources .= sprintf(
-                '<source media="%s" srcset="%s"%s>',
-                esc_attr($mobile_media),
-                esc_attr($mobile_fallback),
-                $mobile_sizes
-            );
-        } else {
-            foreach ($mobile_variants as $variant) {
-                $sources .= sprintf(
-                    '<source media="%s" srcset="%s" type="%s"%s>',
-                    esc_attr($mobile_media),
-                    esc_attr((string) ($variant['srcset'] ?: $variant['url'])),
-                    esc_attr((string) $variant['type']),
-                    $mobile_sizes
-                );
-            }
-        }
-    }
+    $sources = $mobile_sources;
     foreach ($variants as $variant) {
         if (($variant['type'] ?? '') === 'image/webp' && $webp_fallback) {
             continue;

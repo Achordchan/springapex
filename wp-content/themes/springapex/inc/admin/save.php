@@ -148,6 +148,7 @@ function springapex_admin_reset_screen(string $screen): void
         'home' => ['home' => ['applications']],
         'products' => ['products' => ['categories']],
         'solutions' => ['solutions' => ['items']],
+        'contact' => ['contact' => ['hero']],
     ];
     $preserved = [];
     foreach ($retired_collections[$screen] ?? [] as $root => $keys) {

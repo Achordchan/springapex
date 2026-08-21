@@ -285,6 +285,7 @@ function springapex_content_enhancements(): array
             'hero' => [
                 'title' => 'Download Center',
                 'subtitle' => 'Company, product and industry brochures in one place.',
+                'image' => 'generated/springapex-resources-hero-v2.webp',
                 'mobile_image' => 'resources-hero-mobile-v1.png',
             ],
             'items' => [
@@ -324,6 +325,15 @@ function springapex_content_enhancements(): array
                     'summary' => 'Choose inspection, material and traceability documents according to the application risk.',
                     'points' => ['Inspection report', 'Material certificate', 'Surface treatment record', 'Traceability and packaging identification'],
                 ],
+            ],
+        ],
+        'sustainability' => [
+            'hero' => [
+                'eyebrow' => 'SUSTAINABILITY',
+                'title' => 'Responsibility in practice.',
+                'subtitle' => 'From material selection to delivery.',
+                'image' => 'generated/apexspring-sustainability-wire-lifecycle-v1.png',
+                'mobile_image' => '',
             ],
         ],
         'quality_evidence' => [
