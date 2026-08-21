@@ -88,12 +88,6 @@ function springapex_content(): array
                 ['icon' => 'check-shield', 'title' => 'Verified Before Shipment', 'text' => 'Inspection, load testing and documentation for every batch.'],
                 ['icon' => 'headset', 'title' => 'Fast Engineering Support', 'text' => 'Clear feedback and quotations within 24 hours.'],
             ],
-            'applications' => [
-                ['slug' => 'automotive', 'title' => 'Automotive', 'image' => 'home-automotive-v2.png'],
-                ['slug' => 'industrial-equipment', 'title' => 'Industrial Equipment', 'image' => 'home-industrial-v2.png'],
-                ['slug' => 'medical', 'title' => 'Medical Devices', 'image' => 'home-medical-v2.png'],
-                ['slug' => 'energy', 'title' => 'Energy', 'image' => 'home-energy-v2.png'],
-            ],
             'process' => [
                 ['icon' => 'target', 'label' => 'Engineering'],
                 ['icon' => 'cubes', 'label' => 'Prototyping'],
@@ -505,11 +499,15 @@ function springapex_product_from_post(object $post): array
         $gallery = [$database_image];
     }
 
+    $card_description = trim((string) $subtitle) !== ''
+        ? (string) $subtitle
+        : (string) ($post->post_excerpt ?? '');
+
     return array_merge($seed, [
         'id' => $post_id,
         'slug' => $slug,
         'title' => get_the_title($post),
-        'desc' => (string) ($post->post_excerpt ?? ''),
+        'desc' => $card_description,
         'subtitle' => (string) $subtitle,
         'overview' => (string) ($post->post_content ?? ''),
         'image' => $database_image,
@@ -638,8 +636,7 @@ function springapex_featured_products(?array $products = null): array
     }
 
     $products ??= springapex_products();
-    $featured = array_values(array_filter($products, static fn(array $product): bool => !empty($product['featured'])));
-    return array_slice($featured, 0, 4);
+    return array_values(array_filter($products, static fn(array $product): bool => !empty($product['featured'])));
 }
 
 function springapex_solutions(): array

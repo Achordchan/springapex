@@ -140,26 +140,32 @@ function springapex_admin_reset_screen(string $screen): void
     $overrides = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, []);
     $overrides = is_array($overrides) ? $overrides : [];
 
-    // The solutions card editor was retired in favor of the spring_solution
-    // post list, but older installations can still carry its saved rows. The
-    // visible reset action now owns only the page headers; deleting the whole
-    // solutions root would silently remove data the operator can no longer see
-    // or restore from this screen.
-    $legacy_solution_items = null;
-    if (
-        $screen === 'solutions'
-        && isset($overrides['solutions'])
-        && is_array($overrides['solutions'])
-        && array_key_exists('items', $overrides['solutions'])
-    ) {
-        $legacy_solution_items = $overrides['solutions']['items'];
+    // Retired collection editors are now signposts to their CPT lists. Older
+    // installations can still carry saved rows that provide seed fallbacks, so
+    // a visible page reset must not silently delete data the operator can no
+    // longer inspect or restore from this screen.
+    $retired_collections = [
+        'home' => ['home' => ['applications']],
+        'products' => ['products' => ['categories']],
+        'solutions' => ['solutions' => ['items']],
+    ];
+    $preserved = [];
+    foreach ($retired_collections[$screen] ?? [] as $root => $keys) {
+        if (!isset($overrides[$root]) || !is_array($overrides[$root])) {
+            continue;
+        }
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $overrides[$root])) {
+                $preserved[$root][$key] = $overrides[$root][$key];
+            }
+        }
     }
 
     foreach (springapex_admin_screen_roots($screen) as $root) {
         unset($overrides[$root]);
     }
-    if ($legacy_solution_items !== null) {
-        $overrides['solutions'] = ['items' => $legacy_solution_items];
+    foreach ($preserved as $root => $values) {
+        $overrides[$root] = $values;
     }
 
     springapex_content_store_overrides($overrides);
