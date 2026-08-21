@@ -15,7 +15,7 @@ if (!in_array(PHP_SAPI, ['cli', 'cli-server'], true)) {
 
 defined('ABSPATH') || define('ABSPATH', __DIR__ . '/');
 defined('SPRINGAPEX_PREVIEW') || define('SPRINGAPEX_PREVIEW', true);
-defined('SPRINGAPEX_VERSION') || define('SPRINGAPEX_VERSION', '2.9.87');
+defined('SPRINGAPEX_VERSION') || define('SPRINGAPEX_VERSION', '2.9.88');
 defined('SPRINGAPEX_DIR') || define('SPRINGAPEX_DIR', dirname(__DIR__));
 defined('SPRINGAPEX_URI') || define('SPRINGAPEX_URI', '');
 

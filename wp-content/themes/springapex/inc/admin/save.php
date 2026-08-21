@@ -139,8 +139,27 @@ function springapex_admin_reset_screen(string $screen): void
 {
     $overrides = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, []);
     $overrides = is_array($overrides) ? $overrides : [];
+
+    // The solutions card editor was retired in favor of the spring_solution
+    // post list, but older installations can still carry its saved rows. The
+    // visible reset action now owns only the page headers; deleting the whole
+    // solutions root would silently remove data the operator can no longer see
+    // or restore from this screen.
+    $legacy_solution_items = null;
+    if (
+        $screen === 'solutions'
+        && isset($overrides['solutions'])
+        && is_array($overrides['solutions'])
+        && array_key_exists('items', $overrides['solutions'])
+    ) {
+        $legacy_solution_items = $overrides['solutions']['items'];
+    }
+
     foreach (springapex_admin_screen_roots($screen) as $root) {
         unset($overrides[$root]);
+    }
+    if ($legacy_solution_items !== null) {
+        $overrides['solutions'] = ['items' => $legacy_solution_items];
     }
 
     springapex_content_store_overrides($overrides);

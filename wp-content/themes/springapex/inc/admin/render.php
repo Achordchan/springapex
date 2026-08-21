@@ -344,6 +344,12 @@ function springapex_admin_section_summary(array $section): string
     $parts = [];
     $preview = '';
 
+    $signpost = is_array($section['signpost'] ?? null) ? $section['signpost'] : [];
+    $signpost_title = trim((string) ($signpost['title'] ?? ''));
+    if ($signpost_title !== '') {
+        $parts[] = $signpost_title;
+    }
+
     foreach ((array) ($section['fields'] ?? []) as $field) {
         $path = (string) ($field['path'] ?? '');
         if ($path === '') {
@@ -372,6 +378,37 @@ function springapex_admin_section_summary(array $section): string
     }
 
     return implode(' · ', $parts);
+}
+
+/**
+ * A read-only route to the screen that owns this content. Keeping this inside
+ * the original section preserves the operator's mental map without leaving a
+ * second editable control for the same data.
+ */
+function springapex_admin_render_section_signpost(array $signpost): void
+{
+    $path = sanitize_key((string) ($signpost['path'] ?? ''));
+    $title = trim((string) ($signpost['title'] ?? ''));
+    $text = trim((string) ($signpost['text'] ?? ''));
+    $button = trim((string) ($signpost['button'] ?? ''));
+    $url = trim((string) ($signpost['url'] ?? ''));
+
+    if ($title === '' || $url === '') {
+        return;
+    }
+    ?>
+    <aside class="sa-signpost" aria-label="编辑位置提示"<?php echo $path !== '' ? ' data-sa-field-path="' . esc_attr($path) . '"' : ''; ?>>
+        <div class="sa-signpost__copy">
+            <strong class="sa-signpost__title"><?php echo esc_html($title); ?></strong>
+            <?php if ($text !== '') : ?>
+                <p class="sa-signpost__text"><?php echo esc_html($text); ?></p>
+            <?php endif; ?>
+        </div>
+        <a class="button button-primary" href="<?php echo esc_url(admin_url($url)); ?>">
+            <?php echo esc_html($button !== '' ? $button : '前往编辑'); ?>
+        </a>
+    </aside>
+    <?php
 }
 
 /**
@@ -449,6 +486,9 @@ function springapex_admin_render_screen(string $key): void
                         </h2>
                     </summary>
                     <div class="sa-card__body">
+                        <?php if (is_array($section['signpost'] ?? null)) : ?>
+                            <?php springapex_admin_render_section_signpost($section['signpost']); ?>
+                        <?php endif; ?>
                         <?php foreach ((array) ($section['fields'] ?? []) as $field) :
                             $path = (string) ($field['path'] ?? '');
                             if ($path === '') {
