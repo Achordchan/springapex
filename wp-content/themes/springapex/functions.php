@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SPRINGAPEX_VERSION', '2.9.93');
+define('SPRINGAPEX_VERSION', '2.9.94');
 define('SPRINGAPEX_DIR', get_template_directory());
 define('SPRINGAPEX_URI', get_template_directory_uri());
 

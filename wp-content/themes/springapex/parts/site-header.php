@@ -17,7 +17,7 @@ $product_menu_feature_image = $product_menu['feature_image'] ?? 'product-compres
         <?php echo get_custom_logo(); ?>
       <?php else : ?>
         <a class="brand brand--image" href="<?php echo esc_url(springapex_url('/')); ?>" aria-label="<?php echo esc_attr($brand['name'] ?? 'NorenSpring'); ?> home">
-          <?php echo springapex_image('logo-site.png', (string) ($brand['name'] ?? 'NorenSpring'), [
+          <?php echo springapex_image('logo-site-norenspring-v1.png', (string) ($brand['name'] ?? 'NorenSpring'), [
               'class' => 'site-logo site-logo--header',
               'loading' => 'eager',
               'fetchpriority' => 'high',
