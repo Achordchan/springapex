@@ -7,7 +7,19 @@ $why_choose = springapex_get('about.why_choose', []);
 if (!is_array($why_choose) || !$why_choose) {
     return;
 }
-$media_items = array_values(array_filter((array) ($why_choose['media'] ?? []), 'is_array'));
+$media_items = array_values(array_filter(
+    (array) ($why_choose['media'] ?? []),
+    static function (mixed $item): bool {
+        if (!is_array($item)) {
+            return false;
+        }
+        $image = $item['image'] ?? '';
+        if (is_array($image)) {
+            return (int) ($image['id'] ?? 0) > 0 || trim((string) ($image['file'] ?? '')) !== '';
+        }
+        return is_scalar($image) && trim((string) $image) !== '';
+    }
+));
 ?>
 <section class="section sa-why-choose" aria-labelledby="sa-why-choose-title">
   <div class="container container-wide">

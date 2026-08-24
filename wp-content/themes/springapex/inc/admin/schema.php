@@ -504,9 +504,10 @@ function springapex_admin_screens(): array
                             'label' => '左侧大图',
                             'item_label' => '大图',
                             'title_key' => 'label',
+                            'max_items' => 2,
                             'fields' => [
                                 ['path' => 'label', 'label' => '图片标签', 'type' => 'text', 'help' => '显示在图片左下角。'],
-                                ['path' => 'image', 'label' => '图片', 'type' => 'image', 'help' => '横版实拍图。'],
+                                ['path' => 'image', 'label' => '图片', 'type' => 'image', 'required' => true, 'help' => '横版实拍图。需要取消展示时请删除整条大图。'],
                                 ['path' => 'alt', 'label' => '图片说明', 'type' => 'text', 'help' => '请如实描述图片内容，供搜索引擎和读屏软件使用。'],
                             ],
                         ],
