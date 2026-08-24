@@ -628,7 +628,7 @@ function springapex_admin_screens(): array
                                 ['path' => 'year', 'label' => '年份或阶段', 'type' => 'text', 'help' => '例如 2001、Growth 或 Today。'],
                                 ['path' => 'title', 'label' => '标题', 'type' => 'text', 'help' => ''],
                                 ['path' => 'text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
-                                ['path' => 'image', 'label' => '图片', 'type' => 'image', 'help' => '建议所有节点使用相同尺寸的横版图片。'],
+                                ['path' => 'image', 'label' => '图片', 'type' => 'image', 'required' => true, 'help' => '建议所有节点使用相同尺寸的横版图片。需要取消节点时请删除整条节点。'],
                                 ['path' => 'alt', 'label' => '图片说明', 'type' => 'text', 'help' => '请如实描述图片内容，供搜索引擎和读屏软件使用。'],
                             ],
                         ],

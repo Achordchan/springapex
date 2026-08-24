@@ -6,7 +6,19 @@ if (!defined('ABSPATH')) {
 $about = springapex_get('about', []);
 $company = springapex_get('company', []);
 $team = is_array($about['team'] ?? null) ? $about['team'] : [];
-$timeline = array_values(array_filter((array) ($company['timeline'] ?? []), 'is_array'));
+$timeline = array_values(array_filter(
+    (array) ($company['timeline'] ?? []),
+    static function (mixed $item): bool {
+        if (!is_array($item)) {
+            return false;
+        }
+        $image = $item['image'] ?? '';
+        if (is_array($image)) {
+            return (int) ($image['id'] ?? 0) > 0 || trim((string) ($image['file'] ?? '')) !== '';
+        }
+        return is_scalar($image) && trim((string) $image) !== '';
+    }
+));
 $brand = springapex_brand();
 $company_video = is_array($about['company_video'] ?? null) ? $about['company_video'] : [];
 $youtube_id = (string) ($company_video['youtube_id'] ?? '');
