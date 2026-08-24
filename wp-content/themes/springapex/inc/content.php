@@ -110,9 +110,18 @@ function springapex_content(): array
             ],
             'detail_media' => [
                 'quality' => [
-                    'load_test' => 'product-detail/compression-quality-load-test.jpg',
-                    'dimensional_inspection' => 'quality-inspection-original.jpg',
-                    'material_analysis' => 'product-detail/compression-quality-material-lab.jpg',
+                    'load_test' => [
+                        'image' => 'product-detail/compression-quality-load-test.jpg',
+                        'alt' => 'Spring load testing equipment operated by a NorenSpring technician',
+                    ],
+                    'dimensional_inspection' => [
+                        'image' => 'quality-inspection-original.jpg',
+                        'alt' => 'Dimensional inspection with a digital caliper',
+                    ],
+                    'material_analysis' => [
+                        'image' => 'product-detail/compression-quality-material-lab.jpg',
+                        'alt' => 'Material analysis in the NorenSpring laboratory',
+                    ],
                 ],
                 'delivery' => [
                     'protected_packaging' => 'product-detail/compression-packed-springs.jpg',

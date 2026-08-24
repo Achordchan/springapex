@@ -221,9 +221,12 @@ function springapex_admin_screens(): array
                     'title' => '产品详情页 · 质量检测图片',
                     'desc' => '所有产品详情页的“Quality & Testing”区域共用这一组图片，修改一次会同步到全部产品。',
                     'fields' => [
-                        ['path' => 'products.detail_media.quality.load_test', 'label' => '载荷测试大图', 'type' => 'image', 'help' => '区域左侧的大图。'],
-                        ['path' => 'products.detail_media.quality.dimensional_inspection', 'label' => '尺寸检测图', 'type' => 'image', 'help' => '区域右上图片。'],
-                        ['path' => 'products.detail_media.quality.material_analysis', 'label' => '材料分析图', 'type' => 'image', 'help' => '区域右下图片。'],
+                        ['path' => 'products.detail_media.quality.load_test.image', 'label' => '载荷测试大图', 'type' => 'image', 'help' => '区域左侧的大图。'],
+                        ['path' => 'products.detail_media.quality.load_test.alt', 'label' => '载荷测试图说明', 'type' => 'text', 'help' => '请如实描述替换后的图片内容，供搜索引擎和读屏软件使用。'],
+                        ['path' => 'products.detail_media.quality.dimensional_inspection.image', 'label' => '尺寸检测图', 'type' => 'image', 'help' => '区域右上图片。'],
+                        ['path' => 'products.detail_media.quality.dimensional_inspection.alt', 'label' => '尺寸检测图说明', 'type' => 'text', 'help' => '请如实描述替换后的图片内容，供搜索引擎和读屏软件使用。'],
+                        ['path' => 'products.detail_media.quality.material_analysis.image', 'label' => '材料分析图', 'type' => 'image', 'help' => '区域右下图片。'],
+                        ['path' => 'products.detail_media.quality.material_analysis.alt', 'label' => '材料分析图说明', 'type' => 'text', 'help' => '请如实描述替换后的图片内容，供搜索引擎和读屏软件使用。'],
                     ],
                 ],
                 [
@@ -887,9 +890,9 @@ function springapex_admin_image_dimensions_map(): array
 
         // 卡片 / 内容配图
         'products.mega_menu.feature_image' => '1200 × 700 px（约 12:7，横版）',
-        'products.detail_media.quality.load_test' => '1600 × 1067 px（3:2，横版）',
-        'products.detail_media.quality.dimensional_inspection' => '1200 × 800 px（3:2，横版）',
-        'products.detail_media.quality.material_analysis' => '1200 × 800 px（3:2，横版）',
+        'products.detail_media.quality.load_test.image' => '1600 × 1067 px（3:2，横版）',
+        'products.detail_media.quality.dimensional_inspection.image' => '1200 × 800 px（3:2，横版）',
+        'products.detail_media.quality.material_analysis.image' => '1200 × 800 px（3:2，横版）',
         'products.detail_media.delivery.protected_packaging' => '1200 × 1500 px（4:5，竖版）',
         'products.detail_media.delivery.custom_crates' => '1200 × 800 px（3:2，横版）',
         'products.detail_media.delivery.palletized_labelled' => '1200 × 800 px（3:2，横版）',
