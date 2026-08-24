@@ -15,7 +15,7 @@ if (!in_array(PHP_SAPI, ['cli', 'cli-server'], true)) {
 
 defined('ABSPATH') || define('ABSPATH', __DIR__ . '/');
 defined('SPRINGAPEX_PREVIEW') || define('SPRINGAPEX_PREVIEW', true);
-defined('SPRINGAPEX_VERSION') || define('SPRINGAPEX_VERSION', '2.9.96');
+defined('SPRINGAPEX_VERSION') || define('SPRINGAPEX_VERSION', '2.9.97');
 defined('SPRINGAPEX_DIR') || define('SPRINGAPEX_DIR', dirname(__DIR__));
 defined('SPRINGAPEX_URI') || define('SPRINGAPEX_URI', '');
 
@@ -31,7 +31,7 @@ function wp_json_encode(mixed $data, int $options = 0, int $depth = 512): string
 // Turnstile is a live-WordPress feature; in the no-WP preview the widget cannot
 // verify anything, so the site key is rendered for representative markup and the
 // no-JS notice is suppressed (there is no secret configured here).
-function springapex_turnstile_site_key(): string { return '0x4AAAAAAEUKf1Ep7E9Fafsj'; }
+function springapex_turnstile_site_key(): string { return '0x4AAAAAAEaVC1_swOetjJ-b'; }
 function springapex_turnstile_noscript(): string { return ''; }
 function __(string $text, string $domain = 'default'): string { return $text; }
 function esc_html__(string $text, string $domain = 'default'): string { return esc_html($text); }

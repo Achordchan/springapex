@@ -35,7 +35,7 @@ function springapex_turnstile_site_key(): string
         return $option;
     }
 
-    return '0x4AAAAAAEUKf1Ep7E9Fafsj';
+    return '0x4AAAAAAEaVC1_swOetjJ-b';
 }
 
 /**
