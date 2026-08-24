@@ -1,7 +1,7 @@
 # NorenSpring production deployment
 
 Production is isolated under `/srv/springapex` and uses the Compose project name `springapex`.
-The WordPress HTTP container listens only on `127.0.0.1:38100`; public traffic enters through the dedicated `web.apex-springs.com` Nginx server block.
+The WordPress HTTP container listens only on `127.0.0.1:38100`; public traffic enters through the dedicated `web.norenspring.com` Nginx server block. The retired `web.apex-springs.com` hostname only redirects to the NorenSpring domain.
 
 ## Managed paths
 
@@ -34,7 +34,7 @@ docker compose --env-file .env -f compose.yml --profile tools run --rm \
 
 结束后不在 `.env` 中保留该开关，Web 容器仍会定义 `DISALLOW_FILE_MODS=true`。
 
-## 临时调试保护
+## 临时调试保护（仅调试阶段）
 
 线上调试阶段启用三层保护：
 
@@ -44,7 +44,7 @@ docker compose --env-file .env -f compose.yml --profile tools run --rm \
 
 `/.well-known/acme-challenge/` 仍保持无鉴权，保证 Certbot 自动续期。GitHub Actions 的健康检查通过 `springapex-deploy-command` 直接访问 `127.0.0.1:38100`，不依赖共享预览密码。
 
-正式开放前需同时完成：移除 Nginx `auth_basic`、移除 `X-Robots-Tag`、将 `blog_public` 恢复为 `1`，然后执行 Nginx 语法检查和公网验收。
+正式开放配置不得包含 `auth_basic` 或 `X-Robots-Tag: noindex`，并要求 `blog_public=1`。切换后必须执行 Nginx 语法检查、WordPress URL 检查和公网验收。
 
 Before any database URL change:
 
@@ -58,4 +58,4 @@ Then run `wp search-replace` first with `--dry-run`, followed by the real comman
 
 ## DNS and TLS
 
-Point the `A` record for `web.apex-springs.com` to `95.169.2.68`. Use `nginx-web.apex-springs.com.conf` for the initial HTTP/ACME stage. After public DNS resolves, issue the certificate with Certbot webroot mode and install `nginx-web.apex-springs.com.tls.conf` as the active server block. Update `SPRINGAPEX_SITE_URL` in the root-owned `.env` from `http://web.apex-springs.com` to `https://web.apex-springs.com`, recreate only the `wordpress` service, and run a backed-up WordPress URL replacement from HTTP to HTTPS.
+Point the `A` record for `web.norenspring.com` to `95.169.2.68`. Use `nginx-web.norenspring.com.conf` for the initial HTTP/ACME stage. After public DNS resolves, issue the certificate with Certbot webroot mode and install `nginx-web.norenspring.com.tls.conf` as the active server block. Update `SPRINGAPEX_SITE_URL` in the root-owned `.env` to `https://web.norenspring.com`, recreate only the `wordpress` service, and run a backed-up WordPress URL replacement from `https://web.apex-springs.com` to `https://web.norenspring.com`. Keep the old HTTPS hostname as a permanent redirect while its certificate remains renewable.

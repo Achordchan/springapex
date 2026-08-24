@@ -11,7 +11,7 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
         ;;
     springapex-health)
         exec /usr/bin/curl -fsS \
-            -H 'Host: web.apex-springs.com' \
+            -H 'Host: web.norenspring.com' \
             -H 'X-Forwarded-Proto: https' \
             http://127.0.0.1:38100/ >/dev/null
         ;;
