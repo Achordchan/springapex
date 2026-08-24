@@ -153,8 +153,16 @@ function springapex_admin_sanitize_repeater(
             $current_row = $current_rows[(int) $origin];
         }
         $clean_row = [];
+        $reject_row = false;
         foreach ($subfields as $key => $subfield) {
             if (!array_key_exists($key, $row)) {
+                if (!empty($subfield['required']) && !array_key_exists($key, $current_row)) {
+                    springapex_admin_add_warning(
+                        $warnings,
+                        $row_label . '缺少必填字段「' . (string) ($subfield['label'] ?? $key) . '」，整项没有保存。'
+                    );
+                    $reject_row = true;
+                }
                 continue;
             }
             $field_label = $row_label . ' → ' . (string) ($subfield['label'] ?? $key);
@@ -169,7 +177,12 @@ function springapex_admin_sanitize_repeater(
                 $clean_row[$key] = $result['value'];
             } elseif (array_key_exists($key, $current_row)) {
                 $clean_row[$key] = $current_row[$key];
+            } elseif (!empty($subfield['required'])) {
+                $reject_row = true;
             }
+        }
+        if ($reject_row) {
+            continue;
         }
         $clean_rows[] = $clean_row;
     }
