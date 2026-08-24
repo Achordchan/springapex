@@ -6,6 +6,7 @@ if (!defined('ABSPATH')) {
 $about = springapex_get('about', []);
 $company = springapex_get('company', []);
 $team = is_array($about['team'] ?? null) ? $about['team'] : [];
+$timeline = array_values(array_filter((array) ($company['timeline'] ?? []), 'is_array'));
 $brand = springapex_brand();
 $company_video = is_array($about['company_video'] ?? null) ? $about['company_video'] : [];
 $youtube_id = (string) ($company_video['youtube_id'] ?? '');
@@ -162,6 +163,7 @@ get_template_part('parts/why-apexspring');
   </section>
 <?php endif; ?>
 
+<?php if ($timeline) : ?>
 <section class="section sa-timeline" aria-labelledby="sa-company-development-title">
   <div class="container container-wide">
     <div class="sa-timeline__intro" data-reveal="up">
@@ -171,7 +173,7 @@ get_template_part('parts/why-apexspring');
       </div>
     </div>
     <ol class="sa-timeline__list" data-reveal-group>
-      <?php foreach ((array) ($company['timeline'] ?? []) as $item) : ?>
+      <?php foreach ($timeline as $item) : ?>
         <li>
           <figure class="sa-timeline__media">
             <?php echo springapex_image((string) ($item['image'] ?? ''), (string) ($item['alt'] ?? ''), [
@@ -191,6 +193,7 @@ get_template_part('parts/why-apexspring');
     </ol>
   </div>
 </section>
+<?php endif; ?>
 
 <section class="section sa-global-network" id="global-network" aria-labelledby="sa-global-network-title">
   <div class="container container-wide">
