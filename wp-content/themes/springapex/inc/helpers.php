@@ -23,6 +23,41 @@ function springapex_asset_path(string $path): string
 }
 
 /**
+ * Whether an image value still resolves to a usable media attachment, URL or
+ * bundled theme file. This keeps deleted Media Library attachments from leaving
+ * fixed-aspect empty frames on the public site.
+ */
+function springapex_image_value_available(mixed $image, string $base = 'assets/images/'): bool
+{
+    if (is_array($image)) {
+        $attachment_id = (int) ($image['id'] ?? 0);
+        if ($attachment_id > 0 && springapex_image_value_available($attachment_id, $base)) {
+            return true;
+        }
+        return springapex_image_value_available((string) ($image['file'] ?? ''), $base);
+    }
+
+    if (!is_scalar($image)) {
+        return false;
+    }
+
+    $value = trim((string) $image);
+    if ($value === '') {
+        return false;
+    }
+    if (ctype_digit($value)) {
+        return !defined('SPRINGAPEX_PREVIEW')
+            && function_exists('wp_get_attachment_image_url')
+            && wp_get_attachment_image_url((int) $value, 'full') !== false;
+    }
+    if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+        return true;
+    }
+
+    return is_file(springapex_asset_path(rtrim($base, '/') . '/' . ltrim($value, '/')));
+}
+
+/**
  * URL for a content-managed file that is either a media-library attachment ID
  * (what the admin's picker stores), an absolute URL, or a filename shipped
  * with the theme under $base.

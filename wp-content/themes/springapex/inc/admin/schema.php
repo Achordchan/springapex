@@ -183,7 +183,7 @@ function springapex_admin_screens(): array
         'products' => [
             'label' => '产品页',
             'title' => '产品页',
-            'intro' => '这里编辑产品列表页的页面头部和选型引导。产品卡片及每个产品的详细内容，请到左侧菜单「Spring Products」编辑。',
+            'intro' => '这里编辑产品列表页和所有产品详情页共用的内容。产品卡片及每个产品自己的详细内容，请到左侧菜单「Spring Products」编辑。',
             'preview' => '/products/',
             'sections' => [
                 [
@@ -215,6 +215,28 @@ function springapex_admin_screens(): array
                     'desc' => '页头 Products 展开后左侧的品牌展示图，与单个产品的主图独立。',
                     'fields' => [
                         ['path' => 'products.mega_menu.feature_image', 'label' => '左侧展示图', 'type' => 'image', 'help' => '建议使用深色、横版、主体居中的弹簧图。这张图不会随产品主图变化。'],
+                    ],
+                ],
+                [
+                    'title' => '产品详情页 · 质量检测图片',
+                    'desc' => '所有产品详情页的“Quality & Testing”区域共用这一组图片，修改一次会同步到全部产品。',
+                    'fields' => [
+                        ['path' => 'products.detail_media.quality.load_test.image', 'label' => '载荷测试大图', 'type' => 'image', 'required' => true, 'help' => '区域左侧的大图，固定版式必需。'],
+                        ['path' => 'products.detail_media.quality.load_test.alt', 'label' => '载荷测试图说明', 'type' => 'text', 'help' => '请如实描述替换后的图片内容，供搜索引擎和读屏软件使用。'],
+                        ['path' => 'products.detail_media.quality.dimensional_inspection.image', 'label' => '尺寸检测图', 'type' => 'image', 'required' => true, 'help' => '区域右上图片，固定版式必需。'],
+                        ['path' => 'products.detail_media.quality.dimensional_inspection.alt', 'label' => '尺寸检测图说明', 'type' => 'text', 'help' => '请如实描述替换后的图片内容，供搜索引擎和读屏软件使用。'],
+                        ['path' => 'products.detail_media.quality.material_analysis.image', 'label' => '材料分析图', 'type' => 'image', 'required' => true, 'help' => '区域右下图片，固定版式必需。'],
+                        ['path' => 'products.detail_media.quality.material_analysis.alt', 'label' => '材料分析图说明', 'type' => 'text', 'help' => '请如实描述替换后的图片内容，供搜索引擎和读屏软件使用。'],
+                    ],
+                ],
+                [
+                    'title' => '产品详情页 · 包装交付图片',
+                    'desc' => '所有产品详情页的“Packing & Delivery”区域共用这一组图片，修改一次会同步到全部产品。',
+                    'fields' => [
+                        ['path' => 'products.detail_media.delivery.protected_packaging', 'label' => '防护包装', 'type' => 'image', 'required' => true, 'help' => '固定版式必需。'],
+                        ['path' => 'products.detail_media.delivery.custom_crates', 'label' => '定制木箱', 'type' => 'image', 'required' => true, 'help' => '固定版式必需。'],
+                        ['path' => 'products.detail_media.delivery.palletized_labelled', 'label' => '托盘与标签', 'type' => 'image', 'required' => true, 'help' => '固定版式必需。'],
+                        ['path' => 'products.detail_media.delivery.global_delivery', 'label' => '国际交付', 'type' => 'image', 'required' => true, 'help' => '固定版式必需。'],
                     ],
                 ],
                 [
@@ -449,7 +471,7 @@ function springapex_admin_screens(): array
         'about' => [
             'label' => '关于我们页',
             'title' => '关于我们页',
-            'intro' => '公司介绍页。团队成员和公司视频都在这里维护。',
+            'intro' => '公司介绍页。页面头图、公司视频、为什么选择我们和团队成员都在这里维护。',
             'preview' => '/about/',
             'sections' => [
                 [
@@ -476,6 +498,19 @@ function springapex_admin_screens(): array
                     'fields' => [
                         ['path' => 'about.why_choose.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => ''],
                         ['path' => 'about.why_choose.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        [
+                            'path' => 'about.why_choose.media',
+                            'type' => 'repeater',
+                            'label' => '左侧大图',
+                            'item_label' => '大图',
+                            'title_key' => 'label',
+                            'max_items' => 2,
+                            'fields' => [
+                                ['path' => 'label', 'label' => '图片标签', 'type' => 'text', 'help' => '显示在图片左下角。'],
+                                ['path' => 'image', 'label' => '图片', 'type' => 'image', 'required' => true, 'help' => '横版实拍图。需要取消展示时请删除整条大图。'],
+                                ['path' => 'alt', 'label' => '图片说明', 'type' => 'text', 'help' => '请如实描述图片内容，供搜索引擎和读屏软件使用。'],
+                            ],
+                        ],
                         [
                             'path' => 'about.why_choose.items',
                             'type' => 'repeater',
@@ -542,7 +577,7 @@ function springapex_admin_screens(): array
         'company' => [
             'label' => '公司实力与资质',
             'title' => '公司实力与资质',
-            'intro' => '公司简介长文、关键事实和体系证书。证书会同时出现在首页和关于页，过期前记得更新有效期。',
+            'intro' => '公司简介长文、关键事实、发展历程和体系证书。证书会同时出现在首页和关于页，过期前记得更新有效期。',
             'preview' => '/about/',
             'sections' => [
                 [
@@ -574,6 +609,27 @@ function springapex_admin_screens(): array
                                 ['path' => 'value', 'label' => '数值', 'type' => 'text', 'help' => ''],
                                 ['path' => 'label', 'label' => '名称', 'type' => 'text', 'help' => ''],
                                 ['path' => 'detail', 'label' => '补充说明', 'type' => 'textarea', 'help' => ''],
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'title' => '公司发展历程',
+                    'desc' => '对应关于我们页底部的发展历程图片和文字，最多显示 3 个节点，可删除、补回或排序。',
+                    'fields' => [
+                        [
+                            'path' => 'company.timeline',
+                            'type' => 'repeater',
+                            'label' => '发展节点',
+                            'item_label' => '节点',
+                            'title_key' => 'title',
+                            'max_items' => 3,
+                            'fields' => [
+                                ['path' => 'year', 'label' => '年份或阶段', 'type' => 'text', 'help' => '例如 2001、Growth 或 Today。'],
+                                ['path' => 'title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                                ['path' => 'text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
+                                ['path' => 'image', 'label' => '图片', 'type' => 'image', 'required' => true, 'help' => '建议所有节点使用相同尺寸的横版图片。需要取消节点时请删除整条节点。'],
+                                ['path' => 'alt', 'label' => '图片说明', 'type' => 'text', 'help' => '请如实描述图片内容，供搜索引擎和读屏软件使用。'],
                             ],
                         ],
                     ],
@@ -836,6 +892,13 @@ function springapex_admin_image_dimensions_map(): array
 
         // 卡片 / 内容配图
         'products.mega_menu.feature_image' => '1200 × 700 px（约 12:7，横版）',
+        'products.detail_media.quality.load_test.image' => '1600 × 1067 px（3:2，横版）',
+        'products.detail_media.quality.dimensional_inspection.image' => '1200 × 800 px（3:2，横版）',
+        'products.detail_media.quality.material_analysis.image' => '1200 × 800 px（3:2，横版）',
+        'products.detail_media.delivery.protected_packaging' => '1200 × 1500 px（4:5，竖版）',
+        'products.detail_media.delivery.custom_crates' => '1200 × 800 px（3:2，横版）',
+        'products.detail_media.delivery.palletized_labelled' => '1200 × 800 px（3:2，横版）',
+        'products.detail_media.delivery.global_delivery' => '1200 × 800 px（3:2，横版）',
         'capabilities.project_brief.image' => '1600 × 900 px（16:9，横版）',
         'manufacturing_process.#.image' => '1600 × 1200 px（4:3，横版实拍）',
         'capabilities.verification.image' => '1680 × 700 px（2.4:1，横版示意图）',
@@ -849,7 +912,9 @@ function springapex_admin_image_dimensions_map(): array
         // 头像 / 小图
         'about.team.founder.image' => '900 × 1200 px（3:4，竖版）',
         'about.team.groups.#.members.#.image' => '1200 × 900 px（4:3，横版）',
+        'about.why_choose.media.#.image' => '1600 × 1000 px（约 8:5，横版）',
         'about.why_choose.items.#.icon_image' => '600 × 600 px（1:1，方形小图）',
+        'company.timeline.#.image' => '1500 × 1000 px（3:2，横版）',
         'company.quality.certificates.#.image' => '600 × 800 px（3:4，竖版徽标）',
 
         // 特殊

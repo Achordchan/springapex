@@ -131,6 +131,12 @@
     if (empty) {
       empty.hidden = rows.length > 0;
     }
+
+    var addButton = repeater.querySelector(':scope > [data-sa-add]');
+    var maxItems = Number(repeater.getAttribute('data-max-items') || 0);
+    if (addButton && maxItems > 0) {
+      addButton.hidden = rows.length >= maxItems;
+    }
   }
 
   /** Keep the collapsed row title in sync with the row's first text field. */
@@ -195,6 +201,10 @@
       }
       var template = repeater.querySelector('[data-sa-template]');
       var rowsBox = repeater.querySelector('[data-sa-rows]');
+      var maxItems = Number(repeater.getAttribute('data-max-items') || 0);
+      if (maxItems > 0 && rowsBox.children.length >= maxItems) {
+        return;
+      }
       var html = template.innerHTML.replace(/__i__/g, String(rowsBox.children.length));
       var holder = document.createElement('div');
       holder.innerHTML = html;

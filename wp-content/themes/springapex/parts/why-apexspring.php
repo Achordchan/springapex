@@ -7,6 +7,18 @@ $why_choose = springapex_get('about.why_choose', []);
 if (!is_array($why_choose) || !$why_choose) {
     return;
 }
+$media_items = array_values(array_filter(
+    (array) ($why_choose['media'] ?? []),
+    static function (mixed $item): bool {
+        if (!is_array($item)) {
+            return false;
+        }
+        return springapex_image_value_available($item['image'] ?? '');
+    }
+));
+$media_sizes = count($media_items) === 1
+    ? '(max-width: 1080px) 100vw, 46vw'
+    : '(max-width: 1080px) 50vw, 46vw';
 ?>
 <section class="section sa-why-choose" aria-labelledby="sa-why-choose-title">
   <div class="container container-wide">
@@ -15,19 +27,21 @@ if (!is_array($why_choose) || !$why_choose) {
       <h2 id="sa-why-choose-title"><?php echo esc_html((string) ($why_choose['title'] ?? '')); ?></h2>
     </header>
 
-    <div class="sa-why-choose__layout">
-      <div class="sa-why-choose__media" data-reveal-group>
-        <?php foreach (($why_choose['media'] ?? []) as $media) : ?>
+    <div class="sa-why-choose__layout<?php echo $media_items ? '' : ' sa-why-choose__layout--without-media'; ?>">
+      <?php if ($media_items) : ?>
+      <div class="sa-why-choose__media<?php echo count($media_items) === 1 ? ' sa-why-choose__media--single' : ''; ?>" data-reveal-group>
+        <?php foreach ($media_items as $media) : ?>
           <figure>
             <?php echo springapex_image((string) ($media['image'] ?? ''), (string) ($media['alt'] ?? ''), [
                 'width' => 1586,
                 'height' => 992,
-                'sizes' => '(max-width: 1080px) 50vw, 46vw',
+                'sizes' => $media_sizes,
             ]); ?>
             <figcaption><?php echo esc_html((string) ($media['label'] ?? '')); ?></figcaption>
           </figure>
         <?php endforeach; ?>
       </div>
+      <?php endif; ?>
 
       <ol class="sa-why-choose__list" data-reveal-group>
         <?php foreach (($why_choose['items'] ?? []) as $index => $item) : ?>

@@ -121,7 +121,14 @@ function springapex_admin_render_field(array $field, mixed $value, string $name_
                     break;
 
                 case 'image':
-                    springapex_admin_render_image_field($id, $name, $value, springapex_admin_image_base($field), springapex_admin_image_dimension($name_path));
+                    springapex_admin_render_image_field(
+                        $id,
+                        $name,
+                        $value,
+                        springapex_admin_image_base($field),
+                        springapex_admin_image_dimension($name_path),
+                        !empty($field['required'])
+                    );
                     break;
 
                 case 'youtube':
@@ -152,7 +159,14 @@ function springapex_admin_render_field(array $field, mixed $value, string $name_
     <?php
 }
 
-function springapex_admin_render_image_field(string $id, string $name, mixed $value, string $base = 'assets/images/', string $dimensions = ''): void
+function springapex_admin_render_image_field(
+    string $id,
+    string $name,
+    mixed $value,
+    string $base = 'assets/images/',
+    string $dimensions = '',
+    bool $required = false
+): void
 {
     $url = springapex_admin_image_url($value, $base);
     $stored = springapex_admin_image_value($value);
@@ -160,7 +174,7 @@ function springapex_admin_render_image_field(string $id, string $name, mixed $va
     <?php if ($dimensions !== '') : ?>
         <p class="sa-image__dims"><span class="sa-image__dims-tag">推荐尺寸</span><?php echo esc_html($dimensions); ?></p>
     <?php endif; ?>
-    <div class="sa-image" data-sa-image>
+    <div class="sa-image" data-sa-image<?php echo $required ? ' data-required="true"' : ''; ?>>
         <div class="sa-image__preview<?php echo $url === '' ? ' is-empty' : ''; ?>" data-sa-image-preview>
             <?php if ($url !== '') : ?>
                 <img src="<?php echo esc_url($url); ?>" alt="" />
@@ -170,7 +184,9 @@ function springapex_admin_render_image_field(string $id, string $name, mixed $va
         </div>
         <div class="sa-image__actions">
             <button type="button" class="button" data-sa-image-select>选择图片</button>
-            <button type="button" class="button-link sa-image__remove<?php echo $stored === '' ? ' is-hidden' : ''; ?>" data-sa-image-remove>移除</button>
+            <?php if (!$required) : ?>
+                <button type="button" class="button-link sa-image__remove<?php echo $stored === '' ? ' is-hidden' : ''; ?>" data-sa-image-remove>移除</button>
+            <?php endif; ?>
             <input type="hidden" id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" value="<?php echo esc_attr($stored); ?>" data-sa-image-value />
             <?php if ($stored !== '' && !ctype_digit($stored)) : ?>
                 <code class="sa-image__file"><?php echo esc_html($stored); ?></code>
@@ -251,8 +267,9 @@ function springapex_admin_render_repeater(array $field, array $rows, string $nam
     $item_label = (string) ($field['item_label'] ?? '项目');
     $title_key = (string) ($field['title_key'] ?? '');
     $help = (string) ($field['help'] ?? '');
+    $max_items = max(0, (int) ($field['max_items'] ?? 0));
     ?>
-    <div class="sa-repeater" data-sa-repeater data-path="<?php echo esc_attr($name_path); ?>">
+    <div class="sa-repeater" data-sa-repeater data-path="<?php echo esc_attr($name_path); ?>"<?php echo $max_items > 0 ? ' data-max-items="' . esc_attr((string) $max_items) . '"' : ''; ?>>
         <input type="hidden" name="<?php echo esc_attr(springapex_admin_field_name($name_path)); ?>" value="" />
         <div class="sa-repeater__head">
             <span class="sa-repeater__title"><?php echo esc_html((string) ($field['label'] ?? '')); ?></span>
@@ -279,7 +296,7 @@ function springapex_admin_render_repeater(array $field, array $rows, string $nam
             这一栏目前没有任何<?php echo esc_html($item_label); ?>，前台不会显示这个区块。点下面的「添加<?php echo esc_html($item_label); ?>」新增一条。
         </p>
 
-        <button type="button" class="button sa-repeater__add" data-sa-add>+ 添加<?php echo esc_html($item_label); ?></button>
+        <button type="button" class="button sa-repeater__add" data-sa-add<?php echo $max_items > 0 && count($rows) >= $max_items ? ' hidden' : ''; ?>>+ 添加<?php echo esc_html($item_label); ?></button>
 
         <template data-sa-template>
             <?php springapex_admin_render_repeater_row($field, [], $name_path . '.__i__', $item_label, '', 0); ?>

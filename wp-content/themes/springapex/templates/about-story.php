@@ -6,6 +6,19 @@ if (!defined('ABSPATH')) {
 $about = springapex_get('about', []);
 $company = springapex_get('company', []);
 $team = is_array($about['team'] ?? null) ? $about['team'] : [];
+$timeline = array_values(array_filter(
+    (array) ($company['timeline'] ?? []),
+    static function (mixed $item): bool {
+        if (!is_array($item)) {
+            return false;
+        }
+        return springapex_image_value_available($item['image'] ?? '');
+    }
+));
+$timeline_sizes = sprintf(
+    '(max-width: 760px) 100vw, %dvw',
+    intdiv(100, max(1, count($timeline)))
+);
 $brand = springapex_brand();
 $company_video = is_array($about['company_video'] ?? null) ? $about['company_video'] : [];
 $youtube_id = (string) ($company_video['youtube_id'] ?? '');
@@ -162,6 +175,7 @@ get_template_part('parts/why-apexspring');
   </section>
 <?php endif; ?>
 
+<?php if ($timeline) : ?>
 <section class="section sa-timeline" aria-labelledby="sa-company-development-title">
   <div class="container container-wide">
     <div class="sa-timeline__intro" data-reveal="up">
@@ -170,14 +184,14 @@ get_template_part('parts/why-apexspring');
         <h2 id="sa-company-development-title"><?php esc_html_e('Built for repeat production.', 'springapex'); ?></h2>
       </div>
     </div>
-    <ol class="sa-timeline__list" data-reveal-group>
-      <?php foreach ((array) ($company['timeline'] ?? []) as $item) : ?>
+    <ol class="sa-timeline__list" style="--sa-timeline-columns: <?php echo esc_attr((string) count($timeline)); ?>" data-reveal-group>
+      <?php foreach ($timeline as $item) : ?>
         <li>
           <figure class="sa-timeline__media">
             <?php echo springapex_image((string) ($item['image'] ?? ''), (string) ($item['alt'] ?? ''), [
                 'width' => 1536,
                 'height' => 1024,
-                'sizes' => '(max-width: 760px) 100vw, 33vw',
+                'sizes' => $timeline_sizes,
             ]); ?>
           </figure>
           <span class="sa-timeline__marker" aria-hidden="true"></span>
@@ -191,6 +205,7 @@ get_template_part('parts/why-apexspring');
     </ol>
   </div>
 </section>
+<?php endif; ?>
 
 <section class="section sa-global-network" id="global-network" aria-labelledby="sa-global-network-title">
   <div class="container container-wide">
