@@ -12,11 +12,7 @@ $timeline = array_values(array_filter(
         if (!is_array($item)) {
             return false;
         }
-        $image = $item['image'] ?? '';
-        if (is_array($image)) {
-            return (int) ($image['id'] ?? 0) > 0 || trim((string) ($image['file'] ?? '')) !== '';
-        }
-        return is_scalar($image) && trim((string) $image) !== '';
+        return springapex_image_value_available($item['image'] ?? '');
     }
 ));
 $timeline_sizes = sprintf(

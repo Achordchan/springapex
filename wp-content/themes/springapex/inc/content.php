@@ -7,6 +7,32 @@ if (!defined('ABSPATH')) {
 
 require_once __DIR__ . '/content-enhancements.php';
 
+function springapex_product_detail_media_defaults(): array
+{
+    return [
+        'quality' => [
+            'load_test' => [
+                'image' => 'product-detail/compression-quality-load-test.jpg',
+                'alt' => 'Spring load testing equipment operated by a NorenSpring technician',
+            ],
+            'dimensional_inspection' => [
+                'image' => 'quality-inspection-original.jpg',
+                'alt' => 'Dimensional inspection with a digital caliper',
+            ],
+            'material_analysis' => [
+                'image' => 'product-detail/compression-quality-material-lab.jpg',
+                'alt' => 'Material analysis in the NorenSpring laboratory',
+            ],
+        ],
+        'delivery' => [
+            'protected_packaging' => 'product-detail/compression-packed-springs.jpg',
+            'custom_crates' => 'product-detail/compression-custom-crates.jpg',
+            'palletized_labelled' => 'product-detail/compression-parts-racks.jpg',
+            'global_delivery' => 'product-detail/compression-palletized.jpg',
+        ],
+    ];
+}
+
 function springapex_content(): array
 {
     static $data = null;
@@ -108,28 +134,7 @@ function springapex_content(): array
             'mega_menu' => [
                 'feature_image' => 'product-compression-menu-v2.png',
             ],
-            'detail_media' => [
-                'quality' => [
-                    'load_test' => [
-                        'image' => 'product-detail/compression-quality-load-test.jpg',
-                        'alt' => 'Spring load testing equipment operated by a NorenSpring technician',
-                    ],
-                    'dimensional_inspection' => [
-                        'image' => 'quality-inspection-original.jpg',
-                        'alt' => 'Dimensional inspection with a digital caliper',
-                    ],
-                    'material_analysis' => [
-                        'image' => 'product-detail/compression-quality-material-lab.jpg',
-                        'alt' => 'Material analysis in the NorenSpring laboratory',
-                    ],
-                ],
-                'delivery' => [
-                    'protected_packaging' => 'product-detail/compression-packed-springs.jpg',
-                    'custom_crates' => 'product-detail/compression-custom-crates.jpg',
-                    'palletized_labelled' => 'product-detail/compression-parts-racks.jpg',
-                    'global_delivery' => 'product-detail/compression-palletized.jpg',
-                ],
-            ],
+            'detail_media' => springapex_product_detail_media_defaults(),
             'categories' => [
                 ['slug' => 'compression-springs', 'title' => 'Compression Springs', 'image' => 'product-compression-detail-v4.png', 'category_image' => 'product-compression-detail-v4.png', 'featured_image' => 'product-compression-card-v3.png', 'desc' => 'Designed for dependable axial load and return force.'],
                 ['slug' => 'extension-springs', 'title' => 'Extension Springs', 'image' => 'product-extension-v2.png', 'category_image' => 'product-extension-category-v3.png', 'desc' => 'Built to deliver reliable tension and controlled extension.'],

@@ -89,11 +89,30 @@ $quality_steps = [
 ];
 $quality_images = (array) springapex_get('products.detail_media.quality', []);
 $delivery_images = (array) springapex_get('products.detail_media.delivery', []);
+$detail_media_defaults = springapex_product_detail_media_defaults();
+$resolve_detail_image = static fn(mixed $image, string $fallback): mixed =>
+    springapex_image_value_available($image) ? $image : $fallback;
+$resolve_quality_media = static function (mixed $current, array $fallback): array {
+    $current = is_array($current) ? $current : [];
+    $image = $current['image'] ?? '';
+    if (!springapex_image_value_available($image)) {
+        return $fallback;
+    }
+    return [
+        'image' => $image,
+        'alt' => (string) ($current['alt'] ?? $fallback['alt']),
+    ];
+};
+$resolved_quality_images = [
+    'load_test' => $resolve_quality_media($quality_images['load_test'] ?? [], $detail_media_defaults['quality']['load_test']),
+    'dimensional_inspection' => $resolve_quality_media($quality_images['dimensional_inspection'] ?? [], $detail_media_defaults['quality']['dimensional_inspection']),
+    'material_analysis' => $resolve_quality_media($quality_images['material_analysis'] ?? [], $detail_media_defaults['quality']['material_analysis']),
+];
 $delivery_items = [
-    ['image' => $delivery_images['protected_packaging'] ?? '', 'icon' => 'box', 'title' => 'Protected Packaging', 'text' => 'Oil paper, VCI bags, bubble film and reinforced cartons.'],
-    ['image' => $delivery_images['custom_crates'] ?? '', 'icon' => 'cubes', 'title' => 'Custom Crates', 'text' => 'Plywood crates for heavy loads and long-distance shipping.'],
-    ['image' => $delivery_images['palletized_labelled'] ?? '', 'icon' => 'form', 'title' => 'Palletized & Labelled', 'text' => 'Protected racks and clear labelling organize part number, lot and quantity.'],
-    ['image' => $delivery_images['global_delivery'] ?? '', 'icon' => 'delivery', 'title' => 'Global Delivery', 'text' => 'Export-ready loads prepared for reliable international logistics.'],
+    ['image' => $resolve_detail_image($delivery_images['protected_packaging'] ?? '', $detail_media_defaults['delivery']['protected_packaging']), 'icon' => 'box', 'title' => 'Protected Packaging', 'text' => 'Oil paper, VCI bags, bubble film and reinforced cartons.'],
+    ['image' => $resolve_detail_image($delivery_images['custom_crates'] ?? '', $detail_media_defaults['delivery']['custom_crates']), 'icon' => 'cubes', 'title' => 'Custom Crates', 'text' => 'Plywood crates for heavy loads and long-distance shipping.'],
+    ['image' => $resolve_detail_image($delivery_images['palletized_labelled'] ?? '', $detail_media_defaults['delivery']['palletized_labelled']), 'icon' => 'form', 'title' => 'Palletized & Labelled', 'text' => 'Protected racks and clear labelling organize part number, lot and quantity.'],
+    ['image' => $resolve_detail_image($delivery_images['global_delivery'] ?? '', $detail_media_defaults['delivery']['global_delivery']), 'icon' => 'delivery', 'title' => 'Global Delivery', 'text' => 'Export-ready loads prepared for reliable international logistics.'],
 ];
 $documents = [
     ['icon' => 'network', 'title' => 'Material Traceability', 'text' => 'Wire identification and material checks from receipt to production.', 'href' => $traceability_url],
@@ -341,9 +360,9 @@ $documents = [
         <p class="section-kicker"><?php esc_html_e('QUALITY VERIFIED AT EVERY STAGE', 'springapex'); ?></p>
       </header>
       <div class="sa-compression-quality__gallery" data-reveal="up">
-        <figure class="is-large"><?php echo springapex_image($quality_images['load_test']['image'] ?? '', (string) ($quality_images['load_test']['alt'] ?? ''), ['width' => 782, 'height' => 522, 'sizes' => '(max-width: 760px) 100vw, 55vw']); ?></figure>
-        <figure><?php echo springapex_image($quality_images['dimensional_inspection']['image'] ?? '', (string) ($quality_images['dimensional_inspection']['alt'] ?? ''), ['width' => 710, 'height' => 550, 'sizes' => '(max-width: 760px) 100vw, 27vw']); ?><figcaption><strong><?php esc_html_e('Dimensional Inspection', 'springapex'); ?></strong><span><?php esc_html_e('Critical dimensions checked with calibrated tools.', 'springapex'); ?></span></figcaption></figure>
-        <figure><?php echo springapex_image($quality_images['material_analysis']['image'] ?? '', (string) ($quality_images['material_analysis']['alt'] ?? ''), ['width' => 782, 'height' => 442, 'sizes' => '(max-width: 760px) 100vw, 27vw']); ?><figcaption><strong><?php esc_html_e('Material Analysis', 'springapex'); ?></strong><span><?php esc_html_e('Material condition and hardness confirmed.', 'springapex'); ?></span></figcaption></figure>
+        <figure class="is-large"><?php echo springapex_image($resolved_quality_images['load_test']['image'], $resolved_quality_images['load_test']['alt'], ['width' => 782, 'height' => 522, 'sizes' => '(max-width: 760px) 100vw, 55vw']); ?></figure>
+        <figure><?php echo springapex_image($resolved_quality_images['dimensional_inspection']['image'], $resolved_quality_images['dimensional_inspection']['alt'], ['width' => 710, 'height' => 550, 'sizes' => '(max-width: 760px) 100vw, 27vw']); ?><figcaption><strong><?php esc_html_e('Dimensional Inspection', 'springapex'); ?></strong><span><?php esc_html_e('Critical dimensions checked with calibrated tools.', 'springapex'); ?></span></figcaption></figure>
+        <figure><?php echo springapex_image($resolved_quality_images['material_analysis']['image'], $resolved_quality_images['material_analysis']['alt'], ['width' => 782, 'height' => 442, 'sizes' => '(max-width: 760px) 100vw, 27vw']); ?><figcaption><strong><?php esc_html_e('Material Analysis', 'springapex'); ?></strong><span><?php esc_html_e('Material condition and hardness confirmed.', 'springapex'); ?></span></figcaption></figure>
       </div>
       <ol class="sa-compression-quality__steps" data-reveal-group>
         <?php foreach ($quality_steps as $item) : ?>
