@@ -294,7 +294,7 @@
   --sa-timeline-gap: 24px;
   display: grid;
   margin-top: 28px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--sa-timeline-columns, 3), minmax(0, 1fr));
   gap: var(--sa-timeline-gap);
   border-top: 0;
 }

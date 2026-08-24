@@ -172,7 +172,7 @@ get_template_part('parts/why-apexspring');
         <h2 id="sa-company-development-title"><?php esc_html_e('Built for repeat production.', 'springapex'); ?></h2>
       </div>
     </div>
-    <ol class="sa-timeline__list" data-reveal-group>
+    <ol class="sa-timeline__list" style="--sa-timeline-columns: <?php echo esc_attr((string) count($timeline)); ?>" data-reveal-group>
       <?php foreach ($timeline as $item) : ?>
         <li>
           <figure class="sa-timeline__media">
