@@ -12,7 +12,7 @@ x-wordpress-environment: &wordpress-environment
     if (isset($$_SERVER['HTTP_X_FORWARDED_PROTO']) && str_contains((string) $$_SERVER['HTTP_X_FORWARDED_PROTO'], 'https')) {
         $$_SERVER['HTTPS'] = 'on';
     }
-    $$springapex_site_url = getenv('SPRINGAPEX_SITE_URL') ?: 'http://web.apex-springs.com';
+    $$springapex_site_url = getenv('SPRINGAPEX_SITE_URL') ?: 'https://web.norenspring.com';
     define('WP_HOME', $$springapex_site_url);
     define('WP_SITEURL', $$springapex_site_url);
     define('WP_ENVIRONMENT_TYPE', 'production');

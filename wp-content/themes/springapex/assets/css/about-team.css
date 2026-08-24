@@ -178,9 +178,8 @@
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: center top;
-  transition: transform .45s var(--sa-ease-out, ease);
+  object-fit: contain;
+  object-position: center;
 }
 
 .sa-route-about .sa-team__member figcaption {
@@ -205,12 +204,6 @@
   color: var(--sa-text-3);
   font-size: 12px;
   line-height: 1.4;
-}
-
-@media (hover: hover) {
-  .sa-route-about .sa-team__member:hover .sa-team__member-media img {
-    transform: scale(1.025);
-  }
 }
 
 @media (max-width: 1180px) {
