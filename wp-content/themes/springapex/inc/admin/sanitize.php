@@ -115,6 +115,12 @@ function springapex_admin_sanitize_repeater(
         return springapex_admin_reject($warnings, $label, '的数据格式不正确，没有保存。');
     }
 
+    $max_items = max(0, (int) ($field['max_items'] ?? 0));
+    if ($max_items > 0 && count($raw) > $max_items) {
+        springapex_admin_add_warning($warnings, $label . '最多只能保存 ' . $max_items . ' 项，超出的内容没有保存。');
+        $raw = array_slice($raw, 0, $max_items);
+    }
+
     $subfields = [];
     foreach ((array) ($field['fields'] ?? []) as $subfield) {
         $key = (string) ($subfield['path'] ?? '');
@@ -183,7 +189,11 @@ function springapex_admin_sanitize_field(
         return springapex_admin_sanitize_repeater($field, $raw, $current, $label, $warnings);
     }
     if ($type === 'image') {
-        return springapex_admin_sanitize_image($raw, $label, $warnings, springapex_admin_image_base($field));
+        $result = springapex_admin_sanitize_image($raw, $label, $warnings, springapex_admin_image_base($field));
+        if (!empty($field['required']) && $result['accepted'] && $result['value'] === '') {
+            return springapex_admin_reject($warnings, $label, '是固定版式必需图片，不能清空，已保留原内容。');
+        }
+        return $result;
     }
 
     $value = springapex_admin_scalar($raw, $label, $warnings);

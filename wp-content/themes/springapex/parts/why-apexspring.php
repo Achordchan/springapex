@@ -18,7 +18,7 @@ $media_items = array_values(array_filter((array) ($why_choose['media'] ?? []), '
 
     <div class="sa-why-choose__layout<?php echo $media_items ? '' : ' sa-why-choose__layout--without-media'; ?>">
       <?php if ($media_items) : ?>
-      <div class="sa-why-choose__media" data-reveal-group>
+      <div class="sa-why-choose__media<?php echo count($media_items) === 1 ? ' sa-why-choose__media--single' : ''; ?>" data-reveal-group>
         <?php foreach ($media_items as $media) : ?>
           <figure>
             <?php echo springapex_image((string) ($media['image'] ?? ''), (string) ($media['alt'] ?? ''), [

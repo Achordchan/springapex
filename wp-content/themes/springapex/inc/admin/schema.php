@@ -221,11 +221,11 @@ function springapex_admin_screens(): array
                     'title' => '产品详情页 · 质量检测图片',
                     'desc' => '所有产品详情页的“Quality & Testing”区域共用这一组图片，修改一次会同步到全部产品。',
                     'fields' => [
-                        ['path' => 'products.detail_media.quality.load_test.image', 'label' => '载荷测试大图', 'type' => 'image', 'help' => '区域左侧的大图。'],
+                        ['path' => 'products.detail_media.quality.load_test.image', 'label' => '载荷测试大图', 'type' => 'image', 'required' => true, 'help' => '区域左侧的大图，固定版式必需。'],
                         ['path' => 'products.detail_media.quality.load_test.alt', 'label' => '载荷测试图说明', 'type' => 'text', 'help' => '请如实描述替换后的图片内容，供搜索引擎和读屏软件使用。'],
-                        ['path' => 'products.detail_media.quality.dimensional_inspection.image', 'label' => '尺寸检测图', 'type' => 'image', 'help' => '区域右上图片。'],
+                        ['path' => 'products.detail_media.quality.dimensional_inspection.image', 'label' => '尺寸检测图', 'type' => 'image', 'required' => true, 'help' => '区域右上图片，固定版式必需。'],
                         ['path' => 'products.detail_media.quality.dimensional_inspection.alt', 'label' => '尺寸检测图说明', 'type' => 'text', 'help' => '请如实描述替换后的图片内容，供搜索引擎和读屏软件使用。'],
-                        ['path' => 'products.detail_media.quality.material_analysis.image', 'label' => '材料分析图', 'type' => 'image', 'help' => '区域右下图片。'],
+                        ['path' => 'products.detail_media.quality.material_analysis.image', 'label' => '材料分析图', 'type' => 'image', 'required' => true, 'help' => '区域右下图片，固定版式必需。'],
                         ['path' => 'products.detail_media.quality.material_analysis.alt', 'label' => '材料分析图说明', 'type' => 'text', 'help' => '请如实描述替换后的图片内容，供搜索引擎和读屏软件使用。'],
                     ],
                 ],
@@ -233,10 +233,10 @@ function springapex_admin_screens(): array
                     'title' => '产品详情页 · 包装交付图片',
                     'desc' => '所有产品详情页的“Packing & Delivery”区域共用这一组图片，修改一次会同步到全部产品。',
                     'fields' => [
-                        ['path' => 'products.detail_media.delivery.protected_packaging', 'label' => '防护包装', 'type' => 'image', 'help' => ''],
-                        ['path' => 'products.detail_media.delivery.custom_crates', 'label' => '定制木箱', 'type' => 'image', 'help' => ''],
-                        ['path' => 'products.detail_media.delivery.palletized_labelled', 'label' => '托盘与标签', 'type' => 'image', 'help' => ''],
-                        ['path' => 'products.detail_media.delivery.global_delivery', 'label' => '国际交付', 'type' => 'image', 'help' => ''],
+                        ['path' => 'products.detail_media.delivery.protected_packaging', 'label' => '防护包装', 'type' => 'image', 'required' => true, 'help' => '固定版式必需。'],
+                        ['path' => 'products.detail_media.delivery.custom_crates', 'label' => '定制木箱', 'type' => 'image', 'required' => true, 'help' => '固定版式必需。'],
+                        ['path' => 'products.detail_media.delivery.palletized_labelled', 'label' => '托盘与标签', 'type' => 'image', 'required' => true, 'help' => '固定版式必需。'],
+                        ['path' => 'products.detail_media.delivery.global_delivery', 'label' => '国际交付', 'type' => 'image', 'required' => true, 'help' => '固定版式必需。'],
                     ],
                 ],
                 [
@@ -614,7 +614,7 @@ function springapex_admin_screens(): array
                 ],
                 [
                     'title' => '公司发展历程',
-                    'desc' => '对应关于我们页底部的三张发展历程图片和文字，可按实际发展节点增删或排序。',
+                    'desc' => '对应关于我们页底部的发展历程图片和文字，最多显示 3 个节点，可删除、补回或排序。',
                     'fields' => [
                         [
                             'path' => 'company.timeline',
@@ -622,6 +622,7 @@ function springapex_admin_screens(): array
                             'label' => '发展节点',
                             'item_label' => '节点',
                             'title_key' => 'title',
+                            'max_items' => 3,
                             'fields' => [
                                 ['path' => 'year', 'label' => '年份或阶段', 'type' => 'text', 'help' => '例如 2001、Growth 或 Today。'],
                                 ['path' => 'title', 'label' => '标题', 'type' => 'text', 'help' => ''],

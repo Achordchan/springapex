@@ -116,6 +116,10 @@
   gap: 16px;
 }
 
+.sa-route-about .sa-why-choose__media--single {
+  grid-template-rows: minmax(0, 1fr);
+}
+
 .sa-route-about .sa-why-choose__media figure {
   position: relative;
   min-height: 0;
@@ -682,6 +686,10 @@
   .sa-route-about .sa-why-choose__media {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-rows: none;
+  }
+
+  .sa-route-about .sa-why-choose__media--single {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .sa-quality-summary__media {
