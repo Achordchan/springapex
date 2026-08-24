@@ -3,6 +3,10 @@ if (!defined('ABSPATH')) {
     exit;
 }
 $hero = springapex_get('solutions.hero', []);
+$solutions_cta = springapex_get('solutions.cta', []);
+$solutions_cta_image = springapex_image_value_available($solutions_cta['image'] ?? '')
+    ? $solutions_cta['image']
+    : 'solutions-cta-springs-v5.png';
 $solutions = springapex_solutions();
 ?>
 <?php
@@ -63,14 +67,14 @@ get_template_part('parts/solutions-subnav', null, ['active' => 'industries']);
 <section class="section bottom-cta-panel solutions-cta">
   <div class="container container-wide bottom-cta-inner" data-reveal="up">
     <div class="bottom-cta-copy">
-      <h2><?php esc_html_e('Have a specific application in mind?', 'springapex'); ?></h2>
-      <p><?php esc_html_e("We'll help you find the right spring solution for your needs.", 'springapex'); ?></p>
-      <a class="btn btn-primary" href="<?php echo esc_url(springapex_url('/contact/?intent=engineer')); ?>">
-        <?php esc_html_e('Contact Our Engineers', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+      <h2><?php echo esc_html((string) ($solutions_cta['title'] ?? '')); ?></h2>
+      <p><?php echo esc_html((string) ($solutions_cta['text'] ?? '')); ?></p>
+      <a class="btn btn-primary" href="<?php echo esc_url(springapex_url((string) ($solutions_cta['action_href'] ?? ''))); ?>">
+        <?php echo esc_html((string) ($solutions_cta['action_label'] ?? '')); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
       </a>
     </div>
     <div class="bottom-cta-media">
-      <?php echo springapex_image('solutions-cta-springs-v5.png', __('Assorted precision springs', 'springapex'), [
+      <?php echo springapex_image($solutions_cta_image, (string) ($solutions_cta['image_alt'] ?? ''), [
           'width' => 1600,
           'height' => 560,
           'sizes' => '(max-width: 760px) 100vw, 55vw',

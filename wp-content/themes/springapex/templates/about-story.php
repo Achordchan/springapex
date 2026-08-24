@@ -19,14 +19,18 @@ $timeline_sizes = sprintf(
     '(max-width: 760px) 100vw, %dvw',
     intdiv(100, max(1, count($timeline)))
 );
+$timeline_header = is_array($company['timeline_header'] ?? null) ? $company['timeline_header'] : [];
+$global_support = is_array($about['global_support'] ?? null) ? $about['global_support'] : [];
+$official_channels = is_array($about['official_channels'] ?? null) ? $about['official_channels'] : [];
 $brand = springapex_brand();
 $company_video = is_array($about['company_video'] ?? null) ? $about['company_video'] : [];
+$brand_window = is_array($about['brand_window'] ?? null) ? $about['brand_window'] : [];
 $youtube_id = (string) ($company_video['youtube_id'] ?? '');
 $youtube_embed_url = $youtube_id !== '' ? 'https://www.youtube.com/embed/' . rawurlencode($youtube_id) . '?rel=0' : '';
 $social_links = [
-    ['key' => 'facebook', 'label' => 'Facebook', 'href' => (string) ($brand['facebook'] ?? ''), 'text' => 'Company and manufacturing updates.'],
-    ['key' => 'instagram', 'label' => 'Instagram', 'href' => (string) ($brand['instagram'] ?? ''), 'text' => 'Products, facilities and events.'],
-    ['key' => 'youtube', 'label' => 'YouTube', 'href' => $youtube_id !== '' ? 'https://www.youtube.com/watch?v=' . rawurlencode($youtube_id) : '', 'text' => 'Watch the NorenSpring company film.'],
+    ['key' => 'facebook', 'label' => 'Facebook', 'href' => (string) ($brand['facebook'] ?? ''), 'text' => (string) ($official_channels['facebook_text'] ?? '')],
+    ['key' => 'instagram', 'label' => 'Instagram', 'href' => (string) ($brand['instagram'] ?? ''), 'text' => (string) ($official_channels['instagram_text'] ?? '')],
+    ['key' => 'youtube', 'label' => 'YouTube', 'href' => $youtube_id !== '' ? 'https://www.youtube.com/watch?v=' . rawurlencode($youtube_id) : '', 'text' => (string) ($official_channels['youtube_text'] ?? '')],
 ];
 $social_links = array_values(array_filter($social_links, static fn(array $item): bool => trim((string) ($item['href'] ?? '')) !== ''));
 
@@ -40,7 +44,15 @@ get_template_part('parts/inner-hero', null, [
 
 get_template_part('parts/about-subnav');
 
-$brand_window_image = springapex_asset('assets/images/generated/springapex-factory-floor-v1.webp');
+$brand_window_image = springapex_file_url(
+    springapex_image_value_available($brand_window['image'] ?? '')
+        ? (is_int($brand_window['image'] ?? null) ? $brand_window['image'] : (string) ($brand_window['image'] ?? ''))
+        : 'generated/springapex-factory-floor-v1.webp',
+    'assets/images'
+);
+$global_support_image = springapex_image_value_available($global_support['image'] ?? '')
+    ? $global_support['image']
+    : 'about-global-support-map-v1.png';
 ?>
 
 <?php if ($youtube_embed_url !== '') : ?>
@@ -60,7 +72,7 @@ $brand_window_image = springapex_asset('assets/images/generated/springapex-facto
   </section>
 <?php endif; ?>
 
-<section class="sa-brand-window" data-brand-window aria-label="<?php esc_attr_e('NorenSpring precision manufacturing', 'springapex'); ?>">
+<section class="sa-brand-window" data-brand-window aria-label="<?php echo esc_attr((string) ($brand_window['aria_label'] ?? '')); ?>">
   <div class="container container-wide">
     <span class="sr-only">NorenSpring</span>
     <svg class="sa-brand-window__art" viewBox="0 0 1600 300" role="presentation" aria-hidden="true" focusable="false">
@@ -180,8 +192,8 @@ get_template_part('parts/why-apexspring');
   <div class="container container-wide">
     <div class="sa-timeline__intro" data-reveal="up">
       <div>
-        <p class="section-kicker"><?php esc_html_e('COMPANY DEVELOPMENT', 'springapex'); ?></p>
-        <h2 id="sa-company-development-title"><?php esc_html_e('Built for repeat production.', 'springapex'); ?></h2>
+        <p class="section-kicker"><?php echo esc_html((string) ($timeline_header['eyebrow'] ?? '')); ?></p>
+        <h2 id="sa-company-development-title"><?php echo esc_html((string) ($timeline_header['title'] ?? '')); ?></h2>
       </div>
     </div>
     <ol class="sa-timeline__list" style="--sa-timeline-columns: <?php echo esc_attr((string) count($timeline)); ?>" data-reveal-group>
@@ -209,15 +221,15 @@ get_template_part('parts/why-apexspring');
 
 <section class="section sa-global-network" id="global-network" aria-labelledby="sa-global-network-title">
   <div class="container container-wide">
-    <span class="sa-global-network__wordmark" aria-hidden="true">GLOBAL</span>
+    <span class="sa-global-network__wordmark" aria-hidden="true"><?php echo esc_html((string) ($global_support['wordmark'] ?? '')); ?></span>
     <div class="sa-global-network__grid">
       <header class="sa-global-network__intro" data-reveal="up">
-        <p class="section-kicker"><?php esc_html_e('GLOBAL SUPPORT', 'springapex'); ?></p>
-        <h2 id="sa-global-network-title"><?php esc_html_e('One manufacturing base. Connected project support.', 'springapex'); ?></h2>
-        <p><?php esc_html_e('International projects are coordinated from Xuzhou through direct engineering review, production communication and delivery documentation.', 'springapex'); ?></p>
+        <p class="section-kicker"><?php echo esc_html((string) ($global_support['eyebrow'] ?? '')); ?></p>
+        <h2 id="sa-global-network-title"><?php echo esc_html((string) ($global_support['title'] ?? '')); ?></h2>
+        <p><?php echo esc_html((string) ($global_support['text'] ?? '')); ?></p>
       </header>
       <figure class="sa-global-network__map" data-reveal="up">
-        <?php echo springapex_image('about-global-support-map-v1.png', __('International project support coordinated from Xuzhou, China', 'springapex'), [
+        <?php echo springapex_image($global_support_image, (string) ($global_support['image_alt'] ?? ''), [
             'width' => 1672,
             'height' => 941,
             'sizes' => '(max-width: 760px) 100vw, 62vw',
@@ -225,8 +237,8 @@ get_template_part('parts/why-apexspring');
       </figure>
     </div>
     <div class="sa-global-network__action" data-reveal="up">
-      <span class="sa-global-network__location"><?php echo springapex_icon('map-pin', 'icon icon-sm'); ?> <?php esc_html_e('Xuzhou, China', 'springapex'); ?></span>
-      <a href="<?php echo esc_url(springapex_url('/contact/#contact-network')); ?>"><?php esc_html_e('View Contact Network', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon'); ?></a>
+      <span class="sa-global-network__location"><?php echo springapex_icon('map-pin', 'icon icon-sm'); ?> <?php echo esc_html((string) ($global_support['location'] ?? '')); ?></span>
+      <a href="<?php echo esc_url(springapex_url((string) ($global_support['action_href'] ?? '/contact/#contact-network'))); ?>"><?php echo esc_html((string) ($global_support['action_label'] ?? '')); ?> <?php echo springapex_icon('arrow-right', 'icon'); ?></a>
     </div>
   </div>
 </section>
@@ -235,14 +247,14 @@ get_template_part('parts/why-apexspring');
   <section class="section sa-social-hub" id="official-channels" aria-labelledby="sa-social-hub-title">
     <div class="container container-wide">
       <header class="sa-social-hub__head" data-reveal="up">
-        <p class="section-kicker"><?php esc_html_e('OFFICIAL CHANNELS', 'springapex'); ?></p>
-        <h2 id="sa-social-hub-title"><?php esc_html_e('Follow NorenSpring.', 'springapex'); ?></h2>
+        <p class="section-kicker"><?php echo esc_html((string) ($official_channels['eyebrow'] ?? '')); ?></p>
+        <h2 id="sa-social-hub-title"><?php echo esc_html((string) ($official_channels['title'] ?? '')); ?></h2>
         <span class="sa-social-hub__rule" aria-hidden="true"></span>
-        <p><?php esc_html_e('Only confirmed public profile links are shown here.', 'springapex'); ?></p>
+        <p><?php echo esc_html((string) ($official_channels['text'] ?? '')); ?></p>
       </header>
 
       <div class="sa-social-hub__rail" data-reveal="up">
-        <span class="sa-social-hub__label" aria-hidden="true"><?php esc_html_e('FOLLOW', 'springapex'); ?></span>
+        <span class="sa-social-hub__label" aria-hidden="true"><?php echo esc_html((string) ($official_channels['rail_label'] ?? '')); ?></span>
         <div class="sa-social-hub__items" data-reveal-group>
           <?php foreach ($social_links as $social) : ?>
             <?php $social_label = (string) ($social['label'] ?? ''); ?>

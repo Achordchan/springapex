@@ -44,7 +44,7 @@ docker compose --env-file .env -f compose.yml --profile tools run --rm \
 
 `/.well-known/acme-challenge/` 仍保持无鉴权，保证 Certbot 自动续期。GitHub Actions 的健康检查通过 `springapex-deploy-command` 直接访问 `127.0.0.1:38100`，不依赖共享预览密码。
 
-正式开放配置不得包含 `auth_basic` 或 `X-Robots-Tag: noindex`，并要求 `blog_public=1`。切换后必须执行 Nginx 语法检查、WordPress URL 检查和公网验收。
+当前生产站点恢复为预览保护状态：Nginx 使用 `preview` 账号的 Basic Auth，并返回 `X-Robots-Tag: noindex, nofollow, noarchive`，WordPress 保持 `blog_public=0`。正式开放时必须同时移除这三层保护，再执行 Nginx、WordPress URL 和公网验收。
 
 Before any database URL change:
 

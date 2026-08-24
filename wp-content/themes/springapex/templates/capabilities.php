@@ -29,13 +29,13 @@ get_template_part('parts/inner-hero', null, [
 
 <?php get_template_part('parts/manufacturing-process'); ?>
 
-<?php get_template_part('parts/quality-evidence', null, ['title' => __('Verification matched to your drawing and application.', 'springapex')]); ?>
+<?php get_template_part('parts/quality-evidence', null, ['title' => (string) ($capabilities['verification']['title'] ?? '')]); ?>
 
 <?php if ($project_brief) : ?>
 <section class="section sa-custom-brief sa-custom-brief--closing">
   <div class="container container-wide sa-custom-brief__grid">
     <figure class="sa-custom-brief__media" data-reveal="up">
-      <?php echo springapex_image((string) ($project_brief['image'] ?? ''), __('Spring engineering review workspace', 'springapex'), [
+      <?php echo springapex_image((string) ($project_brief['image'] ?? ''), (string) ($project_brief['image_alt'] ?? ''), [
           'width' => 960,
           'height' => 720,
           'sizes' => '(max-width: 760px) 100vw, 44vw',
@@ -56,9 +56,9 @@ get_template_part('parts/inner-hero', null, [
           </article>
         <?php endforeach; ?>
       </div>
-      <a class="btn btn-primary sa-custom-brief__action" href="<?php echo esc_url(springapex_url('/contact/?intent=drawing')); ?>">
+      <a class="btn btn-primary sa-custom-brief__action" href="<?php echo esc_url(springapex_url((string) ($project_brief['action_href'] ?? ''))); ?>">
         <?php echo springapex_icon('upload', 'icon icon-sm'); ?>
-        <?php esc_html_e('Send Your Project Details', 'springapex'); ?>
+        <?php echo esc_html((string) ($project_brief['action_label'] ?? '')); ?>
       </a>
     </div>
   </div>

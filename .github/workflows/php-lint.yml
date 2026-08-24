@@ -22,3 +22,6 @@ jobs:
         run: |
           find wp-content/themes/springapex -name '*.php' -print0 \
             | xargs -0 -n1 -P4 php -l
+
+      - name: Verify admin content coverage
+        run: php wp-content/themes/springapex/tests/admin-content-coverage.php

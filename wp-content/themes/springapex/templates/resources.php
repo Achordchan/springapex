@@ -3,37 +3,16 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-$downloads = [
-    [
-        'id' => 'company-downloads',
-        'category' => 'Company',
-        'title' => 'NorenSpring Company Profile',
-        'description' => 'Company overview, manufacturing scale, markets, team and production capabilities.',
-        'cover' => 'downloads/norenspring-company-profile-cover-v1.png',
-        'document' => 'norenspring-company-profile.pdf',
-        'pages' => '17 pages',
-        'size' => '5.0 MB',
-    ],
-    [
-        'id' => 'product-downloads',
-        'category' => 'Products',
-        'title' => 'NorenSpring Product Catalog',
-        'description' => 'Product families, dimensional references, manufacturing context and application examples.',
-        'cover' => 'downloads/norenspring-product-catalog-cover-v1.png',
-        'document' => 'norenspring-product-catalog.pdf',
-        'pages' => '14 pages',
-        'size' => '4.2 MB',
-    ],
-];
-
-$industry_brochures = [
-    'Automotive',
-    'Industrial Equipment',
-    'Medical',
-    'Aerospace',
-    'Rail',
-    'Energy',
-];
+$resources = springapex_get('resources', []);
+$downloads = array_values(array_filter(
+    is_array($resources['downloads'] ?? null) ? $resources['downloads'] : [],
+    static fn(mixed $item): bool => is_array($item)
+        && springapex_image_value_available($item['cover'] ?? '')
+        && trim((string) ($item['document'] ?? '')) !== ''
+));
+$library = is_array($resources['library'] ?? null) ? $resources['library'] : [];
+$industry_section = is_array($resources['industry'] ?? null) ? $resources['industry'] : [];
+$industry_brochures = (array) ($industry_section['items'] ?? []);
 $resources_hero = springapex_get('resources.hero', []);
 ?>
 <?php
@@ -54,9 +33,9 @@ get_template_part('parts/inner-hero', null, [
   <div class="container container-wide">
     <header class="sa-download-library__head" data-reveal="up">
       <div>
-        <p class="section-kicker"><?php esc_html_e('AVAILABLE DOWNLOADS', 'springapex'); ?></p>
-        <h2 id="sa-download-center-title"><?php esc_html_e('Brochure Library Shelf', 'springapex'); ?></h2>
-        <p><?php esc_html_e('Corporate and product resources ready when you are.', 'springapex'); ?></p>
+        <p class="section-kicker"><?php echo esc_html((string) ($library['eyebrow'] ?? '')); ?></p>
+        <h2 id="sa-download-center-title"><?php echo esc_html((string) ($library['title'] ?? '')); ?></h2>
+        <p><?php echo esc_html((string) ($library['text'] ?? '')); ?></p>
       </div>
       <nav class="sa-download-library__filters" aria-label="<?php esc_attr_e('Download categories', 'springapex'); ?>">
         <a class="is-active" href="#catalog-download"><?php esc_html_e('All', 'springapex'); ?></a>
@@ -68,7 +47,7 @@ get_template_part('parts/inner-hero', null, [
 
     <div class="sa-download-library__shelf" data-reveal-group>
       <?php foreach ($downloads as $download) : ?>
-        <?php $document_url = springapex_asset('assets/documents/' . (string) $download['document']); ?>
+        <?php $document_url = springapex_file_url(is_int($download['document'] ?? null) ? $download['document'] : (string) ($download['document'] ?? ''), 'assets/documents'); ?>
         <article class="sa-download-volume" id="<?php echo esc_attr((string) $download['id']); ?>">
           <a class="sa-download-volume__cover" href="<?php echo esc_url($document_url); ?>" download aria-label="<?php echo esc_attr(sprintf(__('Download %s PDF', 'springapex'), (string) $download['title'])); ?>">
             <?php echo springapex_image((string) $download['cover'], (string) $download['title'], [
@@ -98,17 +77,17 @@ get_template_part('parts/inner-hero', null, [
 
     <section class="sa-download-industries" id="industry-downloads" aria-labelledby="sa-industry-downloads-title" data-reveal="up">
       <header>
-        <p class="section-kicker"><?php esc_html_e('INDUSTRY BROCHURES', 'springapex'); ?></p>
-        <h3 id="sa-industry-downloads-title"><?php esc_html_e('Prepared for future industry libraries.', 'springapex'); ?></h3>
+        <p class="section-kicker"><?php echo esc_html((string) ($industry_section['eyebrow'] ?? '')); ?></p>
+        <h3 id="sa-industry-downloads-title"><?php echo esc_html((string) ($industry_section['title'] ?? '')); ?></h3>
       </header>
       <ul>
         <?php foreach ($industry_brochures as $industry) : ?>
-          <li><strong><?php echo esc_html($industry); ?></strong><small><?php esc_html_e('Awaiting approved file', 'springapex'); ?></small></li>
+          <li><strong><?php echo esc_html((string) $industry); ?></strong><small><?php echo esc_html((string) ($industry_section['status_text'] ?? '')); ?></small></li>
         <?php endforeach; ?>
       </ul>
-      <a class="sa-download-industries__action" href="<?php echo esc_url(springapex_url('/contact/?intent=catalog')); ?>">
+      <a class="sa-download-industries__action" href="<?php echo esc_url(springapex_url((string) ($industry_section['action_href'] ?? ''))); ?>">
         <?php echo springapex_icon('form', 'icon icon-sm'); ?>
-        <?php esc_html_e('Request an industry document', 'springapex'); ?>
+        <?php echo esc_html((string) ($industry_section['action_label'] ?? '')); ?>
       </a>
     </section>
   </div>

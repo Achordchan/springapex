@@ -90,12 +90,29 @@ function springapex_admin_screens(): array
                         ['path' => 'home.hero.video_cta.youtube_id', 'label' => 'YouTube 视频 ID', 'type' => 'youtube', 'help' => '只填 ID，不是整条网址。'],
                         ['path' => 'home.hero.quote_cta.label', 'label' => '询价按钮文字', 'type' => 'text', 'help' => '例如 Request a Quote。'],
                         ['path' => 'home.hero.quote_cta.href', 'label' => '询价按钮链接', 'type' => 'route', 'help' => '从下拉里选一个目的地，默认指向联系页的询价表单。'],
+                        ['path' => 'home.video_dialog_title', 'label' => '视频弹窗标题', 'type' => 'text', 'help' => '点击视频按钮后弹窗顶部显示。'],
+                    ],
+                ],
+                [
+                    'title' => '推荐产品板块',
+                    'desc' => '产品卡片来自产品后台，这里维护板块标题和入口。',
+                    'fields' => [
+                        ['path' => 'home.sections.products.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => ''],
+                        ['path' => 'home.sections.products.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'home.sections.products.text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
+                        ['path' => 'home.sections.products.action_label', 'label' => '按钮文字', 'type' => 'text', 'help' => ''],
+                        ['path' => 'home.sections.products.action_href', 'label' => '按钮链接', 'type' => 'route', 'help' => ''],
                     ],
                 ],
                 [
                     'title' => '四大优势',
                     'desc' => '四张带图标的卡片。建议保持四条，多于四条排版会变形。',
                     'fields' => [
+                        ['path' => 'home.sections.why.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => ''],
+                        ['path' => 'home.sections.why.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'home.sections.why.text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
+                        ['path' => 'home.sections.why.action_label', 'label' => '按钮文字', 'type' => 'text', 'help' => ''],
+                        ['path' => 'home.sections.why.action_href', 'label' => '按钮链接', 'type' => 'route', 'help' => ''],
                         [
                             'path' => 'home.pillars',
                             'type' => 'repeater',
@@ -120,12 +137,22 @@ function springapex_admin_screens(): array
                         'button' => '前往 Industry Solutions',
                         'url' => 'edit.php?post_type=spring_solution',
                     ],
-                    'fields' => [],
+                    'fields' => [
+                        ['path' => 'home.sections.industries.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => ''],
+                        ['path' => 'home.sections.industries.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'home.sections.industries.text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
+                        ['path' => 'home.sections.industries.action_label', 'label' => '按钮文字', 'type' => 'text', 'help' => ''],
+                        ['path' => 'home.sections.industries.action_href', 'label' => '按钮链接', 'type' => 'route', 'help' => ''],
+                    ],
                 ],
                 [
                     'title' => '生产流程',
                     'desc' => '一条横向的流程带，从左到右显示。',
                     'fields' => [
+                        ['path' => 'home.sections.process.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => ''],
+                        ['path' => 'home.sections.process.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'home.sections.process.text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
+                        ['path' => 'home.sections.process.note', 'label' => '底部总结', 'type' => 'text', 'help' => ''],
                         [
                             'path' => 'home.process',
                             'type' => 'repeater',
@@ -196,6 +223,23 @@ function springapex_admin_screens(): array
                         ['path' => 'products.hero.mobile_image', 'label' => '手机端配图', 'type' => 'image', 'help' => '留空则手机上沿用电脑端配图。'],
                         ['path' => 'products.hero.primary_cta.label', 'label' => '按钮文字', 'type' => 'text', 'help' => ''],
                         ['path' => 'products.hero.primary_cta.href', 'label' => '按钮链接', 'type' => 'route', 'help' => '从下拉里选一个目的地。'],
+                        ['path' => 'products.hero.drawing_cta.label', 'label' => '发图按钮文字', 'type' => 'text', 'help' => ''],
+                        ['path' => 'products.hero.drawing_cta.href', 'label' => '发图按钮链接', 'type' => 'route', 'help' => ''],
+                    ],
+                ],
+                [
+                    'title' => '开始方式',
+                    'desc' => '页面头部下方的三张入口卡片，最多三项。',
+                    'fields' => [
+                        ['path' => 'products.entry.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => ''],
+                        ['path' => 'products.entry.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'products.entry.text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
+                        ['path' => 'products.entry.items', 'type' => 'repeater', 'label' => '入口卡片', 'item_label' => '卡片', 'title_key' => 'title', 'max_items' => 3, 'fields' => [
+                            ['path' => 'icon', 'label' => '图标', 'type' => 'icon', 'help' => ''],
+                            ['path' => 'title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                            ['path' => 'text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
+                            ['path' => 'href', 'label' => '链接', 'type' => 'route', 'help' => ''],
+                        ]],
                     ],
                 ],
                 [
@@ -243,6 +287,10 @@ function springapex_admin_screens(): array
                     'title' => '产品选型（按受力方向）',
                     'desc' => '产品列表页中部的选型引导板块，帮助客户按受力方向找到对应的弹簧类别。',
                     'fields' => [
+                        ['path' => 'products.range.eyebrow', 'label' => '产品系列小标签', 'type' => 'text', 'help' => ''],
+                        ['path' => 'products.range.title', 'label' => '产品系列标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'products.range.text', 'label' => '产品系列说明', 'type' => 'textarea', 'help' => ''],
+                        ['path' => 'product_selection.eyebrow', 'label' => '选型小标签', 'type' => 'text', 'help' => ''],
                         ['path' => 'product_selection.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
                         ['path' => 'product_selection.text', 'label' => '说明', 'type' => 'textarea', 'help' => '一句话。'],
                         [
@@ -309,6 +357,18 @@ function springapex_admin_screens(): array
                     'fields' => [],
                 ],
                 [
+                    'title' => '底部咨询区',
+                    'desc' => '行业列表下方的咨询行动区。',
+                    'fields' => [
+                        ['path' => 'solutions.cta.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'solutions.cta.text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
+                        ['path' => 'solutions.cta.action_label', 'label' => '按钮文字', 'type' => 'text', 'help' => ''],
+                        ['path' => 'solutions.cta.action_href', 'label' => '按钮链接', 'type' => 'route', 'help' => ''],
+                        ['path' => 'solutions.cta.image', 'label' => '配图', 'type' => 'image', 'help' => '横版弹簧产品图。'],
+                        ['path' => 'solutions.cta.image_alt', 'label' => '图片说明', 'type' => 'text', 'help' => ''],
+                    ],
+                ],
+                [
                     'title' => '案例页头部',
                     'desc' => '案例列表页（Case Studies）的头部。案例条目请到左侧菜单「Case Studies」里编辑。',
                     'fields' => [
@@ -373,6 +433,9 @@ function springapex_admin_screens(): array
                         ['path' => 'capabilities.project_brief.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
                         ['path' => 'capabilities.project_brief.text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
                         ['path' => 'capabilities.project_brief.image', 'label' => '配图', 'type' => 'image', 'help' => ''],
+                        ['path' => 'capabilities.project_brief.image_alt', 'label' => '图片说明', 'type' => 'text', 'help' => ''],
+                        ['path' => 'capabilities.project_brief.action_label', 'label' => '按钮文字', 'type' => 'text', 'help' => ''],
+                        ['path' => 'capabilities.project_brief.action_href', 'label' => '按钮链接', 'type' => 'route', 'help' => ''],
                         [
                             'path' => 'capabilities.project_brief.items',
                             'type' => 'repeater',
@@ -411,6 +474,7 @@ function springapex_admin_screens(): array
                     'title' => '质量佐证图',
                     'desc' => '定制能力页尾部的尺寸参考图，配合「发图纸或填尺寸」的说明展示。',
                     'fields' => [
+                        ['path' => 'capabilities.verification.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
                         ['path' => 'capabilities.verification.image', 'label' => '参考图', 'type' => 'image', 'help' => '弹簧尺寸标注示意图。'],
                         ['path' => 'capabilities.verification.image_alt', 'label' => '图片说明', 'type' => 'text', 'help' => '给搜索引擎和读屏软件看的描述，请如实填写图里是什么。'],
                     ],
@@ -493,6 +557,14 @@ function springapex_admin_screens(): array
                     ],
                 ],
                 [
+                    'title' => '品牌字景',
+                    'desc' => '公司视频下方 NorenSpring 大字中的背景图片。',
+                    'fields' => [
+                        ['path' => 'about.brand_window.image', 'label' => '背景图片', 'type' => 'image', 'required' => true, 'help' => '横版厂区或制造场景。'],
+                        ['path' => 'about.brand_window.aria_label', 'label' => '区块说明', 'type' => 'text', 'help' => '给读屏软件使用。'],
+                    ],
+                ],
+                [
                     'title' => '为什么选择我们',
                     'desc' => '从需求评审到量产的五个步骤。',
                     'fields' => [
@@ -571,6 +643,34 @@ function springapex_admin_screens(): array
                         ],
                     ],
                 ],
+                [
+                    'title' => '全球支持',
+                    'desc' => 'About 页的 GLOBAL SUPPORT 区块。',
+                    'fields' => [
+                        ['path' => 'about.global_support.wordmark', 'label' => '背景大字', 'type' => 'text', 'help' => '例如 GLOBAL。'],
+                        ['path' => 'about.global_support.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => ''],
+                        ['path' => 'about.global_support.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'about.global_support.text', 'label' => '正文', 'type' => 'textarea', 'help' => ''],
+                        ['path' => 'about.global_support.image', 'label' => '地图图片', 'type' => 'image', 'required' => true, 'help' => ''],
+                        ['path' => 'about.global_support.image_alt', 'label' => '图片说明', 'type' => 'text', 'help' => ''],
+                        ['path' => 'about.global_support.location', 'label' => '所在地', 'type' => 'text', 'help' => ''],
+                        ['path' => 'about.global_support.action_label', 'label' => '按钮文字', 'type' => 'text', 'help' => ''],
+                        ['path' => 'about.global_support.action_href', 'label' => '按钮链接', 'type' => 'route', 'help' => ''],
+                    ],
+                ],
+                [
+                    'title' => '官方渠道',
+                    'desc' => 'About 页的 OFFICIAL CHANNELS 区块；主页链接在「品牌与联系方式 → 社交媒体」维护。',
+                    'fields' => [
+                        ['path' => 'about.official_channels.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => ''],
+                        ['path' => 'about.official_channels.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'about.official_channels.text', 'label' => '正文', 'type' => 'textarea', 'help' => ''],
+                        ['path' => 'about.official_channels.rail_label', 'label' => '侧边大字', 'type' => 'text', 'help' => '例如 FOLLOW。'],
+                        ['path' => 'about.official_channels.facebook_text', 'label' => 'Facebook 说明', 'type' => 'text', 'help' => ''],
+                        ['path' => 'about.official_channels.instagram_text', 'label' => 'Instagram 说明', 'type' => 'text', 'help' => ''],
+                        ['path' => 'about.official_channels.youtube_text', 'label' => 'YouTube 说明', 'type' => 'text', 'help' => ''],
+                    ],
+                ],
             ],
         ],
 
@@ -617,6 +717,8 @@ function springapex_admin_screens(): array
                     'title' => '公司发展历程',
                     'desc' => '对应关于我们页底部的发展历程图片和文字，最多显示 3 个节点，可删除、补回或排序。',
                     'fields' => [
+                        ['path' => 'company.timeline_header.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => ''],
+                        ['path' => 'company.timeline_header.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
                         [
                             'path' => 'company.timeline',
                             'type' => 'repeater',
@@ -676,6 +778,17 @@ function springapex_admin_screens(): array
                         ['path' => 'news.hero.mobile_image', 'label' => '手机端配图', 'type' => 'image', 'help' => ''],
                     ],
                 ],
+                [
+                    'title' => '关注官方渠道',
+                    'desc' => '新闻列表底部跳转到 About 官方渠道的区块。',
+                    'fields' => [
+                        ['path' => 'news.follow.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => ''],
+                        ['path' => 'news.follow.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'news.follow.text', 'label' => '正文', 'type' => 'textarea', 'help' => ''],
+                        ['path' => 'news.follow.action_label', 'label' => '按钮文字', 'type' => 'text', 'help' => ''],
+                        ['path' => 'news.follow.action_href', 'label' => '按钮链接', 'type' => 'route', 'help' => ''],
+                    ],
+                ],
             ],
         ],
 
@@ -696,6 +809,62 @@ function springapex_admin_screens(): array
                         ['path' => 'sustainability.hero.mobile_image', 'label' => '手机端配图', 'type' => 'image', 'help' => '留空则手机上沿用电脑端配图。'],
                     ],
                 ],
+                [
+                    'title' => '材料生命周期',
+                    'desc' => '页面主体的四个生命周期阶段。',
+                    'fields' => [
+                        ['path' => 'sustainability.lifecycle.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => ''],
+                        ['path' => 'sustainability.lifecycle.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'sustainability.lifecycle.text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
+                        ['path' => 'sustainability.lifecycle.status', 'label' => '状态文字', 'type' => 'text', 'help' => ''],
+                        ['path' => 'sustainability.lifecycle.items', 'type' => 'repeater', 'label' => '生命周期阶段', 'item_label' => '阶段', 'title_key' => 'title', 'max_items' => 4, 'fields' => [
+                            ['path' => 'number', 'label' => '序号', 'type' => 'text', 'help' => ''],
+                            ['path' => 'title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                            ['path' => 'text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
+                            ['path' => 'points', 'label' => '要点', 'type' => 'lines', 'help' => '一行一个。'],
+                            ['path' => 'image', 'label' => '图片', 'type' => 'image', 'required' => true, 'help' => ''],
+                            ['path' => 'alt', 'label' => '图片说明', 'type' => 'text', 'help' => ''],
+                        ]],
+                    ],
+                ],
+                [
+                    'title' => '管理体系',
+                    'desc' => '证书来自「公司实力与资质」，这里维护区块文案和入口。',
+                    'fields' => [
+                        ['path' => 'sustainability.management.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => ''],
+                        ['path' => 'sustainability.management.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'sustainability.management.text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
+                        ['path' => 'sustainability.management.action_label', 'label' => '按钮文字', 'type' => 'text', 'help' => ''],
+                        ['path' => 'sustainability.management.action_href', 'label' => '按钮链接', 'type' => 'route', 'help' => ''],
+                        ['path' => 'sustainability.proof_record.title', 'label' => '记录卡片标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'sustainability.proof_record.text', 'label' => '记录卡片说明', 'type' => 'textarea', 'help' => ''],
+                    ],
+                ],
+                [
+                    'title' => '安全生产',
+                    'desc' => '',
+                    'fields' => [
+                        ['path' => 'sustainability.safety.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => ''],
+                        ['path' => 'sustainability.safety.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'sustainability.safety.text', 'label' => '正文', 'type' => 'textarea', 'help' => ''],
+                        ['path' => 'sustainability.safety.image', 'label' => '图片', 'type' => 'image', 'required' => true, 'help' => ''],
+                        ['path' => 'sustainability.safety.image_alt', 'label' => '图片说明', 'type' => 'text', 'help' => ''],
+                        ['path' => 'sustainability.safety.points', 'label' => '要点', 'type' => 'lines', 'help' => '一行一个。'],
+                    ],
+                ],
+                [
+                    'title' => '透明进展',
+                    'desc' => '页面底部行动区。',
+                    'fields' => [
+                        ['path' => 'sustainability.progress.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => ''],
+                        ['path' => 'sustainability.progress.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'sustainability.progress.text', 'label' => '正文', 'type' => 'textarea', 'help' => ''],
+                        ['path' => 'sustainability.progress.primary_label', 'label' => '主按钮文字', 'type' => 'text', 'help' => ''],
+                        ['path' => 'sustainability.progress.primary_href', 'label' => '主按钮链接', 'type' => 'route', 'help' => ''],
+                        ['path' => 'sustainability.progress.secondary_label', 'label' => '次按钮文字', 'type' => 'text', 'help' => ''],
+                        ['path' => 'sustainability.progress.secondary_href', 'label' => '次按钮链接', 'type' => 'route', 'help' => ''],
+                    ],
+                ],
             ],
         ],
 
@@ -710,6 +879,16 @@ function springapex_admin_screens(): array
                     'desc' => '客户在表单里选择的下拉选项，会原样出现在询盘通知邮件里。',
                     'fields' => [
                         ['path' => 'contact.inquiry_types', 'label' => '选项', 'type' => 'lines', 'help' => '一行一个，把最常见的放在最前面。'],
+                    ],
+                ],
+                [
+                    'title' => '询盘表单文案',
+                    'desc' => '联系页右侧表单的标题、说明和按钮。',
+                    'fields' => [
+                        ['path' => 'contact.form.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'contact.form.text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
+                        ['path' => 'contact.form.submit_label', 'label' => '提交按钮文字', 'type' => 'text', 'help' => ''],
+                        ['path' => 'contact.form.direct_label', 'label' => '直接联系提示', 'type' => 'text', 'help' => ''],
                     ],
                 ],
                 [
@@ -785,7 +964,7 @@ function springapex_admin_screens(): array
         'resources' => [
             'label' => '资源下载',
             'title' => '资源下载',
-            'intro' => '维护资源下载页头部，以及联系页「图纸准备指引」和站内搜索使用的资源条目。下载手册列表目前仍由模板管理。',
+            'intro' => '维护资源下载页头部、下载手册、行业资料提示，以及联系页和搜索使用的资源指引。',
             'preview' => '/resources/',
             'sections' => [
                 [
@@ -796,6 +975,37 @@ function springapex_admin_screens(): array
                         ['path' => 'resources.hero.subtitle', 'label' => '副标题', 'type' => 'textarea', 'help' => ''],
                         ['path' => 'resources.hero.image', 'label' => '电脑端配图', 'type' => 'image', 'help' => ''],
                         ['path' => 'resources.hero.mobile_image', 'label' => '手机端配图', 'type' => 'image', 'help' => '留空则手机上沿用电脑端配图。'],
+                    ],
+                ],
+                [
+                    'title' => '下载资料库',
+                    'desc' => '实际显示在 Download Center 的资料卡片。PDF 文件名对应主题 assets/documents 目录。',
+                    'fields' => [
+                        ['path' => 'resources.library.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => ''],
+                        ['path' => 'resources.library.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'resources.library.text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
+                        ['path' => 'resources.downloads', 'type' => 'repeater', 'label' => '下载手册', 'item_label' => '手册', 'title_key' => 'title', 'fields' => [
+                            ['path' => 'id', 'label' => '锚点标识', 'type' => 'text', 'help' => '小写英文加连字符。'],
+                            ['path' => 'category', 'label' => '分类', 'type' => 'text', 'help' => ''],
+                            ['path' => 'title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                            ['path' => 'description', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
+                            ['path' => 'cover', 'label' => '封面图', 'type' => 'image', 'required' => true, 'help' => ''],
+                            ['path' => 'document', 'label' => 'PDF 文件名', 'type' => 'text', 'help' => '例如 norenspring-company-profile.pdf。'],
+                            ['path' => 'pages', 'label' => '页数', 'type' => 'text', 'help' => ''],
+                            ['path' => 'size', 'label' => '文件大小', 'type' => 'text', 'help' => ''],
+                        ]],
+                    ],
+                ],
+                [
+                    'title' => '行业资料提示',
+                    'desc' => '尚未上传行业手册时显示的占位列表和咨询入口。',
+                    'fields' => [
+                        ['path' => 'resources.industry.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => ''],
+                        ['path' => 'resources.industry.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'resources.industry.status_text', 'label' => '状态文字', 'type' => 'text', 'help' => ''],
+                        ['path' => 'resources.industry.action_label', 'label' => '按钮文字', 'type' => 'text', 'help' => ''],
+                        ['path' => 'resources.industry.action_href', 'label' => '按钮链接', 'type' => 'route', 'help' => ''],
+                        ['path' => 'resources.industry.items', 'label' => '行业名称', 'type' => 'lines', 'help' => '一行一个。'],
                     ],
                 ],
                 [
@@ -892,6 +1102,7 @@ function springapex_admin_image_dimensions_map(): array
 
         // 卡片 / 内容配图
         'products.mega_menu.feature_image' => '1200 × 700 px（约 12:7，横版）',
+        'solutions.cta.image' => '1600 × 560 px（约 20:7，横版）',
         'products.detail_media.quality.load_test.image' => '1600 × 1067 px（3:2，横版）',
         'products.detail_media.quality.dimensional_inspection.image' => '1200 × 800 px（3:2，横版）',
         'products.detail_media.quality.material_analysis.image' => '1200 × 800 px（3:2，横版）',
@@ -900,6 +1111,11 @@ function springapex_admin_image_dimensions_map(): array
         'products.detail_media.delivery.palletized_labelled' => '1200 × 800 px（3:2，横版）',
         'products.detail_media.delivery.global_delivery' => '1200 × 800 px（3:2，横版）',
         'capabilities.project_brief.image' => '1600 × 900 px（16:9，横版）',
+        'about.global_support.image' => '1672 × 941 px（16:9，横版地图）',
+        'about.brand_window.image' => '1760 × 660 px（约 8:3，横版）',
+        'sustainability.lifecycle.items.#.image' => '1536 × 1024 px（3:2，横版）',
+        'sustainability.safety.image' => '1536 × 1024 px（3:2，横版）',
+        'resources.downloads.#.cover' => '768 × 960 px（4:5，竖版封面）',
         'manufacturing_process.#.image' => '1600 × 1200 px（4:3，横版实拍）',
         'capabilities.verification.image' => '1680 × 700 px（2.4:1，横版示意图）',
         'company.profile.image' => '1920 × 700 px（约 2.75:1，横版宽幅）',
@@ -964,9 +1180,16 @@ function springapex_admin_route_options(): array
         '联系页（带预选意图）' => [
             '/contact/?intent=quote' => '联系页 · 打开询价表单',
             '/contact/?intent=drawing' => '联系页 · 打开上传图纸',
+            '/contact/?intent=solution' => '联系页 · 描述应用需求',
+            '/contact/?intent=engineer' => '联系页 · 联系工程师',
+            '/contact/?intent=catalog' => '联系页 · 索取资料',
+            '/contact/?intent=sustainability' => '联系页 · 可持续发展资料',
         ],
         '页面内锚点' => [
             '/products/#product-families' => '产品页 · 跳到产品分类区块',
+            '/about/#official-channels' => '关于页 · 官方渠道',
+            '/about/#quality-certificates' => '关于页 · 体系证书',
+            '/contact/#contact-network' => '联系页 · 全球联系网络',
         ],
     ];
 }
