@@ -28,7 +28,7 @@ $email = (string) ($brand['email'] ?? 'victoria@springapex.cn');
     <article class="sa-legal-content">
       <section id="information">
         <h2><?php esc_html_e('Website information', 'springapex'); ?></h2>
-        <p><?php esc_html_e('This website provides general information about ApexSpring products, manufacturing capabilities and engineering support. Content may be updated as products, processes and documentation change.', 'springapex'); ?></p>
+        <p><?php esc_html_e('This website provides general information about NorenSpring products, manufacturing capabilities and engineering support. Content may be updated as products, processes and documentation change.', 'springapex'); ?></p>
       </section>
 
       <section id="quotations">
@@ -39,7 +39,7 @@ $email = (string) ($brand['email'] ?? 'victoria@springapex.cn');
 
       <section>
         <h2><?php esc_html_e('Intellectual property', 'springapex'); ?></h2>
-        <p><?php esc_html_e('The website design, text, graphics and product materials are owned by ApexSpring or used with permission. You may use them to evaluate our products and services, but may not republish or commercially exploit them without permission.', 'springapex'); ?></p>
+        <p><?php esc_html_e('The website design, text, graphics and product materials are owned by NorenSpring or used with permission. You may use them to evaluate our products and services, but may not republish or commercially exploit them without permission.', 'springapex'); ?></p>
       </section>
 
       <section id="use">
@@ -54,7 +54,7 @@ $email = (string) ($brand['email'] ?? 'victoria@springapex.cn');
 
       <section>
         <h2><?php esc_html_e('Liability boundary', 'springapex'); ?></h2>
-        <p><?php esc_html_e('To the extent permitted by applicable law, ApexSpring is not responsible for losses arising from use of general website information.', 'springapex'); ?></p>
+        <p><?php esc_html_e('To the extent permitted by applicable law, NorenSpring is not responsible for losses arising from use of general website information.', 'springapex'); ?></p>
       </section>
 
       <section id="contact">

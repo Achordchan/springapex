@@ -12,9 +12,9 @@ function springapex_content_enhancements(): array
     return [
         'company' => [
             'profile' => [
-                'eyebrow' => 'ABOUT APEXSPRING',
+                'eyebrow' => 'ABOUT NORENSPRING',
                 'home_title' => 'Precision spring manufacturing, built for long-term production.',
-                'home_text' => 'ApexSpring is a women-owned precision spring manufacturer based in Xuzhou, China. Since 2001, we have supported projects from application review and prototyping through controlled production, inspection and export delivery.',
+                'home_text' => 'NorenSpring is a women-owned precision spring manufacturer based in Xuzhou, China. Since 2001, we have supported projects from application review and prototyping through controlled production, inspection and export delivery.',
                 'home_support' => 'We manufacture standard and custom spring components for automotive, industrial equipment, medical, energy and other demanding applications.',
                 'title' => 'Precision manufacturing, from review to delivery.',
                 'paragraphs' => [
@@ -24,7 +24,7 @@ function springapex_content_enhancements(): array
                     'Our products have been exported to dozens of countries and regions, including Switzerland, France, Thailand, Singapore, and Malaysia. In the domestic market, we maintain long-term cooperation with over 2,000 stable customers, demonstrating strong market recognition and reliability. The company is certified to IATF 16949, ISO 13485, ISO 9001, ISO 14001, and ISO 45001, and is supported by a comprehensive quality control system and in-house testing laboratory to ensure consistent performance and reliability under demanding operating conditions. We don’t just manufacture springs — we engineer solutions for performance and reliability.',
                 ],
                 'image' => 'facility-aerial-original.webp',
-                'image_alt' => 'ApexSpring manufacturing facility in Xuzhou, Jiangsu, China',
+                'image_alt' => 'NorenSpring manufacturing facility in Xuzhou, Jiangsu, China',
                 'highlights' => [
                     ['value' => '2001', 'label' => 'Founded'],
                     ['value' => 'Xuzhou, China', 'label' => 'Manufacturing base'],
@@ -91,7 +91,7 @@ function springapex_content_enhancements(): array
             'timeline' => [
                 [
                     'year' => '2001',
-                    'title' => 'ApexSpring founded',
+                    'title' => 'NorenSpring founded',
                     'text' => 'Production began in Xuzhou.',
                     'image' => 'generated/about-timeline-2001-workshop-v1.png',
                     'alt' => 'Representative early precision spring manufacturing workshop',
@@ -129,7 +129,7 @@ function springapex_content_enhancements(): array
             'headquarters' => [
                 'title' => 'Who we are',
                 'location' => '',
-                'text' => 'ApexSpring is a precision spring manufacturer delivering reliable spring solutions from design and prototyping to mass production. Our Xuzhou facility combines advanced machinery with experienced engineering support for customers across diverse industries.',
+                'text' => 'NorenSpring is a precision spring manufacturer delivering reliable spring solutions from design and prototyping to mass production. Our Xuzhou facility combines advanced machinery with experienced engineering support for customers across diverse industries.',
             ],
             'facts' => [
                 ['icon' => 'factory', 'value' => '12,000 m²', 'label' => 'Production facility'],

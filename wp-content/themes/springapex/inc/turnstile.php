@@ -191,6 +191,6 @@ add_action('admin_notices', static function (): void {
 
     printf(
         '<div class="notice notice-warning"><p>%s</p></div>',
-        esc_html__('ApexSpring: the Cloudflare Turnstile widget is shown on the contact forms, but submissions are NOT verified yet. Define SPRINGAPEX_TURNSTILE_SECRET in wp-config.php to activate anti-spam verification.', 'springapex')
+        esc_html__('NorenSpring: the Cloudflare Turnstile widget is shown on the contact forms, but submissions are NOT verified yet. Define SPRINGAPEX_TURNSTILE_SECRET in wp-config.php to activate anti-spam verification.', 'springapex')
     );
 });

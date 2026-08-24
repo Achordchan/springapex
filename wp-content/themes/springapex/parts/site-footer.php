@@ -10,7 +10,7 @@ $show_footer_cta = $route === 'home';
 $privacy_url = springapex_url('/privacy/');
 $terms_url = springapex_url('/terms/');
 $sitemap_url = springapex_url('/sitemap/');
-$company_name = rtrim((string) ($brand['company'] ?? 'ApexSpring'), ". \t\n\r\0\x0B");
+$company_name = rtrim((string) ($brand['company'] ?? 'NorenSpring'), ". \t\n\r\0\x0B");
 $phone = trim((string) ($brand['phone'] ?? ''));
 $phone_href = preg_replace('/[^0-9+]/', '', $phone);
 $youtube_id = trim((string) springapex_get('home.hero.video_cta.youtube_id', ''));
@@ -50,8 +50,8 @@ $footer_socials = [
   <div class="footer-directory">
     <div class="container container-wide footer-directory-grid">
       <div class="footer-brand-column">
-        <a class="brand brand-footer brand--image" href="<?php echo esc_url(springapex_url('/')); ?>" aria-label="<?php echo esc_attr($brand['name'] ?? 'ApexSpring'); ?> home">
-          <?php echo springapex_image('logo-site.png', (string) ($brand['name'] ?? 'ApexSpring'), [
+        <a class="brand brand-footer brand--image" href="<?php echo esc_url(springapex_url('/')); ?>" aria-label="<?php echo esc_attr($brand['name'] ?? 'NorenSpring'); ?> home">
+          <?php echo springapex_image('logo-site.png', (string) ($brand['name'] ?? 'NorenSpring'), [
               'class' => 'site-logo site-logo--footer',
               'width' => 916,
               'height' => 529,

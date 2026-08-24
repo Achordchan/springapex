@@ -172,7 +172,7 @@ $related = springapex_related_news($slug, 3);
   <div class="container container-wide">
     <div class="section-head sa-section-intro">
       <p class="section-kicker"><?php esc_html_e('KEEP READING', 'springapex'); ?></p>
-      <h2><?php esc_html_e('Related news from ApexSpring.', 'springapex'); ?></h2>
+      <h2><?php esc_html_e('Related news from NorenSpring.', 'springapex'); ?></h2>
     </div>
     <div class="sa-news-grid" data-reveal-group>
       <?php foreach ($related as $item) :

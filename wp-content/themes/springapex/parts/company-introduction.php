@@ -26,7 +26,7 @@ $company_facts = $is_about ? array_slice((array) springapex_get('company.facts',
     <?php endif; ?>
 
     <div class="sa-company-intro__content" data-reveal="up">
-      <p class="section-kicker"><?php echo esc_html((string) ($profile['eyebrow'] ?? 'ABOUT APEXSPRING')); ?></p>
+      <p class="section-kicker"><?php echo esc_html((string) ($profile['eyebrow'] ?? 'ABOUT NORENSPRING')); ?></p>
       <h2 id="company-intro-<?php echo esc_attr($variant); ?>-title"><?php echo esc_html((string) ($is_about ? ($profile['title'] ?? '') : ($profile['home_title'] ?? ''))); ?></h2>
 
       <?php if ($is_about) : ?>
@@ -80,7 +80,7 @@ $company_facts = $is_about ? array_slice((array) springapex_get('company.facts',
           <?php endforeach; ?>
         </dl>
         <a class="text-link sa-company-intro__link" href="<?php echo esc_url(springapex_url('/about/')); ?>">
-          <?php esc_html_e('Learn about ApexSpring', 'springapex'); ?>
+          <?php esc_html_e('Learn about NorenSpring', 'springapex'); ?>
           <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
         </a>
       <?php endif; ?>

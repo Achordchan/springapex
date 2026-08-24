@@ -24,7 +24,7 @@ $preview_image = $product['category_image'] ?? ($product['image'] ?? '');
         <?php echo apply_filters('the_content', $details_source); ?>
       <?php elseif ($slug === 'compression-springs') : ?>
         <h2><?php esc_html_e('Custom compression springs engineered to application requirements.', 'springapex'); ?></h2>
-        <p><?php esc_html_e('ApexSpring manufactures custom compression springs for automotive, industrial equipment, medical devices and precision assemblies. Wire diameter, outside diameter, free length, spring rate, solid height and operating environment are reviewed before material, end configuration and surface treatment are confirmed.', 'springapex'); ?></p>
+        <p><?php esc_html_e('NorenSpring manufactures custom compression springs for automotive, industrial equipment, medical devices and precision assemblies. Wire diameter, outside diameter, free length, spring rate, solid height and operating environment are reviewed before material, end configuration and surface treatment are confirmed.', 'springapex'); ?></p>
         <figure class="wp-block-image size-large">
           <?php echo springapex_image('product-detail/compression-advantages-infographic-v1.png', __('Compression spring advantages including flexible geometry, material options, production support and quality records', 'springapex'), [
               'width' => 1672,

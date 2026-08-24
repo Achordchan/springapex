@@ -339,9 +339,9 @@ $documents = [
         <p class="section-kicker"><?php esc_html_e('QUALITY VERIFIED AT EVERY STAGE', 'springapex'); ?></p>
       </header>
       <div class="sa-compression-quality__gallery" data-reveal="up">
-        <figure class="is-large"><?php echo springapex_image('product-detail/compression-quality-load-test.jpg', __('Spring load testing equipment operated by an ApexSpring technician', 'springapex'), ['width' => 782, 'height' => 522, 'sizes' => '(max-width: 760px) 100vw, 55vw']); ?></figure>
+        <figure class="is-large"><?php echo springapex_image('product-detail/compression-quality-load-test.jpg', __('Spring load testing equipment operated by an NorenSpring technician', 'springapex'), ['width' => 782, 'height' => 522, 'sizes' => '(max-width: 760px) 100vw, 55vw']); ?></figure>
         <figure><?php echo springapex_image('quality-inspection-original.jpg', __('Dimensional inspection with digital caliper', 'springapex'), ['width' => 710, 'height' => 550, 'sizes' => '(max-width: 760px) 100vw, 27vw']); ?><figcaption><strong><?php esc_html_e('Dimensional Inspection', 'springapex'); ?></strong><span><?php esc_html_e('Critical dimensions checked with calibrated tools.', 'springapex'); ?></span></figcaption></figure>
-        <figure><?php echo springapex_image('product-detail/compression-quality-material-lab.jpg', __('Material analysis in the ApexSpring laboratory', 'springapex'), ['width' => 782, 'height' => 442, 'sizes' => '(max-width: 760px) 100vw, 27vw']); ?><figcaption><strong><?php esc_html_e('Material Analysis', 'springapex'); ?></strong><span><?php esc_html_e('Material condition and hardness confirmed.', 'springapex'); ?></span></figcaption></figure>
+        <figure><?php echo springapex_image('product-detail/compression-quality-material-lab.jpg', __('Material analysis in the NorenSpring laboratory', 'springapex'), ['width' => 782, 'height' => 442, 'sizes' => '(max-width: 760px) 100vw, 27vw']); ?><figcaption><strong><?php esc_html_e('Material Analysis', 'springapex'); ?></strong><span><?php esc_html_e('Material condition and hardness confirmed.', 'springapex'); ?></span></figcaption></figure>
       </div>
       <ol class="sa-compression-quality__steps" data-reveal-group>
         <?php foreach ($quality_steps as $item) : ?>

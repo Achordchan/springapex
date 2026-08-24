@@ -85,7 +85,7 @@ wp eval 'echo count(springapex_content());'   # 21（修复前是 0）
 ## 5【新发现】「导航菜单」页面其实不生效 —— 已删除该页面，改走 WP 原生菜单
 
 `springapex_navigation_items()` 优先用「外观 → 菜单」里分配到 `primary` 位置的菜单，
-内容数组里的 `nav` 只是**无数据库静态预览时的兜底**。当前站分配了 `ApexSpring Primary`，
+内容数组里的 `nav` 只是**无数据库静态预览时的兜底**。当前站分配了 `NorenSpring Primary`，
 所以那个后台页面改什么都不会显示——运营会以为改了，其实没改。
 
 这不是当初的产品决策，是两条路径撞车：`inc/setup.php:22` 从初始提交就按 WP 标准

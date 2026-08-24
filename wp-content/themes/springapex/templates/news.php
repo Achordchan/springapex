@@ -13,7 +13,7 @@ if (!$all_items) {
 $news_types = [
     'all' => [
         'label' => __('All News', 'springapex'),
-        'kicker' => __('LATEST FROM APEXSPRING', 'springapex'),
+        'kicker' => __('LATEST FROM NORENSPRING', 'springapex'),
         'title' => __('News and engineering insights.', 'springapex'),
     ],
     'industry-news' => [
@@ -24,12 +24,12 @@ $news_types = [
     'exhibitions' => [
         'label' => __('Exhibitions', 'springapex'),
         'kicker' => __('EXHIBITIONS', 'springapex'),
-        'title' => __('Meet ApexSpring at industry events.', 'springapex'),
+        'title' => __('Meet NorenSpring at industry events.', 'springapex'),
     ],
     'company-news' => [
         'label' => __('Company News', 'springapex'),
         'kicker' => __('COMPANY NEWS', 'springapex'),
-        'title' => __('Updates from ApexSpring.', 'springapex'),
+        'title' => __('Updates from NorenSpring.', 'springapex'),
     ],
 ];
 $requested_news_type = is_scalar($_GET['news_type'] ?? null)
@@ -164,8 +164,8 @@ get_template_part('parts/inner-hero', null, [
 <section class="section sa-news-cta">
   <div class="container container-wide sa-news-cta__inner">
     <div>
-      <p class="section-kicker"><?php esc_html_e('FOLLOW APEXSPRING', 'springapex'); ?></p>
-      <h2><?php esc_html_e('Keep up with ApexSpring.', 'springapex'); ?></h2>
+      <p class="section-kicker"><?php esc_html_e('FOLLOW NORENSPRING', 'springapex'); ?></p>
+      <h2><?php esc_html_e('Keep up with NorenSpring.', 'springapex'); ?></h2>
       <p><?php esc_html_e('Follow exhibition news, manufacturing updates and company developments through our official channels.', 'springapex'); ?></p>
     </div>
     <a class="btn btn-primary" href="<?php echo esc_url(springapex_url('/about/#official-channels')); ?>">

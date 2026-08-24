@@ -15,7 +15,7 @@ if (!in_array(PHP_SAPI, ['cli', 'cli-server'], true)) {
 
 defined('ABSPATH') || define('ABSPATH', __DIR__ . '/');
 defined('SPRINGAPEX_PREVIEW') || define('SPRINGAPEX_PREVIEW', true);
-defined('SPRINGAPEX_VERSION') || define('SPRINGAPEX_VERSION', '2.9.92');
+defined('SPRINGAPEX_VERSION') || define('SPRINGAPEX_VERSION', '2.9.93');
 defined('SPRINGAPEX_DIR') || define('SPRINGAPEX_DIR', dirname(__DIR__));
 defined('SPRINGAPEX_URI') || define('SPRINGAPEX_URI', '');
 
@@ -251,25 +251,25 @@ function wp_head(): void
 {
     $route = springapex_preview_route();
     $titles = [
-        'home' => 'ApexSpring — Precision Springs',
-        'products' => 'Products — ApexSpring',
-        'product' => 'Compression Springs — ApexSpring',
-        'solutions' => 'Solutions — ApexSpring',
-        'solution' => 'Industry Solution — ApexSpring',
-        'case-studies' => 'Case Studies — ApexSpring',
-        'case-study' => 'Case Study — ApexSpring',
-        'news' => 'News — ApexSpring',
-        'news-single' => 'News — ApexSpring',
-        'capabilities' => 'Capabilities — ApexSpring',
-        'manufacturing-videos' => 'Manufacturing Videos — ApexSpring',
-        'about' => 'About ApexSpring — Precision Springs',
-        'sustainability' => 'Sustainability — ApexSpring',
-        'contact' => 'Contact ApexSpring',
-        'resources' => 'Download Center — ApexSpring',
-        'search' => 'Search — ApexSpring',
-        'privacy' => 'Privacy Policy — ApexSpring',
-        'terms' => 'Terms of Use — ApexSpring',
-        'sitemap' => 'Sitemap — ApexSpring',
+        'home' => 'NorenSpring — Precision Springs',
+        'products' => 'Products — NorenSpring',
+        'product' => 'Compression Springs — NorenSpring',
+        'solutions' => 'Solutions — NorenSpring',
+        'solution' => 'Industry Solution — NorenSpring',
+        'case-studies' => 'Case Studies — NorenSpring',
+        'case-study' => 'Case Study — NorenSpring',
+        'news' => 'News — NorenSpring',
+        'news-single' => 'News — NorenSpring',
+        'capabilities' => 'Capabilities — NorenSpring',
+        'manufacturing-videos' => 'Manufacturing Videos — NorenSpring',
+        'about' => 'About NorenSpring — Precision Springs',
+        'sustainability' => 'Sustainability — NorenSpring',
+        'contact' => 'Contact NorenSpring',
+        'resources' => 'Download Center — NorenSpring',
+        'search' => 'Search — NorenSpring',
+        'privacy' => 'Privacy Policy — NorenSpring',
+        'terms' => 'Terms of Use — NorenSpring',
+        'sitemap' => 'Sitemap — NorenSpring',
     ];
     $hero_images = [
         'home' => 'hero-spring-v3.png',
@@ -292,7 +292,7 @@ function wp_head(): void
     if ($route === 'product' && function_exists('springapex_product')) {
         $product = springapex_product(springapex_preview_product_slug());
         if ($product) {
-            $titles['product'] = (string) ($product['title'] ?? 'Product') . ' — ApexSpring';
+            $titles['product'] = (string) ($product['title'] ?? 'Product') . ' — NorenSpring';
             $product_image = $product['image'] ?? '';
             $hero_images['product'] = is_array($product_image)
                 ? (string) ($product_image['file'] ?? '')
@@ -302,7 +302,7 @@ function wp_head(): void
     if ($route === 'solution' && function_exists('springapex_solution')) {
         $solution = springapex_solution(springapex_preview_solution_slug());
         if ($solution) {
-            $titles['solution'] = (string) ($solution['title'] ?? 'Industry Solution') . ' — ApexSpring';
+            $titles['solution'] = (string) ($solution['title'] ?? 'Industry Solution') . ' — NorenSpring';
             $solution_image = $solution['image'] ?? '';
             $hero_images['solution'] = is_array($solution_image)
                 ? (string) ($solution_image['file'] ?? '')
@@ -312,7 +312,7 @@ function wp_head(): void
     if ($route === 'case-study' && function_exists('springapex_case')) {
         $case = springapex_case(springapex_preview_case_slug());
         if ($case) {
-            $titles['case-study'] = (string) ($case['title'] ?? 'Case Study') . ' — ApexSpring';
+            $titles['case-study'] = (string) ($case['title'] ?? 'Case Study') . ' — NorenSpring';
             $case_image = $case['image'] ?? '';
             $hero_images['case-study'] = is_array($case_image)
                 ? (string) ($case_image['file'] ?? '')
@@ -322,7 +322,7 @@ function wp_head(): void
     if ($route === 'news-single' && function_exists('springapex_news')) {
         $news_item = springapex_news(springapex_preview_news_slug());
         if ($news_item) {
-            $titles['news-single'] = (string) ($news_item['title'] ?? 'News') . ' — ApexSpring';
+            $titles['news-single'] = (string) ($news_item['title'] ?? 'News') . ' — NorenSpring';
             $news_image = $news_item['image'] ?? '';
             $hero_images['news-single'] = is_array($news_image)
                 ? (string) ($news_image['file'] ?? '')
@@ -389,17 +389,17 @@ function wp_head(): void
     echo '<link rel="stylesheet" href="/assets/css/solution-detail.css?v=' . $version . '">' . "\n";
     echo '<link rel="stylesheet" href="/assets/css/solution-detail-responsive.css?v=' . $version . '">' . "\n";
     $descriptions = [
-        'case-studies' => 'ApexSpring customer-approved precision spring case studies.',
-        'case-study' => 'ApexSpring precision spring project case study.',
+        'case-studies' => 'NorenSpring customer-approved precision spring case studies.',
+        'case-study' => 'NorenSpring precision spring project case study.',
     ];
-    echo '<meta name="description" content="' . esc_attr($descriptions[$route] ?? 'ApexSpring precision spring products and engineering solutions.') . '">' . "\n";
+    echo '<meta name="description" content="' . esc_attr($descriptions[$route] ?? 'NorenSpring precision spring products and engineering solutions.') . '">' . "\n";
     echo '<meta name="robots" content="noindex,nofollow">' . "\n";
     echo '<title>' . esc_html($titles[$route] ?? $titles['home']) . '</title>' . "\n";
 }
 
 function wp_footer(): void
 {
-    echo '<script>window.ApexSpring=' . json_encode([
+    echo '<script>window.NorenSpring=' . json_encode([
         'homeUrl' => home_url('/'),
         'themeUrl' => '',
         'ajaxUrl' => '',

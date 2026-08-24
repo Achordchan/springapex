@@ -12,7 +12,7 @@ if (!defined('ABSPATH')) {
 
 function springapex_inquiry_mail_default_subject(): string
 {
-    return '[ApexSpring] {type} inquiry from {name}';
+    return '[NorenSpring] {type} inquiry from {name}';
 }
 
 function springapex_inquiry_mail_default_body(): string

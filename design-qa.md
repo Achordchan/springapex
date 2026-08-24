@@ -21,7 +21,7 @@
 
 - Fonts and typography: Inter/system stack, compact uppercase kicker, bold engineering headline, 12–15px product labels and descriptions match the selected direction. Wrapping remains controlled at 861px and no labels are clipped.
 - Spacing and layout rhythm: the final panel is 1280 × 600 at 1440px, starts 18px below the header, uses the selected asymmetric rail/index composition, and has no horizontal overflow at tested widths.
-- Colors and visual tokens: existing ApexSpring navy, white, gray borders and blue active accent are preserved. Contrast remains readable in the dark rail and mobile menu.
+- Colors and visual tokens: existing NorenSpring navy, white, gray borders and blue active accent are preserved. Contrast remains readable in the dark rail and mobile menu.
 - Image quality and asset fidelity: existing product photography is reused. A dedicated Die Springs image and a native navy-background compression-spring rail asset were added. Torsion Springs uses the recognizable full-arm product image. No placeholder, emoji, CSS drawing or handcrafted SVG was used.
 - Copy and content: seven existing product families, real product URLs and concise functional descriptions are present. No invented category, price, badge or marketing metric was added.
 
@@ -98,7 +98,7 @@ final result: passed
 
 - Fonts and typography: Inter and the existing system fallbacks remain unchanged. Desktop H1 is 52px/55.12px at weight 600; requirements H2 is 46px/50.6px at weight 600; body text is 16px/26.4px; section kickers are 11px at weight 700. The hero headline now wraps to three lines, matching the source hierarchy instead of the previous four-line wrap.
 - Spacing and layout rhythm: Hero reduced from about 615px to 541px; Requirements from about 572px to 423px; Proof from about 919px to 658px; CTA from about 249px to 200px. Application and product content padding was tightened, and the flow images were given explicit row height so intrinsic image ratios no longer stretched the rows.
-- Colors and tokens: existing ApexSpring navy, blue, gray, border and soft-surface tokens are preserved; no new decorative gradients, cards or shadows were introduced.
+- Colors and tokens: existing NorenSpring navy, blue, gray, border and soft-surface tokens are preserved; no new decorative gradients, cards or shadows were introduced.
 - Image quality and asset fidelity: all Automotive hero, application, product, process and quality images loaded in the final desktop and mobile passes. Existing customer-approved image assets remain in place.
 - Copy and content: the shared template copy remains editable and unchanged; the visual pass did not add presentation-only wording or mock content.
 
@@ -171,9 +171,9 @@ final result: passed
 
 ## Required Fidelity Surfaces
 
-- Fonts and typography: the implementation retains ApexSpring's Inter/system stack and follows the selected hierarchy of compact blue uppercase labels, a large engineering headline, restrained body copy and smaller evidence text. The Automotive headline wraps to four lines at 1440px rather than the mock's three, but the visual hierarchy and readable line length remain consistent with the live site header width.
+- Fonts and typography: the implementation retains NorenSpring's Inter/system stack and follows the selected hierarchy of compact blue uppercase labels, a large engineering headline, restrained body copy and smaller evidence text. The Automotive headline wraps to four lines at 1440px rather than the mock's three, but the visual hierarchy and readable line length remain consistent with the live site header width.
 - Spacing and layout rhythm: the page follows the selected sequence of split Hero, four engineering inputs, requirements, three applications, four spring families, four program steps, quality evidence and one final CTA. Section separation relies on white space and thin rules rather than additional cards, shadows or decorative blocks.
-- Colors and visual tokens: the existing navy, white, light-gray and blue system is preserved. The primary actions use the site's shared navy button rather than the concept's brighter blue, keeping the solution template consistent with the rest of ApexSpring.
+- Colors and visual tokens: the existing navy, white, light-gray and blue system is preserved. The primary actions use the site's shared navy button rather than the concept's brighter blue, keeping the solution template consistent with the rest of NorenSpring.
 - Image quality and asset fidelity: the six existing industry Hero images, real product imagery, existing manufacturing/inspection photography and three new Automotive application assets are used. The new application assets have responsive AVIF/WebP variants at 480, 768, 1200 and 1536px. No placeholder, CSS drawing, emoji or handcrafted SVG replaces visible design assets.
 - Copy and content: all six industries use the same component structure with industry-specific requirements, applications, recommended families and quality evidence. Backend fields can override every structured section, and an explicitly empty field hides the corresponding module.
 
@@ -216,7 +216,7 @@ Post-fix evidence:
 ## Findings
 
 - No actionable P0, P1 or P2 differences remain in the industry solution template.
-- [P3] The implementation keeps the existing ApexSpring global header and support language rather than duplicating the concept header.
+- [P3] The implementation keeps the existing NorenSpring global header and support language rather than duplicating the concept header.
 - [P3] Automotive uses the existing vehicle Hero instead of the concept's fixture close-up so the page remains grounded in the approved industry asset library.
 - [P3] Industries without approved application photography use the designed text-and-icon card state until real images are added through the same data field.
 
@@ -255,7 +255,7 @@ final result: passed
 
 ## Required Fidelity Surfaces
 
-- Fonts and typography: the existing ApexSpring sans-serif stack is retained. The final Hero title is tightened to a maximum 56px, with compact facts and actions matching the approved engineering-product hierarchy. Section kickers, form labels, FAQ labels and document metadata remain readable and consistent.
+- Fonts and typography: the existing NorenSpring sans-serif stack is retained. The final Hero title is tightened to a maximum 56px, with compact facts and actions matching the approved engineering-product hierarchy. Section kickers, form labels, FAQ labels and document metadata remain readable and consistent.
 - Spacing and layout rhythm: the current page follows the user-directed sequence of product Hero, anchor navigation, complete engineering inquiry, quality process, packing and delivery, lightweight second CTA, documents, FAQ and original footer. The repeated introduction/gallery region was removed after the Hero was confirmed to already contain the same overview copy and all three images.
 - Colors and visual tokens: the page uses the existing white, navy, light-gray and blue system tokens. Following the final user-directed revision, primary actions now reuse the shared navy `btn-primary` component instead of the concept's orange action treatment.
 - Image quality and asset fidelity: the Hero provides the three high-resolution product/inspection views through its working thumbnail switcher. The engineering dimension guide appears only in the inquiry module. Quality and delivery use real customer-supplied spreadsheet images cropped into JPG/WebP assets. No placeholder, emoji, CSS drawing or handcrafted SVG replaces a visible target asset.
@@ -299,7 +299,7 @@ Post-fix evidence:
 
 ### Iteration 2
 
-- [P2] The selected concept used orange primary actions, but the completed site system uses the shared navy primary-button component. The page-specific orange override made this product route feel disconnected from the rest of ApexSpring.
+- [P2] The selected concept used orange primary actions, but the completed site system uses the shared navy primary-button component. The page-specific orange override made this product route feel disconnected from the rest of NorenSpring.
 
 Fixes made:
 
@@ -501,7 +501,7 @@ final result: passed
 
 ## Required Fidelity Surfaces
 
-- Fonts and typography: existing ApexSpring sans-serif stack, uppercase section kicker, compact hero headline and high-contrast featured-video title reproduce the selected hierarchy without clipped desktop text. Mobile headline and featured title wrap cleanly.
+- Fonts and typography: existing NorenSpring sans-serif stack, uppercase section kicker, compact hero headline and high-contrast featured-video title reproduce the selected hierarchy without clipped desktop text. Mobile headline and featured title wrap cleanly.
 - Spacing and layout rhythm: desktop preserves the selected sequence of compact intro, cinematic featured video and four-item film strip. Mobile collapses the film strip to one column without horizontal overflow.
 - Colors and visual tokens: existing white, soft gray, navy and restrained accent tokens are retained. No decorative gradient was introduced.
 - Image quality and asset fidelity: three missing industrial assets were generated individually for CNC coiling, stamping/forming and load testing; existing factory and quality-lab photography was reused. Responsive AVIF/WebP variants loaded successfully with no failed page images.
@@ -571,7 +571,7 @@ final result: passed
 
 ## Required Fidelity Surfaces
 
-- Fonts and typography: the selected compact sans-serif hierarchy, four-line Hero statement, lifecycle title scale, certificate heading and progress statement are retained with the existing ApexSpring font stack and responsive weights.
+- Fonts and typography: the selected compact sans-serif hierarchy, four-line Hero statement, lifecycle title scale, certificate heading and progress statement are retained with the existing NorenSpring font stack and responsive weights.
 - Spacing and layout rhythm: the page follows the selected sequence of Hero, evidence strip, four-step lifecycle, management systems, safe work, documented progress and footer. Desktop uses alternating image/copy rows and mobile reduces to one readable column without horizontal overflow.
 - Colors and visual tokens: existing navy, white, light gray and restrained orange accents map closely to the selected design and remain scoped to `.sa-route-sustainability`.
 - Image quality and asset fidelity: the Hero now uses a dedicated high-resolution wire-coil image with responsive AVIF/WebP variants. Lifecycle, inspection, packaging, certification and safety imagery use project-owned or previously generated raster assets; no placeholder, emoji, CSS drawing or handcrafted SVG replaces a visible image.
@@ -641,7 +641,7 @@ final result: passed
 
 ## Required Fidelity Surfaces
 
-- Fonts and typography: the existing ApexSpring sans-serif stack is retained. The headline resolves to three lines at 50px with the selected compact line height and weight.
+- Fonts and typography: the existing NorenSpring sans-serif stack is retained. The headline resolves to three lines at 50px with the selected compact line height and weight.
 - Spacing and layout rhythm: desktop now uses a clearer two-column editorial grid with a dominant map, an outlined vertical GLOBAL wordmark and an expanded bottom CTA strip. Mobile becomes a single-column sequence with no horizontal overflow.
 - Colors and visual tokens: the section uses the existing navy and light-gray surfaces with `--sa-action` orange for the kicker rule, location and CTA arrow.
 - Image quality and asset fidelity: a dedicated generated raster map and responsive AVIF/WebP variants are used. The approved parallel route treatment replaces the rejected radiating spider-web lines. No placeholder, emoji, handcrafted SVG or CSS-drawn map was used.
@@ -758,7 +758,7 @@ final result: passed
 - Desktop implementation: `audit/about-team-implementation-1440.png`
 - Mobile implementation: `audit/about-team-mobile-430.png`
 - Side-by-side comparison: `audit/about-team-comparison-1440.png`
-- Route: About page, between Why ApexSpring and Company Development.
+- Route: About page, between Why NorenSpring and Company Development.
 
 ## Viewport And Fidelity
 
@@ -846,7 +846,7 @@ final result: passed
 
 ## Required Fidelity Surfaces
 
-- Fonts and typography: the selected editorial hierarchy, compact uppercase kicker, “Brochure Library Shelf” heading, document titles, metadata and orange download actions use the existing ApexSpring font system with equivalent weight and wrapping.
+- Fonts and typography: the selected editorial hierarchy, compact uppercase kicker, “Brochure Library Shelf” heading, document titles, metadata and orange download actions use the existing NorenSpring font system with equivalent weight and wrapping.
 - Spacing and layout rhythm: the two brochure volumes share one visual shelf, use asymmetric cover-and-copy groupings and flow into a restrained industry library row. Mobile changes to compact cover-and-copy rows without horizontal overflow.
 - Colors and visual tokens: existing navy, white, light gray and orange tokens are preserved. The implementation avoids gradients, nested cards and excessive borders or shadows.
 - Image quality and asset fidelity: two dedicated portrait raster cover assets were generated for the company profile and product catalog, with responsive AVIF/WebP variants. No CSS drawing, placeholder, emoji or handcrafted SVG replaces visible cover artwork.

@@ -232,7 +232,7 @@ add_action('wp_enqueue_scripts', static function (): void {
     }
 
     $brand = springapex_brand();
-    wp_localize_script('springapex-main', 'ApexSpring', [
+    wp_localize_script('springapex-main', 'NorenSpring', [
         'homeUrl' => home_url('/'),
         'themeUrl' => SPRINGAPEX_URI,
         'ajaxUrl' => admin_url('admin-ajax.php'),

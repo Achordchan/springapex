@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
 $items = springapex_about_navigation_items();
 $current_route = springapex_current_route();
 ?>
-<nav class="sa-about-subnav" aria-label="<?php esc_attr_e('About ApexSpring', 'springapex'); ?>">
+<nav class="sa-about-subnav" aria-label="<?php esc_attr_e('About NorenSpring', 'springapex'); ?>">
   <div class="container container-wide sa-about-subnav__inner">
     <?php foreach ($items as $item) : ?>
       <?php $active = (string) ($item['route'] ?? '') === $current_route; ?>

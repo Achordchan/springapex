@@ -663,7 +663,7 @@
       const drawingGuideOpen = form.querySelector('[data-drawing-guide-open]');
       const drawingGuideDialog = form.querySelector('[data-drawing-guide-dialog]');
       const drawingGuideClose = form.querySelector('[data-drawing-guide-close]');
-      const config = window.ApexSpring || {};
+      const config = window.NorenSpring || {};
       if (startedAt) startedAt.value = String(Math.floor(Date.now() / 1000));
 
       const closeDrawingGuide = () => {

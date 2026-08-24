@@ -40,7 +40,7 @@ if command -v mysqladmin >/dev/null 2>&1 && ! mysqladmin ping --silent >/dev/nul
 fi
 
 echo ""
-echo "ApexSpring WordPress 已启动"
+echo "NorenSpring WordPress 已启动"
 echo ""
 echo "  前台     http://127.0.0.1:${PORT}/"
 echo "  后台     http://127.0.0.1:${PORT}/wp-admin/"

@@ -16,7 +16,7 @@ function springapex_content(): array
 
     $data = [
         'brand' => [
-            'name' => 'ApexSpring',
+            'name' => 'NorenSpring',
             'tagline' => 'SPRING MANUFACTURING EXPERT',
             'company' => 'Xuzhou APEX Spring Manufacturing Co., Ltd.',
             'email' => 'victoria@springapex.cn',
@@ -187,17 +187,17 @@ function springapex_content(): array
             'items' => [
                 [
                     'slug' => 'manufacturing-expo-bangkok-2024',
-                    'title' => 'ApexSpring at Manufacturing Expo 2024 in Bangkok',
+                    'title' => 'NorenSpring at Manufacturing Expo 2024 in Bangkok',
                     'date' => '2024-06-20',
                     'date_label' => 'June 17–20, 2024',
                     'category' => 'Exhibition',
                     'news_type' => 'exhibitions',
-                    'summary' => 'ApexSpring presented precision spring products and met visitors at Manufacturing Expo 2024 in Bangkok, Thailand.',
+                    'summary' => 'NorenSpring presented precision spring products and met visitors at Manufacturing Expo 2024 in Bangkok, Thailand.',
                     'image' => 'news/manufacturing-expo-bangkok-2024/hero.jpg',
                     'products' => ['compression-springs', 'torsion-springs', 'wire-forms'],
                     'content' => [
-                        ['type' => 'p', 'text' => 'From June 17 to 20, 2024, ApexSpring exhibited at Manufacturing Expo in Bangkok, Thailand. The event brought manufacturing teams and suppliers together at BITEC to review production technologies and component solutions.'],
-                        ['type' => 'p', 'text' => 'At the ApexSpring booth, visitors reviewed spring samples and discussed custom applications with our team. The conversations focused on turning drawings and operating requirements into practical production plans.'],
+                        ['type' => 'p', 'text' => 'From June 17 to 20, 2024, NorenSpring exhibited at Manufacturing Expo in Bangkok, Thailand. The event brought manufacturing teams and suppliers together at BITEC to review production technologies and component solutions.'],
+                        ['type' => 'p', 'text' => 'At the NorenSpring booth, visitors reviewed spring samples and discussed custom applications with our team. The conversations focused on turning drawings and operating requirements into practical production plans.'],
                         ['type' => 'h2', 'text' => 'Discussions at the booth'],
                         ['type' => 'list', 'items' => [
                             'Custom spring geometry, load and installation requirements.',
@@ -205,29 +205,29 @@ function springapex_content(): array
                             'Prototype, production and quality-documentation requirements.',
                         ]],
                         ['type' => 'h2', 'text' => 'Thank you for visiting'],
-                        ['type' => 'p', 'text' => 'Thank you to everyone who visited the ApexSpring booth and shared their application requirements. Our team continues to support follow-up discussions with drawing review, product selection and quotation preparation.'],
+                        ['type' => 'p', 'text' => 'Thank you to everyone who visited the NorenSpring booth and shared their application requirements. Our team continues to support follow-up discussions with drawing review, product selection and quotation preparation.'],
                     ],
                     'gallery_title' => 'Manufacturing Expo 2024 in Bangkok',
                     'gallery' => [
                         ['image' => 'news/manufacturing-expo-bangkok-2024/venue.jpg', 'alt' => 'Manufacturing Expo 2024 entrance at BITEC in Bangkok', 'caption' => 'Manufacturing Expo 2024 at BITEC, Bangkok'],
-                        ['image' => 'news/manufacturing-expo-bangkok-2024/visitor-discussion.jpg', 'alt' => 'ApexSpring team discussing spring samples with a visitor', 'caption' => 'Spring samples and application discussion'],
-                        ['image' => 'news/manufacturing-expo-bangkok-2024/project-meeting.jpg', 'alt' => 'Visitors meeting with the ApexSpring team at the exhibition booth', 'caption' => 'Project requirements discussed at the booth'],
-                        ['image' => 'news/manufacturing-expo-bangkok-2024/product-consultation.jpg', 'alt' => 'ApexSpring representative presenting products at Manufacturing Expo', 'caption' => 'Product consultation during the exhibition'],
-                        ['image' => 'news/manufacturing-expo-bangkok-2024/technical-review.jpg', 'alt' => 'Technical discussion at the ApexSpring exhibition counter', 'caption' => 'Technical requirements review'],
-                        ['image' => 'news/manufacturing-expo-bangkok-2024/exhibition-team.jpg', 'alt' => 'ApexSpring exhibition team at Manufacturing Expo 2024', 'caption' => 'The ApexSpring exhibition team'],
+                        ['image' => 'news/manufacturing-expo-bangkok-2024/visitor-discussion.jpg', 'alt' => 'NorenSpring team discussing spring samples with a visitor', 'caption' => 'Spring samples and application discussion'],
+                        ['image' => 'news/manufacturing-expo-bangkok-2024/project-meeting.jpg', 'alt' => 'Visitors meeting with the NorenSpring team at the exhibition booth', 'caption' => 'Project requirements discussed at the booth'],
+                        ['image' => 'news/manufacturing-expo-bangkok-2024/product-consultation.jpg', 'alt' => 'NorenSpring representative presenting products at Manufacturing Expo', 'caption' => 'Product consultation during the exhibition'],
+                        ['image' => 'news/manufacturing-expo-bangkok-2024/technical-review.jpg', 'alt' => 'Technical discussion at the NorenSpring exhibition counter', 'caption' => 'Technical requirements review'],
+                        ['image' => 'news/manufacturing-expo-bangkok-2024/exhibition-team.jpg', 'alt' => 'NorenSpring exhibition team at Manufacturing Expo 2024', 'caption' => 'The NorenSpring exhibition team'],
                     ],
                 ],
             ],
         ],
         'about' => [
             'hero' => [
-                'title' => 'About ApexSpring',
+                'title' => 'About NorenSpring',
                 'subtitle' => 'Precision spring manufacturing since 2001.',
                 'image' => 'about-building-v3.png',
                 'mobile_image' => 'about-hero-mobile-v1.png',
             ],
             'company_video' => [
-                'title' => 'Inside ApexSpring',
+                'title' => 'Inside NorenSpring',
                 'youtube_id' => '5LUKHmIHPDY',
             ],
             'stats' => [
@@ -237,7 +237,7 @@ function springapex_content(): array
                 ['icon' => 'globe', 'value' => '2,000+', 'label' => 'Customers'],
             ],
             'why_choose' => [
-                'eyebrow' => 'WHY APEXSPRING',
+                'eyebrow' => 'WHY NORENSPRING',
                 'title' => 'From application challenge to repeat production.',
                 'media' => [
                     [

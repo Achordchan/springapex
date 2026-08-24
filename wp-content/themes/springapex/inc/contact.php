@@ -1284,7 +1284,7 @@ function springapex_contact_admin_notices(): void
     if (!springapex_private_uploads_are_protected()) {
         printf(
             '<div class="notice notice-warning"><p>%s</p></div>',
-            esc_html__('ApexSpring drawing uploads are disabled until the private uploads path is blocked by the Web Server/CDN and SPRINGAPEX_PRIVATE_UPLOADS_PROTECTED is enabled in wp-config.php.', 'springapex')
+            esc_html__('NorenSpring drawing uploads are disabled until the private uploads path is blocked by the Web Server/CDN and SPRINGAPEX_PRIVATE_UPLOADS_PROTECTED is enabled in wp-config.php.', 'springapex')
         );
     }
 
@@ -1303,8 +1303,8 @@ function springapex_contact_admin_notices(): void
         '<div class="notice notice-warning"><p>%1$s <a href="%2$s">%3$s</a> <a href="%4$s">%5$s</a></p></div>',
         esc_html(sprintf(
             _n(
-                'ApexSpring could not finalize the email status for %d inquiry. The inquiry is still saved.',
-                'ApexSpring could not finalize the email status for %d inquiries. The inquiries are still saved.',
+                'NorenSpring could not finalize the email status for %d inquiry. The inquiry is still saved.',
+                'NorenSpring could not finalize the email status for %d inquiries. The inquiries are still saved.',
                 $count,
                 'springapex'
             ),

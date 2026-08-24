@@ -38,7 +38,7 @@ function springapex_admin_screens(): array
                     'title' => '公司名称',
                     'desc' => '客户在页头、页脚和邮件里看到的名字。',
                     'fields' => [
-                        ['path' => 'brand.name', 'label' => '品牌名', 'type' => 'text', 'help' => '显示在页头 Logo 旁，例如 ApexSpring。'],
+                        ['path' => 'brand.name', 'label' => '品牌名', 'type' => 'text', 'help' => '显示在页头 Logo 旁，例如 NorenSpring。'],
                         ['path' => 'brand.tagline', 'label' => '品牌标语', 'type' => 'text', 'help' => '品牌名下方的一行小字，全大写效果由前台自动处理。'],
                         ['path' => 'brand.company', 'label' => '公司全称', 'type' => 'text', 'help' => '用于页脚版权行和询盘邮件签名，请填写营业执照上的英文全称。'],
                     ],

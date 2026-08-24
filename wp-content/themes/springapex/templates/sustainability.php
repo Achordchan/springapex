@@ -26,7 +26,7 @@ $lifecycle = [
             'Housekeeping and safe-work responsibilities applied in daily operations.',
         ],
         'image' => 'generated/springapex-factory-floor-v1.webp',
-        'alt' => 'Controlled spring manufacturing equipment on the ApexSpring production floor',
+        'alt' => 'Controlled spring manufacturing equipment on the NorenSpring production floor',
     ],
     [
         'number' => '03',
@@ -38,7 +38,7 @@ $lifecycle = [
             'Inspection and traceability records supplied as agreed.',
         ],
         'image' => 'generated/springapex-quality-lab-v1.webp',
-        'alt' => 'ApexSpring technician measuring a spring in the quality laboratory',
+        'alt' => 'NorenSpring technician measuring a spring in the quality laboratory',
     ],
     [
         'number' => '04',

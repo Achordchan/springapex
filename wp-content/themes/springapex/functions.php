@@ -1,6 +1,6 @@
 <?php
 /**
- * ApexSpring theme bootstrap.
+ * NorenSpring theme bootstrap.
  */
 
 declare(strict_types=1);
@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SPRINGAPEX_VERSION', '2.9.92');
+define('SPRINGAPEX_VERSION', '2.9.93');
 define('SPRINGAPEX_DIR', get_template_directory());
 define('SPRINGAPEX_URI', get_template_directory_uri());
 

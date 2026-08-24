@@ -11,7 +11,7 @@ $email = (string) ($brand['email'] ?? 'victoria@springapex.cn');
     <div class="container sa-legal-container">
       <p class="section-kicker"><?php esc_html_e('PRIVACY', 'springapex'); ?></p>
       <h1><?php esc_html_e('Privacy Policy', 'springapex'); ?></h1>
-      <p><?php esc_html_e('How we handle information submitted through the ApexSpring website.', 'springapex'); ?></p>
+      <p><?php esc_html_e('How we handle information submitted through the NorenSpring website.', 'springapex'); ?></p>
       <span><?php esc_html_e('Last updated: August 3, 2026', 'springapex'); ?></span>
     </div>
   </header>
@@ -35,7 +35,7 @@ $email = (string) ($brand['email'] ?? 'victoria@springapex.cn');
       <section id="use">
         <h2><?php esc_html_e('How we use information', 'springapex'); ?></h2>
         <p><?php esc_html_e('We use submitted information to review your application, respond to your request, prepare engineering feedback or a quotation, and maintain an internal record of the inquiry.', 'springapex'); ?></p>
-        <p><?php esc_html_e('Inquiry details are stored as a private WordPress record and emailed to the responsible ApexSpring team. We do not sell inquiry information.', 'springapex'); ?></p>
+        <p><?php esc_html_e('Inquiry details are stored as a private WordPress record and emailed to the responsible NorenSpring team. We do not sell inquiry information.', 'springapex'); ?></p>
       </section>
 
       <section id="storage">

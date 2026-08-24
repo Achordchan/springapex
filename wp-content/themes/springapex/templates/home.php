@@ -53,7 +53,7 @@ $home_solutions = array_slice(springapex_solutions(), 0, 4);
 >
   <div class="sa-video-dialog__shell">
     <div class="sa-video-dialog__header">
-      <h2 id="hero-video-title"><?php esc_html_e('ApexSpring Manufacturing', 'springapex'); ?></h2>
+      <h2 id="hero-video-title"><?php esc_html_e('NorenSpring Manufacturing', 'springapex'); ?></h2>
       <button class="sa-video-dialog__close" type="button" data-hero-video-close aria-label="Close video">
         <?php echo springapex_icon('close', 'icon'); ?>
       </button>
@@ -61,7 +61,7 @@ $home_solutions = array_slice(springapex_solutions(), 0, 4);
     <div class="sa-video-dialog__media">
       <iframe
         data-hero-video-frame
-        title="ApexSpring manufacturing video"
+        title="NorenSpring manufacturing video"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         referrerpolicy="strict-origin-when-cross-origin"
         allowfullscreen
@@ -110,7 +110,7 @@ $home_solutions = array_slice(springapex_solutions(), 0, 4);
   <div class="container container-wide">
     <div class="section-head row-between">
       <div class="sa-section-intro">
-        <p class="section-kicker"><?php esc_html_e('WHY APEXSPRING', 'springapex'); ?></p>
+        <p class="section-kicker"><?php esc_html_e('WHY NORENSPRING', 'springapex'); ?></p>
         <h2><?php esc_html_e('What You Get When You Work With Us', 'springapex'); ?></h2>
         <p class="sa-section-bridge"><?php esc_html_e('Choosing a spring supplier is choosing a manufacturing partner. Here is what that partnership delivers.', 'springapex'); ?></p>
       </div>

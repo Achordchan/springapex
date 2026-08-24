@@ -9,10 +9,10 @@ $phone = trim((string) ($brand['phone'] ?? ''));
 $whatsapp = trim((string) ($brand['whatsapp'] ?? $phone));
 $whatsapp_number = preg_replace('/\D+/', '', $whatsapp);
 $email_href = $email !== ''
-    ? 'mailto:' . $email . '?subject=' . rawurlencode('ApexSpring Project Inquiry')
+    ? 'mailto:' . $email . '?subject=' . rawurlencode('NorenSpring Project Inquiry')
     : '';
 $whatsapp_href = $whatsapp_number !== ''
-    ? 'https://wa.me/' . $whatsapp_number . '?text=' . rawurlencode('Hello ApexSpring, I would like to discuss a spring project.')
+    ? 'https://wa.me/' . $whatsapp_number . '?text=' . rawurlencode('Hello NorenSpring, I would like to discuss a spring project.')
     : '';
 $hours = trim((string) ($brand['hours'] ?? ''));
 $form_action = defined('SPRINGAPEX_PREVIEW')

@@ -1,6 +1,6 @@
-# ApexSpring WordPress 主题
+# NorenSpring WordPress 主题
 
-ApexSpring 精密弹簧独立站的经典 WordPress 主题。运行栈为 PHP + WordPress + MySQL；前端由 PHP 模板、分层 CSS 和原生 JavaScript 组成，不依赖 GSAP、Three.js、Google Fonts 或前端构建工具。
+NorenSpring 精密弹簧独立站的经典 WordPress 主题。运行栈为 PHP + WordPress + MySQL；前端由 PHP 模板、分层 CSS 和原生 JavaScript 组成，不依赖 GSAP、Three.js、Google Fonts 或前端构建工具。
 
 ## 运行要求
 
@@ -78,10 +78,10 @@ wp option update siteurl http://127.0.0.1:9000 && wp option update home http://1
 ## 安装到 WordPress
 
 1. 将仓库中的 `wp-content/themes/springapex/` 目录整体复制到目标站点的 `wp-content/themes/`；不要复制项目根的 `node_modules/`、验收截图或证据目录。
-2. 在 WordPress 后台启用 **ApexSpring** 主题。
+2. 在 WordPress 后台启用 **NorenSpring** 主题。
 3. 主题首次启用会补充缺失的 Home、About、Contact、Resources 页面，产品、行业方案和主导航；已有同 slug 内容不会被覆盖。后续主题升级只迁移仍存在的对象，不会重建管理员已删除或改名的默认内容。
 4. 在“设置 → 固定链接”保存一次，使 `/products/{slug}/`、产品归档和行业方案归档规则生效。
-5. 在“外观 → 自定义 → ApexSpring Company Details”配置对外邮箱、询盘接收邮箱、电话、地址、营业时间和 LinkedIn。
+5. 在“外观 → 自定义 → NorenSpring Company Details”配置对外邮箱、询盘接收邮箱、电话、地址、营业时间和 LinkedIn。
 6. 在服务器上配置可用的 WordPress 邮件发送方式，并实际验证询盘保存、通知邮件和文件上传。
 7. 按下方要求禁止 Web Server 和 CDN 对外访问 `springapex-private` 目录，用真实公网地址验证返回 403 或 404 后，再在 `wp-config.php` 启用私有上传门禁。
 
@@ -89,7 +89,7 @@ Products 与 Solutions 由自定义文章类型归档提供；产品详情使用
 
 ## 生产部署
 
-生产结构、Nginx 配置、Docker Compose 配置和 GitHub Actions 受限部署说明位于 `deploy/`。推送 `main` 时，工作流会先执行 PHP/JavaScript 语法检查，通过后只同步 SpringApex 主题和仓库管理的 WebP 插件，不会覆盖数据库、上传文件、WordPress 核心或服务器上的其他项目。
+生产结构、Nginx 配置、Docker Compose 配置和 GitHub Actions 受限部署说明位于 `deploy/`。推送 `main` 时，工作流会先执行 PHP/JavaScript 语法检查，通过后只同步 NorenSpring 主题和仓库管理的 WebP 插件，不会覆盖数据库、上传文件、WordPress 核心或服务器上的其他项目。
 
 ## 内容与询盘
 

@@ -9,7 +9,7 @@ $cases = springapex_cases();
 $news_items = springapex_news_list();
 $main_pages = [
     ['label' => 'Home', 'path' => '/'],
-    ['label' => 'About ApexSpring', 'path' => '/about/'],
+    ['label' => 'About NorenSpring', 'path' => '/about/'],
     ['label' => 'Sustainability', 'path' => '/sustainability/'],
     ['label' => 'Products', 'path' => '/products/'],
     ['label' => 'Industries', 'path' => '/solutions/'],
@@ -26,7 +26,7 @@ $main_pages = [
     <div class="container sa-legal-container">
       <p class="section-kicker"><?php esc_html_e('SITE DIRECTORY', 'springapex'); ?></p>
       <h1><?php esc_html_e('Sitemap', 'springapex'); ?></h1>
-      <p><?php esc_html_e('Browse ApexSpring products, industries, company information and downloadable documents.', 'springapex'); ?></p>
+      <p><?php esc_html_e('Browse NorenSpring products, industries, company information and downloadable documents.', 'springapex'); ?></p>
     </div>
   </header>
 

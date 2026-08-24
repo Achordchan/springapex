@@ -1,4 +1,4 @@
-# SpringApex production deployment
+# NorenSpring production deployment
 
 Production is isolated under `/srv/springapex` and uses the Compose project name `springapex`.
 The WordPress HTTP container listens only on `127.0.0.1:38100`; public traffic enters through the dedicated `web.apex-springs.com` Nginx server block.

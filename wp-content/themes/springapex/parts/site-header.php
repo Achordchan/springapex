@@ -16,8 +16,8 @@ $product_menu_feature_image = $product_menu['feature_image'] ?? 'product-compres
       <?php if (!defined('SPRINGAPEX_PREVIEW') && function_exists('has_custom_logo') && has_custom_logo()) : ?>
         <?php echo get_custom_logo(); ?>
       <?php else : ?>
-        <a class="brand brand--image" href="<?php echo esc_url(springapex_url('/')); ?>" aria-label="<?php echo esc_attr($brand['name'] ?? 'ApexSpring'); ?> home">
-          <?php echo springapex_image('logo-site.png', (string) ($brand['name'] ?? 'ApexSpring'), [
+        <a class="brand brand--image" href="<?php echo esc_url(springapex_url('/')); ?>" aria-label="<?php echo esc_attr($brand['name'] ?? 'NorenSpring'); ?> home">
+          <?php echo springapex_image('logo-site.png', (string) ($brand['name'] ?? 'NorenSpring'), [
               'class' => 'site-logo site-logo--header',
               'loading' => 'eager',
               'fetchpriority' => 'high',
@@ -157,7 +157,7 @@ $product_menu_feature_image = $product_menu['feature_image'] ?? 'product-compres
             <?php
             echo springapex_image(
                 $product_menu_feature_image,
-                __('ApexSpring precision spring product showcase', 'springapex'),
+                __('NorenSpring precision spring product showcase', 'springapex'),
                 [
                     'class' => 'products-mega-menu__feature-image',
                     'sizes' => '340px',

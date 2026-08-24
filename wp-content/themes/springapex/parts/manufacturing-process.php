@@ -24,7 +24,7 @@ if (!$process) {
           <li>
             <?php if (!empty($item['image'])) : ?>
               <figure class="sa-process-detail__media">
-                <?php echo springapex_image((string) $item['image'], sprintf(__('%s at ApexSpring', 'springapex'), (string) ($item['title'] ?? '')), [
+                <?php echo springapex_image((string) $item['image'], sprintf(__('%s at NorenSpring', 'springapex'), (string) ($item['title'] ?? '')), [
                     'width' => 640,
                     'height' => 400,
                     'sizes' => '(max-width: 760px) 100vw, (max-width: 1180px) 50vw, 370px',

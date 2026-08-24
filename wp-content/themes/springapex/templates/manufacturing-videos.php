@@ -35,7 +35,7 @@ $video_src = $youtube_id !== ''
 
   <?php get_template_part('parts/capabilities-subnav'); ?>
 
-  <section class="sa-video-library" aria-label="ApexSpring manufacturing video library">
+  <section class="sa-video-library" aria-label="NorenSpring manufacturing video library">
     <div class="container container-wide">
       <article class="sa-video-feature" data-reveal="up">
         <?php echo springapex_image((string) ($featured['image'] ?? ''), (string) ($featured['title'] ?? ''), [
@@ -96,7 +96,7 @@ $video_src = $youtube_id !== ''
   >
     <div class="sa-video-dialog__shell">
       <div class="sa-video-dialog__header">
-        <h2 id="manufacturing-video-dialog-title"><?php echo esc_html((string) ($featured['title'] ?? 'ApexSpring Manufacturing')); ?></h2>
+        <h2 id="manufacturing-video-dialog-title"><?php echo esc_html((string) ($featured['title'] ?? 'NorenSpring Manufacturing')); ?></h2>
         <button class="sa-video-dialog__close" type="button" data-hero-video-close aria-label="<?php esc_attr_e('Close video', 'springapex'); ?>">
           <?php echo springapex_icon('close', 'icon'); ?>
         </button>
@@ -104,7 +104,7 @@ $video_src = $youtube_id !== ''
       <div class="sa-video-dialog__media">
         <iframe
           data-hero-video-frame
-          title="<?php echo esc_attr((string) ($featured['title'] ?? 'ApexSpring manufacturing video')); ?>"
+          title="<?php echo esc_attr((string) ($featured['title'] ?? 'NorenSpring manufacturing video')); ?>"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           referrerpolicy="strict-origin-when-cross-origin"
           allowfullscreen

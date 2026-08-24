@@ -16,7 +16,7 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
             http://127.0.0.1:38100/ >/dev/null
         ;;
     *)
-        echo 'This key can only deploy SpringApex code or run its health check.' >&2
+        echo 'This key can only deploy NorenSpring code or run its health check.' >&2
         exit 126
         ;;
 esac

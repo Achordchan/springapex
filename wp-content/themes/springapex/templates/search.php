@@ -48,7 +48,7 @@ foreach (springapex_get('resources.items', []) as $resource) {
 
 $items[] = [
     'type' => 'Company',
-    'title' => 'About ApexSpring',
+    'title' => 'About NorenSpring',
     'summary' => 'Company story, manufacturing facilities, quality systems and global program support.',
     'href' => springapex_url('/about/'),
 ];
@@ -75,7 +75,7 @@ if ($needle !== '') {
     <div class="sa-search-hero__intro">
       <p class="sa-search-hero__kicker"><?php echo $query === '' ? 'SITE DIRECTORY' : 'SEARCH RESULTS'; ?></p>
       <?php if ($query === '') : ?>
-        <h1 class="sa-search-hero__title">Explore ApexSpring.</h1>
+        <h1 class="sa-search-hero__title">Explore NorenSpring.</h1>
         <p class="sa-search-hero__subtitle">Use the search button in the header or browse the main product, industry and custom manufacturing routes below.</p>
       <?php elseif ($matches) : ?>
         <h1 class="sa-search-hero__title">Results for “<?php echo esc_html($query); ?>”</h1>
@@ -94,7 +94,7 @@ if ($needle !== '') {
       <div class="sa-search-start" data-reveal>
         <div class="sa-search-start__intro">
           <p class="sa-search-results__kicker">START HERE</p>
-          <h2>Browse the main routes into ApexSpring.</h2>
+          <h2>Browse the main routes into NorenSpring.</h2>
           <p>Choose a product family, an industry application or the custom manufacturing path.</p>
         </div>
         <div class="sa-search-start__grid" data-reveal-group>

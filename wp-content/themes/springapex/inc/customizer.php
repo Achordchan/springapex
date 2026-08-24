@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
 
 add_action('customize_register', static function (object $customizer): void {
     $customizer->add_section('springapex_company', [
-        'title' => __('ApexSpring Company Details', 'springapex'),
+        'title' => __('NorenSpring Company Details', 'springapex'),
         'priority' => 30,
     ]);
 

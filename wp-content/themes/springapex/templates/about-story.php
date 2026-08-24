@@ -13,13 +13,13 @@ $youtube_embed_url = $youtube_id !== '' ? 'https://www.youtube.com/embed/' . raw
 $social_links = [
     ['key' => 'facebook', 'label' => 'Facebook', 'href' => (string) ($brand['facebook'] ?? ''), 'text' => 'Company and manufacturing updates.'],
     ['key' => 'instagram', 'label' => 'Instagram', 'href' => (string) ($brand['instagram'] ?? ''), 'text' => 'Products, facilities and events.'],
-    ['key' => 'youtube', 'label' => 'YouTube', 'href' => $youtube_id !== '' ? 'https://www.youtube.com/watch?v=' . rawurlencode($youtube_id) : '', 'text' => 'Watch the ApexSpring company film.'],
+    ['key' => 'youtube', 'label' => 'YouTube', 'href' => $youtube_id !== '' ? 'https://www.youtube.com/watch?v=' . rawurlencode($youtube_id) : '', 'text' => 'Watch the NorenSpring company film.'],
 ];
 $social_links = array_values(array_filter($social_links, static fn(array $item): bool => trim((string) ($item['href'] ?? '')) !== ''));
 
 get_template_part('parts/inner-hero', null, [
     'variant' => 'about',
-    'title' => $about['hero']['title'] ?? 'About ApexSpring',
+    'title' => $about['hero']['title'] ?? 'About NorenSpring',
     'subtitle' => $about['hero']['subtitle'] ?? 'Precision spring manufacturing since 2001.',
     'image' => $about['hero']['image'] ?? 'about-building-v3.png',
     'mobile_image' => $about['hero']['mobile_image'] ?? 'about-hero-mobile-v1.png',
@@ -31,12 +31,12 @@ $brand_window_image = springapex_asset('assets/images/generated/springapex-facto
 ?>
 
 <?php if ($youtube_embed_url !== '') : ?>
-  <section class="section sa-company-film" aria-label="<?php esc_attr_e('ApexSpring company film', 'springapex'); ?>">
+  <section class="section sa-company-film" aria-label="<?php esc_attr_e('NorenSpring company film', 'springapex'); ?>">
     <div class="container container-wide">
       <div class="sa-company-film__player" data-reveal="up">
         <iframe
           src="<?php echo esc_url($youtube_embed_url); ?>"
-          title="<?php echo esc_attr((string) ($company_video['title'] ?? 'Inside ApexSpring')); ?>"
+          title="<?php echo esc_attr((string) ($company_video['title'] ?? 'Inside NorenSpring')); ?>"
           loading="lazy"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           referrerpolicy="strict-origin-when-cross-origin"
@@ -47,13 +47,13 @@ $brand_window_image = springapex_asset('assets/images/generated/springapex-facto
   </section>
 <?php endif; ?>
 
-<section class="sa-brand-window" data-brand-window aria-label="<?php esc_attr_e('ApexSpring precision manufacturing', 'springapex'); ?>">
+<section class="sa-brand-window" data-brand-window aria-label="<?php esc_attr_e('NorenSpring precision manufacturing', 'springapex'); ?>">
   <div class="container container-wide">
-    <span class="sr-only">ApexSpring</span>
+    <span class="sr-only">NorenSpring</span>
     <svg class="sa-brand-window__art" viewBox="0 0 1600 300" role="presentation" aria-hidden="true" focusable="false">
       <defs>
         <clipPath id="sa-apexspring-wordmark-clip" clipPathUnits="userSpaceOnUse">
-          <text class="sa-brand-window__clip-text" x="800" y="226" text-anchor="middle">ApexSpring</text>
+          <text class="sa-brand-window__clip-text" x="800" y="226" text-anchor="middle">NorenSpring</text>
         </clipPath>
       </defs>
       <g clip-path="url(#sa-apexspring-wordmark-clip)">
@@ -68,7 +68,7 @@ $brand_window_image = springapex_asset('assets/images/generated/springapex-facto
           preserveAspectRatio="xMidYMid slice"
         />
       </g>
-      <text class="sa-brand-window__outline" x="800" y="226" text-anchor="middle">ApexSpring</text>
+      <text class="sa-brand-window__outline" x="800" y="226" text-anchor="middle">NorenSpring</text>
     </svg>
   </div>
 </section>
@@ -108,7 +108,7 @@ get_template_part('parts/why-apexspring');
         <div class="sa-team__founder" data-reveal="up">
           <div class="sa-team__founder-media">
             <?php echo springapex_image((string) ($founder['image'] ?? ''), sprintf(
-                __('%1$s, %2$s of ApexSpring', 'springapex'),
+                __('%1$s, %2$s of NorenSpring', 'springapex'),
                 (string) ($founder['name'] ?? ''),
                 (string) ($founder['role'] ?? '')
             ), [
@@ -139,7 +139,7 @@ get_template_part('parts/why-apexspring');
                 <figure class="sa-team__member">
                   <div class="sa-team__member-media">
                     <?php echo springapex_image((string) ($member['image'] ?? ''), sprintf(
-                        __('%1$s, %2$s at ApexSpring', 'springapex'),
+                        __('%1$s, %2$s at NorenSpring', 'springapex'),
                         (string) ($member['name'] ?? ''),
                         (string) ($member['role'] ?? '')
                     ), [
@@ -221,7 +221,7 @@ get_template_part('parts/why-apexspring');
     <div class="container container-wide">
       <header class="sa-social-hub__head" data-reveal="up">
         <p class="section-kicker"><?php esc_html_e('OFFICIAL CHANNELS', 'springapex'); ?></p>
-        <h2 id="sa-social-hub-title"><?php esc_html_e('Follow ApexSpring.', 'springapex'); ?></h2>
+        <h2 id="sa-social-hub-title"><?php esc_html_e('Follow NorenSpring.', 'springapex'); ?></h2>
         <span class="sa-social-hub__rule" aria-hidden="true"></span>
         <p><?php esc_html_e('Only confirmed public profile links are shown here.', 'springapex'); ?></p>
       </header>
@@ -236,7 +236,7 @@ get_template_part('parts/why-apexspring');
               href="<?php echo esc_url((string) $social['href']); ?>"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="<?php echo esc_attr(sprintf(__('Follow ApexSpring on %s', 'springapex'), $social_label)); ?>"
+              aria-label="<?php echo esc_attr(sprintf(__('Follow NorenSpring on %s', 'springapex'), $social_label)); ?>"
             >
               <span class="sa-social-hub__icon sa-social-hub__icon--<?php echo esc_attr((string) ($social['key'] ?? '')); ?>"><?php echo springapex_icon((string) ($social['key'] ?? '')); ?></span>
               <span class="sa-social-hub__copy">

@@ -49,13 +49,13 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
     <div class="sa-contact-network__layout">
       <div class="sa-contact-network__main">
         <header class="sa-contact-network__intro" data-reveal="up">
-          <h1><?php echo esc_html((string) ($network['eyebrow'] ?? 'CONTACT APEXSPRING')); ?></h1>
+          <h1><?php echo esc_html((string) ($network['eyebrow'] ?? 'CONTACT NORENSPRING')); ?></h1>
           <p><?php echo esc_html((string) ($network['title'] ?? 'Engineering support for projects worldwide.')); ?></p>
         </header>
 
         <div class="sa-contact-network__company" data-reveal="up">
           <figure class="sa-contact-network__facility">
-            <?php echo springapex_image((string) ($network['facility_image'] ?? 'facility-aerial-original.webp'), __('ApexSpring manufacturing facility in Xuzhou', 'springapex'), [
+            <?php echo springapex_image((string) ($network['facility_image'] ?? 'facility-aerial-original.webp'), __('NorenSpring manufacturing facility in Xuzhou', 'springapex'), [
                 'width' => 1800,
                 'height' => 760,
                 'sizes' => '(max-width: 980px) 100vw, 50vw',
@@ -115,7 +115,7 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
         // Static world-map image, reused as the no-JavaScript fallback and as the
         // full replacement inside the no-WordPress preview (which does not load
         // Leaflet or contact-map.js, so the interactive container cannot render).
-        $map_static_image = springapex_image((string) ($network['map_image'] ?? 'contact/contact-world-map-v1.png'), __('Global ApexSpring contact network map', 'springapex'), [
+        $map_static_image = springapex_image((string) ($network['map_image'] ?? 'contact/contact-world-map-v1.png'), __('Global NorenSpring contact network map', 'springapex'), [
             'width' => 1800,
             'height' => 820,
             'sizes' => '(max-width: 980px) 100vw, 68vw',
@@ -132,7 +132,7 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
               data-points="<?php echo esc_attr((string) wp_json_encode($map_points)); ?>"
               data-nav-label="<?php esc_attr_e('Get directions', 'springapex'); ?>"
               role="application"
-              aria-label="<?php esc_attr_e('Interactive map of ApexSpring global contact locations', 'springapex'); ?>"
+              aria-label="<?php esc_attr_e('Interactive map of NorenSpring global contact locations', 'springapex'); ?>"
             >
               <noscript><?php echo $map_static_image; ?></noscript>
             </div>

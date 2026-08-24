@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-defined('SPRINGAPEX_SEED_VERSION') || define('SPRINGAPEX_SEED_VERSION', '2.7.9');
+defined('SPRINGAPEX_SEED_VERSION') || define('SPRINGAPEX_SEED_VERSION', '2.7.10');
 
 add_action('after_switch_theme', 'springapex_seed_site');
 add_action('admin_notices', 'springapex_seed_admin_notice');
@@ -69,7 +69,7 @@ function springapex_seed_admin_notice(): void
     $message = $messages[$code] ?? __('Theme initialization did not complete.', 'springapex');
     printf(
         '<div class="notice notice-error"><p>%s</p></div>',
-        esc_html(sprintf(__('ApexSpring setup will retry automatically: %s', 'springapex'), $message))
+        esc_html(sprintf(__('NorenSpring setup will retry automatically: %s', 'springapex'), $message))
     );
 }
 
@@ -83,10 +83,9 @@ function springapex_seed_site_locked(): bool
     $initialized = (string) get_option('springapex_seed_initialized', '') === '1' || $current_version !== '';
     $allow_create = !$initialized;
 
-    $legacy_brand = 'Spring' . 'Apex';
     foreach (['blogname', 'blogdescription'] as $option_name) {
         $current_value = (string) get_option($option_name, '');
-        $updated_value = str_replace($legacy_brand, 'ApexSpring', $current_value);
+        $updated_value = (string) springapex_replace_public_brand($current_value);
         if (
             $updated_value !== $current_value &&
             !springapex_seed_update_option($option_name, $updated_value)
@@ -130,7 +129,7 @@ function springapex_seed_site_locked(): bool
     $resources_id = springapex_seed_page(
         'Resources',
         'resources',
-        '<h2>Engineering resources</h2><p>Catalogs, material guidance and technical support are available from the ApexSpring engineering team.</p>',
+        '<h2>Engineering resources</h2><p>Catalogs, material guidance and technical support are available from the NorenSpring engineering team.</p>',
         'page-resources.php',
         $allow_create
     );
@@ -282,11 +281,10 @@ function springapex_seed_update_option(string $name, string $value): bool
 function springapex_seed_upgrade_brand_fields(object $post, array $target_fields): bool
 {
     $update = ['ID' => (int) $post->ID];
-    $legacy_brand = 'Spring' . 'Apex';
 
     foreach ($target_fields as $field => $target) {
-        $legacy = str_replace('ApexSpring', $legacy_brand, $target);
-        if ($legacy !== $target && (string) ($post->{$field} ?? '') === $legacy) {
+        $current = (string) ($post->{$field} ?? '');
+        if ($current !== $target && springapex_replace_public_brand($current) === $target) {
             $update[$field] = $target;
         }
     }
@@ -388,7 +386,7 @@ function springapex_seed_solutions(bool $allow_create = true): bool
         if ($existing) {
             $post_id = (int) $existing->ID;
             $seed_content = sprintf(
-                'ApexSpring engineers precision spring solutions for %s applications, from design review and prototyping through stable production.',
+                'NorenSpring engineers precision spring solutions for %s applications, from design review and prototyping through stable production.',
                 strtolower((string) ($solution['title'] ?? 'industrial'))
             );
             if (!springapex_seed_upgrade_brand_fields($existing, ['post_content' => $seed_content])) {
@@ -426,7 +424,7 @@ function springapex_seed_solutions(bool $allow_create = true): bool
             'post_name' => $slug,
             'post_excerpt' => (string) ($solution['tagline'] ?? ''),
             'post_content' => sprintf(
-                'ApexSpring engineers precision spring solutions for %s applications, from design review and prototyping through stable production.',
+                'NorenSpring engineers precision spring solutions for %s applications, from design review and prototyping through stable production.',
                 strtolower((string) ($solution['title'] ?? 'industrial'))
             ),
             'menu_order' => $index,
@@ -786,14 +784,28 @@ function springapex_seed_primary_menu(bool $allow_create = true): bool
     $footer_id = (int) ($locations['footer'] ?? 0);
     $primary_menu = $primary_id > 0 ? wp_get_nav_menu_object($primary_id) : false;
     $footer_menu = $footer_id > 0 ? wp_get_nav_menu_object($footer_id) : false;
-    $legacy_menu_name = ('Spring' . 'Apex') . ' Primary';
+    $target_menu_name = 'NorenSpring Primary';
+    $legacy_menu_names = [
+        ('Apex' . 'Spring') . ' Primary',
+        ('Spring' . 'Apex') . ' Primary',
+    ];
+    $find_legacy_menu = static function () use ($legacy_menu_names): mixed {
+        foreach ($legacy_menu_names as $legacy_menu_name) {
+            $legacy_menu = wp_get_nav_menu_object($legacy_menu_name);
+            if (is_wp_error($legacy_menu) || $legacy_menu) {
+                return $legacy_menu;
+            }
+        }
+        return false;
+    };
 
     if (
         $primary_menu &&
         !is_wp_error($primary_menu) &&
-        (string) ($primary_menu->name ?? '') === $legacy_menu_name
+        (string) ($primary_menu->name ?? '') !== $target_menu_name &&
+        springapex_replace_public_brand((string) ($primary_menu->name ?? '')) === $target_menu_name
     ) {
-        $renamed = wp_update_nav_menu_object($primary_id, ['menu-name' => 'ApexSpring Primary']);
+        $renamed = wp_update_nav_menu_object($primary_id, ['menu-name' => $target_menu_name]);
         if (is_wp_error($renamed)) {
             return false;
         }
@@ -826,14 +838,14 @@ function springapex_seed_primary_menu(bool $allow_create = true): bool
     }
 
     if (!$allow_create) {
-        $legacy_menu = wp_get_nav_menu_object($legacy_menu_name);
+        $legacy_menu = $find_legacy_menu();
         if (is_wp_error($legacy_menu)) {
             return false;
         }
         if ($legacy_menu) {
             return !is_wp_error(wp_update_nav_menu_object(
                 (int) $legacy_menu->term_id,
-                ['menu-name' => 'ApexSpring Primary']
+                ['menu-name' => $target_menu_name]
             ));
         }
         return true;
@@ -845,18 +857,18 @@ function springapex_seed_primary_menu(bool $allow_create = true): bool
         $footer_id = 0;
     }
 
-    $menu = wp_get_nav_menu_object('ApexSpring Primary');
+    $menu = wp_get_nav_menu_object($target_menu_name);
     if (is_wp_error($menu)) {
         return false;
     }
 
     if (!$menu) {
-        $legacy_menu = wp_get_nav_menu_object($legacy_menu_name);
+        $legacy_menu = $find_legacy_menu();
         if (is_wp_error($legacy_menu)) {
             return false;
         }
         if ($legacy_menu) {
-            $renamed = wp_update_nav_menu_object((int) $legacy_menu->term_id, ['menu-name' => 'ApexSpring Primary']);
+            $renamed = wp_update_nav_menu_object((int) $legacy_menu->term_id, ['menu-name' => $target_menu_name]);
             if (is_wp_error($renamed)) {
                 return false;
             }
@@ -867,7 +879,7 @@ function springapex_seed_primary_menu(bool $allow_create = true): bool
         }
     }
 
-    $menu_result = $menu ?: wp_create_nav_menu('ApexSpring Primary');
+    $menu_result = $menu ?: wp_create_nav_menu($target_menu_name);
     if (is_wp_error($menu_result)) {
         return false;
     }
@@ -1077,7 +1089,7 @@ function springapex_seed_is_untouched_other_regions(array $region): bool
             [
                 'name' => 'Global programs',
                 'detail' => 'Coordinated from Xuzhou, China',
-                'company' => 'ApexSpring',
+                'company' => 'NorenSpring',
                 'phone' => '+86 187 9642 2510',
                 'email' => 'victoria@springapex.cn',
                 'address' => 'Xuzhou, Jiangsu Province, China',
@@ -1090,7 +1102,7 @@ function springapex_seed_is_untouched_other_regions(array $region): bool
         }
     }
 
-    return $region == $untouched;
+    return springapex_replace_public_brand($region) == $untouched;
 }
 
 function springapex_seed_capabilities_menu_url(): bool
