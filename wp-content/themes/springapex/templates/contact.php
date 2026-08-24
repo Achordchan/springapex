@@ -4,6 +4,7 @@ if (!defined('ABSPATH')) {
 }
 
 $network = springapex_get('contact_network', []);
+$contact_content = springapex_get('contact.form', []);
 $regions = is_array($network['regions'] ?? null) ? $network['regions'] : [];
 $markers = is_array($network['markers'] ?? null) ? $network['markers'] : [];
 $facts = is_array($network['facts'] ?? null) ? $network['facts'] : [];
@@ -209,8 +210,8 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
       </div>
 
       <aside class="sa-contact-network__form-wrap" data-reveal="up">
-        <h2><?php esc_html_e('Send an Inquiry', 'springapex'); ?></h2>
-        <p><?php esc_html_e('Tell us about your project. Our team will get back to you promptly.', 'springapex'); ?></p>
+        <h2><?php echo esc_html((string) ($contact_content['title'] ?? '')); ?></h2>
+        <p><?php echo esc_html((string) ($contact_content['text'] ?? '')); ?></p>
 
         <?php if ($product !== '' || $industry !== '' || $document !== '') : ?>
           <p class="sa-contact-context">
@@ -308,7 +309,7 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
           </details>
           <?php endif; ?>
           <button class="btn btn-primary btn-block" type="submit" data-submit-button>
-            <span><?php esc_html_e('Send Inquiry', 'springapex'); ?></span> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+            <span><?php echo esc_html((string) ($contact_content['submit_label'] ?? '')); ?></span> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
           </button>
           <?php if (springapex_form_turnstile_enabled('contact')) : ?>
           <div class="sa-turnstile-widget">
@@ -327,7 +328,7 @@ $whatsapp_number = preg_replace('/[^0-9]/', '', (string) ($brand['whatsapp'] ?? 
         </form>
 
         <div class="sa-contact-network__direct">
-          <p><?php esc_html_e('Or contact us directly', 'springapex'); ?></p>
+          <p><?php echo esc_html((string) ($contact_content['direct_label'] ?? '')); ?></p>
           <a href="mailto:<?php echo esc_attr((string) ($brand['email'] ?? '')); ?>"><?php echo springapex_icon('mail', 'icon icon-sm'); ?><span><?php echo esc_html((string) ($brand['email'] ?? '')); ?></span></a>
           <?php if ($whatsapp_number !== '') : ?>
             <a href="https://wa.me/<?php echo esc_attr($whatsapp_number); ?>"><?php echo springapex_icon('chat', 'icon icon-sm'); ?><span><?php echo esc_html((string) ($brand['whatsapp'] ?? $brand['phone'] ?? '')); ?></span></a>

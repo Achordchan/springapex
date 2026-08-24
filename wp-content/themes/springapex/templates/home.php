@@ -7,6 +7,7 @@ $hero = $home['hero'] ?? [];
 $hero_lines = preg_split('/\R/', (string) ($hero['title'] ?? '')) ?: [];
 $home_products = springapex_featured_products();
 $home_solutions = array_slice(springapex_solutions(), 0, 4);
+$home_sections = is_array($home['sections'] ?? null) ? $home['sections'] : [];
 ?>
 <section class="hero hero-home">
   <div class="container container-wide hero-grid hero-grid-home">
@@ -53,7 +54,7 @@ $home_solutions = array_slice(springapex_solutions(), 0, 4);
 >
   <div class="sa-video-dialog__shell">
     <div class="sa-video-dialog__header">
-      <h2 id="hero-video-title"><?php esc_html_e('NorenSpring Manufacturing', 'springapex'); ?></h2>
+      <h2 id="hero-video-title"><?php echo esc_html((string) ($home['video_dialog_title'] ?? '')); ?></h2>
       <button class="sa-video-dialog__close" type="button" data-hero-video-close aria-label="Close video">
         <?php echo springapex_icon('close', 'icon'); ?>
       </button>
@@ -83,16 +84,17 @@ $home_solutions = array_slice(springapex_solutions(), 0, 4);
 </section>
 
 <?php if ($home_products) : ?>
+<?php $products_section = is_array($home_sections['products'] ?? null) ? $home_sections['products'] : []; ?>
 <section class="section sa-home-products">
   <div class="container container-wide">
     <div class="section-head row-between">
       <div class="sa-section-intro">
-        <p class="section-kicker"><?php esc_html_e('PRODUCT RANGE', 'springapex'); ?></p>
-        <h2><?php esc_html_e('Featured spring products for demanding applications.', 'springapex'); ?></h2>
-        <p class="sa-section-bridge"><?php esc_html_e('Whether you need a standard compression spring or a complex wire form, start here.', 'springapex'); ?></p>
+        <p class="section-kicker"><?php echo esc_html((string) ($products_section['eyebrow'] ?? '')); ?></p>
+        <h2><?php echo esc_html((string) ($products_section['title'] ?? '')); ?></h2>
+        <p class="sa-section-bridge"><?php echo esc_html((string) ($products_section['text'] ?? '')); ?></p>
       </div>
-      <a class="text-link" href="<?php echo esc_url(springapex_url('/products/')); ?>">
-        <?php esc_html_e('Explore all products', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+      <a class="text-link" href="<?php echo esc_url(springapex_url((string) ($products_section['action_href'] ?? '/products/'))); ?>">
+        <?php echo esc_html((string) ($products_section['action_label'] ?? '')); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
       </a>
     </div>
     <div class="sa-product-grid" data-reveal-group>
@@ -107,15 +109,16 @@ $home_solutions = array_slice(springapex_solutions(), 0, 4);
 <?php get_template_part('parts/company-introduction', null, ['variant' => 'home']); ?>
 
 <section class="section pillars-section">
+  <?php $why_section = is_array($home_sections['why'] ?? null) ? $home_sections['why'] : []; ?>
   <div class="container container-wide">
     <div class="section-head row-between">
       <div class="sa-section-intro">
-        <p class="section-kicker"><?php esc_html_e('WHY NORENSPRING', 'springapex'); ?></p>
-        <h2><?php esc_html_e('What You Get When You Work With Us', 'springapex'); ?></h2>
-        <p class="sa-section-bridge"><?php esc_html_e('Choosing a spring supplier is choosing a manufacturing partner. Here is what that partnership delivers.', 'springapex'); ?></p>
+        <p class="section-kicker"><?php echo esc_html((string) ($why_section['eyebrow'] ?? '')); ?></p>
+        <h2><?php echo esc_html((string) ($why_section['title'] ?? '')); ?></h2>
+        <p class="sa-section-bridge"><?php echo esc_html((string) ($why_section['text'] ?? '')); ?></p>
       </div>
-      <a class="text-link" href="<?php echo esc_url(springapex_url('/capabilities/')); ?>">
-        <?php esc_html_e('Our Capabilities', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+      <a class="text-link" href="<?php echo esc_url(springapex_url((string) ($why_section['action_href'] ?? '/capabilities/'))); ?>">
+        <?php echo esc_html((string) ($why_section['action_label'] ?? '')); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
       </a>
     </div>
     <div class="pillar-grid" data-reveal-group>
@@ -131,11 +134,12 @@ $home_solutions = array_slice(springapex_solutions(), 0, 4);
 </section>
 
 <section class="section process-section">
+  <?php $process_section = is_array($home_sections['process'] ?? null) ? $home_sections['process'] : []; ?>
   <div class="container container-wide" data-reveal="up">
     <div class="process-header">
-      <p class="section-kicker"><?php esc_html_e('HOW WE WORK', 'springapex'); ?></p>
-      <h2 class="process-title"><?php esc_html_e('From Wire to Performance', 'springapex'); ?></h2>
-      <p class="process-intro"><?php esc_html_e('Every order follows the same disciplined sequence — so quality is built in, not inspected in.', 'springapex'); ?></p>
+      <p class="section-kicker"><?php echo esc_html((string) ($process_section['eyebrow'] ?? '')); ?></p>
+      <h2 class="process-title"><?php echo esc_html((string) ($process_section['title'] ?? '')); ?></h2>
+      <p class="process-intro"><?php echo esc_html((string) ($process_section['text'] ?? '')); ?></p>
     </div>
     <div class="process-track" data-reveal-group>
       <?php foreach (($home['process'] ?? []) as $step) : ?>
@@ -145,20 +149,21 @@ $home_solutions = array_slice(springapex_solutions(), 0, 4);
         </div>
       <?php endforeach; ?>
     </div>
-    <p class="process-note"><?php esc_html_e('A proven process. Precision quality. Reliable delivery.', 'springapex'); ?></p>
+    <p class="process-note"><?php echo esc_html((string) ($process_section['note'] ?? '')); ?></p>
   </div>
 </section>
 
 <section class="section applications-section">
+  <?php $industries_section = is_array($home_sections['industries'] ?? null) ? $home_sections['industries'] : []; ?>
   <div class="container container-wide">
     <div class="section-head row-between">
       <div class="sa-section-intro">
-        <p class="section-kicker"><?php esc_html_e('INDUSTRIES WE SERVE', 'springapex'); ?></p>
-        <h2><?php esc_html_e('Springs built for the demands of your industry.', 'springapex'); ?></h2>
-        <p class="sa-section-bridge"><?php esc_html_e('Each sector has unique load, environment and compliance requirements. We engineer around them.', 'springapex'); ?></p>
+        <p class="section-kicker"><?php echo esc_html((string) ($industries_section['eyebrow'] ?? '')); ?></p>
+        <h2><?php echo esc_html((string) ($industries_section['title'] ?? '')); ?></h2>
+        <p class="sa-section-bridge"><?php echo esc_html((string) ($industries_section['text'] ?? '')); ?></p>
       </div>
-      <a class="text-link" href="<?php echo esc_url(springapex_url('/solutions/')); ?>">
-        <?php esc_html_e('View All Applications', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+      <a class="text-link" href="<?php echo esc_url(springapex_url((string) ($industries_section['action_href'] ?? '/solutions/'))); ?>">
+        <?php echo esc_html((string) ($industries_section['action_label'] ?? '')); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
       </a>
     </div>
     <div class="application-grid" data-reveal-group>

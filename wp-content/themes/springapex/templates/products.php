@@ -4,6 +4,8 @@ if (!defined('ABSPATH')) {
 }
 $products_data = springapex_get('products', []);
 $hero = $products_data['hero'] ?? [];
+$entry = is_array($products_data['entry'] ?? null) ? $products_data['entry'] : [];
+$range = is_array($products_data['range'] ?? null) ? $products_data['range'] : [];
 $products = springapex_products();
 ?>
 <?php
@@ -14,8 +16,8 @@ get_template_part('parts/inner-hero', null, [
     'image' => $hero['image'] ?? 'products-hero-v3.png',
     'mobile_image' => $hero['mobile_image'] ?? 'products-hero-mobile-v1.png',
     'ctas' => [
-        ['label' => 'Browse Products', 'href' => '#product-families', 'icon' => 'arrow-right'],
-        ['label' => 'Send a Drawing', 'href' => '/contact/?intent=drawing', 'icon' => 'upload', 'style' => 'ghost'],
+        ['label' => (string) ($hero['primary_cta']['label'] ?? ''), 'href' => (string) ($hero['primary_cta']['href'] ?? '#product-families'), 'icon' => (string) ($hero['primary_cta']['icon'] ?? 'arrow-right')],
+        ['label' => (string) ($hero['drawing_cta']['label'] ?? ''), 'href' => (string) ($hero['drawing_cta']['href'] ?? '/contact/?intent=drawing'), 'icon' => (string) ($hero['drawing_cta']['icon'] ?? 'upload'), 'style' => 'ghost'],
     ],
 ]);
 ?>
@@ -24,36 +26,22 @@ get_template_part('parts/inner-hero', null, [
   <div class="container container-wide">
     <div class="sa-products-intro" data-reveal="up">
       <div>
-        <p class="section-kicker"><?php esc_html_e('START HERE', 'springapex'); ?></p>
-        <h2><?php esc_html_e('Choose How to Start', 'springapex'); ?></h2>
+        <p class="section-kicker"><?php echo esc_html((string) ($entry['eyebrow'] ?? '')); ?></p>
+        <h2><?php echo esc_html((string) ($entry['title'] ?? '')); ?></h2>
       </div>
-      <p><?php esc_html_e('Describe your application or send a drawing for review.', 'springapex'); ?></p>
+      <p><?php echo esc_html((string) ($entry['text'] ?? '')); ?></p>
     </div>
     <div class="sa-product-entry-paths__grid" data-reveal-group>
-      <a class="sa-entry-path-card" href="<?php echo esc_url(springapex_url('/contact/?intent=solution')); ?>">
-        <div class="sa-entry-path-card__icon"><?php echo springapex_icon('gear', 'icon'); ?></div>
-        <div class="sa-entry-path-card__content">
-          <h3><?php esc_html_e('Describe Your Application', 'springapex'); ?></h3>
-          <p><?php esc_html_e('Share the load, space and motion requirements for engineering guidance.', 'springapex'); ?></p>
-        </div>
-        <span class="sa-entry-path-card__arrow"><?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></span>
-      </a>
-      <a class="sa-entry-path-card" href="<?php echo esc_url(springapex_url('/contact/?intent=drawing')); ?>">
-        <div class="sa-entry-path-card__icon"><?php echo springapex_icon('upload', 'icon'); ?></div>
-        <div class="sa-entry-path-card__content">
-          <h3><?php esc_html_e('Upload Drawing for Quote', 'springapex'); ?></h3>
-          <p><?php esc_html_e('Send a drawing or specification for review and quotation.', 'springapex'); ?></p>
-        </div>
-        <span class="sa-entry-path-card__arrow"><?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></span>
-      </a>
-      <a class="sa-entry-path-card" href="#product-families">
-        <div class="sa-entry-path-card__icon"><?php echo springapex_icon('spring', 'icon'); ?></div>
-        <div class="sa-entry-path-card__content">
-          <h3><?php esc_html_e('Find by Product Type', 'springapex'); ?></h3>
-          <p><?php esc_html_e('Browse spring families by load direction and component type.', 'springapex'); ?></p>
-        </div>
-        <span class="sa-entry-path-card__arrow"><?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></span>
-      </a>
+      <?php foreach ((array) ($entry['items'] ?? []) as $item) : ?>
+        <a class="sa-entry-path-card" href="<?php echo esc_url(springapex_url((string) ($item['href'] ?? ''))); ?>">
+          <div class="sa-entry-path-card__icon"><?php echo springapex_icon((string) ($item['icon'] ?? 'arrow-right'), 'icon'); ?></div>
+          <div class="sa-entry-path-card__content">
+            <h3><?php echo esc_html((string) ($item['title'] ?? '')); ?></h3>
+            <p><?php echo esc_html((string) ($item['text'] ?? '')); ?></p>
+          </div>
+          <span class="sa-entry-path-card__arrow"><?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></span>
+        </a>
+      <?php endforeach; ?>
     </div>
   </div>
 </section>
@@ -62,10 +50,10 @@ get_template_part('parts/inner-hero', null, [
   <div class="container container-wide">
     <div class="sa-products-intro" data-reveal="up">
       <div>
-        <p class="section-kicker"><?php esc_html_e('PRODUCT RANGE', 'springapex'); ?></p>
-        <h2><?php esc_html_e('Spring families for every load and motion.', 'springapex'); ?></h2>
+        <p class="section-kicker"><?php echo esc_html((string) ($range['eyebrow'] ?? '')); ?></p>
+        <h2><?php echo esc_html((string) ($range['title'] ?? '')); ?></h2>
       </div>
-      <p><?php esc_html_e('Compare force direction, space, material and operating conditions.', 'springapex'); ?></p>
+      <p><?php echo esc_html((string) ($range['text'] ?? '')); ?></p>
     </div>
     <div class="product-grid product-grid--all" data-reveal-group>
       <?php foreach ($products as $product) : ?>
@@ -93,7 +81,7 @@ get_template_part('parts/inner-hero', null, [
   <div class="container container-wide sa-selection-guide__layout">
     <div class="sa-selection-guide__intro" data-reveal="up">
       <div>
-        <p class="section-kicker"><?php esc_html_e('SELECTION GUIDE', 'springapex'); ?></p>
+        <p class="section-kicker"><?php echo esc_html((string) ($selection['eyebrow'] ?? '')); ?></p>
         <h2><?php echo esc_html((string) ($selection['title'] ?? '')); ?></h2>
       </div>
       <p><?php echo esc_html((string) ($selection['text'] ?? '')); ?></p>

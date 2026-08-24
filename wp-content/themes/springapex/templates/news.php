@@ -59,6 +59,7 @@ $featured = $items ? array_shift($items) : null;
 $featured_date = is_array($featured) ? (string) ($featured['date'] ?? '') : '';
 $featured_date_label = is_array($featured) ? (string) ($featured['date_label'] ?? '') : '';
 $active_news_heading = $news_types[$active_news_type];
+$news_follow = springapex_get('news.follow', []);
 ?>
 <?php
 get_template_part('parts/inner-hero', null, [
@@ -164,12 +165,12 @@ get_template_part('parts/inner-hero', null, [
 <section class="section sa-news-cta">
   <div class="container container-wide sa-news-cta__inner">
     <div>
-      <p class="section-kicker"><?php esc_html_e('FOLLOW NORENSPRING', 'springapex'); ?></p>
-      <h2><?php esc_html_e('Keep up with NorenSpring.', 'springapex'); ?></h2>
-      <p><?php esc_html_e('Follow exhibition news, manufacturing updates and company developments through our official channels.', 'springapex'); ?></p>
+      <p class="section-kicker"><?php echo esc_html((string) ($news_follow['eyebrow'] ?? '')); ?></p>
+      <h2><?php echo esc_html((string) ($news_follow['title'] ?? '')); ?></h2>
+      <p><?php echo esc_html((string) ($news_follow['text'] ?? '')); ?></p>
     </div>
-    <a class="btn btn-primary" href="<?php echo esc_url(springapex_url('/about/#official-channels')); ?>">
-      <?php esc_html_e('View Official Channels', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+    <a class="btn btn-primary" href="<?php echo esc_url(springapex_url((string) ($news_follow['action_href'] ?? ''))); ?>">
+      <?php echo esc_html((string) ($news_follow['action_label'] ?? '')); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
     </a>
   </div>
 </section>

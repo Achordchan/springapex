@@ -3,56 +3,19 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-$lifecycle = [
-    [
-        'number' => '01',
-        'title' => 'Material selection',
-        'text' => 'Spring wire and raw materials are selected around application requirements, performance and service life.',
-        'points' => [
-            'Qualified suppliers and documented material certificates.',
-            'Material choice aligned to strength, fatigue and corrosion needs.',
-            'Traceable records from incoming material to finished spring.',
-        ],
-        'image' => 'generated/springapex-news-material-selection-v1.webp',
-        'alt' => 'Spring wire, material samples and finished spring components prepared for review',
-    ],
-    [
-        'number' => '02',
-        'title' => 'Controlled production',
-        'text' => 'Documented instructions and process controls guide repeatable spring manufacturing across the shop floor.',
-        'points' => [
-            'Production settings defined for the approved part and process.',
-            'Equipment condition and process parameters checked during production.',
-            'Housekeeping and safe-work responsibilities applied in daily operations.',
-        ],
-        'image' => 'generated/springapex-factory-floor-v1.webp',
-        'alt' => 'Controlled spring manufacturing equipment on the NorenSpring production floor',
-    ],
-    [
-        'number' => '03',
-        'title' => 'Inspection & traceability',
-        'text' => 'Critical dimensions and functional characteristics are checked against agreed drawings and requirements.',
-        'points' => [
-            'Incoming material and in-process verification.',
-            'Final inspection to approved drawings and specifications.',
-            'Inspection and traceability records supplied as agreed.',
-        ],
-        'image' => 'generated/springapex-quality-lab-v1.webp',
-        'alt' => 'NorenSpring technician measuring a spring in the quality laboratory',
-    ],
-    [
-        'number' => '04',
-        'title' => 'Protective packaging & delivery',
-        'text' => 'Finished springs are protected, identified and prepared for reliable receiving and international delivery.',
-        'points' => [
-            'Protective packaging selected around part size and finish.',
-            'Clear identification for part number, lot and quantity.',
-            'Export-ready documentation prepared to project requirements.',
-        ],
-        'image' => 'generated/springapex-news-export-packaging-v1.webp',
-        'alt' => 'Precision springs arranged in protective export packaging',
-    ],
-];
+$sustainability = springapex_get('sustainability', []);
+$lifecycle_section = is_array($sustainability['lifecycle'] ?? null) ? $sustainability['lifecycle'] : [];
+$lifecycle = array_values(array_filter(
+    is_array($lifecycle_section['items'] ?? null) ? $lifecycle_section['items'] : [],
+    static fn(mixed $item): bool => is_array($item) && springapex_image_value_available($item['image'] ?? '')
+));
+$management = is_array($sustainability['management'] ?? null) ? $sustainability['management'] : [];
+$safety = is_array($sustainability['safety'] ?? null) ? $sustainability['safety'] : [];
+$progress = is_array($sustainability['progress'] ?? null) ? $sustainability['progress'] : [];
+$proof_record = is_array($sustainability['proof_record'] ?? null) ? $sustainability['proof_record'] : [];
+$safety_image = springapex_image_value_available($safety['image'] ?? '')
+    ? $safety['image']
+    : 'generated/springapex-news-quality-audit-v1.webp';
 
 $certificate_names = ['ISO 14001', 'ISO 45001'];
 $certificates = array_values(array_filter(
@@ -71,8 +34,8 @@ foreach ($certificates as $certificate) {
 }
 $proof_items[] = [
     'icon' => 'form',
-    'title' => 'Records before claims.',
-    'text' => 'Measured targets and reduction results are published only after reviewed records are available.',
+    'title' => (string) ($proof_record['title'] ?? ''),
+    'text' => (string) ($proof_record['text'] ?? ''),
     'meta' => '',
 ];
 $sustainability_hero = springapex_get('sustainability.hero', []);
@@ -120,11 +83,11 @@ $sustainability_hero = springapex_get('sustainability.hero', []);
   <div class="container container-wide">
     <header class="sa-sustainability-lifecycle__head" data-reveal="up">
       <div>
-        <p class="section-kicker"><?php esc_html_e('MATERIAL LIFECYCLE', 'springapex'); ?></p>
-        <h2 id="sa-sustainability-lifecycle-title"><?php esc_html_e('Material Lifecycle Story', 'springapex'); ?></h2>
-        <p class="sa-sustainability-lifecycle__intro"><?php esc_html_e('Responsibility is engineered through the full lifecycle of every spring we build.', 'springapex'); ?></p>
+        <p class="section-kicker"><?php echo esc_html((string) ($lifecycle_section['eyebrow'] ?? '')); ?></p>
+        <h2 id="sa-sustainability-lifecycle-title"><?php echo esc_html((string) ($lifecycle_section['title'] ?? '')); ?></h2>
+        <p class="sa-sustainability-lifecycle__intro"><?php echo esc_html((string) ($lifecycle_section['text'] ?? '')); ?></p>
       </div>
-      <p><?php esc_html_e('Current framework', 'springapex'); ?></p>
+      <p><?php echo esc_html((string) ($lifecycle_section['status'] ?? '')); ?></p>
     </header>
 
     <ol class="sa-sustainability-lifecycle__list">
@@ -157,11 +120,11 @@ $sustainability_hero = springapex_get('sustainability.hero', []);
   <section class="section sa-sustainability-certificates" id="verified-certificates" aria-labelledby="sa-sustainability-certificates-title">
     <div class="container container-wide sa-sustainability-certificates__layout">
       <header data-reveal="up">
-        <p class="section-kicker"><?php esc_html_e('MANAGEMENT SYSTEMS', 'springapex'); ?></p>
-        <h2 id="sa-sustainability-certificates-title"><?php esc_html_e('Certified systems. Verified records.', 'springapex'); ?></h2>
-        <p><?php esc_html_e('Environmental and occupational health and safety management systems provide the framework for responsible operations and continual improvement.', 'springapex'); ?></p>
-        <a class="sa-sustainability-certificates__link" href="<?php echo esc_url(springapex_url('/about/#quality-certificates')); ?>">
-          <?php esc_html_e('View all certificates', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+        <p class="section-kicker"><?php echo esc_html((string) ($management['eyebrow'] ?? '')); ?></p>
+        <h2 id="sa-sustainability-certificates-title"><?php echo esc_html((string) ($management['title'] ?? '')); ?></h2>
+        <p><?php echo esc_html((string) ($management['text'] ?? '')); ?></p>
+        <a class="sa-sustainability-certificates__link" href="<?php echo esc_url(springapex_url((string) ($management['action_href'] ?? ''))); ?>">
+          <?php echo esc_html((string) ($management['action_label'] ?? '')); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
         </a>
       </header>
 
@@ -194,20 +157,18 @@ $sustainability_hero = springapex_get('sustainability.hero', []);
 <section class="section sa-sustainability-safety" aria-labelledby="sa-sustainability-safety-title">
   <div class="container container-wide sa-sustainability-safety__layout">
     <figure data-reveal="up">
-      <?php echo springapex_image('generated/springapex-news-quality-audit-v1.webp', __('Spring inspection under documented quality and safety procedures', 'springapex'), [
+      <?php echo springapex_image($safety_image, (string) ($safety['image_alt'] ?? ''), [
           'width' => 1536,
           'height' => 1024,
           'sizes' => '(max-width: 760px) 100vw, 50vw',
       ]); ?>
     </figure>
     <div data-reveal="up">
-      <p class="section-kicker"><?php esc_html_e('SAFE WORK', 'springapex'); ?></p>
-      <h2 id="sa-sustainability-safety-title"><?php esc_html_e('Safe work supports dependable production.', 'springapex'); ?></h2>
-      <p><?php esc_html_e('The occupational health and safety management system defines responsibilities, training and workplace controls that support people and consistent production.', 'springapex'); ?></p>
+      <p class="section-kicker"><?php echo esc_html((string) ($safety['eyebrow'] ?? '')); ?></p>
+      <h2 id="sa-sustainability-safety-title"><?php echo esc_html((string) ($safety['title'] ?? '')); ?></h2>
+      <p><?php echo esc_html((string) ($safety['text'] ?? '')); ?></p>
       <ul>
-        <li><?php esc_html_e('Documented responsibilities and operating procedures.', 'springapex'); ?></li>
-        <li><?php esc_html_e('Training aligned to assigned work and equipment.', 'springapex'); ?></li>
-        <li><?php esc_html_e('Routine checks and continual improvement of workplace controls.', 'springapex'); ?></li>
+        <?php foreach ((array) ($safety['points'] ?? []) as $point) : ?><li><?php echo esc_html((string) $point); ?></li><?php endforeach; ?>
       </ul>
     </div>
   </div>
@@ -216,17 +177,17 @@ $sustainability_hero = springapex_get('sustainability.hero', []);
 <section class="section sa-sustainability-progress" aria-labelledby="sa-sustainability-progress-title">
   <div class="container container-wide sa-sustainability-progress__layout">
     <div data-reveal="up">
-      <p class="section-kicker"><?php esc_html_e('TRANSPARENT PROGRESS', 'springapex'); ?></p>
-      <h2 id="sa-sustainability-progress-title"><?php esc_html_e('Progress we can document.', 'springapex'); ?></h2>
+      <p class="section-kicker"><?php echo esc_html((string) ($progress['eyebrow'] ?? '')); ?></p>
+      <h2 id="sa-sustainability-progress-title"><?php echo esc_html((string) ($progress['title'] ?? '')); ?></h2>
     </div>
     <div data-reveal="up">
-      <p><?php esc_html_e('Certifications, management-system scope and supporting records can be shared for supplier audits and qualification reviews. Contact our engineering team for the documentation your programme requires.', 'springapex'); ?></p>
+      <p><?php echo esc_html((string) ($progress['text'] ?? '')); ?></p>
       <div class="sa-sustainability-progress__actions">
-        <a class="sa-sustainability-progress__primary" href="<?php echo esc_url(springapex_url('/contact/?intent=sustainability')); ?>">
-          <?php esc_html_e('Contact Engineering', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+        <a class="sa-sustainability-progress__primary" href="<?php echo esc_url(springapex_url((string) ($progress['primary_href'] ?? ''))); ?>">
+          <?php echo esc_html((string) ($progress['primary_label'] ?? '')); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
         </a>
-        <a class="sa-sustainability-progress__secondary" href="<?php echo esc_url(springapex_url('/resources/')); ?>">
-          <?php esc_html_e('Open Download Center', 'springapex'); ?>
+        <a class="sa-sustainability-progress__secondary" href="<?php echo esc_url(springapex_url((string) ($progress['secondary_href'] ?? ''))); ?>">
+          <?php echo esc_html((string) ($progress['secondary_label'] ?? '')); ?>
         </a>
       </div>
     </div>

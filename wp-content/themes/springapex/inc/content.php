@@ -108,6 +108,36 @@ function springapex_content(): array
                 'image' => 'hero-spring-v3.png',
                 'mobile_image' => 'hero-spring-mobile-v1.png',
             ],
+            'video_dialog_title' => 'NorenSpring Manufacturing',
+            'sections' => [
+                'products' => [
+                    'eyebrow' => 'PRODUCT RANGE',
+                    'title' => 'Featured spring products for demanding applications.',
+                    'text' => 'Whether you need a standard compression spring or a complex wire form, start here.',
+                    'action_label' => 'Explore all products',
+                    'action_href' => '/products/',
+                ],
+                'why' => [
+                    'eyebrow' => 'WHY NORENSPRING',
+                    'title' => 'What You Get When You Work With Us',
+                    'text' => 'Choosing a spring supplier is choosing a manufacturing partner. Here is what that partnership delivers.',
+                    'action_label' => 'Our Capabilities',
+                    'action_href' => '/capabilities/',
+                ],
+                'process' => [
+                    'eyebrow' => 'HOW WE WORK',
+                    'title' => 'From Wire to Performance',
+                    'text' => 'Every order follows the same disciplined sequence — so quality is built in, not inspected in.',
+                    'note' => 'A proven process. Precision quality. Reliable delivery.',
+                ],
+                'industries' => [
+                    'eyebrow' => 'INDUSTRIES WE SERVE',
+                    'title' => 'Springs built for the demands of your industry.',
+                    'text' => 'Each sector has unique load, environment and compliance requirements. We engineer around them.',
+                    'action_label' => 'View All Applications',
+                    'action_href' => '/solutions/',
+                ],
+            ],
             'industries' => ['AUTOMOTIVE', 'INDUSTRIAL', 'MEDICAL', 'AEROSPACE', 'RAIL', 'ENERGY'],
             'pillars' => [
                 ['icon' => 'pen', 'title' => 'Production-Ready Design', 'text' => 'Drawing review for reliable, manufacturable spring designs.'],
@@ -128,6 +158,7 @@ function springapex_content(): array
                 'title' => 'Products',
                 'subtitle' => 'Precision springs engineered for dependable performance.',
                 'primary_cta' => ['label' => 'Explore Product Range', 'href' => '/products/#product-families', 'icon' => 'arrow-right'],
+                'drawing_cta' => ['label' => 'Send a Drawing', 'href' => '/contact/?intent=drawing', 'icon' => 'upload'],
                 'image' => 'products-hero-v3.png',
                 'mobile_image' => 'products-hero-mobile-v1.png',
             ],
@@ -135,6 +166,21 @@ function springapex_content(): array
                 'feature_image' => 'product-compression-menu-v2.png',
             ],
             'detail_media' => springapex_product_detail_media_defaults(),
+            'entry' => [
+                'eyebrow' => 'START HERE',
+                'title' => 'Choose How to Start',
+                'text' => 'Describe your application or send a drawing for review.',
+                'items' => [
+                    ['icon' => 'gear', 'title' => 'Describe Your Application', 'text' => 'Share the load, space and motion requirements for engineering guidance.', 'href' => '/contact/?intent=solution'],
+                    ['icon' => 'upload', 'title' => 'Upload Drawing for Quote', 'text' => 'Send a drawing or specification for review and quotation.', 'href' => '/contact/?intent=drawing'],
+                    ['icon' => 'spring', 'title' => 'Find by Product Type', 'text' => 'Browse spring families by load direction and component type.', 'href' => '/products/#product-families'],
+                ],
+            ],
+            'range' => [
+                'eyebrow' => 'PRODUCT RANGE',
+                'title' => 'Spring families for every load and motion.',
+                'text' => 'Compare force direction, space, material and operating conditions.',
+            ],
             'categories' => [
                 ['slug' => 'compression-springs', 'title' => 'Compression Springs', 'image' => 'product-compression-detail-v4.png', 'category_image' => 'product-compression-detail-v4.png', 'featured_image' => 'product-compression-card-v3.png', 'desc' => 'Designed for dependable axial load and return force.'],
                 ['slug' => 'extension-springs', 'title' => 'Extension Springs', 'image' => 'product-extension-v2.png', 'category_image' => 'product-extension-category-v3.png', 'desc' => 'Built to deliver reliable tension and controlled extension.'],
@@ -194,6 +240,14 @@ function springapex_content(): array
                 ['slug' => 'energy', 'title' => 'Energy', 'tagline' => 'Built to endure', 'image' => 'solution-energy-v2.png'],
                 ['slug' => 'rail-transit', 'title' => 'Rail Transit', 'tagline' => 'Moving the future', 'image' => 'solution-rail-v2.png'],
             ],
+            'cta' => [
+                'title' => 'Have a specific application in mind?',
+                'text' => "We'll help you find the right spring solution for your needs.",
+                'action_label' => 'Contact Our Engineers',
+                'action_href' => '/contact/?intent=engineer',
+                'image' => 'solutions-cta-springs-v5.png',
+                'image_alt' => 'Assorted precision springs',
+            ],
         ],
         'case_studies' => [
             'hero' => [
@@ -210,6 +264,13 @@ function springapex_content(): array
                 'subtitle' => 'Company and engineering updates.',
                 'image' => 'generated/springapex-news-hero-v3.webp',
                 'mobile_image' => 'news-hero-mobile-v1.png',
+            ],
+            'follow' => [
+                'eyebrow' => 'FOLLOW NORENSPRING',
+                'title' => 'Keep up with NorenSpring.',
+                'text' => 'Follow exhibition news, manufacturing updates and company developments through our official channels.',
+                'action_label' => 'View Official Channels',
+                'action_href' => '/about/#official-channels',
             ],
             'items' => [
                 [
@@ -256,6 +317,10 @@ function springapex_content(): array
             'company_video' => [
                 'title' => 'Inside NorenSpring',
                 'youtube_id' => '5LUKHmIHPDY',
+            ],
+            'brand_window' => [
+                'image' => 'generated/springapex-factory-floor-v1.webp',
+                'aria_label' => 'NorenSpring precision manufacturing',
             ],
             'stats' => [
                 ['icon' => 'users', 'value' => '2001', 'label' => 'Founded'],
@@ -323,6 +388,26 @@ function springapex_content(): array
                     ],
                 ],
             ],
+            'global_support' => [
+                'wordmark' => 'GLOBAL',
+                'eyebrow' => 'GLOBAL SUPPORT',
+                'title' => 'One manufacturing base. Connected project support.',
+                'text' => 'International projects are coordinated from Xuzhou through direct engineering review, production communication and delivery documentation.',
+                'image' => 'about-global-support-map-v1.png',
+                'image_alt' => 'International project support coordinated from Xuzhou, China',
+                'location' => 'Xuzhou, China',
+                'action_label' => 'View Contact Network',
+                'action_href' => '/contact/#contact-network',
+            ],
+            'official_channels' => [
+                'eyebrow' => 'OFFICIAL CHANNELS',
+                'title' => 'Follow NorenSpring.',
+                'text' => 'Only confirmed public profile links are shown here.',
+                'rail_label' => 'FOLLOW',
+                'facebook_text' => 'Company and manufacturing updates.',
+                'instagram_text' => 'Products, facilities and events.',
+                'youtube_text' => 'Watch the NorenSpring company film.',
+            ],
         ],
         'capabilities' => [
             'hero' => [
@@ -347,6 +432,9 @@ function springapex_content(): array
                 'title' => 'Start with the information that drives spring performance.',
                 'text' => 'A drawing is helpful, but an effective review also considers working load, movement, environment, quantity and required production records.',
                 'image' => 'generated/springapex-engineering-desk-v1.webp',
+                'image_alt' => 'Spring engineering review workspace',
+                'action_label' => 'Send Your Project Details',
+                'action_href' => '/contact/?intent=drawing',
                 'items' => [
                     ['icon' => 'pen', 'title' => 'Geometry or Drawing', 'text' => 'Dimensions, available space, end details and installation constraints.'],
                     ['icon' => 'spring', 'title' => 'Load & Movement', 'text' => 'Required force or torque at the working position and expected travel.'],
@@ -355,6 +443,7 @@ function springapex_content(): array
                 ],
             ],
             'verification' => [
+                'title' => 'Verification matched to your drawing and application.',
                 'image' => 'product-detail/compression-dimension-guide-v2.png',
                 'image_alt' => 'Spring dimension reference diagram with wire diameter, outer diameter and free length callouts',
             ],
@@ -425,6 +514,12 @@ function springapex_content(): array
         ],
         'contact' => [
             'inquiry_types' => ['Request a Quote', 'Upload a Drawing', 'Technical Support', 'Custom Design', 'Catalog / Technical Documents', 'Supplier Qualification', 'Feedback / Suggestions', 'Partnership', 'Other'],
+            'form' => [
+                'title' => 'Send an Inquiry',
+                'text' => 'Tell us about your project. Our team will get back to you promptly.',
+                'submit_label' => 'Send Inquiry',
+                'direct_label' => 'Or contact us directly',
+            ],
         ],
     ];
 
