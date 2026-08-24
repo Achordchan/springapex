@@ -19,6 +19,10 @@ $timeline = array_values(array_filter(
         return is_scalar($image) && trim((string) $image) !== '';
     }
 ));
+$timeline_sizes = sprintf(
+    '(max-width: 760px) 100vw, %dvw',
+    intdiv(100, max(1, count($timeline)))
+);
 $brand = springapex_brand();
 $company_video = is_array($about['company_video'] ?? null) ? $about['company_video'] : [];
 $youtube_id = (string) ($company_video['youtube_id'] ?? '');
@@ -191,7 +195,7 @@ get_template_part('parts/why-apexspring');
             <?php echo springapex_image((string) ($item['image'] ?? ''), (string) ($item['alt'] ?? ''), [
                 'width' => 1536,
                 'height' => 1024,
-                'sizes' => '(max-width: 760px) 100vw, 33vw',
+                'sizes' => $timeline_sizes,
             ]); ?>
           </figure>
           <span class="sa-timeline__marker" aria-hidden="true"></span>

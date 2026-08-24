@@ -20,6 +20,9 @@ $media_items = array_values(array_filter(
         return is_scalar($image) && trim((string) $image) !== '';
     }
 ));
+$media_sizes = count($media_items) === 1
+    ? '(max-width: 1080px) 100vw, 46vw'
+    : '(max-width: 1080px) 50vw, 46vw';
 ?>
 <section class="section sa-why-choose" aria-labelledby="sa-why-choose-title">
   <div class="container container-wide">
@@ -36,7 +39,7 @@ $media_items = array_values(array_filter(
             <?php echo springapex_image((string) ($media['image'] ?? ''), (string) ($media['alt'] ?? ''), [
                 'width' => 1586,
                 'height' => 992,
-                'sizes' => '(max-width: 1080px) 50vw, 46vw',
+                'sizes' => $media_sizes,
             ]); ?>
             <figcaption><?php echo esc_html((string) ($media['label'] ?? '')); ?></figcaption>
           </figure>
