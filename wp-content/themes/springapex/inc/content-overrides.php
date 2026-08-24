@@ -11,6 +11,7 @@ if (!defined('ABSPATH')) {
 
 const SPRINGAPEX_CONTENT_OVERRIDES_OPTION = 'springapex_content_overrides';
 const SPRINGAPEX_CONTENT_AUTOLOAD_LIMIT = 204800;
+const SPRINGAPEX_PUBLIC_BRAND_VERSION = '2';
 
 /**
  * Replace the retired public brand name without touching stable technical
@@ -45,7 +46,7 @@ function springapex_replace_public_brand(mixed $value): mixed
  */
 function springapex_migrate_public_brand_options(): void
 {
-    if ((string) get_option('springapex_public_brand_version', '') === '1') {
+    if ((string) get_option('springapex_public_brand_version', '') === SPRINGAPEX_PUBLIC_BRAND_VERSION) {
         return;
     }
 
@@ -68,20 +69,18 @@ function springapex_migrate_public_brand_options(): void
         }
     }
 
+    // The bundled NorenSpring wordmark is the release authority. Clear the
+    // currently selected media-library logo once, even when its attachment
+    // title/alt text is generic and cannot identify the old pixels. Operators
+    // can still upload a new custom logo after this one-time migration.
     $custom_logo_id = function_exists('get_theme_mod') ? (int) get_theme_mod('custom_logo', 0) : 0;
-    if ($custom_logo_id > 0 && function_exists('get_post_field') && function_exists('get_post_meta')) {
-        $logo_identity = implode(' ', [
-            (string) get_post_field('post_title', $custom_logo_id, 'raw'),
-            (string) get_post_meta($custom_logo_id, '_wp_attachment_image_alt', true),
-        ]);
-        if (springapex_replace_public_brand($logo_identity) !== $logo_identity) {
-            remove_theme_mod('custom_logo');
-            $success = (int) get_theme_mod('custom_logo', 0) === 0 && $success;
-        }
+    if ($custom_logo_id > 0) {
+        remove_theme_mod('custom_logo');
+        $success = (int) get_theme_mod('custom_logo', 0) === 0 && $success;
     }
 
     if ($success) {
-        update_option('springapex_public_brand_version', '1', false);
+        update_option('springapex_public_brand_version', SPRINGAPEX_PUBLIC_BRAND_VERSION, false);
     }
 }
 add_action('init', 'springapex_migrate_public_brand_options', 1);

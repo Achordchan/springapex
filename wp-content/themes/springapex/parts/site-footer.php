@@ -51,7 +51,7 @@ $footer_socials = [
     <div class="container container-wide footer-directory-grid">
       <div class="footer-brand-column">
         <a class="brand brand-footer brand--image" href="<?php echo esc_url(springapex_url('/')); ?>" aria-label="<?php echo esc_attr($brand['name'] ?? 'NorenSpring'); ?> home">
-          <?php echo springapex_image('logo-site.png', (string) ($brand['name'] ?? 'NorenSpring'), [
+          <?php echo springapex_image('logo-site-norenspring-v1.png', (string) ($brand['name'] ?? 'NorenSpring'), [
               'class' => 'site-logo site-logo--footer',
               'width' => 916,
               'height' => 529,
