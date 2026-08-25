@@ -51,10 +51,10 @@ jobs:
     name: Deploy to AWS BT Panel site
     needs: verify
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, ARM64, springapex-production]
     environment: production
     env:
-      DEPLOY_HOST: ${{ secrets.SPRINGAPEX_DEPLOY_HOST }}
+      DEPLOY_HOST: 127.0.0.1
       DEPLOY_USER: ${{ secrets.SPRINGAPEX_DEPLOY_USER }}
       DEPLOY_KEY: ${{ secrets.SPRINGAPEX_DEPLOY_SSH_KEY }}
     steps:
@@ -72,11 +72,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          install -d -m 700 "$HOME/.ssh"
-          printf '%s\n' "$DEPLOY_KEY" > "$HOME/.ssh/springapex_deploy"
-          chmod 600 "$HOME/.ssh/springapex_deploy"
-          cp deploy/known_hosts "$HOME/.ssh/known_hosts"
-          chmod 600 "$HOME/.ssh/known_hosts"
+          printf '%s\n' "$DEPLOY_KEY" > "$RUNNER_TEMP/springapex_deploy"
+          chmod 600 "$RUNNER_TEMP/springapex_deploy"
+          cp deploy/known_hosts "$RUNNER_TEMP/springapex_known_hosts"
+          chmod 600 "$RUNNER_TEMP/springapex_known_hosts"
 
       - name: Read and validate theme version
         shell: bash
@@ -94,11 +93,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ssh -i "$HOME/.ssh/springapex_deploy" -o IdentitiesOnly=yes \
+          ssh -i "$RUNNER_TEMP/springapex_deploy" -o IdentitiesOnly=yes \
+            -o UserKnownHostsFile="$RUNNER_TEMP/springapex_known_hosts" \
             "$DEPLOY_USER@$DEPLOY_HOST" \
             "springapex-cdn-prepare $SPRINGAPEX_RELEASE_VERSION"
           rsync -az --delete-delay --itemize-changes --exclude='.DS_Store' \
-            -e "ssh -i $HOME/.ssh/springapex_deploy -o IdentitiesOnly=yes" \
+            -e "ssh -i $RUNNER_TEMP/springapex_deploy -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/springapex_known_hosts" \
             wp-content/themes/springapex/assets/ \
             "$DEPLOY_USER@$DEPLOY_HOST:.springapex-cdn-stage/$SPRINGAPEX_RELEASE_VERSION/assets/"
 
@@ -106,7 +106,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ssh -i "$HOME/.ssh/springapex_deploy" -o IdentitiesOnly=yes \
+          ssh -i "$RUNNER_TEMP/springapex_deploy" -o IdentitiesOnly=yes \
+            -o UserKnownHostsFile="$RUNNER_TEMP/springapex_known_hosts" \
             "$DEPLOY_USER@$DEPLOY_HOST" \
             "springapex-cdn-sync $SPRINGAPEX_RELEASE_VERSION"
 
@@ -115,7 +116,7 @@ jobs:
         run: |
           set -euo pipefail
           rsync -az --delete-delay --itemize-changes --exclude='.DS_Store' \
-            -e "ssh -i $HOME/.ssh/springapex_deploy -o IdentitiesOnly=yes" \
+            -e "ssh -i $RUNNER_TEMP/springapex_deploy -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/springapex_known_hosts" \
             wp-content/themes/springapex/ \
             "$DEPLOY_USER@$DEPLOY_HOST:themes/springapex/"
 
@@ -124,7 +125,7 @@ jobs:
         run: |
           set -euo pipefail
           rsync -az --delete-delay --itemize-changes --exclude='.DS_Store' \
-            -e "ssh -i $HOME/.ssh/springapex_deploy -o IdentitiesOnly=yes" \
+            -e "ssh -i $RUNNER_TEMP/springapex_deploy -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/springapex_known_hosts" \
             wp-content/plugins/webp-converter-for-media/ \
             "$DEPLOY_USER@$DEPLOY_HOST:plugins/webp-converter-for-media/"
 
@@ -133,7 +134,7 @@ jobs:
         run: |
           set -euo pipefail
           rsync -az --delete-delay --itemize-changes --exclude='.DS_Store' \
-            -e "ssh -i $HOME/.ssh/springapex_deploy -o IdentitiesOnly=yes" \
+            -e "ssh -i $RUNNER_TEMP/springapex_deploy -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/springapex_known_hosts" \
             wp-content/plugins/wp-mail-smtp/ \
             "$DEPLOY_USER@$DEPLOY_HOST:plugins/wp-mail-smtp/"
 
@@ -141,5 +142,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ssh -i "$HOME/.ssh/springapex_deploy" -o IdentitiesOnly=yes \
+          ssh -i "$RUNNER_TEMP/springapex_deploy" -o IdentitiesOnly=yes \
+            -o UserKnownHostsFile="$RUNNER_TEMP/springapex_known_hosts" \
             "$DEPLOY_USER@$DEPLOY_HOST" springapex-health
+
+      - name: Cleanup deployment credentials
+        if: always()
+        shell: bash
+        run: |
+          rm -f \
+            "$RUNNER_TEMP/springapex_deploy" \
+            "$RUNNER_TEMP/springapex_known_hosts"

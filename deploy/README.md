@@ -71,6 +71,13 @@ Pushes to `main` deploy only these repository-managed directories:
 - `wp-content/plugins/webp-converter-for-media`
 - `wp-content/plugins/wp-mail-smtp`
 
+The production deploy job runs on the dedicated ARM64 self-hosted runner
+`norenspring-aws-prod`. PR verification remains on GitHub-hosted runners. The
+production runner connects only to `springapex-deploy@127.0.0.1`, so GitHub
+does not require public SSH access and port 22 remains restricted to the
+current management IP. Deployment credentials are written only under
+`RUNNER_TEMP` and removed in an `always()` cleanup step.
+
 The GitHub key is forced through `/usr/local/bin/springapex-deploy-command`.
 It can only run write-only `rrsync` within this site's `wp-content` directory
 or execute the local site health check. It cannot open an interactive shell,
