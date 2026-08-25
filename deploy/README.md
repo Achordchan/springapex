@@ -1,61 +1,103 @@
-# NorenSpring production deployment
+# NorenSpring AWS production deployment
 
-Production is isolated under `/srv/springapex` and uses the Compose project name `springapex`.
-The WordPress HTTP container listens only on `127.0.0.1:38100`; public traffic enters through the dedicated `web.norenspring.com` Nginx server block. The retired `web.apex-springs.com` hostname only redirects to the NorenSpring domain.
+Production runs on the AWS EC2 instance managed by BT Panel. The site uses BT
+Panel's native Nginx, PHP 8.3 and MySQL/MariaDB services; Docker is not part of
+the production request path.
 
-## Managed paths
+## Managed resources
 
-- `/srv/springapex/compose.yml` and `/srv/springapex/.env`: root-owned runtime configuration.
-- `/srv/springapex/data/mariadb`: production database files.
-- `/srv/springapex/wordpress`: WordPress core, uploads and runtime data.
-- `/srv/springapex/wordpress/wp-content/themes/springapex`: deployed from GitHub.
-- `/srv/springapex/wordpress/wp-content/plugins/webp-converter-for-media`: deployed from GitHub.
-- `/srv/springapex/wordpress/wp-content/plugins/wp-mail-smtp`: deployed from GitHub; the directory itself is root-provisioned and owned by `springapex-deploy`（rrsync 无法在 root 属主的 `plugins/` 下新建目录，新增受管插件需先用 root `install -d` 并按 `webp-converter-for-media` 的属主授权）。
+- BT Panel site: `norenspring.com`
+- Site root: `/www/wwwroot/norenspring.com`
+- Canonical URL: `https://norenspring.com`
+- Redirect host: `www.norenspring.com`
+- Nginx vhost: `/www/server/panel/vhost/nginx/norenspring.com.conf`
+- WordPress database: managed and visible in BT Panel
+- Production backups: managed as BT Panel scheduled tasks and copied to the
+  private AWS backup bucket
 
-The GitHub key is forced through `/usr/local/bin/springapex-deploy-command`. It can only run write-only `rrsync` inside this site's `wp-content` directory or the site health check; it cannot run an interactive shell.
+## AWS storage and CDN
 
-## Initial and recovery operations
+- Private bucket: `norenspring-prod-storage-20260825-7e4c9a`
+- CloudFront distribution: `E3KAOKVHE37PM3`
+- CloudFront domain: `d1i3aekcxk6dsb.cloudfront.net`
+- Public CDN domain: `cdn.norenspring.com`
+- EC2 instance role: `NorenSpringEC2RoleNorenSpringStorageAccess`
 
-Run all commands from `/srv/springapex` and target the explicit Compose file:
+The bucket has ACLs disabled, all public access blocked, versioning enabled and
+SSE-S3 default encryption. CloudFront is restricted to the bucket's `public/`
+origin path. Inquiry attachments use `private/inquiries/`; backups use
+`backups/`. Neither private prefix is exposed through CloudFront.
 
-```bash
-docker compose --env-file .env -f compose.yml ps
-docker compose --env-file .env -f compose.yml logs --tail=100 wordpress
-docker compose --env-file .env -f compose.yml --profile tools run --rm cli core version
-docker compose --env-file .env -f compose.yml --profile tools run --rm cli option get home
+Production `wp-config.php` must define:
+
+```php
+define('SPRINGAPEX_S3_BUCKET', 'norenspring-prod-storage-20260825-7e4c9a');
+define('SPRINGAPEX_S3_REGION', 'us-east-1');
+define('SPRINGAPEX_S3_PRIVATE_PREFIX', 'private/inquiries');
+define('SPRINGAPEX_CDN_URL', 'https://cdn.norenspring.com');
 ```
 
-生产默认禁止在线修改程序文件。只在安装受信任的 WordPress 语言包时，给当次 CLI 容器传入一次性开关：
+AWS credentials must not be stored in WordPress, BT Panel or GitHub. The theme
+uses IMDSv2 to obtain short-lived credentials from the attached EC2 role.
+GitHub invokes the restricted `springapex-cdn-sync` command after deploying the
+theme. That command uploads only the `assets/` directory to the versioned
+`public/theme/<version>/assets/` prefix; PHP source files are never published.
+
+The public website no longer uses preview Basic Auth, `X-Robots-Tag: noindex`
+or WordPress `blog_public=0`.
+
+## GitHub deployment boundary
+
+Pushes to `main` deploy only these repository-managed directories:
+
+- `wp-content/themes/springapex`
+- `wp-content/plugins/webp-converter-for-media`
+- `wp-content/plugins/wp-mail-smtp`
+
+The GitHub key is forced through `/usr/local/bin/springapex-deploy-command`.
+It can only run write-only `rrsync` within this site's `wp-content` directory
+or execute the local site health check. It cannot open an interactive shell,
+modify the database, overwrite uploads or affect other BT Panel sites.
+
+## Required server ownership
+
+The deployment account owns only the managed code directories. WordPress,
+uploads, `wp-config.php`, the database and BT Panel configuration remain owned
+by the site runtime account.
 
 ```bash
-docker compose --env-file .env -f compose.yml --profile tools run --rm \
-  -e SPRINGAPEX_ALLOW_FILE_MODS=1 cli language core install zh_CN --activate
+install -d -o springapex-deploy -g www -m 2775 \
+  /www/wwwroot/norenspring.com/wp-content/themes/springapex \
+  /www/wwwroot/norenspring.com/wp-content/plugins/webp-converter-for-media \
+  /www/wwwroot/norenspring.com/wp-content/plugins/wp-mail-smtp
 ```
 
-结束后不在 `.env` 中保留该开关，Web 容器仍会定义 `DISALLOW_FILE_MODS=true`。
+## Production checks
 
-## 临时调试保护（仅调试阶段）
-
-线上调试阶段启用三层保护：
-
-1. Nginx HTTPS server 使用 `auth_basic` 和 `/etc/nginx/.htpasswd-springapex`。
-2. HTTP/HTTPS 响应都返回 `X-Robots-Tag: noindex, nofollow, noarchive`。
-3. WordPress `blog_public` 选项设为 `0`。
-
-`/.well-known/acme-challenge/` 仍保持无鉴权，保证 Certbot 自动续期。GitHub Actions 的健康检查通过 `springapex-deploy-command` 直接访问 `127.0.0.1:38100`，不依赖共享预览密码。
-
-当前生产站点恢复为预览保护状态：Nginx 使用 `preview` 账号的 Basic Auth，并返回 `X-Robots-Tag: noindex, nofollow, noarchive`，WordPress 保持 `blog_public=0`。正式开放时必须同时移除这三层保护，再执行 Nginx、WordPress URL 和公网验收。
-
-Before any database URL change:
+Run these after a release; a green GitHub Actions run alone is insufficient.
 
 ```bash
-docker compose --env-file .env -f compose.yml exec -T database \
-  sh -c 'mariadb-dump -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" "$MARIADB_DATABASE"' \
-  > backups/before-url-change.sql
+curl -fsS -H 'Host: norenspring.com' http://127.0.0.1/ >/dev/null
+curl -fsSI https://norenspring.com/
+curl -fsSI https://www.norenspring.com/
+curl -sS -o /dev/null -w '%{http_code}\n' \
+  https://norenspring.com/wp-content/uploads/springapex-private/probe.txt
 ```
 
-Then run `wp search-replace` first with `--dry-run`, followed by the real command only after reviewing the count.
+Verify in BT Panel as well:
 
-## DNS and TLS
+- Nginx, PHP and database services are running.
+- PHP upload limits are 10 MB per file and 12 MB per request.
+- The private attachment URL returns 403 or 404.
+- WordPress `home` and `siteurl` are `https://norenspring.com`.
+- WordPress `blog_public` is `1`.
+- Recent Nginx, PHP and WordPress logs contain no fatal errors.
+- Let's Encrypt renewal covers all production hostnames.
+- Daily site and database backup tasks are enabled and have a successful run.
 
-Point the `A` record for `web.norenspring.com` to `95.169.2.68`. Use `nginx-web.norenspring.com.conf` for the initial HTTP/ACME stage. After public DNS resolves, issue the certificate with Certbot webroot mode and install `nginx-web.norenspring.com.tls.conf` as the active server block. Update `SPRINGAPEX_SITE_URL` in the root-owned `.env` to `https://web.norenspring.com`, recreate only the `wordpress` service, and run a backed-up WordPress URL replacement from `https://web.apex-springs.com` to `https://web.norenspring.com`. Keep the old HTTPS hostname as a permanent redirect while its certificate remains renewable.
+## Rollback
+
+The migration source backup contains a logical database dump, the complete
+WordPress tree, runtime configuration and checksums. Keep the old VPS stopped
+but intact until the AWS deployment, GitHub workflow, inquiry upload/download,
+email delivery and scheduled backups have all passed production acceptance.

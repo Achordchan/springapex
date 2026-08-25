@@ -1,4 +1,4 @@
-name: Deploy NorenSpring
+name: Deploy NorenSpring to AWS BT Panel
 
 on:
   push:
@@ -22,7 +22,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.3'
 
       - name: Lint theme PHP files
         run: |
@@ -32,6 +32,9 @@ jobs:
       - name: Verify admin content coverage
         run: php wp-content/themes/springapex/tests/admin-content-coverage.php
 
+      - name: Verify private S3 storage flow
+        run: php wp-content/themes/springapex/tests/s3-storage.php
+
       - name: Check theme JavaScript syntax
         run: |
           node --check wp-content/themes/springapex/assets/js/main.js
@@ -39,7 +42,7 @@ jobs:
           node --check wp-content/themes/springapex/assets/js/row-editor.js
 
   deploy:
-    name: Deploy theme and managed plugin
+    name: Deploy to AWS BT Panel site
     needs: verify
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -95,6 +98,13 @@ jobs:
             -e "ssh -i $HOME/.ssh/springapex_deploy -o IdentitiesOnly=yes" \
             wp-content/plugins/wp-mail-smtp/ \
             "$DEPLOY_USER@$DEPLOY_HOST:plugins/wp-mail-smtp/"
+
+      - name: Publish versioned theme assets to CloudFront origin
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/springapex_deploy" -o IdentitiesOnly=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" springapex-cdn-sync
 
       - name: Verify the deployed WordPress response
         shell: bash

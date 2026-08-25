@@ -16,7 +16,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.3'
 
       - name: Lint theme PHP files
         run: |
@@ -25,3 +25,6 @@ jobs:
 
       - name: Verify admin content coverage
         run: php wp-content/themes/springapex/tests/admin-content-coverage.php
+
+      - name: Verify private S3 storage flow
+        run: php wp-content/themes/springapex/tests/s3-storage.php

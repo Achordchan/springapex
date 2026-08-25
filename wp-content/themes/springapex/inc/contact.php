@@ -325,11 +325,13 @@ function springapex_process_contact_submission(): array|WP_Error
     }
 
     $private_files = [];
+    $persistent_private_files = [];
     if (is_array($drawings)) {
         foreach ($drawings as $drawing) {
             $private_file = springapex_store_private_drawing($drawing);
             if (!is_wp_error($private_file)) {
                 $private_files[] = $private_file;
+                $persistent_private_files[] = springapex_persistent_private_file_metadata($private_file);
                 continue;
             }
             springapex_delete_private_files($private_files);
@@ -337,10 +339,10 @@ function springapex_process_contact_submission(): array|WP_Error
             return $private_file;
         }
         if (
-            $private_files &&
+            $persistent_private_files &&
             (
-                !springapex_contact_update_meta((int) $inquiry_id, '_springapex_private_files', $private_files) ||
-                !springapex_contact_update_meta((int) $inquiry_id, '_springapex_private_file', $private_files[0])
+                !springapex_contact_update_meta((int) $inquiry_id, '_springapex_private_files', $persistent_private_files) ||
+                !springapex_contact_update_meta((int) $inquiry_id, '_springapex_private_file', $persistent_private_files[0])
             )
         ) {
             springapex_delete_private_files($private_files);
@@ -401,6 +403,7 @@ function springapex_process_contact_submission(): array|WP_Error
     }
 
     $sent = $recipient !== '' && wp_mail($recipient, $subject, $body, $headers, $attachments);
+    springapex_cleanup_temporary_private_files($private_files);
     // 与后台询盘视图（inquiry-view.php）约定的状态值：sent / failed（初始 pending）。
     if (!springapex_contact_update_meta((int) $inquiry_id, '_springapex_mail_sent', $sent ? 'sent' : 'failed')) {
         springapex_record_contact_admin_warning('mail_status_meta');
@@ -786,7 +789,8 @@ function springapex_iges_signature_is_valid(string $sample): bool
 
 function springapex_private_uploads_are_protected(): bool
 {
-    return defined('SPRINGAPEX_PRIVATE_UPLOADS_PROTECTED') && SPRINGAPEX_PRIVATE_UPLOADS_PROTECTED === true;
+    return springapex_s3_private_storage_enabled()
+        || (defined('SPRINGAPEX_PRIVATE_UPLOADS_PROTECTED') && SPRINGAPEX_PRIVATE_UPLOADS_PROTECTED === true);
 }
 
 function springapex_private_upload_root(bool $create = false): string|WP_Error
@@ -907,12 +911,44 @@ function springapex_store_private_drawing(array $drawing): array|WP_Error
         'sha256' => $sha256,
     ];
 
+    if (springapex_s3_private_storage_enabled()) {
+        $s3_metadata = springapex_s3_store_private_file(
+            $file_path,
+            (string) $drawing['original_name'],
+            (string) $drawing['mime'],
+            $sha256
+        );
+        if (is_wp_error($s3_metadata)) {
+            wp_delete_file($file_path);
+            return springapex_contact_error(
+                'springapex_upload_storage',
+                __('The drawing could not be stored securely.', 'springapex'),
+                500
+            );
+        }
+        return $s3_metadata;
+    }
+
+    return $metadata;
+}
+
+/** @param array<string, mixed> $metadata */
+function springapex_persistent_private_file_metadata(array $metadata): array
+{
+    unset($metadata['_temporary_path']);
     return $metadata;
 }
 
 function springapex_private_file_path(mixed $metadata): string
 {
-    if (!is_array($metadata) || !is_string($metadata['relative_path'] ?? null)) {
+    if (!is_array($metadata)) {
+        return '';
+    }
+    $temporary_path = is_string($metadata['_temporary_path'] ?? null) ? $metadata['_temporary_path'] : '';
+    if ($temporary_path !== '' && is_file($temporary_path) && is_readable($temporary_path)) {
+        return $temporary_path;
+    }
+    if (($metadata['storage'] ?? '') === 's3' || !is_string($metadata['relative_path'] ?? null)) {
         return '';
     }
     $root = springapex_private_upload_root(false);
@@ -938,8 +974,22 @@ function springapex_private_file_path(mixed $metadata): string
 function springapex_delete_private_files(array $files): void
 {
     foreach ($files as $metadata) {
+        if (is_array($metadata) && ($metadata['storage'] ?? '') === 's3') {
+            springapex_s3_delete_private_file($metadata);
+        }
         $path = springapex_private_file_path($metadata);
         if ($path !== '') {
+            wp_delete_file($path);
+        }
+    }
+}
+
+/** @param array<int, array<string, mixed>> $files */
+function springapex_cleanup_temporary_private_files(array $files): void
+{
+    foreach ($files as $metadata) {
+        $path = is_string($metadata['_temporary_path'] ?? null) ? $metadata['_temporary_path'] : '';
+        if ($path !== '' && is_file($path)) {
             wp_delete_file($path);
         }
     }
@@ -982,8 +1032,18 @@ function springapex_download_inquiry_file(): void
     check_admin_referer('springapex_download_inquiry_' . $inquiry_id . '_' . $file_index);
     $files = springapex_inquiry_private_files($inquiry_id);
     $metadata = $files[$file_index] ?? null;
-    $path = springapex_private_file_path($metadata);
-    if ($path === '') {
+    $delete_after_download = false;
+    if (is_array($metadata) && ($metadata['storage'] ?? '') === 's3') {
+        $download = springapex_s3_download_private_file($metadata);
+        if (is_wp_error($download)) {
+            wp_die(esc_html__('The requested file is unavailable.', 'springapex'), '', ['response' => 404]);
+        }
+        $path = $download;
+        $delete_after_download = true;
+    } else {
+        $path = springapex_private_file_path($metadata);
+    }
+    if ($path === '' || !is_file($path)) {
         wp_die(esc_html__('The requested file is unavailable.', 'springapex'), '', ['response' => 404]);
     }
 
@@ -996,6 +1056,9 @@ function springapex_download_inquiry_file(): void
     header('Content-Disposition: attachment; filename="' . $filename . '"');
     header('Content-Length: ' . (string) filesize($path));
     readfile($path);
+    if ($delete_after_download) {
+        wp_delete_file($path);
+    }
     exit;
 }
 

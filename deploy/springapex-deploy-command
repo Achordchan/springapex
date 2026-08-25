@@ -7,16 +7,31 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
         # the equivalent --dirs emitted by some rsync clients (notably macOS).
         SSH_ORIGINAL_COMMAND=$(printf '%s\n' "$SSH_ORIGINAL_COMMAND" | sed 's/ --dirs / -d /g')
         export SSH_ORIGINAL_COMMAND
-        exec /usr/bin/rrsync -wo /srv/springapex/wordpress/wp-content
+        exec /usr/bin/rrsync -wo /www/wwwroot/norenspring.com/wp-content
         ;;
     springapex-health)
         exec /usr/bin/curl -fsS \
-            -H 'Host: web.norenspring.com' \
+            -H 'Host: norenspring.com' \
             -H 'X-Forwarded-Proto: https' \
-            http://127.0.0.1:38100/ >/dev/null
+            http://127.0.0.1/ >/dev/null
+        ;;
+    springapex-cdn-sync)
+        version=$(/usr/bin/sed -n "s/^define('SPRINGAPEX_VERSION', '\([^']*\)');/\1/p" \
+            /www/wwwroot/norenspring.com/wp-content/themes/springapex/functions.php)
+        case "$version" in
+            ''|*[!0-9.]* )
+                echo 'The NorenSpring theme version is invalid.' >&2
+                exit 1
+                ;;
+        esac
+        exec /usr/bin/aws s3 sync \
+            /www/wwwroot/norenspring.com/wp-content/themes/springapex/assets/ \
+            "s3://norenspring-prod-storage-20260825-7e4c9a/public/theme/$version/assets/" \
+            --delete \
+            --only-show-errors
         ;;
     *)
-        echo 'This key can only deploy NorenSpring code or run its health check.' >&2
+        echo 'This key can only deploy NorenSpring code, sync CDN assets or run its health check.' >&2
         exit 126
         ;;
 esac
