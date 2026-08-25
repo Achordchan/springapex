@@ -103,6 +103,14 @@ install -o root -g root -m 0755 \
   /usr/local/sbin/springapex-pull-production
 ```
 
+Before the first deployment on an empty host, root must explicitly initialize
+`/srv/springapex/releases/bootstrap.sha` with the trusted, currently verified
+`production-ready` SHA and then set ownership to `springapex-deploy:www` with
+mode `0600`. The puller requires that SHA to equal both the current `main` tip
+and marker, then removes `bootstrap.sha` after writing `deployed.sha`. If
+`deployed.sha` is later lost, deployment fails closed until root performs a
+new trusted bootstrap; historical attestations are never accepted implicitly.
+
 The read-only GitHub deploy key is stored as
 `/home/springapex-deploy/.ssh/github_readonly`; its known-hosts file contains
 GitHub's published ED25519 host key. The matching HMAC secret is stored at

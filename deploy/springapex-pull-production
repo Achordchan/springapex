@@ -4,6 +4,7 @@ set -eu
 release_root='/srv/springapex/releases'
 repository="$release_root/repository.git"
 state_file="$release_root/deployed.sha"
+bootstrap_file="$release_root/bootstrap.sha"
 github_key='/home/springapex-deploy/.ssh/github_readonly'
 github_known_hosts='/home/springapex-deploy/.ssh/github_known_hosts'
 release_hmac_key='/home/springapex-deploy/.config/release_hmac_key'
@@ -90,6 +91,20 @@ if [ "$selected_run" -eq 0 ]; then
     exit 1
 fi
 deployment_id="$release_sha:$selected_run:$selected_attempt"
+if [ ! -f "$state_file" ]; then
+    if [ ! -f "$bootstrap_file" ]; then
+        echo 'The trusted production bootstrap state is missing.' >&2
+        exit 1
+    fi
+    bootstrap_sha=$(/bin/cat "$bootstrap_file")
+    case "$bootstrap_sha" in ''|*[!0-9a-f]*) bootstrap_sha='' ;; esac
+    if [ "${#bootstrap_sha}" -ne 40 ] \
+        || [ "$bootstrap_sha" != "$release_sha" ] \
+        || [ "$release_sha" != "$main_sha" ]; then
+        echo 'The trusted production bootstrap state is invalid.' >&2
+        exit 1
+    fi
+fi
 if [ -f "$state_file" ]; then
     deployed_id=$(/bin/cat "$state_file")
     deployed_sha=${deployed_id%%:*}
@@ -175,5 +190,6 @@ SSH_ORIGINAL_COMMAND='springapex-health' /usr/local/bin/springapex-deploy-comman
 
 /usr/bin/printf '%s\n' "$deployment_id" > "$state_file.next"
 /bin/mv "$state_file.next" "$state_file"
+/bin/rm -f -- "$bootstrap_file"
 /bin/rm -rf -- "$candidate"
 echo "Deployed verified NorenSpring release: $deployment_id"
