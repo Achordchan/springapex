@@ -40,6 +40,7 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
             echo 'The NorenSpring CDN staging root is invalid.' >&2
             exit 1
         fi
+        /bin/chmod 0700 -- "$stage_root"
         version_dir="$stage_root/$version"
         stage="$version_dir/assets"
         if [ -L "$version_dir" ] || [ -L "$stage" ]; then
@@ -51,7 +52,7 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
             echo 'The NorenSpring CDN staging path escaped its root.' >&2
             exit 1
         fi
-        /bin/chmod 2775 -- \
+        /bin/chmod 0700 -- \
             "/www/wwwroot/norenspring.com/wp-content/.springapex-cdn-stage/$version" \
             "$stage"
         ;;
@@ -66,6 +67,7 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
             echo 'The NorenSpring CDN staging root is invalid.' >&2
             exit 1
         fi
+        /bin/chmod 0700 -- "$stage_root"
         version_dir="$stage_root/$version"
         stage="$version_dir/assets"
         if [ -L "$version_dir" ] || [ -L "$stage" ]; then

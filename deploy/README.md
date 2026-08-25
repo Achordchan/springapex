@@ -77,8 +77,10 @@ uploads, `wp-config.php`, the database and BT Panel configuration remain owned
 by the site runtime account.
 
 ```bash
+install -d -o springapex-deploy -g root -m 0700 \
+  /www/wwwroot/norenspring.com/wp-content/.springapex-cdn-stage
+
 install -d -o springapex-deploy -g www -m 2775 \
-  /www/wwwroot/norenspring.com/wp-content/.springapex-cdn-stage \
   /www/wwwroot/norenspring.com/wp-content/themes/springapex \
   /www/wwwroot/norenspring.com/wp-content/plugins/webp-converter-for-media \
   /www/wwwroot/norenspring.com/wp-content/plugins/wp-mail-smtp
