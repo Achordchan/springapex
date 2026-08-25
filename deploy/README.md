@@ -39,9 +39,10 @@ define('SPRINGAPEX_CDN_URL', 'https://cdn.norenspring.com');
 
 AWS credentials must not be stored in WordPress, BT Panel or GitHub. The theme
 uses IMDSv2 to obtain short-lived credentials from the attached EC2 role.
-GitHub calls the restricted `springapex-cdn-prepare <version>` command, stages
-only the new `assets/` directory, then invokes `springapex-cdn-sync <version>`
-before changing the live theme. The sync command publishes
+The production puller calls the local `springapex-cdn-prepare <version>`
+command, stages only the new `assets/` directory, then invokes
+`springapex-cdn-sync <version>` before changing the live theme. The sync
+command publishes
 `public/theme/<version>/assets/` and removes the staging directory. Only after
 that succeeds does rsync activate the new theme version, so a failed CDN
 publish cannot leave production pointing at missing assets. The command rejects
@@ -109,12 +110,11 @@ GitHub's published ED25519 host key. The matching HMAC secret is stored at
 secret `SPRINGAPEX_RELEASE_HMAC_KEY`. The BT Panel task must execute the puller
 as `springapex-deploy`, never as `root` or `www`.
 
-The GitHub key is forced through `/usr/local/bin/springapex-deploy-command`.
-It can only run write-only `rrsync` within this site's `wp-content` directory
-or execute the local site health check. It cannot open an interactive shell,
-modify the database, overwrite uploads or affect other BT Panel sites.
-Server-side rsync link munging is enabled, and the CDN commands reject symlinked
-staging roots, version directories and asset directories after realpath checks.
+The root-owned `/usr/local/bin/springapex-deploy-command` is invoked locally by
+the unprivileged puller. It exposes only CDN prepare/sync and the site health
+check; it has no inbound SSH or rsync command path. The CDN commands reject
+symlinked staging roots, version directories and asset directories after
+realpath checks.
 
 ## Required server ownership
 
