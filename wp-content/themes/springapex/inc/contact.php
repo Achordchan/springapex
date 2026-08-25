@@ -926,6 +926,12 @@ function springapex_store_private_drawing(array $drawing): array|WP_Error
                 500
             );
         }
+        $temporary_path = $file_path;
+        register_shutdown_function(static function () use ($temporary_path): void {
+            if (is_file($temporary_path)) {
+                wp_delete_file($temporary_path);
+            }
+        });
         return $s3_metadata;
     }
 
