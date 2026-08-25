@@ -1,4 +1,4 @@
-name: Deploy NorenSpring
+name: Deploy NorenSpring to AWS BT Panel
 
 on:
   push:
@@ -18,11 +18,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.3'
 
       - name: Lint theme PHP files
         run: |
@@ -32,6 +34,13 @@ jobs:
       - name: Verify admin content coverage
         run: php wp-content/themes/springapex/tests/admin-content-coverage.php
 
+      - name: Verify private S3 storage flow
+        run: php wp-content/themes/springapex/tests/s3-storage.php
+
+      - name: Require a new version for changed CDN assets
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        run: sh deploy/verify-asset-version-bump.sh "${{ github.event.before }}"
+
       - name: Check theme JavaScript syntax
         run: |
           node --check wp-content/themes/springapex/assets/js/main.js
@@ -39,7 +48,7 @@ jobs:
           node --check wp-content/themes/springapex/assets/js/row-editor.js
 
   deploy:
-    name: Deploy theme and managed plugin
+    name: Deploy to AWS BT Panel site
     needs: verify
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -69,11 +78,43 @@ jobs:
           cp deploy/known_hosts "$HOME/.ssh/known_hosts"
           chmod 600 "$HOME/.ssh/known_hosts"
 
-      - name: Sync NorenSpring theme
+      - name: Read and validate theme version
         shell: bash
         run: |
           set -euo pipefail
-          rsync -az --delete-delay --itemize-changes \
+          version="$(sed -n "s/^define('SPRINGAPEX_VERSION', '\([^']*\)');/\1/p" \
+            wp-content/themes/springapex/functions.php)"
+          if ! printf '%s\n' "$version" | grep -Eq '^[0-9]+(\.[0-9]+)+$'; then
+            echo 'Invalid NorenSpring theme version.' >&2
+            exit 1
+          fi
+          printf 'SPRINGAPEX_RELEASE_VERSION=%s\n' "$version" >> "$GITHUB_ENV"
+
+      - name: Stage versioned CDN assets on the server
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/springapex_deploy" -o IdentitiesOnly=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "springapex-cdn-prepare $SPRINGAPEX_RELEASE_VERSION"
+          rsync -az --delete-delay --itemize-changes --exclude='.DS_Store' \
+            -e "ssh -i $HOME/.ssh/springapex_deploy -o IdentitiesOnly=yes" \
+            wp-content/themes/springapex/assets/ \
+            "$DEPLOY_USER@$DEPLOY_HOST:.springapex-cdn-stage/$SPRINGAPEX_RELEASE_VERSION/assets/"
+
+      - name: Publish versioned assets before theme activation
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/springapex_deploy" -o IdentitiesOnly=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "springapex-cdn-sync $SPRINGAPEX_RELEASE_VERSION"
+
+      - name: Activate NorenSpring theme version
+        shell: bash
+        run: |
+          set -euo pipefail
+          rsync -az --delete-delay --itemize-changes --exclude='.DS_Store' \
             -e "ssh -i $HOME/.ssh/springapex_deploy -o IdentitiesOnly=yes" \
             wp-content/themes/springapex/ \
             "$DEPLOY_USER@$DEPLOY_HOST:themes/springapex/"
@@ -82,7 +123,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rsync -az --delete-delay --itemize-changes \
+          rsync -az --delete-delay --itemize-changes --exclude='.DS_Store' \
             -e "ssh -i $HOME/.ssh/springapex_deploy -o IdentitiesOnly=yes" \
             wp-content/plugins/webp-converter-for-media/ \
             "$DEPLOY_USER@$DEPLOY_HOST:plugins/webp-converter-for-media/"
@@ -91,7 +132,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rsync -az --delete-delay --itemize-changes \
+          rsync -az --delete-delay --itemize-changes --exclude='.DS_Store' \
             -e "ssh -i $HOME/.ssh/springapex_deploy -o IdentitiesOnly=yes" \
             wp-content/plugins/wp-mail-smtp/ \
             "$DEPLOY_USER@$DEPLOY_HOST:plugins/wp-mail-smtp/"

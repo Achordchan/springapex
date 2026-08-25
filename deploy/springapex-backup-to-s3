@@ -1,0 +1,78 @@
+#!/bin/sh
+set -eu
+
+bucket='norenspring-prod-storage-20260825-7e4c9a'
+site_dir='/www/backup/site/norenspring.com'
+database_dir='/www/backup/database/mysql/crontab_backup/springapex_wp'
+
+exec 9>/var/lock/springapex-backup-to-s3.lock
+if ! /usr/bin/flock -n 9; then
+    echo 'A NorenSpring backup upload is already running.' >&2
+    exit 1
+fi
+
+latest_backup() {
+    directory=$1
+    pattern=$2
+    /usr/bin/find "$directory" -maxdepth 1 -type f -name "$pattern" -printf '%T@ %p\n' \
+        | /usr/bin/sort -nr \
+        | /usr/bin/head -n 1 \
+        | /usr/bin/cut -d ' ' -f 2-
+}
+
+site_backup=$(latest_backup "$site_dir" 'web_norenspring.com_*.tar.gz')
+database_backup=$(latest_backup "$database_dir" 'springapex_wp_*_mysql_data.sql.gz')
+if [ -z "$site_backup" ] || [ -z "$database_backup" ]; then
+    echo 'The latest BT Panel site or database backup is missing.' >&2
+    exit 1
+fi
+
+expected_date=$(/usr/bin/date '+%Y-%m-%d')
+now=$(/usr/bin/date '+%s')
+verify_fresh_backup() {
+    backup_file=$1
+    label=$2
+    backup_date=$(/usr/bin/date -r "$backup_file" '+%Y-%m-%d')
+    backup_time=$(/usr/bin/stat -c '%Y' "$backup_file")
+    age=$((now - backup_time))
+    if [ "$backup_date" != "$expected_date" ] || [ "$age" -lt 0 ] || [ "$age" -gt 10800 ]; then
+        echo "The latest $label backup is stale or from a different run date." >&2
+        exit 1
+    fi
+}
+
+verify_fresh_backup "$site_backup" 'site'
+verify_fresh_backup "$database_backup" 'database'
+/usr/bin/gzip -t "$site_backup"
+/usr/bin/gzip -t "$database_backup"
+
+upload_and_verify() {
+    source_file=$1
+    prefix=$2
+    object_key="$prefix/$(/usr/bin/basename "$source_file")"
+    /usr/local/bin/aws s3 cp \
+        "$source_file" \
+        "s3://$bucket/$object_key" \
+        --sse AES256 \
+        --only-show-errors
+
+    expected_size=$(/usr/bin/stat -c '%s' "$source_file")
+    actual_size=$(/usr/local/bin/aws s3api head-object \
+        --bucket "$bucket" \
+        --key "$object_key" \
+        --query 'ContentLength' \
+        --output text)
+    encryption=$(/usr/local/bin/aws s3api head-object \
+        --bucket "$bucket" \
+        --key "$object_key" \
+        --query 'ServerSideEncryption' \
+        --output text)
+    if [ "$actual_size" != "$expected_size" ] || [ "$encryption" != 'AES256' ]; then
+        echo "The uploaded backup failed verification: $object_key" >&2
+        exit 1
+    fi
+    echo "Uploaded and verified: s3://$bucket/$object_key"
+}
+
+upload_and_verify "$site_backup" 'backups/site'
+upload_and_verify "$database_backup" 'backups/database'

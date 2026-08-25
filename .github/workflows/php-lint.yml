@@ -12,11 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.3'
 
       - name: Lint theme PHP files
         run: |
@@ -25,3 +27,9 @@ jobs:
 
       - name: Verify admin content coverage
         run: php wp-content/themes/springapex/tests/admin-content-coverage.php
+
+      - name: Verify private S3 storage flow
+        run: php wp-content/themes/springapex/tests/s3-storage.php
+
+      - name: Require a new version for changed CDN assets
+        run: sh deploy/verify-asset-version-bump.sh "${{ github.event.pull_request.base.sha }}"

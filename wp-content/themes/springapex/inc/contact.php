@@ -325,11 +325,13 @@ function springapex_process_contact_submission(): array|WP_Error
     }
 
     $private_files = [];
+    $persistent_private_files = [];
     if (is_array($drawings)) {
         foreach ($drawings as $drawing) {
             $private_file = springapex_store_private_drawing($drawing);
             if (!is_wp_error($private_file)) {
                 $private_files[] = $private_file;
+                $persistent_private_files[] = springapex_persistent_private_file_metadata($private_file);
                 continue;
             }
             springapex_delete_private_files($private_files);
@@ -337,10 +339,10 @@ function springapex_process_contact_submission(): array|WP_Error
             return $private_file;
         }
         if (
-            $private_files &&
+            $persistent_private_files &&
             (
-                !springapex_contact_update_meta((int) $inquiry_id, '_springapex_private_files', $private_files) ||
-                !springapex_contact_update_meta((int) $inquiry_id, '_springapex_private_file', $private_files[0])
+                !springapex_contact_update_meta((int) $inquiry_id, '_springapex_private_files', $persistent_private_files) ||
+                !springapex_contact_update_meta((int) $inquiry_id, '_springapex_private_file', $persistent_private_files[0])
             )
         ) {
             springapex_delete_private_files($private_files);
@@ -401,6 +403,7 @@ function springapex_process_contact_submission(): array|WP_Error
     }
 
     $sent = $recipient !== '' && wp_mail($recipient, $subject, $body, $headers, $attachments);
+    springapex_cleanup_temporary_private_files($private_files);
     // 与后台询盘视图（inquiry-view.php）约定的状态值：sent / failed（初始 pending）。
     if (!springapex_contact_update_meta((int) $inquiry_id, '_springapex_mail_sent', $sent ? 'sent' : 'failed')) {
         springapex_record_contact_admin_warning('mail_status_meta');
@@ -786,7 +789,8 @@ function springapex_iges_signature_is_valid(string $sample): bool
 
 function springapex_private_uploads_are_protected(): bool
 {
-    return defined('SPRINGAPEX_PRIVATE_UPLOADS_PROTECTED') && SPRINGAPEX_PRIVATE_UPLOADS_PROTECTED === true;
+    return springapex_s3_private_storage_enabled()
+        || (defined('SPRINGAPEX_PRIVATE_UPLOADS_PROTECTED') && SPRINGAPEX_PRIVATE_UPLOADS_PROTECTED === true);
 }
 
 function springapex_private_upload_root(bool $create = false): string|WP_Error
@@ -907,12 +911,50 @@ function springapex_store_private_drawing(array $drawing): array|WP_Error
         'sha256' => $sha256,
     ];
 
+    if (springapex_s3_private_storage_enabled()) {
+        $s3_metadata = springapex_s3_store_private_file(
+            $file_path,
+            (string) $drawing['original_name'],
+            (string) $drawing['mime'],
+            $sha256
+        );
+        if (is_wp_error($s3_metadata)) {
+            wp_delete_file($file_path);
+            return springapex_contact_error(
+                'springapex_upload_storage',
+                __('The drawing could not be stored securely.', 'springapex'),
+                500
+            );
+        }
+        $temporary_path = $file_path;
+        register_shutdown_function(static function () use ($temporary_path): void {
+            if (is_file($temporary_path)) {
+                wp_delete_file($temporary_path);
+            }
+        });
+        return $s3_metadata;
+    }
+
+    return $metadata;
+}
+
+/** @param array<string, mixed> $metadata */
+function springapex_persistent_private_file_metadata(array $metadata): array
+{
+    unset($metadata['_temporary_path']);
     return $metadata;
 }
 
 function springapex_private_file_path(mixed $metadata): string
 {
-    if (!is_array($metadata) || !is_string($metadata['relative_path'] ?? null)) {
+    if (!is_array($metadata)) {
+        return '';
+    }
+    $temporary_path = is_string($metadata['_temporary_path'] ?? null) ? $metadata['_temporary_path'] : '';
+    if ($temporary_path !== '' && is_file($temporary_path) && is_readable($temporary_path)) {
+        return $temporary_path;
+    }
+    if (($metadata['storage'] ?? '') === 's3' || !is_string($metadata['relative_path'] ?? null)) {
         return '';
     }
     $root = springapex_private_upload_root(false);
@@ -938,8 +980,120 @@ function springapex_private_file_path(mixed $metadata): string
 function springapex_delete_private_files(array $files): void
 {
     foreach ($files as $metadata) {
+        if (is_array($metadata) && ($metadata['storage'] ?? '') === 's3') {
+            if (!springapex_s3_delete_private_file($metadata)) {
+                springapex_queue_s3_delete_retry($metadata);
+            }
+        }
         $path = springapex_private_file_path($metadata);
         if ($path !== '') {
+            wp_delete_file($path);
+        }
+    }
+}
+
+/** @param array<string, mixed> $metadata */
+function springapex_queue_s3_delete_retry(array $metadata): void
+{
+    $bucket = is_string($metadata['bucket'] ?? null) ? $metadata['bucket'] : '';
+    $key = is_string($metadata['key'] ?? null) ? $metadata['key'] : '';
+    if ($bucket === '' || $key === '') {
+        return;
+    }
+    $id = hash('sha256', $bucket . "\n" . $key);
+    $option = 'springapex_s3_delete_retry_v1_' . $id;
+    $entry = [
+        'metadata' => springapex_persistent_private_file_metadata($metadata),
+        'attempts' => 0,
+        'last_attempt' => time(),
+    ];
+    if (!add_option($option, $entry, '', false)) {
+        $existing = get_option($option, []);
+        if (is_array($existing)) {
+            $entry['attempts'] = (int) ($existing['attempts'] ?? 0);
+        }
+        update_option($option, $entry, false);
+    }
+    if (!wp_next_scheduled('springapex_retry_s3_deletions')) {
+        wp_schedule_single_event(time() + MINUTE_IN_SECONDS, 'springapex_retry_s3_deletions');
+    }
+}
+
+function springapex_retry_s3_deletions(): void
+{
+    global $wpdb;
+    if (!isset($wpdb->options) || !is_string($wpdb->options)) {
+        return;
+    }
+    // Replace any legacy recurring event, then schedule the successor before
+    // remote deletes so a timeout or fatal error cannot strand queued objects.
+    wp_clear_scheduled_hook('springapex_retry_s3_deletions');
+    wp_schedule_single_event(time() + HOUR_IN_SECONDS, 'springapex_retry_s3_deletions');
+    $prefix = 'springapex_s3_delete_retry_v1_';
+    $cursor_option = 'springapex_s3_delete_retry_cursor_v1';
+    $cursor = max(0, (int) get_option($cursor_option, 0));
+    $rows = $wpdb->get_results($wpdb->prepare(
+        "SELECT option_id, option_name FROM {$wpdb->options}
+         WHERE option_name LIKE %s
+         ORDER BY (option_id <= %d), option_id ASC
+         LIMIT 20",
+        $wpdb->esc_like($prefix) . '%',
+        $cursor
+    ));
+    $last_option_id = $cursor;
+    foreach (is_array($rows) ? $rows : [] as $row) {
+        $option = is_object($row) && is_string($row->option_name ?? null) ? $row->option_name : '';
+        if (!is_string($option) || !str_starts_with($option, $prefix)) {
+            continue;
+        }
+        $last_option_id = max(0, (int) ($row->option_id ?? 0));
+        $entry = get_option($option, []);
+        $entry = is_array($entry) ? $entry : [];
+        $metadata = is_array($entry['metadata'] ?? null) ? $entry['metadata'] : [];
+        if ($metadata !== [] && springapex_s3_delete_private_file($metadata)) {
+            delete_option($option);
+            continue;
+        }
+        $entry['attempts'] = (int) ($entry['attempts'] ?? 0) + 1;
+        $entry['last_attempt'] = time();
+        update_option($option, $entry, false);
+    }
+    if ($last_option_id !== $cursor) {
+        if (!add_option($cursor_option, $last_option_id, '', false)) {
+            update_option($cursor_option, $last_option_id, false);
+        }
+    }
+
+    $remaining = $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s",
+        $wpdb->esc_like($prefix) . '%'
+    ));
+    if ($remaining !== null && (int) $remaining === 0) {
+        wp_clear_scheduled_hook('springapex_retry_s3_deletions');
+        // An enqueue racing with the clear either schedules its own event or
+        // appears in this second count, in which case restore the successor.
+        $remaining = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s",
+            $wpdb->esc_like($prefix) . '%'
+        ));
+        if ($remaining !== null && (int) $remaining === 0) {
+            delete_option($cursor_option);
+            return;
+        }
+        if (!wp_next_scheduled('springapex_retry_s3_deletions')) {
+            wp_schedule_single_event(time() + HOUR_IN_SECONDS, 'springapex_retry_s3_deletions');
+        }
+    }
+}
+
+add_action('springapex_retry_s3_deletions', 'springapex_retry_s3_deletions');
+
+/** @param array<int, array<string, mixed>> $files */
+function springapex_cleanup_temporary_private_files(array $files): void
+{
+    foreach ($files as $metadata) {
+        $path = is_string($metadata['_temporary_path'] ?? null) ? $metadata['_temporary_path'] : '';
+        if ($path !== '' && is_file($path)) {
             wp_delete_file($path);
         }
     }
@@ -982,8 +1136,18 @@ function springapex_download_inquiry_file(): void
     check_admin_referer('springapex_download_inquiry_' . $inquiry_id . '_' . $file_index);
     $files = springapex_inquiry_private_files($inquiry_id);
     $metadata = $files[$file_index] ?? null;
-    $path = springapex_private_file_path($metadata);
-    if ($path === '') {
+    $delete_after_download = false;
+    if (is_array($metadata) && ($metadata['storage'] ?? '') === 's3') {
+        $download = springapex_s3_download_private_file($metadata);
+        if (is_wp_error($download)) {
+            wp_die(esc_html__('The requested file is unavailable.', 'springapex'), '', ['response' => 404]);
+        }
+        $path = $download;
+        $delete_after_download = true;
+    } else {
+        $path = springapex_private_file_path($metadata);
+    }
+    if ($path === '' || !is_file($path)) {
         wp_die(esc_html__('The requested file is unavailable.', 'springapex'), '', ['response' => 404]);
     }
 
@@ -995,7 +1159,18 @@ function springapex_download_inquiry_file(): void
     header('X-Content-Type-Options: nosniff');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
     header('Content-Length: ' . (string) filesize($path));
+    if ($delete_after_download) {
+        $cleanup_path = $path;
+        register_shutdown_function(static function () use ($cleanup_path): void {
+            if (is_file($cleanup_path)) {
+                wp_delete_file($cleanup_path);
+            }
+        });
+    }
     readfile($path);
+    if ($delete_after_download) {
+        wp_delete_file($path);
+    }
     exit;
 }
 
