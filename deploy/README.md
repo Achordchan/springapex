@@ -52,6 +52,14 @@ PR and `main` workflows run `verify-asset-version-bump.sh`: any change under
 the theme's `assets/` directory must also advance `SPRINGAPEX_VERSION`, so an
 immutable CloudFront prefix is never overwritten with different content.
 
+BT Panel keeps seven daily local copies of the site and database. Install
+`deploy/springapex-backup-to-s3` as
+`/usr/local/sbin/springapex-backup-to-s3` with mode `0755`, then create a BT
+Panel Shell scheduled task at 03:00 daily that runs that command after the
+02:00 site backup and 02:30 database backup. The script uses the EC2 instance
+role, validates both gzip archives, uploads them under `backups/site/` and
+`backups/database/`, and verifies the S3 object size and SSE-S3 encryption.
+
 The public website no longer uses preview Basic Auth, `X-Robots-Tag: noindex`
 or WordPress `blog_public=0`.
 
@@ -80,7 +88,7 @@ by the site runtime account.
 install -d -o springapex-deploy -g root -m 0700 \
   /www/wwwroot/norenspring.com/wp-content/.springapex-cdn-stage
 
-install -d -o springapex-deploy -g www -m 2775 \
+install -d -o springapex-deploy -g www -m 2750 \
   /www/wwwroot/norenspring.com/wp-content/themes/springapex \
   /www/wwwroot/norenspring.com/wp-content/plugins/webp-converter-for-media \
   /www/wwwroot/norenspring.com/wp-content/plugins/wp-mail-smtp
