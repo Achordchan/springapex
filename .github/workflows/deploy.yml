@@ -69,14 +69,27 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
           RELEASE_SHA: ${{ github.sha }}
+          RELEASE_HMAC_KEY: ${{ secrets.SPRINGAPEX_RELEASE_HMAC_KEY }}
         run: |
           set -euo pipefail
+          test -n "$RELEASE_HMAC_KEY"
           api="https://api.github.com/repos/$REPOSITORY/git/refs"
           headers=(
             -H "Authorization: Bearer $GH_TOKEN"
             -H "Accept: application/vnd.github+json"
             -H "X-GitHub-Api-Version: 2022-11-28"
           )
+          signature="$(printf '%s' "$RELEASE_SHA" \
+            | openssl dgst -sha256 -hmac "$RELEASE_HMAC_KEY" -binary \
+            | xxd -p -c 256)"
+          tag="production-ready-$RELEASE_SHA-$signature"
+          if tag_json="$(curl -fsS "${headers[@]}" "$api/tags/$tag" 2>/dev/null)"; then
+            test "$(jq -r '.object.sha' <<<"$tag_json")" = "$RELEASE_SHA"
+          else
+            curl -fsS -X POST "${headers[@]}" \
+              "$api" \
+              -d "{\"ref\":\"refs/tags/$tag\",\"sha\":\"$RELEASE_SHA\"}" >/dev/null
+          fi
           if curl -fsS "${headers[@]}" "$api/heads/production-ready" >/dev/null; then
             curl -fsS -X PATCH "${headers[@]}" \
               "$api/heads/production-ready" \

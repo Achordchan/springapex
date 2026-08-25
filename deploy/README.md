@@ -72,13 +72,17 @@ Pushes to `main` deploy only these repository-managed directories:
 - `wp-content/plugins/wp-mail-smtp`
 
 GitHub-hosted runners perform verification only. After a successful `main`
-run, the workflow advances the fast-forward-only `production-ready` branch.
+run, the workflow creates an HMAC-authenticated tag bound to the verified SHA,
+then advances the fast-forward-only `production-ready` branch.
 BT Panel runs `/usr/local/sbin/springapex-pull-production` every minute as the
 unprivileged `springapex-deploy` user. The EC2 host uses an encrypted-at-rest,
-read-only GitHub deploy key to fetch that branch over outbound SSH, rejects
+read-only GitHub deploy key to fetch that branch over outbound SSH, requires
+the marker to equal the latest `main`, verifies the HMAC attestation, rejects
 symlinks, lints PHP, publishes CDN assets and activates only the three managed
-code directories. No GitHub Action or repository script executes on the
-production host, and public SSH remains restricted to the management IP.
+code directories. Extracted release trees are removed after success, and stale
+candidate directories are cleared while the deployment lock is held. No
+GitHub Action or repository script executes on the production host, and public
+SSH remains restricted to the management IP.
 
 Recovery setup installs the puller as a root-owned executable, but the task
 itself runs without root privileges:
@@ -92,7 +96,9 @@ install -o root -g root -m 0755 \
 
 The read-only GitHub deploy key is stored as
 `/home/springapex-deploy/.ssh/github_readonly`; its known-hosts file contains
-GitHub's published ED25519 host key. The BT Panel task must execute the puller
+GitHub's published ED25519 host key. The matching HMAC secret is stored at
+`/home/springapex-deploy/.config/release_hmac_key` and as the protected GitHub
+secret `SPRINGAPEX_RELEASE_HMAC_KEY`. The BT Panel task must execute the puller
 as `springapex-deploy`, never as `root` or `www`.
 
 The GitHub key is forced through `/usr/local/bin/springapex-deploy-command`.

@@ -6,6 +6,7 @@ repository="$release_root/repository.git"
 state_file="$release_root/deployed.sha"
 github_key='/home/springapex-deploy/.ssh/github_readonly'
 github_known_hosts='/home/springapex-deploy/.ssh/github_known_hosts'
+release_hmac_key='/home/springapex-deploy/.config/release_hmac_key'
 remote='git@github.com:Achordchan/springapex.git'
 site='/www/wwwroot/norenspring.com'
 
@@ -17,17 +18,41 @@ if ! /usr/bin/flock -n 9; then
     echo 'A NorenSpring production deployment is already running.' >&2
     exit 0
 fi
+/usr/bin/find "$release_root" -mindepth 1 -maxdepth 1 -type d \
+    \( -name 'candidate-*' -o -name 'deployed-*' \) -exec /bin/rm -rf -- {} +
 
 export GIT_SSH_COMMAND="ssh -i $github_key -o IdentitiesOnly=yes -o UserKnownHostsFile=$github_known_hosts"
 if [ ! -d "$repository" ]; then
     /usr/bin/git clone --bare "$remote" "$repository"
 fi
 /usr/bin/git --git-dir="$repository" fetch --prune origin \
+    '+refs/heads/main:refs/remotes/origin/main' \
     '+refs/heads/production-ready:refs/remotes/origin/production-ready'
+main_sha=$(/usr/bin/git --git-dir="$repository" rev-parse 'refs/remotes/origin/main^{commit}')
 release_sha=$(/usr/bin/git --git-dir="$repository" rev-parse 'refs/remotes/origin/production-ready^{commit}')
 case "$release_sha" in ''|*[!0-9a-f]*) release_sha='' ;; esac
 if [ "${#release_sha}" -ne 40 ]; then
     echo 'The production-ready commit is invalid.' >&2
+    exit 1
+fi
+if [ "$release_sha" != "$main_sha" ]; then
+    echo "The verified release is waiting for the latest main commit: $main_sha"
+    exit 0
+fi
+release_key=$(/bin/cat "$release_hmac_key")
+if [ -z "$release_key" ]; then
+    echo 'The production release attestation key is missing.' >&2
+    exit 1
+fi
+signature=$(/usr/bin/printf '%s' "$release_sha" \
+    | /usr/bin/openssl dgst -sha256 -hmac "$release_key" -binary \
+    | /usr/bin/xxd -p -c 256)
+attestation="production-ready-$release_sha-$signature"
+/usr/bin/git --git-dir="$repository" fetch origin \
+    "refs/tags/$attestation:refs/tags/$attestation"
+attested_sha=$(/usr/bin/git --git-dir="$repository" rev-parse "refs/tags/$attestation^{commit}")
+if [ "$attested_sha" != "$release_sha" ]; then
+    echo 'The production release attestation is invalid.' >&2
     exit 1
 fi
 if [ -f "$state_file" ] && [ "$(/bin/cat "$state_file")" = "$release_sha" ]; then
@@ -70,5 +95,5 @@ SSH_ORIGINAL_COMMAND='springapex-health' /usr/local/bin/springapex-deploy-comman
 
 /usr/bin/printf '%s\n' "$release_sha" > "$state_file.next"
 /bin/mv "$state_file.next" "$state_file"
-/bin/mv "$candidate" "$release_root/deployed-$release_sha"
+/bin/rm -rf -- "$candidate"
 echo "Deployed verified NorenSpring commit: $release_sha"
