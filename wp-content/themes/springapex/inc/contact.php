@@ -1114,6 +1114,14 @@ function springapex_download_inquiry_file(): void
     header('X-Content-Type-Options: nosniff');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
     header('Content-Length: ' . (string) filesize($path));
+    if ($delete_after_download) {
+        $cleanup_path = $path;
+        register_shutdown_function(static function () use ($cleanup_path): void {
+            if (is_file($cleanup_path)) {
+                wp_delete_file($cleanup_path);
+            }
+        });
+    }
     readfile($path);
     if ($delete_after_download) {
         wp_delete_file($path);
