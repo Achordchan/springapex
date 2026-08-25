@@ -1025,9 +1025,10 @@ function springapex_retry_s3_deletions(): void
     if (!isset($wpdb->options) || !is_string($wpdb->options)) {
         return;
     }
-    // Replace any legacy recurring event with a one-shot retry. Enqueues that
-    // race with this handler will schedule their own event or be seen below.
+    // Replace any legacy recurring event, then schedule the successor before
+    // remote deletes so a timeout or fatal error cannot strand queued objects.
     wp_clear_scheduled_hook('springapex_retry_s3_deletions');
+    wp_schedule_single_event(time() + HOUR_IN_SECONDS, 'springapex_retry_s3_deletions');
     $prefix = 'springapex_s3_delete_retry_v1_';
     $cursor_option = 'springapex_s3_delete_retry_cursor_v1';
     $cursor = max(0, (int) get_option($cursor_option, 0));
@@ -1068,11 +1069,20 @@ function springapex_retry_s3_deletions(): void
         $wpdb->esc_like($prefix) . '%'
     ));
     if ($remaining !== null && (int) $remaining === 0) {
-        delete_option($cursor_option);
-        return;
-    }
-    if (!wp_next_scheduled('springapex_retry_s3_deletions')) {
-        wp_schedule_single_event(time() + HOUR_IN_SECONDS, 'springapex_retry_s3_deletions');
+        wp_clear_scheduled_hook('springapex_retry_s3_deletions');
+        // An enqueue racing with the clear either schedules its own event or
+        // appears in this second count, in which case restore the successor.
+        $remaining = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s",
+            $wpdb->esc_like($prefix) . '%'
+        ));
+        if ($remaining !== null && (int) $remaining === 0) {
+            delete_option($cursor_option);
+            return;
+        }
+        if (!wp_next_scheduled('springapex_retry_s3_deletions')) {
+            wp_schedule_single_event(time() + HOUR_IN_SECONDS, 'springapex_retry_s3_deletions');
+        }
     }
 }
 
