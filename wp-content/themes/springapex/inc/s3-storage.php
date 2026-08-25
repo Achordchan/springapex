@@ -276,8 +276,13 @@ function springapex_s3_download_private_file(array $metadata): string|WP_Error
         return new WP_Error('springapex_s3_download', 'The private file failed integrity validation.');
     }
     $temp = wp_tempnam((string) ($metadata['original_name'] ?? 'drawing'));
-    if (!is_string($temp) || $temp === '' || file_put_contents($temp, $body, LOCK_EX) === false) {
+    if (!is_string($temp) || $temp === '') {
         return new WP_Error('springapex_s3_download', 'The private file is unavailable.');
+    }
+    $written = file_put_contents($temp, $body, LOCK_EX);
+    if ($written !== strlen($body)) {
+        @unlink($temp);
+        return new WP_Error('springapex_s3_download', 'The private file failed local integrity validation.');
     }
     @chmod($temp, 0600);
     return $temp;

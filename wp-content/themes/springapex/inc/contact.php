@@ -1020,14 +1020,23 @@ function springapex_retry_s3_deletions(): void
         return;
     }
     $prefix = 'springapex_s3_delete_retry_v1_';
-    $names = $wpdb->get_col($wpdb->prepare(
-        "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s ORDER BY option_id ASC LIMIT 20",
-        $wpdb->esc_like($prefix) . '%'
+    $cursor_option = 'springapex_s3_delete_retry_cursor_v1';
+    $cursor = max(0, (int) get_option($cursor_option, 0));
+    $rows = $wpdb->get_results($wpdb->prepare(
+        "SELECT option_id, option_name FROM {$wpdb->options}
+         WHERE option_name LIKE %s
+         ORDER BY (option_id <= %d), option_id ASC
+         LIMIT 20",
+        $wpdb->esc_like($prefix) . '%',
+        $cursor
     ));
-    foreach (is_array($names) ? $names : [] as $option) {
+    $last_option_id = $cursor;
+    foreach (is_array($rows) ? $rows : [] as $row) {
+        $option = is_object($row) && is_string($row->option_name ?? null) ? $row->option_name : '';
         if (!is_string($option) || !str_starts_with($option, $prefix)) {
             continue;
         }
+        $last_option_id = max(0, (int) ($row->option_id ?? 0));
         $entry = get_option($option, []);
         $entry = is_array($entry) ? $entry : [];
         $metadata = is_array($entry['metadata'] ?? null) ? $entry['metadata'] : [];
@@ -1038,6 +1047,11 @@ function springapex_retry_s3_deletions(): void
         $entry['attempts'] = (int) ($entry['attempts'] ?? 0) + 1;
         $entry['last_attempt'] = time();
         update_option($option, $entry, false);
+    }
+    if ($last_option_id !== $cursor) {
+        if (!add_option($cursor_option, $last_option_id, '', false)) {
+            update_option($cursor_option, $last_option_id, false);
+        }
     }
 }
 
