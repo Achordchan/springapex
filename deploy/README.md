@@ -48,6 +48,10 @@ publish cannot leave production pointing at missing assets. The command rejects
 every symbolic link and tells AWS CLI not to follow links; PHP source files and
 server-local files are never published.
 
+PR and `main` workflows run `verify-asset-version-bump.sh`: any change under
+the theme's `assets/` directory must also advance `SPRINGAPEX_VERSION`, so an
+immutable CloudFront prefix is never overwritten with different content.
+
 The public website no longer uses preview Basic Auth, `X-Robots-Tag: noindex`
 or WordPress `blog_public=0`.
 
