@@ -994,19 +994,19 @@ function springapex_queue_s3_delete_retry(array $metadata): void
     if ($bucket === '' || $key === '') {
         return;
     }
-    $option = 'springapex_s3_delete_retry_v1';
-    $queue = get_option($option, []);
-    $queue = is_array($queue) ? $queue : [];
     $id = hash('sha256', $bucket . "\n" . $key);
-    $queue[$id] = [
+    $option = 'springapex_s3_delete_retry_v1_' . $id;
+    $entry = [
         'metadata' => springapex_persistent_private_file_metadata($metadata),
-        'attempts' => (int) ($queue[$id]['attempts'] ?? 0),
+        'attempts' => 0,
         'last_attempt' => time(),
     ];
-    if (get_option($option, null) === null) {
-        add_option($option, $queue, '', false);
-    } else {
-        update_option($option, $queue, false);
+    if (!add_option($option, $entry, '', false)) {
+        $existing = get_option($option, []);
+        if (is_array($existing)) {
+            $entry['attempts'] = (int) ($existing['attempts'] ?? 0);
+        }
+        update_option($option, $entry, false);
     }
     if (!wp_next_scheduled('springapex_retry_s3_deletions')) {
         wp_schedule_event(time() + MINUTE_IN_SECONDS, 'hourly', 'springapex_retry_s3_deletions');
@@ -1015,29 +1015,29 @@ function springapex_queue_s3_delete_retry(array $metadata): void
 
 function springapex_retry_s3_deletions(): void
 {
-    $option = 'springapex_s3_delete_retry_v1';
-    $queue = get_option($option, []);
-    if (!is_array($queue) || $queue === []) {
-        wp_clear_scheduled_hook('springapex_retry_s3_deletions');
+    global $wpdb;
+    if (!isset($wpdb->options) || !is_string($wpdb->options)) {
         return;
     }
-    $processed = 0;
-    foreach ($queue as $id => $entry) {
-        if ($processed >= 20) {
-            break;
-        }
-        $processed++;
-        $metadata = is_array($entry['metadata'] ?? null) ? $entry['metadata'] : [];
-        if ($metadata !== [] && springapex_s3_delete_private_file($metadata)) {
-            unset($queue[$id]);
+    $prefix = 'springapex_s3_delete_retry_v1_';
+    $names = $wpdb->get_col($wpdb->prepare(
+        "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s ORDER BY option_id ASC LIMIT 20",
+        $wpdb->esc_like($prefix) . '%'
+    ));
+    foreach (is_array($names) ? $names : [] as $option) {
+        if (!is_string($option) || !str_starts_with($option, $prefix)) {
             continue;
         }
-        $queue[$id]['attempts'] = (int) ($entry['attempts'] ?? 0) + 1;
-        $queue[$id]['last_attempt'] = time();
-    }
-    update_option($option, $queue, false);
-    if ($queue === []) {
-        wp_clear_scheduled_hook('springapex_retry_s3_deletions');
+        $entry = get_option($option, []);
+        $entry = is_array($entry) ? $entry : [];
+        $metadata = is_array($entry['metadata'] ?? null) ? $entry['metadata'] : [];
+        if ($metadata !== [] && springapex_s3_delete_private_file($metadata)) {
+            delete_option($option);
+            continue;
+        }
+        $entry['attempts'] = (int) ($entry['attempts'] ?? 0) + 1;
+        $entry['last_attempt'] = time();
+        update_option($option, $entry, false);
     }
 }
 

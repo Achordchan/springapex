@@ -22,7 +22,7 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
         # the equivalent --dirs emitted by some rsync clients (notably macOS).
         SSH_ORIGINAL_COMMAND=$(printf '%s\n' "$SSH_ORIGINAL_COMMAND" | sed 's/ --dirs / -d /g')
         export SSH_ORIGINAL_COMMAND
-        exec /usr/bin/rrsync -wo /www/wwwroot/norenspring.com/wp-content
+        exec /usr/bin/rrsync -wo -munge /www/wwwroot/norenspring.com/wp-content
         ;;
     springapex-health)
         exec /usr/bin/curl -fsS \
@@ -35,8 +35,22 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
             echo 'The NorenSpring theme version is invalid.' >&2
             exit 1
         fi
-        stage="/www/wwwroot/norenspring.com/wp-content/.springapex-cdn-stage/$version/assets"
+        stage_root="/www/wwwroot/norenspring.com/wp-content/.springapex-cdn-stage"
+        if [ -L "$stage_root" ] || [ "$(/usr/bin/realpath -e "$stage_root")" != "$stage_root" ]; then
+            echo 'The NorenSpring CDN staging root is invalid.' >&2
+            exit 1
+        fi
+        version_dir="$stage_root/$version"
+        stage="$version_dir/assets"
+        if [ -L "$version_dir" ] || [ -L "$stage" ]; then
+            echo 'Symbolic links are not allowed in staged CDN paths.' >&2
+            exit 1
+        fi
         /bin/mkdir -p -- "$stage"
+        if [ "$(/usr/bin/realpath -e "$stage")" != "$stage" ]; then
+            echo 'The NorenSpring CDN staging path escaped its root.' >&2
+            exit 1
+        fi
         /bin/chmod 2775 -- \
             "/www/wwwroot/norenspring.com/wp-content/.springapex-cdn-stage/$version" \
             "$stage"
@@ -47,7 +61,17 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
             echo 'The NorenSpring theme version is invalid.' >&2
             exit 1
         fi
-        stage="/www/wwwroot/norenspring.com/wp-content/.springapex-cdn-stage/$version/assets"
+        stage_root="/www/wwwroot/norenspring.com/wp-content/.springapex-cdn-stage"
+        if [ -L "$stage_root" ] || [ "$(/usr/bin/realpath -e "$stage_root")" != "$stage_root" ]; then
+            echo 'The NorenSpring CDN staging root is invalid.' >&2
+            exit 1
+        fi
+        version_dir="$stage_root/$version"
+        stage="$version_dir/assets"
+        if [ -L "$version_dir" ] || [ -L "$stage" ]; then
+            echo 'Symbolic links are not allowed in staged CDN paths.' >&2
+            exit 1
+        fi
         if [ ! -d "$stage" ]; then
             echo 'The staged NorenSpring CDN assets are missing.' >&2
             exit 1
@@ -62,7 +86,7 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
             --delete \
             --no-follow-symlinks \
             --only-show-errors
-        /bin/rm -rf -- "/www/wwwroot/norenspring.com/wp-content/.springapex-cdn-stage/$version"
+        /bin/rm -rf -- "$version_dir"
         ;;
     *)
         echo 'This key can only deploy NorenSpring code, stage/sync CDN assets or run its health check.' >&2

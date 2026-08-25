@@ -63,6 +63,8 @@ The GitHub key is forced through `/usr/local/bin/springapex-deploy-command`.
 It can only run write-only `rrsync` within this site's `wp-content` directory
 or execute the local site health check. It cannot open an interactive shell,
 modify the database, overwrite uploads or affect other BT Panel sites.
+Server-side rsync link munging is enabled, and the CDN commands reject symlinked
+staging roots, version directories and asset directories after realpath checks.
 
 ## Required server ownership
 
