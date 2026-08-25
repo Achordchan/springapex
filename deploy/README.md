@@ -39,9 +39,10 @@ define('SPRINGAPEX_CDN_URL', 'https://cdn.norenspring.com');
 
 AWS credentials must not be stored in WordPress, BT Panel or GitHub. The theme
 uses IMDSv2 to obtain short-lived credentials from the attached EC2 role.
-GitHub calls the restricted `springapex-cdn-prepare <version>` command, stages
-only the new `assets/` directory, then invokes `springapex-cdn-sync <version>`
-before changing the live theme. The sync command publishes
+The production puller calls the local `springapex-cdn-prepare <version>`
+command, stages only the new `assets/` directory, then invokes
+`springapex-cdn-sync <version>` before changing the live theme. The sync
+command publishes
 `public/theme/<version>/assets/` and removes the staging directory. Only after
 that succeeds does rsync activate the new theme version, so a failed CDN
 publish cannot leave production pointing at missing assets. The command rejects
@@ -71,12 +72,57 @@ Pushes to `main` deploy only these repository-managed directories:
 - `wp-content/plugins/webp-converter-for-media`
 - `wp-content/plugins/wp-mail-smtp`
 
-The GitHub key is forced through `/usr/local/bin/springapex-deploy-command`.
-It can only run write-only `rrsync` within this site's `wp-content` directory
-or execute the local site health check. It cannot open an interactive shell,
-modify the database, overwrite uploads or affect other BT Panel sites.
-Server-side rsync link munging is enabled, and the CDN commands reject symlinked
-staging roots, version directories and asset directories after realpath checks.
+GitHub-hosted runners perform verification only. After a successful `main`
+run, the workflow creates an HMAC-authenticated tag bound to the verified SHA,
+GitHub run ID and run attempt, then advances the fast-forward-only
+`production-ready` branch.
+BT Panel runs `/usr/local/sbin/springapex-pull-production` every minute as the
+unprivileged `springapex-deploy` user. The EC2 host uses an encrypted-at-rest,
+read-only GitHub deploy key to fetch that branch over outbound SSH, requires
+the marker to remain in the latest `main` history, verifies the newest HMAC
+attestation generation, rejects symlinks, lints PHP, publishes CDN assets and
+activates only the three managed code directories. Extracted release trees are
+removed after success, and stale candidate directories are cleared while the
+deployment lock is held. No GitHub Action or repository script executes on the
+production host, and public SSH remains restricted to the management IP.
+
+Because the deployment state includes the GitHub run ID and run attempt, a
+successful manual `workflow_dispatch` creates a new authenticated generation
+and intentionally redeploys the same commit to repair production drift. The
+puller also requires every new release SHA to descend from the deployed SHA
+and rejects older run generations for the same commit, preventing marker or
+attestation replay from rolling production back.
+
+Recovery setup installs the puller as a root-owned executable, but the task
+itself runs without root privileges:
+
+```bash
+install -d -o springapex-deploy -g www -m 0700 /srv/springapex/releases
+install -o root -g root -m 0755 \
+  deploy/springapex-pull-production \
+  /usr/local/sbin/springapex-pull-production
+```
+
+Before the first deployment on an empty host, root must explicitly initialize
+`/srv/springapex/releases/bootstrap.sha` with the trusted, currently verified
+`production-ready` SHA and then set ownership to `springapex-deploy:www` with
+mode `0600`. The puller requires that SHA to equal both the current `main` tip
+and marker, then removes `bootstrap.sha` after writing `deployed.sha`. If
+`deployed.sha` is later lost, deployment fails closed until root performs a
+new trusted bootstrap; historical attestations are never accepted implicitly.
+
+The read-only GitHub deploy key is stored as
+`/home/springapex-deploy/.ssh/github_readonly`; its known-hosts file contains
+GitHub's published ED25519 host key. The matching HMAC secret is stored at
+`/home/springapex-deploy/.config/release_hmac_key` and as the protected GitHub
+secret `SPRINGAPEX_RELEASE_HMAC_KEY`. The BT Panel task must execute the puller
+as `springapex-deploy`, never as `root` or `www`.
+
+The root-owned `/usr/local/bin/springapex-deploy-command` is invoked locally by
+the unprivileged puller. It exposes only CDN prepare/sync and the site health
+check; it has no inbound SSH or rsync command path. The CDN commands reject
+symlinked staging roots, version directories and asset directories after
+realpath checks.
 
 ## Required server ownership
 

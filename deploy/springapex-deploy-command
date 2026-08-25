@@ -17,13 +17,6 @@ valid_version() {
 }
 
 case "${SSH_ORIGINAL_COMMAND:-}" in
-    rsync\ --server*)
-        # Ubuntu's packaged rrsync allowlist accepts the short -d form but omits
-        # the equivalent --dirs emitted by some rsync clients (notably macOS).
-        SSH_ORIGINAL_COMMAND=$(printf '%s\n' "$SSH_ORIGINAL_COMMAND" | sed 's/ --dirs / -d /g')
-        export SSH_ORIGINAL_COMMAND
-        exec /usr/bin/rrsync -wo -munge /www/wwwroot/norenspring.com/wp-content
-        ;;
     springapex-health)
         exec /usr/bin/curl -fsS \
             --resolve norenspring.com:443:127.0.0.1 \
@@ -91,7 +84,7 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
         /bin/rm -rf -- "$version_dir"
         ;;
     *)
-        echo 'This key can only deploy NorenSpring code, stage/sync CDN assets or run its health check.' >&2
+        echo 'This command can only stage/sync NorenSpring CDN assets or run its health check.' >&2
         exit 126
         ;;
 esac

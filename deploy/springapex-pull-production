@@ -1,0 +1,195 @@
+#!/bin/sh
+set -eu
+
+release_root='/srv/springapex/releases'
+repository="$release_root/repository.git"
+state_file="$release_root/deployed.sha"
+bootstrap_file="$release_root/bootstrap.sha"
+github_key='/home/springapex-deploy/.ssh/github_readonly'
+github_known_hosts='/home/springapex-deploy/.ssh/github_known_hosts'
+release_hmac_key='/home/springapex-deploy/.config/release_hmac_key'
+remote='git@github.com:Achordchan/springapex.git'
+site='/www/wwwroot/norenspring.com'
+
+mkdir -p "$release_root"
+chmod 0700 "$release_root"
+cd "$release_root"
+exec 9>"$release_root/deploy.lock"
+if ! /usr/bin/flock -n 9; then
+    echo 'A NorenSpring production deployment is already running.' >&2
+    exit 0
+fi
+/usr/bin/find "$release_root" -mindepth 1 -maxdepth 1 -type d \
+    \( -name 'candidate-*' -o -name 'deployed-*' \) -exec /bin/rm -rf -- {} +
+
+export GIT_SSH_COMMAND="ssh -i $github_key -o IdentitiesOnly=yes -o UserKnownHostsFile=$github_known_hosts"
+if [ ! -d "$repository" ]; then
+    /usr/bin/git clone --bare "$remote" "$repository"
+fi
+/usr/bin/git --git-dir="$repository" fetch --prune origin \
+    '+refs/heads/main:refs/remotes/origin/main' \
+    '+refs/heads/production-ready:refs/remotes/origin/production-ready'
+main_sha=$(/usr/bin/git --git-dir="$repository" rev-parse 'refs/remotes/origin/main^{commit}')
+release_sha=$(/usr/bin/git --git-dir="$repository" rev-parse 'refs/remotes/origin/production-ready^{commit}')
+case "$release_sha" in ''|*[!0-9a-f]*) release_sha='' ;; esac
+if [ "${#release_sha}" -ne 40 ]; then
+    echo 'The production-ready commit is invalid.' >&2
+    exit 1
+fi
+if ! /usr/bin/git --git-dir="$repository" merge-base --is-ancestor "$release_sha" "$main_sha"; then
+    echo 'The production-ready commit is not in the current main history.' >&2
+    exit 1
+fi
+release_key=$(/bin/cat "$release_hmac_key")
+if [ -z "$release_key" ]; then
+    echo 'The production release attestation key is missing.' >&2
+    exit 1
+fi
+/usr/bin/git --git-dir="$repository" fetch origin \
+    "+refs/tags/production-ready-$release_sha-*:refs/tags/production-ready-$release_sha-*"
+selected_run=0
+selected_attempt=0
+for attestation in $(/usr/bin/git --git-dir="$repository" for-each-ref \
+    --format='%(refname:strip=2)' "refs/tags/production-ready-$release_sha-*"); do
+    suffix=${attestation#production-ready-$release_sha-}
+    old_ifs=$IFS
+    IFS=-
+    set -- $suffix
+    IFS=$old_ifs
+    if [ "$#" -ne 3 ]; then
+        continue
+    fi
+    run_id=$1
+    run_attempt=$2
+    supplied_signature=$3
+    case "$run_id:$run_attempt:$supplied_signature" in
+        *[!0-9a-f:]*) continue ;;
+    esac
+    if [ -z "$run_id" ] || [ -z "$run_attempt" ] || [ "${#supplied_signature}" -ne 64 ]; then
+        continue
+    fi
+    payload="$release_sha:$run_id:$run_attempt"
+    expected_signature=$(/usr/bin/printf '%s' "$payload" \
+        | /usr/bin/openssl dgst -sha256 -hmac "$release_key" -binary \
+        | /usr/bin/xxd -p -c 256)
+    if [ "$supplied_signature" != "$expected_signature" ]; then
+        continue
+    fi
+    attested_sha=$(/usr/bin/git --git-dir="$repository" rev-parse "refs/tags/$attestation^{commit}")
+    if [ "$attested_sha" != "$release_sha" ]; then
+        continue
+    fi
+    if [ "$run_id" -gt "$selected_run" ] || {
+        [ "$run_id" -eq "$selected_run" ] && [ "$run_attempt" -gt "$selected_attempt" ];
+    }; then
+        selected_run=$run_id
+        selected_attempt=$run_attempt
+    fi
+done
+if [ "$selected_run" -eq 0 ]; then
+    echo 'No valid production release attestation was found.' >&2
+    exit 1
+fi
+deployment_id="$release_sha:$selected_run:$selected_attempt"
+if [ ! -f "$state_file" ]; then
+    if [ ! -f "$bootstrap_file" ]; then
+        echo 'The trusted production bootstrap state is missing.' >&2
+        exit 1
+    fi
+    bootstrap_sha=$(/bin/cat "$bootstrap_file")
+    case "$bootstrap_sha" in ''|*[!0-9a-f]*) bootstrap_sha='' ;; esac
+    if [ "${#bootstrap_sha}" -ne 40 ] \
+        || [ "$bootstrap_sha" != "$release_sha" ] \
+        || [ "$release_sha" != "$main_sha" ]; then
+        echo 'The trusted production bootstrap state is invalid.' >&2
+        exit 1
+    fi
+fi
+if [ -f "$state_file" ]; then
+    deployed_id=$(/bin/cat "$state_file")
+    deployed_sha=${deployed_id%%:*}
+    case "$deployed_sha" in ''|*[!0-9a-f]*) deployed_sha='' ;; esac
+    if [ "${#deployed_sha}" -ne 40 ] \
+        || ! /usr/bin/git --git-dir="$repository" cat-file -e "$deployed_sha^{commit}"; then
+        echo 'The deployed release state is invalid.' >&2
+        exit 1
+    fi
+    if ! /usr/bin/git --git-dir="$repository" merge-base --is-ancestor "$deployed_sha" "$release_sha"; then
+        echo 'The production-ready release would roll production back.' >&2
+        exit 1
+    fi
+    if [ "$deployed_sha" = "$release_sha" ]; then
+        deployed_run=0
+        deployed_attempt=0
+        case "$deployed_id" in
+            *:*:*)
+                old_ifs=$IFS
+                IFS=:
+                set -- $deployed_id
+                IFS=$old_ifs
+                if [ "$#" -ne 3 ]; then
+                    echo 'The deployed release generation is invalid.' >&2
+                    exit 1
+                fi
+                deployed_run=$2
+                deployed_attempt=$3
+                case "$deployed_run:$deployed_attempt" in
+                    *[!0-9:]*)
+                        echo 'The deployed release generation is invalid.' >&2
+                        exit 1
+                        ;;
+                esac
+                ;;
+        esac
+        if [ "$selected_run" -lt "$deployed_run" ] || {
+            [ "$selected_run" -eq "$deployed_run" ] \
+                && [ "$selected_attempt" -lt "$deployed_attempt" ];
+        }; then
+            echo 'The production-ready generation would roll production back.' >&2
+            exit 1
+        fi
+    fi
+    if [ "$deployed_id" = "$deployment_id" ]; then
+        echo "NorenSpring is already deployed at $deployment_id"
+        exit 0
+    fi
+fi
+
+candidate="$release_root/candidate-$release_sha"
+/bin/rm -rf -- "$candidate"
+/bin/mkdir -m 0700 -- "$candidate"
+/usr/bin/git --git-dir="$repository" archive "$release_sha" | /bin/tar -x -C "$candidate"
+
+theme="$candidate/wp-content/themes/springapex"
+webp_plugin="$candidate/wp-content/plugins/webp-converter-for-media"
+mail_plugin="$candidate/wp-content/plugins/wp-mail-smtp"
+for path in "$theme" "$webp_plugin" "$mail_plugin"; do
+    if [ ! -d "$path" ] || /usr/bin/find "$path" -type l -print -quit | /usr/bin/grep -q .; then
+        echo "The verified release contains a missing directory or symbolic link: $path" >&2
+        exit 1
+    fi
+done
+
+version=$(/bin/sed -n "s/^define('SPRINGAPEX_VERSION', '\([^']*\)');/\1/p" "$theme/functions.php")
+if ! /usr/bin/printf '%s\n' "$version" | /usr/bin/grep -Eq '^[0-9]+(\.[0-9]+)+$'; then
+    echo 'The verified release contains an invalid theme version.' >&2
+    exit 1
+fi
+/usr/bin/find "$theme" -name '*.php' -print0 \
+    | /usr/bin/xargs -0 -n1 -P4 /www/server/php/83/bin/php -l >/dev/null
+
+SSH_ORIGINAL_COMMAND="springapex-cdn-prepare $version" /usr/local/bin/springapex-deploy-command
+/usr/bin/rsync -az --delete-delay --exclude='.DS_Store' \
+    "$theme/assets/" \
+    "$site/wp-content/.springapex-cdn-stage/$version/assets/"
+SSH_ORIGINAL_COMMAND="springapex-cdn-sync $version" /usr/local/bin/springapex-deploy-command
+/usr/bin/rsync -az --delete-delay --exclude='.DS_Store' "$theme/" "$site/wp-content/themes/springapex/"
+/usr/bin/rsync -az --delete-delay --exclude='.DS_Store' "$webp_plugin/" "$site/wp-content/plugins/webp-converter-for-media/"
+/usr/bin/rsync -az --delete-delay --exclude='.DS_Store' "$mail_plugin/" "$site/wp-content/plugins/wp-mail-smtp/"
+SSH_ORIGINAL_COMMAND='springapex-health' /usr/local/bin/springapex-deploy-command
+
+/usr/bin/printf '%s\n' "$deployment_id" > "$state_file.next"
+/bin/mv "$state_file.next" "$state_file"
+/bin/rm -f -- "$bootstrap_file"
+/bin/rm -rf -- "$candidate"
+echo "Deployed verified NorenSpring release: $deployment_id"
