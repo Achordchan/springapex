@@ -87,7 +87,10 @@ production host, and public SSH remains restricted to the management IP.
 
 Because the deployment state includes the GitHub run ID and run attempt, a
 successful manual `workflow_dispatch` creates a new authenticated generation
-and intentionally redeploys the same commit to repair production drift.
+and intentionally redeploys the same commit to repair production drift. The
+puller also requires every new release SHA to descend from the deployed SHA
+and rejects older run generations for the same commit, preventing marker or
+attestation replay from rolling production back.
 
 Recovery setup installs the puller as a root-owned executable, but the task
 itself runs without root privileges:

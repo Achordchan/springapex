@@ -90,9 +90,54 @@ if [ "$selected_run" -eq 0 ]; then
     exit 1
 fi
 deployment_id="$release_sha:$selected_run:$selected_attempt"
-if [ -f "$state_file" ] && [ "$(/bin/cat "$state_file")" = "$deployment_id" ]; then
-    echo "NorenSpring is already deployed at $deployment_id"
-    exit 0
+if [ -f "$state_file" ]; then
+    deployed_id=$(/bin/cat "$state_file")
+    deployed_sha=${deployed_id%%:*}
+    case "$deployed_sha" in ''|*[!0-9a-f]*) deployed_sha='' ;; esac
+    if [ "${#deployed_sha}" -ne 40 ] \
+        || ! /usr/bin/git --git-dir="$repository" cat-file -e "$deployed_sha^{commit}"; then
+        echo 'The deployed release state is invalid.' >&2
+        exit 1
+    fi
+    if ! /usr/bin/git --git-dir="$repository" merge-base --is-ancestor "$deployed_sha" "$release_sha"; then
+        echo 'The production-ready release would roll production back.' >&2
+        exit 1
+    fi
+    if [ "$deployed_sha" = "$release_sha" ]; then
+        deployed_run=0
+        deployed_attempt=0
+        case "$deployed_id" in
+            *:*:*)
+                old_ifs=$IFS
+                IFS=:
+                set -- $deployed_id
+                IFS=$old_ifs
+                if [ "$#" -ne 3 ]; then
+                    echo 'The deployed release generation is invalid.' >&2
+                    exit 1
+                fi
+                deployed_run=$2
+                deployed_attempt=$3
+                case "$deployed_run:$deployed_attempt" in
+                    *[!0-9:]*)
+                        echo 'The deployed release generation is invalid.' >&2
+                        exit 1
+                        ;;
+                esac
+                ;;
+        esac
+        if [ "$selected_run" -lt "$deployed_run" ] || {
+            [ "$selected_run" -eq "$deployed_run" ] \
+                && [ "$selected_attempt" -lt "$deployed_attempt" ];
+        }; then
+            echo 'The production-ready generation would roll production back.' >&2
+            exit 1
+        fi
+    fi
+    if [ "$deployed_id" = "$deployment_id" ]; then
+        echo "NorenSpring is already deployed at $deployment_id"
+        exit 0
+    fi
 fi
 
 candidate="$release_root/candidate-$release_sha"
