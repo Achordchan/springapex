@@ -27,6 +27,22 @@ if [ -z "$site_backup" ] || [ -z "$database_backup" ]; then
     exit 1
 fi
 
+expected_date=$(/usr/bin/date '+%Y-%m-%d')
+now=$(/usr/bin/date '+%s')
+verify_fresh_backup() {
+    backup_file=$1
+    label=$2
+    backup_date=$(/usr/bin/date -r "$backup_file" '+%Y-%m-%d')
+    backup_time=$(/usr/bin/stat -c '%Y' "$backup_file")
+    age=$((now - backup_time))
+    if [ "$backup_date" != "$expected_date" ] || [ "$age" -lt 0 ] || [ "$age" -gt 10800 ]; then
+        echo "The latest $label backup is stale or from a different run date." >&2
+        exit 1
+    fi
+}
+
+verify_fresh_backup "$site_backup" 'site'
+verify_fresh_backup "$database_backup" 'database'
 /usr/bin/gzip -t "$site_backup"
 /usr/bin/gzip -t "$database_backup"
 
