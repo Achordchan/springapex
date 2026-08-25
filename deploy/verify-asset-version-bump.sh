@@ -9,14 +9,17 @@ fi
 
 assets='wp-content/themes/springapex/assets'
 version_file='wp-content/themes/springapex/functions.php'
-if git diff --quiet "$base" HEAD -- "$assets"; then
-    echo 'asset-version: no asset changes'
-    exit 0
-fi
-
 old_version=$(git show "$base:$version_file" 2>/dev/null \
     | sed -n "s/^define('SPRINGAPEX_VERSION', '\([^']*\)');/\1/p")
 new_version=$(sed -n "s/^define('SPRINGAPEX_VERSION', '\([^']*\)');/\1/p" "$version_file")
+assets_changed=true
+if git diff --quiet "$base" HEAD -- "$assets"; then
+    assets_changed=false
+fi
+if [ "$assets_changed" = false ] && [ "$new_version" = "$old_version" ]; then
+    echo 'asset-version: no asset or version changes'
+    exit 0
+fi
 
 is_numeric_version() {
     case $1 in
@@ -27,7 +30,7 @@ is_numeric_version() {
 }
 
 if ! is_numeric_version "$old_version" || ! is_numeric_version "$new_version"; then
-    echo 'Theme assets changed with an invalid SPRINGAPEX_VERSION.' >&2
+    echo 'SPRINGAPEX_VERSION is invalid.' >&2
     exit 1
 fi
 
@@ -56,8 +59,12 @@ if ! awk -v old="$old_version" -v new="$new_version" '
         exit 1
     }
 '; then
-    echo 'Theme assets changed without advancing SPRINGAPEX_VERSION.' >&2
+    echo 'SPRINGAPEX_VERSION must advance monotonically.' >&2
     exit 1
 fi
 
-echo "asset-version: $old_version -> $new_version"
+if [ "$assets_changed" = true ]; then
+    echo "asset-version: $old_version -> $new_version"
+else
+    echo "theme-version: $old_version -> $new_version"
+fi
