@@ -15,20 +15,25 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
             -H 'X-Forwarded-Proto: https' \
             http://127.0.0.1/ >/dev/null
         ;;
-    springapex-cdn-sync)
-        version=$(/usr/bin/sed -n "s/^define('SPRINGAPEX_VERSION', '\([^']*\)');/\1/p" \
-            /www/wwwroot/norenspring.com/wp-content/themes/springapex/functions.php)
+    springapex-cdn-sync\ *)
+        version=${SSH_ORIGINAL_COMMAND#springapex-cdn-sync }
         case "$version" in
             ''|*[!0-9.]* )
                 echo 'The NorenSpring theme version is invalid.' >&2
                 exit 1
                 ;;
         esac
-        exec /usr/bin/aws s3 sync \
-            /www/wwwroot/norenspring.com/wp-content/themes/springapex/assets/ \
+        stage="/www/wwwroot/norenspring.com/wp-content/.springapex-cdn-stage/$version/assets"
+        if [ ! -d "$stage" ]; then
+            echo 'The staged NorenSpring CDN assets are missing.' >&2
+            exit 1
+        fi
+        /usr/bin/aws s3 sync \
+            "$stage/" \
             "s3://norenspring-prod-storage-20260825-7e4c9a/public/theme/$version/assets/" \
             --delete \
             --only-show-errors
+        /bin/rm -rf -- "/www/wwwroot/norenspring.com/wp-content/.springapex-cdn-stage/$version"
         ;;
     *)
         echo 'This key can only deploy NorenSpring code, sync CDN assets or run its health check.' >&2
