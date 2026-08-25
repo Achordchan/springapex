@@ -11,9 +11,8 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
         ;;
     springapex-health)
         exec /usr/bin/curl -fsS \
-            -H 'Host: norenspring.com' \
-            -H 'X-Forwarded-Proto: https' \
-            http://127.0.0.1/ >/dev/null
+            --resolve norenspring.com:443:127.0.0.1 \
+            https://norenspring.com/ >/dev/null
         ;;
     springapex-cdn-prepare\ *)
         version=${SSH_ORIGINAL_COMMAND#springapex-cdn-prepare }
@@ -42,10 +41,15 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
             echo 'The staged NorenSpring CDN assets are missing.' >&2
             exit 1
         fi
+        if /usr/bin/find "$stage" -type l -print -quit | /usr/bin/grep -q .; then
+            echo 'Symbolic links are not allowed in staged CDN assets.' >&2
+            exit 1
+        fi
         /usr/bin/aws s3 sync \
             "$stage/" \
             "s3://norenspring-prod-storage-20260825-7e4c9a/public/theme/$version/assets/" \
             --delete \
+            --no-follow-symlinks \
             --only-show-errors
         /bin/rm -rf -- "/www/wwwroot/norenspring.com/wp-content/.springapex-cdn-stage/$version"
         ;;

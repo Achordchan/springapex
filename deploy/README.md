@@ -44,8 +44,9 @@ only the new `assets/` directory, then invokes `springapex-cdn-sync <version>`
 before changing the live theme. The sync command publishes
 `public/theme/<version>/assets/` and removes the staging directory. Only after
 that succeeds does rsync activate the new theme version, so a failed CDN
-publish cannot leave production pointing at missing assets. PHP source files
-are never published.
+publish cannot leave production pointing at missing assets. The command rejects
+every symbolic link and tells AWS CLI not to follow links; PHP source files and
+server-local files are never published.
 
 The public website no longer uses preview Basic Auth, `X-Robots-Tag: noindex`
 or WordPress `blog_public=0`.
@@ -81,7 +82,8 @@ install -d -o springapex-deploy -g www -m 2775 \
 Run these after a release; a green GitHub Actions run alone is insufficient.
 
 ```bash
-curl -fsS -H 'Host: norenspring.com' http://127.0.0.1/ >/dev/null
+curl -fsS --resolve norenspring.com:443:127.0.0.1 \
+  https://norenspring.com/ >/dev/null
 curl -fsSI https://norenspring.com/
 curl -fsSI https://www.norenspring.com/
 curl -sS -o /dev/null -w '%{http_code}\n' \
