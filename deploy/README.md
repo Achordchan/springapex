@@ -71,12 +71,29 @@ Pushes to `main` deploy only these repository-managed directories:
 - `wp-content/plugins/webp-converter-for-media`
 - `wp-content/plugins/wp-mail-smtp`
 
-The production deploy job runs on the dedicated ARM64 self-hosted runner
-`norenspring-aws-prod`. PR verification remains on GitHub-hosted runners. The
-production runner connects only to `springapex-deploy@127.0.0.1`, so GitHub
-does not require public SSH access and port 22 remains restricted to the
-current management IP. Deployment credentials are written only under
-`RUNNER_TEMP` and removed in an `always()` cleanup step.
+GitHub-hosted runners perform verification only. After a successful `main`
+run, the workflow advances the fast-forward-only `production-ready` branch.
+BT Panel runs `/usr/local/sbin/springapex-pull-production` every minute as the
+unprivileged `springapex-deploy` user. The EC2 host uses an encrypted-at-rest,
+read-only GitHub deploy key to fetch that branch over outbound SSH, rejects
+symlinks, lints PHP, publishes CDN assets and activates only the three managed
+code directories. No GitHub Action or repository script executes on the
+production host, and public SSH remains restricted to the management IP.
+
+Recovery setup installs the puller as a root-owned executable, but the task
+itself runs without root privileges:
+
+```bash
+install -d -o springapex-deploy -g www -m 0700 /srv/springapex/releases
+install -o root -g root -m 0755 \
+  deploy/springapex-pull-production \
+  /usr/local/sbin/springapex-pull-production
+```
+
+The read-only GitHub deploy key is stored as
+`/home/springapex-deploy/.ssh/github_readonly`; its known-hosts file contains
+GitHub's published ED25519 host key. The BT Panel task must execute the puller
+as `springapex-deploy`, never as `root` or `www`.
 
 The GitHub key is forced through `/usr/local/bin/springapex-deploy-command`.
 It can only run write-only `rrsync` within this site's `wp-content` directory

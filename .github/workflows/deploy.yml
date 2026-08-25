@@ -41,115 +41,48 @@ jobs:
         if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
         run: sh deploy/verify-asset-version-bump.sh "${{ github.event.before }}"
 
+      - name: Check deployment shell syntax
+        run: |
+          sh -n deploy/springapex-deploy-command
+          sh -n deploy/verify-asset-version-bump.sh
+          sh -n deploy/springapex-backup-to-s3
+          sh -n deploy/springapex-pull-production
+
       - name: Check theme JavaScript syntax
         run: |
           node --check wp-content/themes/springapex/assets/js/main.js
           node --check wp-content/themes/springapex/assets/js/product-compression.js
           node --check wp-content/themes/springapex/assets/js/row-editor.js
 
-  deploy:
-    name: Deploy to AWS BT Panel site
+  release:
+    name: Mark verified commit for production
     needs: verify
     if: github.ref == 'refs/heads/main'
-    runs-on: [self-hosted, Linux, ARM64, springapex-production]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
     environment: production
-    env:
-      DEPLOY_HOST: 127.0.0.1
-      DEPLOY_USER: ${{ secrets.SPRINGAPEX_DEPLOY_USER }}
-      DEPLOY_KEY: ${{ secrets.SPRINGAPEX_DEPLOY_SSH_KEY }}
     steps:
-      - uses: actions/checkout@v5
-
-      - name: Validate deployment credentials
+      - name: Advance the production-ready branch
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          test -n "$DEPLOY_HOST"
-          test -n "$DEPLOY_USER"
-          test -n "$DEPLOY_KEY"
-
-      - name: Install restricted deployment key
-        shell: bash
-        run: |
-          set -euo pipefail
-          printf '%s\n' "$DEPLOY_KEY" > "$RUNNER_TEMP/springapex_deploy"
-          chmod 600 "$RUNNER_TEMP/springapex_deploy"
-          cp deploy/known_hosts "$RUNNER_TEMP/springapex_known_hosts"
-          chmod 600 "$RUNNER_TEMP/springapex_known_hosts"
-
-      - name: Read and validate theme version
-        shell: bash
-        run: |
-          set -euo pipefail
-          version="$(sed -n "s/^define('SPRINGAPEX_VERSION', '\([^']*\)');/\1/p" \
-            wp-content/themes/springapex/functions.php)"
-          if ! printf '%s\n' "$version" | grep -Eq '^[0-9]+(\.[0-9]+)+$'; then
-            echo 'Invalid NorenSpring theme version.' >&2
-            exit 1
+          api="https://api.github.com/repos/$REPOSITORY/git/refs"
+          headers=(
+            -H "Authorization: Bearer $GH_TOKEN"
+            -H "Accept: application/vnd.github+json"
+            -H "X-GitHub-Api-Version: 2022-11-28"
+          )
+          if curl -fsS "${headers[@]}" "$api/heads/production-ready" >/dev/null; then
+            curl -fsS -X PATCH "${headers[@]}" \
+              "$api/heads/production-ready" \
+              -d "{\"sha\":\"$RELEASE_SHA\",\"force\":false}" >/dev/null
+          else
+            curl -fsS -X POST "${headers[@]}" \
+              "$api" \
+              -d "{\"ref\":\"refs/heads/production-ready\",\"sha\":\"$RELEASE_SHA\"}" >/dev/null
           fi
-          printf 'SPRINGAPEX_RELEASE_VERSION=%s\n' "$version" >> "$GITHUB_ENV"
-
-      - name: Stage versioned CDN assets on the server
-        shell: bash
-        run: |
-          set -euo pipefail
-          ssh -i "$RUNNER_TEMP/springapex_deploy" -o IdentitiesOnly=yes \
-            -o UserKnownHostsFile="$RUNNER_TEMP/springapex_known_hosts" \
-            "$DEPLOY_USER@$DEPLOY_HOST" \
-            "springapex-cdn-prepare $SPRINGAPEX_RELEASE_VERSION"
-          rsync -az --delete-delay --itemize-changes --exclude='.DS_Store' \
-            -e "ssh -i $RUNNER_TEMP/springapex_deploy -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/springapex_known_hosts" \
-            wp-content/themes/springapex/assets/ \
-            "$DEPLOY_USER@$DEPLOY_HOST:.springapex-cdn-stage/$SPRINGAPEX_RELEASE_VERSION/assets/"
-
-      - name: Publish versioned assets before theme activation
-        shell: bash
-        run: |
-          set -euo pipefail
-          ssh -i "$RUNNER_TEMP/springapex_deploy" -o IdentitiesOnly=yes \
-            -o UserKnownHostsFile="$RUNNER_TEMP/springapex_known_hosts" \
-            "$DEPLOY_USER@$DEPLOY_HOST" \
-            "springapex-cdn-sync $SPRINGAPEX_RELEASE_VERSION"
-
-      - name: Activate NorenSpring theme version
-        shell: bash
-        run: |
-          set -euo pipefail
-          rsync -az --delete-delay --itemize-changes --exclude='.DS_Store' \
-            -e "ssh -i $RUNNER_TEMP/springapex_deploy -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/springapex_known_hosts" \
-            wp-content/themes/springapex/ \
-            "$DEPLOY_USER@$DEPLOY_HOST:themes/springapex/"
-
-      - name: Sync managed WebP plugin
-        shell: bash
-        run: |
-          set -euo pipefail
-          rsync -az --delete-delay --itemize-changes --exclude='.DS_Store' \
-            -e "ssh -i $RUNNER_TEMP/springapex_deploy -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/springapex_known_hosts" \
-            wp-content/plugins/webp-converter-for-media/ \
-            "$DEPLOY_USER@$DEPLOY_HOST:plugins/webp-converter-for-media/"
-
-      - name: Sync managed WP Mail SMTP plugin
-        shell: bash
-        run: |
-          set -euo pipefail
-          rsync -az --delete-delay --itemize-changes --exclude='.DS_Store' \
-            -e "ssh -i $RUNNER_TEMP/springapex_deploy -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/springapex_known_hosts" \
-            wp-content/plugins/wp-mail-smtp/ \
-            "$DEPLOY_USER@$DEPLOY_HOST:plugins/wp-mail-smtp/"
-
-      - name: Verify the deployed WordPress response
-        shell: bash
-        run: |
-          set -euo pipefail
-          ssh -i "$RUNNER_TEMP/springapex_deploy" -o IdentitiesOnly=yes \
-            -o UserKnownHostsFile="$RUNNER_TEMP/springapex_known_hosts" \
-            "$DEPLOY_USER@$DEPLOY_HOST" springapex-health
-
-      - name: Cleanup deployment credentials
-        if: always()
-        shell: bash
-        run: |
-          rm -f \
-            "$RUNNER_TEMP/springapex_deploy" \
-            "$RUNNER_TEMP/springapex_known_hosts"

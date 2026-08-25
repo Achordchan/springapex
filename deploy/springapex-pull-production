@@ -1,0 +1,74 @@
+#!/bin/sh
+set -eu
+
+release_root='/srv/springapex/releases'
+repository="$release_root/repository.git"
+state_file="$release_root/deployed.sha"
+github_key='/home/springapex-deploy/.ssh/github_readonly'
+github_known_hosts='/home/springapex-deploy/.ssh/github_known_hosts'
+remote='git@github.com:Achordchan/springapex.git'
+site='/www/wwwroot/norenspring.com'
+
+mkdir -p "$release_root"
+chmod 0700 "$release_root"
+cd "$release_root"
+exec 9>"$release_root/deploy.lock"
+if ! /usr/bin/flock -n 9; then
+    echo 'A NorenSpring production deployment is already running.' >&2
+    exit 0
+fi
+
+export GIT_SSH_COMMAND="ssh -i $github_key -o IdentitiesOnly=yes -o UserKnownHostsFile=$github_known_hosts"
+if [ ! -d "$repository" ]; then
+    /usr/bin/git clone --bare "$remote" "$repository"
+fi
+/usr/bin/git --git-dir="$repository" fetch --prune origin \
+    '+refs/heads/production-ready:refs/remotes/origin/production-ready'
+release_sha=$(/usr/bin/git --git-dir="$repository" rev-parse 'refs/remotes/origin/production-ready^{commit}')
+case "$release_sha" in ''|*[!0-9a-f]*) release_sha='' ;; esac
+if [ "${#release_sha}" -ne 40 ]; then
+    echo 'The production-ready commit is invalid.' >&2
+    exit 1
+fi
+if [ -f "$state_file" ] && [ "$(/bin/cat "$state_file")" = "$release_sha" ]; then
+    echo "NorenSpring is already deployed at $release_sha"
+    exit 0
+fi
+
+candidate="$release_root/candidate-$release_sha"
+/bin/rm -rf -- "$candidate"
+/bin/mkdir -m 0700 -- "$candidate"
+/usr/bin/git --git-dir="$repository" archive "$release_sha" | /bin/tar -x -C "$candidate"
+
+theme="$candidate/wp-content/themes/springapex"
+webp_plugin="$candidate/wp-content/plugins/webp-converter-for-media"
+mail_plugin="$candidate/wp-content/plugins/wp-mail-smtp"
+for path in "$theme" "$webp_plugin" "$mail_plugin"; do
+    if [ ! -d "$path" ] || /usr/bin/find "$path" -type l -print -quit | /usr/bin/grep -q .; then
+        echo "The verified release contains a missing directory or symbolic link: $path" >&2
+        exit 1
+    fi
+done
+
+version=$(/bin/sed -n "s/^define('SPRINGAPEX_VERSION', '\([^']*\)');/\1/p" "$theme/functions.php")
+if ! /usr/bin/printf '%s\n' "$version" | /usr/bin/grep -Eq '^[0-9]+(\.[0-9]+)+$'; then
+    echo 'The verified release contains an invalid theme version.' >&2
+    exit 1
+fi
+/usr/bin/find "$theme" -name '*.php' -print0 \
+    | /usr/bin/xargs -0 -n1 -P4 /www/server/php/83/bin/php -l >/dev/null
+
+SSH_ORIGINAL_COMMAND="springapex-cdn-prepare $version" /usr/local/bin/springapex-deploy-command
+/usr/bin/rsync -az --delete-delay --exclude='.DS_Store' \
+    "$theme/assets/" \
+    "$site/wp-content/.springapex-cdn-stage/$version/assets/"
+SSH_ORIGINAL_COMMAND="springapex-cdn-sync $version" /usr/local/bin/springapex-deploy-command
+/usr/bin/rsync -az --delete-delay --exclude='.DS_Store' "$theme/" "$site/wp-content/themes/springapex/"
+/usr/bin/rsync -az --delete-delay --exclude='.DS_Store' "$webp_plugin/" "$site/wp-content/plugins/webp-converter-for-media/"
+/usr/bin/rsync -az --delete-delay --exclude='.DS_Store' "$mail_plugin/" "$site/wp-content/plugins/wp-mail-smtp/"
+SSH_ORIGINAL_COMMAND='springapex-health' /usr/local/bin/springapex-deploy-command
+
+/usr/bin/printf '%s\n' "$release_sha" > "$state_file.next"
+/bin/mv "$state_file.next" "$state_file"
+/bin/mv "$candidate" "$release_root/deployed-$release_sha"
+echo "Deployed verified NorenSpring commit: $release_sha"
