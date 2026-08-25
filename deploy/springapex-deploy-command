@@ -2,7 +2,18 @@
 set -eu
 
 valid_version() {
-    printf '%s\n' "$1" | /usr/bin/grep -Eq '^[0-9]+(\.[0-9]+)+$'
+    value=$1
+    line_count=$(printf '%s' "$value" | /usr/bin/wc -l | /usr/bin/tr -d '[:space:]')
+    carriage_return=$(/usr/bin/printf '\r')
+    if [ "$line_count" != '0' ]; then
+        return 1
+    fi
+    case "$value" in
+        ''|*/*|*\\*|*"$carriage_return"*)
+            return 1
+            ;;
+    esac
+    printf '%s\n' "$value" | /usr/bin/grep -Eq '^[0-9]+(\.[0-9]+)+$'
 }
 
 case "${SSH_ORIGINAL_COMMAND:-}" in

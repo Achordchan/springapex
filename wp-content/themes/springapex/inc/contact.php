@@ -975,7 +975,9 @@ function springapex_delete_private_files(array $files): void
 {
     foreach ($files as $metadata) {
         if (is_array($metadata) && ($metadata['storage'] ?? '') === 's3') {
-            springapex_s3_delete_private_file($metadata);
+            if (!springapex_s3_delete_private_file($metadata)) {
+                springapex_queue_s3_delete_retry($metadata);
+            }
         }
         $path = springapex_private_file_path($metadata);
         if ($path !== '') {
@@ -983,6 +985,63 @@ function springapex_delete_private_files(array $files): void
         }
     }
 }
+
+/** @param array<string, mixed> $metadata */
+function springapex_queue_s3_delete_retry(array $metadata): void
+{
+    $bucket = is_string($metadata['bucket'] ?? null) ? $metadata['bucket'] : '';
+    $key = is_string($metadata['key'] ?? null) ? $metadata['key'] : '';
+    if ($bucket === '' || $key === '') {
+        return;
+    }
+    $option = 'springapex_s3_delete_retry_v1';
+    $queue = get_option($option, []);
+    $queue = is_array($queue) ? $queue : [];
+    $id = hash('sha256', $bucket . "\n" . $key);
+    $queue[$id] = [
+        'metadata' => springapex_persistent_private_file_metadata($metadata),
+        'attempts' => (int) ($queue[$id]['attempts'] ?? 0),
+        'last_attempt' => time(),
+    ];
+    if (get_option($option, null) === null) {
+        add_option($option, $queue, '', false);
+    } else {
+        update_option($option, $queue, false);
+    }
+    if (!wp_next_scheduled('springapex_retry_s3_deletions')) {
+        wp_schedule_event(time() + MINUTE_IN_SECONDS, 'hourly', 'springapex_retry_s3_deletions');
+    }
+}
+
+function springapex_retry_s3_deletions(): void
+{
+    $option = 'springapex_s3_delete_retry_v1';
+    $queue = get_option($option, []);
+    if (!is_array($queue) || $queue === []) {
+        wp_clear_scheduled_hook('springapex_retry_s3_deletions');
+        return;
+    }
+    $processed = 0;
+    foreach ($queue as $id => $entry) {
+        if ($processed >= 20) {
+            break;
+        }
+        $processed++;
+        $metadata = is_array($entry['metadata'] ?? null) ? $entry['metadata'] : [];
+        if ($metadata !== [] && springapex_s3_delete_private_file($metadata)) {
+            unset($queue[$id]);
+            continue;
+        }
+        $queue[$id]['attempts'] = (int) ($entry['attempts'] ?? 0) + 1;
+        $queue[$id]['last_attempt'] = time();
+    }
+    update_option($option, $queue, false);
+    if ($queue === []) {
+        wp_clear_scheduled_hook('springapex_retry_s3_deletions');
+    }
+}
+
+add_action('springapex_retry_s3_deletions', 'springapex_retry_s3_deletions');
 
 /** @param array<int, array<string, mixed>> $files */
 function springapex_cleanup_temporary_private_files(array $files): void
