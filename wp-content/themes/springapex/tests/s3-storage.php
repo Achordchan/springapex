@@ -20,8 +20,18 @@ function is_wp_error(mixed $value): bool
     return $value instanceof WP_Error;
 }
 
-/** @return array{response:array{code:int},body:string} */
-function wp_remote_request(string $url, array $args = []): array
+/** @var array<int, array<string, mixed>> */
+$springapex_test_delete_retries = [];
+
+/** @param array<string, mixed> $metadata */
+function springapex_queue_s3_delete_retry(array $metadata): void
+{
+    global $springapex_test_delete_retries;
+    $springapex_test_delete_retries[] = $metadata;
+}
+
+/** @return array{response:array{code:int},body:string}|WP_Error */
+function wp_remote_request(string $url, array $args = []): array|WP_Error
 {
     static $stored_body = '';
     if ($url === 'http://169.254.169.254/latest/api/token') {
@@ -55,6 +65,9 @@ function wp_remote_request(string $url, array $args = []): array
             return ['response' => ['code' => 400], 'body' => ''];
         }
         $stored_body = (string) ($args['body'] ?? '');
+        if (!empty($GLOBALS['springapex_test_ambiguous_put'])) {
+            return new WP_Error('http_request_failed', 'The response was lost.');
+        }
         return ['response' => ['code' => 200], 'body' => ''];
     }
     if ($method === 'GET') {
@@ -114,6 +127,21 @@ if (is_wp_error($download) || file_get_contents($download) !== $contents) {
 if (!springapex_s3_delete_private_file($metadata)) {
     throw new RuntimeException('S3 delete flow failed.');
 }
+
+$GLOBALS['springapex_test_ambiguous_put'] = true;
+$ambiguous = springapex_s3_store_private_file(
+    $source,
+    'drawing.pdf',
+    'application/pdf',
+    hash('sha256', $contents)
+);
+$GLOBALS['springapex_test_ambiguous_put'] = false;
+if (!is_wp_error($ambiguous) || count($springapex_test_delete_retries) !== 1) {
+    throw new RuntimeException('Ambiguous S3 upload was not queued for cleanup.');
+}
+if (!springapex_s3_delete_private_file($springapex_test_delete_retries[0])) {
+    throw new RuntimeException('Ambiguous S3 upload cleanup failed.');
+}
 @unlink($source);
 @unlink($download);
-echo "s3-storage: signed upload/download/delete flow ok\n";
+echo "s3-storage: signed upload/download/delete and ambiguous cleanup flow ok\n";

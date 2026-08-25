@@ -210,15 +210,7 @@ function springapex_s3_store_private_file(
     $key = springapex_s3_private_prefix() . '/' . gmdate('Y/m') . '/' . $name;
     $bucket = springapex_s3_bucket();
     $region = springapex_s3_region();
-    $result = springapex_s3_signed_request('PUT', $bucket, $region, $key, $body, $mime);
-    if (is_wp_error($result)) {
-        return $result;
-    }
-    $response = $result['response'];
-    if (is_wp_error($response) || !in_array(wp_remote_retrieve_response_code($response), [200, 201], true)) {
-        return new WP_Error('springapex_s3_upload', 'The private file could not be stored.');
-    }
-    return [
+    $metadata = [
         'storage' => 's3',
         'bucket' => $bucket,
         'region' => $region,
@@ -227,8 +219,20 @@ function springapex_s3_store_private_file(
         'mime' => $mime,
         'size' => strlen($body),
         'sha256' => $sha256,
-        '_temporary_path' => $path,
     ];
+    $result = springapex_s3_signed_request('PUT', $bucket, $region, $key, $body, $mime);
+    if (is_wp_error($result)) {
+        return $result;
+    }
+    $response = $result['response'];
+    if (is_wp_error($response) || !in_array(wp_remote_retrieve_response_code($response), [200, 201], true)) {
+        if (function_exists('springapex_queue_s3_delete_retry')) {
+            springapex_queue_s3_delete_retry($metadata);
+        }
+        return new WP_Error('springapex_s3_upload', 'The private file could not be stored.');
+    }
+    $metadata['_temporary_path'] = $path;
+    return $metadata;
 }
 
 function springapex_s3_delete_private_file(array $metadata): bool
