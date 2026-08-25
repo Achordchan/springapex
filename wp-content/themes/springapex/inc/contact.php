@@ -1015,7 +1015,7 @@ function springapex_queue_s3_delete_retry(array $metadata): void
         update_option($option, $entry, false);
     }
     if (!wp_next_scheduled('springapex_retry_s3_deletions')) {
-        wp_schedule_event(time() + MINUTE_IN_SECONDS, 'hourly', 'springapex_retry_s3_deletions');
+        wp_schedule_single_event(time() + MINUTE_IN_SECONDS, 'springapex_retry_s3_deletions');
     }
 }
 
@@ -1025,6 +1025,9 @@ function springapex_retry_s3_deletions(): void
     if (!isset($wpdb->options) || !is_string($wpdb->options)) {
         return;
     }
+    // Replace any legacy recurring event with a one-shot retry. Enqueues that
+    // race with this handler will schedule their own event or be seen below.
+    wp_clear_scheduled_hook('springapex_retry_s3_deletions');
     $prefix = 'springapex_s3_delete_retry_v1_';
     $cursor_option = 'springapex_s3_delete_retry_cursor_v1';
     $cursor = max(0, (int) get_option($cursor_option, 0));
@@ -1058,6 +1061,18 @@ function springapex_retry_s3_deletions(): void
         if (!add_option($cursor_option, $last_option_id, '', false)) {
             update_option($cursor_option, $last_option_id, false);
         }
+    }
+
+    $remaining = $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s",
+        $wpdb->esc_like($prefix) . '%'
+    ));
+    if ($remaining !== null && (int) $remaining === 0) {
+        delete_option($cursor_option);
+        return;
+    }
+    if (!wp_next_scheduled('springapex_retry_s3_deletions')) {
+        wp_schedule_single_event(time() + HOUR_IN_SECONDS, 'springapex_retry_s3_deletions');
     }
 }
 
