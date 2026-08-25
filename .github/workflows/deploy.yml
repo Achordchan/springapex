@@ -90,7 +90,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rsync -az --delete-delay --itemize-changes \
+          ssh -i "$HOME/.ssh/springapex_deploy" -o IdentitiesOnly=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "springapex-cdn-prepare $SPRINGAPEX_RELEASE_VERSION"
+          rsync -az --delete-delay --itemize-changes --exclude='.DS_Store' \
             -e "ssh -i $HOME/.ssh/springapex_deploy -o IdentitiesOnly=yes" \
             wp-content/themes/springapex/assets/ \
             "$DEPLOY_USER@$DEPLOY_HOST:.springapex-cdn-stage/$SPRINGAPEX_RELEASE_VERSION/assets/"
@@ -107,7 +110,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rsync -az --delete-delay --itemize-changes \
+          rsync -az --delete-delay --itemize-changes --exclude='.DS_Store' \
             -e "ssh -i $HOME/.ssh/springapex_deploy -o IdentitiesOnly=yes" \
             wp-content/themes/springapex/ \
             "$DEPLOY_USER@$DEPLOY_HOST:themes/springapex/"
@@ -116,7 +119,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rsync -az --delete-delay --itemize-changes \
+          rsync -az --delete-delay --itemize-changes --exclude='.DS_Store' \
             -e "ssh -i $HOME/.ssh/springapex_deploy -o IdentitiesOnly=yes" \
             wp-content/plugins/webp-converter-for-media/ \
             "$DEPLOY_USER@$DEPLOY_HOST:plugins/webp-converter-for-media/"
@@ -125,7 +128,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rsync -az --delete-delay --itemize-changes \
+          rsync -az --delete-delay --itemize-changes --exclude='.DS_Store' \
             -e "ssh -i $HOME/.ssh/springapex_deploy -o IdentitiesOnly=yes" \
             wp-content/plugins/wp-mail-smtp/ \
             "$DEPLOY_USER@$DEPLOY_HOST:plugins/wp-mail-smtp/"

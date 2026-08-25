@@ -39,12 +39,13 @@ define('SPRINGAPEX_CDN_URL', 'https://cdn.norenspring.com');
 
 AWS credentials must not be stored in WordPress, BT Panel or GitHub. The theme
 uses IMDSv2 to obtain short-lived credentials from the attached EC2 role.
-GitHub stages only the new `assets/` directory and invokes the restricted
-`springapex-cdn-sync <version>` command before changing the live theme. The
-command publishes `public/theme/<version>/assets/` and removes the staging
-directory. Only after that succeeds does rsync activate the new theme version,
-so a failed CDN publish cannot leave production pointing at missing assets.
-PHP source files are never published.
+GitHub calls the restricted `springapex-cdn-prepare <version>` command, stages
+only the new `assets/` directory, then invokes `springapex-cdn-sync <version>`
+before changing the live theme. The sync command publishes
+`public/theme/<version>/assets/` and removes the staging directory. Only after
+that succeeds does rsync activate the new theme version, so a failed CDN
+publish cannot leave production pointing at missing assets. PHP source files
+are never published.
 
 The public website no longer uses preview Basic Auth, `X-Robots-Tag: noindex`
 or WordPress `blog_public=0`.
