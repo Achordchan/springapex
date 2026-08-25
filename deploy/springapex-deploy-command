@@ -1,6 +1,10 @@
 #!/bin/sh
 set -eu
 
+valid_version() {
+    printf '%s\n' "$1" | /usr/bin/grep -Eq '^[0-9]+(\.[0-9]+)+$'
+}
+
 case "${SSH_ORIGINAL_COMMAND:-}" in
     rsync\ --server*)
         # Ubuntu's packaged rrsync allowlist accepts the short -d form but omits
@@ -16,12 +20,10 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
         ;;
     springapex-cdn-prepare\ *)
         version=${SSH_ORIGINAL_COMMAND#springapex-cdn-prepare }
-        case "$version" in
-            ''|*[!0-9.]* )
-                echo 'The NorenSpring theme version is invalid.' >&2
-                exit 1
-                ;;
-        esac
+        if ! valid_version "$version"; then
+            echo 'The NorenSpring theme version is invalid.' >&2
+            exit 1
+        fi
         stage="/www/wwwroot/norenspring.com/wp-content/.springapex-cdn-stage/$version/assets"
         /bin/mkdir -p -- "$stage"
         /bin/chmod 2775 -- \
@@ -30,12 +32,10 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
         ;;
     springapex-cdn-sync\ *)
         version=${SSH_ORIGINAL_COMMAND#springapex-cdn-sync }
-        case "$version" in
-            ''|*[!0-9.]* )
-                echo 'The NorenSpring theme version is invalid.' >&2
-                exit 1
-                ;;
-        esac
+        if ! valid_version "$version"; then
+            echo 'The NorenSpring theme version is invalid.' >&2
+            exit 1
+        fi
         stage="/www/wwwroot/norenspring.com/wp-content/.springapex-cdn-stage/$version/assets"
         if [ ! -d "$stage" ]; then
             echo 'The staged NorenSpring CDN assets are missing.' >&2

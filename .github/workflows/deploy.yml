@@ -78,12 +78,10 @@ jobs:
           set -euo pipefail
           version="$(sed -n "s/^define('SPRINGAPEX_VERSION', '\([^']*\)');/\1/p" \
             wp-content/themes/springapex/functions.php)"
-          case "$version" in
-            ''|*[!0-9.]* )
-              echo 'Invalid NorenSpring theme version.' >&2
-              exit 1
-              ;;
-          esac
+          if ! printf '%s\n' "$version" | grep -Eq '^[0-9]+(\.[0-9]+)+$'; then
+            echo 'Invalid NorenSpring theme version.' >&2
+            exit 1
+          fi
           printf 'SPRINGAPEX_RELEASE_VERSION=%s\n' "$version" >> "$GITHUB_ENV"
 
       - name: Stage versioned CDN assets on the server
