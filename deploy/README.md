@@ -73,16 +73,21 @@ Pushes to `main` deploy only these repository-managed directories:
 
 GitHub-hosted runners perform verification only. After a successful `main`
 run, the workflow creates an HMAC-authenticated tag bound to the verified SHA,
-then advances the fast-forward-only `production-ready` branch.
+GitHub run ID and run attempt, then advances the fast-forward-only
+`production-ready` branch.
 BT Panel runs `/usr/local/sbin/springapex-pull-production` every minute as the
 unprivileged `springapex-deploy` user. The EC2 host uses an encrypted-at-rest,
 read-only GitHub deploy key to fetch that branch over outbound SSH, requires
-the marker to equal the latest `main`, verifies the HMAC attestation, rejects
-symlinks, lints PHP, publishes CDN assets and activates only the three managed
-code directories. Extracted release trees are removed after success, and stale
-candidate directories are cleared while the deployment lock is held. No
-GitHub Action or repository script executes on the production host, and public
-SSH remains restricted to the management IP.
+the marker to remain in the latest `main` history, verifies the newest HMAC
+attestation generation, rejects symlinks, lints PHP, publishes CDN assets and
+activates only the three managed code directories. Extracted release trees are
+removed after success, and stale candidate directories are cleared while the
+deployment lock is held. No GitHub Action or repository script executes on the
+production host, and public SSH remains restricted to the management IP.
+
+Because the deployment state includes the GitHub run ID and run attempt, a
+successful manual `workflow_dispatch` creates a new authenticated generation
+and intentionally redeploys the same commit to repair production drift.
 
 Recovery setup installs the puller as a root-owned executable, but the task
 itself runs without root privileges:

@@ -35,28 +35,63 @@ if [ "${#release_sha}" -ne 40 ]; then
     echo 'The production-ready commit is invalid.' >&2
     exit 1
 fi
-if [ "$release_sha" != "$main_sha" ]; then
-    echo "The verified release is waiting for the latest main commit: $main_sha"
-    exit 0
+if ! /usr/bin/git --git-dir="$repository" merge-base --is-ancestor "$release_sha" "$main_sha"; then
+    echo 'The production-ready commit is not in the current main history.' >&2
+    exit 1
 fi
 release_key=$(/bin/cat "$release_hmac_key")
 if [ -z "$release_key" ]; then
     echo 'The production release attestation key is missing.' >&2
     exit 1
 fi
-signature=$(/usr/bin/printf '%s' "$release_sha" \
-    | /usr/bin/openssl dgst -sha256 -hmac "$release_key" -binary \
-    | /usr/bin/xxd -p -c 256)
-attestation="production-ready-$release_sha-$signature"
 /usr/bin/git --git-dir="$repository" fetch origin \
-    "refs/tags/$attestation:refs/tags/$attestation"
-attested_sha=$(/usr/bin/git --git-dir="$repository" rev-parse "refs/tags/$attestation^{commit}")
-if [ "$attested_sha" != "$release_sha" ]; then
-    echo 'The production release attestation is invalid.' >&2
+    "+refs/tags/production-ready-$release_sha-*:refs/tags/production-ready-$release_sha-*"
+selected_run=0
+selected_attempt=0
+for attestation in $(/usr/bin/git --git-dir="$repository" for-each-ref \
+    --format='%(refname:strip=2)' "refs/tags/production-ready-$release_sha-*"); do
+    suffix=${attestation#production-ready-$release_sha-}
+    old_ifs=$IFS
+    IFS=-
+    set -- $suffix
+    IFS=$old_ifs
+    if [ "$#" -ne 3 ]; then
+        continue
+    fi
+    run_id=$1
+    run_attempt=$2
+    supplied_signature=$3
+    case "$run_id:$run_attempt:$supplied_signature" in
+        *[!0-9a-f:]*) continue ;;
+    esac
+    if [ -z "$run_id" ] || [ -z "$run_attempt" ] || [ "${#supplied_signature}" -ne 64 ]; then
+        continue
+    fi
+    payload="$release_sha:$run_id:$run_attempt"
+    expected_signature=$(/usr/bin/printf '%s' "$payload" \
+        | /usr/bin/openssl dgst -sha256 -hmac "$release_key" -binary \
+        | /usr/bin/xxd -p -c 256)
+    if [ "$supplied_signature" != "$expected_signature" ]; then
+        continue
+    fi
+    attested_sha=$(/usr/bin/git --git-dir="$repository" rev-parse "refs/tags/$attestation^{commit}")
+    if [ "$attested_sha" != "$release_sha" ]; then
+        continue
+    fi
+    if [ "$run_id" -gt "$selected_run" ] || {
+        [ "$run_id" -eq "$selected_run" ] && [ "$run_attempt" -gt "$selected_attempt" ];
+    }; then
+        selected_run=$run_id
+        selected_attempt=$run_attempt
+    fi
+done
+if [ "$selected_run" -eq 0 ]; then
+    echo 'No valid production release attestation was found.' >&2
     exit 1
 fi
-if [ -f "$state_file" ] && [ "$(/bin/cat "$state_file")" = "$release_sha" ]; then
-    echo "NorenSpring is already deployed at $release_sha"
+deployment_id="$release_sha:$selected_run:$selected_attempt"
+if [ -f "$state_file" ] && [ "$(/bin/cat "$state_file")" = "$deployment_id" ]; then
+    echo "NorenSpring is already deployed at $deployment_id"
     exit 0
 fi
 
@@ -93,7 +128,7 @@ SSH_ORIGINAL_COMMAND="springapex-cdn-sync $version" /usr/local/bin/springapex-de
 /usr/bin/rsync -az --delete-delay --exclude='.DS_Store' "$mail_plugin/" "$site/wp-content/plugins/wp-mail-smtp/"
 SSH_ORIGINAL_COMMAND='springapex-health' /usr/local/bin/springapex-deploy-command
 
-/usr/bin/printf '%s\n' "$release_sha" > "$state_file.next"
+/usr/bin/printf '%s\n' "$deployment_id" > "$state_file.next"
 /bin/mv "$state_file.next" "$state_file"
 /bin/rm -rf -- "$candidate"
-echo "Deployed verified NorenSpring commit: $release_sha"
+echo "Deployed verified NorenSpring release: $deployment_id"
