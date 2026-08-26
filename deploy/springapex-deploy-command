@@ -19,8 +19,8 @@ valid_version() {
 case "${SSH_ORIGINAL_COMMAND:-}" in
     springapex-health)
         exec /usr/bin/curl -fsS \
-            --resolve norenspring.com:443:127.0.0.1 \
-            https://norenspring.com/ >/dev/null
+            --resolve www.norenspring.com:443:127.0.0.1 \
+            https://www.norenspring.com/ >/dev/null
         ;;
     springapex-cdn-prepare\ *)
         version=${SSH_ORIGINAL_COMMAND#springapex-cdn-prepare }

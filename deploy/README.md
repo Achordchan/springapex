@@ -8,8 +8,8 @@ the production request path.
 
 - BT Panel site: `norenspring.com`
 - Site root: `/www/wwwroot/norenspring.com`
-- Canonical URL: `https://norenspring.com`
-- Redirect host: `www.norenspring.com`
+- Canonical URL: `https://www.norenspring.com`
+- Redirect host: `norenspring.com`
 - Nginx vhost: `/www/server/panel/vhost/nginx/norenspring.com.conf`
 - WordPress database: managed and visible in BT Panel
 - Production backups: managed as BT Panel scheduled tasks and copied to the
@@ -60,6 +60,11 @@ Panel Shell scheduled task at 03:00 daily that runs that command after the
 02:00 site backup and 02:30 database backup. The script uses the EC2 instance
 role, validates both gzip archives, uploads them under `backups/site/` and
 `backups/database/`, and verifies the S3 object size and SSE-S3 encryption.
+The bucket lifecycle rule `NorenSpring backups 7-day retention` applies only
+to the `backups/` prefix: current versions expire after 7 days, noncurrent
+versions are permanently deleted after 1 day, and incomplete multipart uploads
+are removed after 1 day. The rule does not affect CDN assets or private inquiry
+attachments.
 
 The public website no longer uses preview Basic Auth, `X-Robots-Tag: noindex`
 or WordPress `blog_public=0`.
@@ -145,12 +150,12 @@ install -d -o springapex-deploy -g www -m 2750 \
 Run these after a release; a green GitHub Actions run alone is insufficient.
 
 ```bash
-curl -fsS --resolve norenspring.com:443:127.0.0.1 \
-  https://norenspring.com/ >/dev/null
-curl -fsSI https://norenspring.com/
+curl -fsS --resolve www.norenspring.com:443:127.0.0.1 \
+  https://www.norenspring.com/ >/dev/null
 curl -fsSI https://www.norenspring.com/
+curl -fsSI https://norenspring.com/
 curl -sS -o /dev/null -w '%{http_code}\n' \
-  https://norenspring.com/wp-content/uploads/springapex-private/probe.txt
+  https://www.norenspring.com/wp-content/uploads/springapex-private/probe.txt
 ```
 
 Verify in BT Panel as well:
@@ -158,7 +163,7 @@ Verify in BT Panel as well:
 - Nginx, PHP and database services are running.
 - PHP upload limits are 10 MB per file and 12 MB per request.
 - The private attachment URL returns 403 or 404.
-- WordPress `home` and `siteurl` are `https://norenspring.com`.
+- WordPress `home` and `siteurl` are `https://www.norenspring.com`.
 - WordPress `blog_public` is `1`.
 - Recent Nginx, PHP and WordPress logs contain no fatal errors.
 - Let's Encrypt renewal covers all production hostnames.
