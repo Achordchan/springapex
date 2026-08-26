@@ -29,6 +29,7 @@ if (!$certificates) {
       $document_urls = springapex_file_delivery_urls($document, 'assets/documents');
       $document_url = $document_urls['preferred'];
       $document_original_url = $document_urls['original'];
+      $card_url = $viewer ? $document_url : $document_original_url;
       ?>
       <?php if ($viewer) : ?>
         <button
@@ -44,7 +45,7 @@ if (!$certificates) {
           aria-controls="<?php echo esc_attr($gallery_id); ?>-viewer"
         >
       <?php else : ?>
-        <a class="sa-certificate-card" href="<?php echo esc_url($document_url); ?>" target="_blank" rel="noopener noreferrer">
+        <a class="sa-certificate-card" href="<?php echo esc_url($card_url); ?>" target="_blank" rel="noopener noreferrer">
       <?php endif; ?>
         <span class="sa-certificate-card__media">
           <?php echo springapex_image((string) ($certificate['image'] ?? ''), (string) ($certificate['name'] ?? ''), [
