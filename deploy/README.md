@@ -60,6 +60,11 @@ Panel Shell scheduled task at 03:00 daily that runs that command after the
 02:00 site backup and 02:30 database backup. The script uses the EC2 instance
 role, validates both gzip archives, uploads them under `backups/site/` and
 `backups/database/`, and verifies the S3 object size and SSE-S3 encryption.
+The bucket lifecycle rule `NorenSpring backups 7-day retention` applies only
+to the `backups/` prefix: current versions expire after 7 days, noncurrent
+versions are permanently deleted after 1 day, and incomplete multipart uploads
+are removed after 1 day. The rule does not affect CDN assets or private inquiry
+attachments.
 
 The public website no longer uses preview Basic Auth, `X-Robots-Tag: noindex`
 or WordPress `blog_public=0`.
