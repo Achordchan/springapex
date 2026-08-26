@@ -8,10 +8,26 @@ reload_pending="$target.reload-pending"
 nginx='/www/server/nginx/sbin/nginx'
 
 work_dir=$(/usr/bin/mktemp -d)
-trap '/bin/rm -rf "$work_dir"' EXIT HUP INT TERM
 ranges_json="$work_dir/ip-ranges.json"
 candidate="$work_dir/cloudfront-real-ip.conf"
 previous="$work_dir/cloudfront-real-ip.previous"
+staged_target="$target_dir/.cloudfront-real-ip.next-$$"
+
+cleanup() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    /bin/rm -f "$staged_target"
+    /bin/rm -rf "$work_dir"
+    exit "$status"
+}
+trap cleanup EXIT
+trap 'exit 1' HUP INT TERM
+
+replace_target() {
+    source_file=$1
+    /usr/bin/install -o root -g root -m 0644 "$source_file" "$staged_target"
+    /bin/mv -Tf "$staged_target" "$target"
+}
 
 /usr/bin/curl --proto '=https' --tlsv1.2 -fsS "$aws_ranges_url" -o "$ranges_json"
 
@@ -50,10 +66,10 @@ if [ -f "$target" ] && [ "$had_pending" -eq 0 ]; then
 fi
 
 /usr/bin/touch "$reload_pending"
-/usr/bin/install -o root -g root -m 0644 "$candidate" "$target"
+replace_target "$candidate"
 if ! "$nginx" -t; then
     if [ -f "$previous" ]; then
-        /usr/bin/install -o root -g root -m 0644 "$previous" "$target"
+        replace_target "$previous"
         /bin/rm -f "$reload_pending"
     fi
     echo 'Nginx rejected the refreshed CloudFront real-IP configuration.' >&2
@@ -62,7 +78,7 @@ fi
 
 if ! "$nginx" -s reload; then
     if [ -f "$previous" ]; then
-        /usr/bin/install -o root -g root -m 0644 "$previous" "$target"
+        replace_target "$previous"
         if "$nginx" -t; then
             "$nginx" -s reload || true
         fi
