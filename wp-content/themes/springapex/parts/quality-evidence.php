@@ -91,7 +91,6 @@ if (!$image) {
         ?>
         <input type="hidden" name="inquiry_type" value="<?php echo $capability_dimensions_default ? 'Request a Quote' : 'Upload a Drawing'; ?>" data-inquiry-type>
         <input type="hidden" name="started_at" value="<?php echo esc_attr((string) time()); ?>" data-form-started-at>
-        <input type="hidden" name="full_name" value="Capabilities inquiry">
         <label class="honeypot" aria-hidden="true">Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
 
         <div class="sa-compression-form__modes" role="tablist" aria-label="<?php esc_attr_e('How to send requirements', 'springapex'); ?>">
