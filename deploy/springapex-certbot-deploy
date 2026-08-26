@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+
+source_dir='/etc/letsencrypt/live/norenspring.com'
+target_dir='/www/server/panel/vhost/cert/norenspring.com'
+
+/usr/bin/install -d -o root -g root -m 0700 "$target_dir"
+/usr/bin/install -o root -g root -m 0644 "$source_dir/fullchain.pem" "$target_dir/fullchain.pem"
+/usr/bin/install -o root -g root -m 0600 "$source_dir/privkey.pem" "$target_dir/privkey.pem"
+/www/server/nginx/sbin/nginx -t
+/www/server/nginx/sbin/nginx -s reload

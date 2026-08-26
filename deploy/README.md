@@ -10,6 +10,7 @@ the production request path.
 - Site root: `/www/wwwroot/norenspring.com`
 - Canonical URL: `https://www.norenspring.com`
 - Redirect host: `norenspring.com`
+- CloudFront origin hostname: `origin.norenspring.com`
 - Nginx vhost: `/www/server/panel/vhost/nginx/norenspring.com.conf`
 - WordPress database: managed and visible in BT Panel
 - Production backups: managed as BT Panel scheduled tasks and copied to the
@@ -21,12 +22,30 @@ the production request path.
 - CloudFront distribution: `E3KAOKVHE37PM3`
 - CloudFront domain: `d1i3aekcxk6dsb.cloudfront.net`
 - Public CDN domain: `cdn.norenspring.com`
+- Whole-site CloudFront distribution: `E3RJJNEV93MH8L`
+- Whole-site CloudFront domain: `d1toybyvcdpqap.cloudfront.net`
 - EC2 instance role: `NorenSpringEC2RoleNorenSpringStorageAccess`
 
 The bucket has ACLs disabled, all public access blocked, versioning enabled and
 SSE-S3 default encryption. CloudFront is restricted to the bucket's `public/`
 origin path. Inquiry attachments use `private/inquiries/`; backups use
 `backups/`. Neither private prefix is exposed through CloudFront.
+
+The public hosts `norenspring.com` and `www.norenspring.com` are DNS-only
+CNAME records pointing to the whole-site CloudFront distribution. That
+distribution connects to `origin.norenspring.com` over HTTPS, redirects HTTP
+viewers to HTTPS, forwards all WordPress request methods and uses the managed
+`CachingDisabled` policy. It therefore acts as the public AWS reverse proxy
+without caching dynamic WordPress HTML. The separate `cdn.norenspring.com`
+distribution continues to serve immutable theme assets from the bucket.
+
+The origin hostname remains a DNS-only A record to the EC2 address so
+CloudFront can reach it directly. The Nginx certificate must cover
+`norenspring.com`, `www.norenspring.com` and `origin.norenspring.com`. Install
+`deploy/springapex-certbot-deploy` as the root-owned executable
+`/etc/letsencrypt/renewal-hooks/deploy/springapex-certbot-deploy`; successful
+Certbot renewals then copy the renewed certificate into BT Panel's certificate
+directory, validate Nginx and reload it.
 
 Production `wp-config.php` must define:
 
@@ -154,6 +173,7 @@ curl -fsS --resolve www.norenspring.com:443:127.0.0.1 \
   https://www.norenspring.com/ >/dev/null
 curl -fsSI https://www.norenspring.com/
 curl -fsSI https://norenspring.com/
+curl -fsSI https://www.norenspring.com/wp-json/
 curl -sS -o /dev/null -w '%{http_code}\n' \
   https://www.norenspring.com/wp-content/uploads/springapex-private/probe.txt
 ```
@@ -163,6 +183,10 @@ Verify in BT Panel as well:
 - Nginx, PHP and database services are running.
 - PHP upload limits are 10 MB per file and 12 MB per request.
 - The private attachment URL returns 403 or 404.
+- Public responses include `via`, `x-cache` and `x-amz-cf-pop` CloudFront
+  headers, and the public DNS answers no longer expose the EC2 address.
+- `norenspring.com` redirects to `https://www.norenspring.com` while retaining
+  the original path and query string.
 - WordPress `home` and `siteurl` are `https://www.norenspring.com`.
 - WordPress `blog_public` is `1`.
 - Recent Nginx, PHP and WordPress logs contain no fatal errors.

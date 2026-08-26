@@ -33,3 +33,6 @@ jobs:
 
       - name: Require a new version for changed CDN assets
         run: sh deploy/verify-asset-version-bump.sh "${{ github.event.pull_request.base.sha }}"
+
+      - name: Check certificate hook shell syntax
+        run: sh -n deploy/springapex-certbot-deploy
