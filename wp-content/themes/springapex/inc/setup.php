@@ -94,6 +94,8 @@ add_action('wp_enqueue_scripts', static function (): void {
     }
     if ($route === 'product') {
         $enqueue_style('springapex-product-details', 'product-details.css');
+    }
+    if (in_array($route, ['product', 'capabilities'], true)) {
         $enqueue_style('springapex-product-compression', 'product-compression.css');
     }
     if ($route === 'solution') {
@@ -108,7 +110,7 @@ add_action('wp_enqueue_scripts', static function (): void {
         SPRINGAPEX_VERSION,
         ['strategy' => 'defer', 'in_footer' => true]
     );
-    if ($route === 'product') {
+    if (in_array($route, ['product', 'capabilities'], true)) {
         wp_enqueue_script(
             'springapex-product-compression',
             SPRINGAPEX_URI . '/assets/js/product-compression.js',

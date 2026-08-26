@@ -231,12 +231,6 @@ function springapex_process_contact_submission(): array|WP_Error
         }
     }
 
-    // 姓名可按表单关闭：关闭且为空时用邮箱前缀兜底，询盘标题不至于空白。
-    if ($name === '') {
-        $at = strpos($email, '@');
-        $name = $at !== false ? substr($email, 0, $at) : 'Visitor';
-    }
-
     if (
         !is_email($email) ||
         $schema_missing !== [] ||
