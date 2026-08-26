@@ -667,17 +667,9 @@ function springapex_image(int|string|array $image, string $alt, array $args = []
 
     $is_url = str_starts_with($fallback, 'http://') || str_starts_with($fallback, 'https://');
     $variants = $is_url ? [] : springapex_static_image_variants($fallback);
-    $webp_fallback = null;
-    foreach ($variants as $variant) {
-        if (($variant['type'] ?? '') === 'image/webp') {
-            $webp_fallback = $variant;
-            break;
-        }
-    }
-
     $src = $is_url
         ? $fallback
-        : (string) ($webp_fallback['url'] ?? springapex_asset('assets/images/' . ltrim($fallback, '/')));
+        : springapex_asset('assets/images/' . ltrim($fallback, '/'));
     $attrs  = [
         'src="' . esc_url($src) . '"',
         'alt="' . esc_attr($alt) . '"',
@@ -697,14 +689,11 @@ function springapex_image(int|string|array $image, string $alt, array $args = []
     if ($args['sizes']) {
         $attrs[] = 'sizes="' . esc_attr((string) $args['sizes']) . '"';
     }
-    if (!empty($webp_fallback['srcset'])) {
-        $attrs[] = 'srcset="' . esc_attr((string) $webp_fallback['srcset']) . '"';
-    }
-
     $img = '<img ' . implode(' ', $attrs) . '>';
     $sources = $mobile_sources;
+    $fallback_file = ltrim($fallback, '/');
     foreach ($variants as $variant) {
-        if (($variant['type'] ?? '') === 'image/webp' && $webp_fallback) {
+        if (($variant['file'] ?? '') === $fallback_file) {
             continue;
         }
         $source_sizes = $args['sizes'] ? ' sizes="' . esc_attr((string) $args['sizes']) . '"' : '';
