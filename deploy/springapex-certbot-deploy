@@ -8,6 +8,12 @@ current_link="$target_dir/current"
 retry_marker="$target_dir/.springapex-certbot-deploy-pending"
 nginx='/www/server/nginx/sbin/nginx'
 
+exec 9>/var/lock/springapex-certbot-deploy.lock
+if ! /usr/bin/flock -n 9; then
+    echo 'A NorenSpring certificate deployment is already running.' >&2
+    exit 0
+fi
+
 if [ ! -L "$current_link" ]; then
     echo 'The BT Panel certificate current symlink is missing.' >&2
     exit 1
