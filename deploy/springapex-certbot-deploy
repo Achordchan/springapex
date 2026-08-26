@@ -3,9 +3,42 @@ set -eu
 
 source_dir='/etc/letsencrypt/live/norenspring.com'
 target_dir='/www/server/panel/vhost/cert/norenspring.com'
+nginx='/www/server/nginx/sbin/nginx'
 
 /usr/bin/install -d -o root -g root -m 0700 "$target_dir"
-/usr/bin/install -o root -g root -m 0644 "$source_dir/fullchain.pem" "$target_dir/fullchain.pem"
-/usr/bin/install -o root -g root -m 0600 "$source_dir/privkey.pem" "$target_dir/privkey.pem"
-/www/server/nginx/sbin/nginx -t
-/www/server/nginx/sbin/nginx -s reload
+if [ ! -f "$target_dir/fullchain.pem" ] || [ ! -f "$target_dir/privkey.pem" ]; then
+    echo 'The existing BT Panel certificate pair is incomplete.' >&2
+    exit 1
+fi
+
+work_dir=$(/usr/bin/mktemp -d "$target_dir/.springapex-certbot.XXXXXX")
+rollback_required=0
+
+cleanup() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ "$rollback_required" -eq 1 ]; then
+        /usr/bin/install -o root -g root -m 0644 "$work_dir/fullchain.previous" "$target_dir/fullchain.pem"
+        /usr/bin/install -o root -g root -m 0600 "$work_dir/privkey.previous" "$target_dir/privkey.pem"
+        if "$nginx" -t; then
+            "$nginx" -s reload
+        else
+            echo 'The previous certificate pair was restored, but Nginx validation still failed.' >&2
+        fi
+    fi
+    /bin/rm -rf "$work_dir"
+    exit "$status"
+}
+trap cleanup EXIT HUP INT TERM
+
+/bin/cp -p "$target_dir/fullchain.pem" "$work_dir/fullchain.previous"
+/bin/cp -p "$target_dir/privkey.pem" "$work_dir/privkey.previous"
+/usr/bin/install -o root -g root -m 0644 "$source_dir/fullchain.pem" "$work_dir/fullchain.next"
+/usr/bin/install -o root -g root -m 0600 "$source_dir/privkey.pem" "$work_dir/privkey.next"
+
+rollback_required=1
+/usr/bin/install -o root -g root -m 0644 "$work_dir/fullchain.next" "$target_dir/fullchain.pem"
+/usr/bin/install -o root -g root -m 0600 "$work_dir/privkey.next" "$target_dir/privkey.pem"
+"$nginx" -t
+"$nginx" -s reload
+rollback_required=0
