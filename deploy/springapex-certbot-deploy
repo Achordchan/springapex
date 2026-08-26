@@ -1,0 +1,92 @@
+#!/bin/sh
+set -eu
+
+source_dir='/etc/letsencrypt/live/norenspring.com'
+target_dir='/www/server/panel/vhost/cert/norenspring.com'
+releases_dir="$target_dir/releases"
+current_link="$target_dir/current"
+retry_marker="$target_dir/.springapex-certbot-deploy-pending"
+nginx='/www/server/nginx/sbin/nginx'
+
+exec 9>/var/lock/springapex-certbot-deploy.lock
+if ! /usr/bin/flock -n 9; then
+    echo 'A NorenSpring certificate deployment is already running.' >&2
+    exit 0
+fi
+
+if [ ! -L "$current_link" ]; then
+    echo 'The BT Panel certificate current symlink is missing.' >&2
+    exit 1
+fi
+current_dir=$(/usr/bin/readlink -f "$current_link")
+case "$current_dir" in
+    "$releases_dir"/*) ;;
+    *)
+        echo 'The BT Panel certificate current symlink escaped its releases directory.' >&2
+        exit 1
+        ;;
+esac
+if [ ! -f "$current_dir/fullchain.pem" ] || [ ! -f "$current_dir/privkey.pem" ]; then
+    echo 'The active BT Panel certificate pair is incomplete.' >&2
+    exit 1
+fi
+if /usr/bin/cmp -s "$source_dir/fullchain.pem" "$current_dir/fullchain.pem" \
+    && /usr/bin/cmp -s "$source_dir/privkey.pem" "$current_dir/privkey.pem" \
+    && [ ! -f "$retry_marker" ]; then
+    exit 0
+fi
+
+/usr/bin/touch "$retry_marker"
+release_name="cert-$(/usr/bin/date +%s)-$$"
+candidate_dir="$releases_dir/$release_name"
+next_link="$target_dir/.springapex-current-next-$$"
+previous_target=$(/usr/bin/readlink "$current_link")
+switched=0
+
+cleanup() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    /bin/rm -f "$next_link"
+    if [ "$status" -ne 0 ] && [ "$switched" -eq 0 ]; then
+        /bin/rm -rf "$candidate_dir"
+    fi
+    exit "$status"
+}
+trap cleanup EXIT
+trap 'exit 1' HUP INT TERM
+
+/usr/bin/install -d -o root -g root -m 0700 "$releases_dir"
+/usr/bin/install -d -o root -g root -m 0700 "$candidate_dir"
+/usr/bin/install -o root -g root -m 0644 "$source_dir/fullchain.pem" "$candidate_dir/fullchain.pem"
+/usr/bin/install -o root -g root -m 0600 "$source_dir/privkey.pem" "$candidate_dir/privkey.pem"
+
+cert_public_key=$(
+    /usr/bin/openssl x509 -in "$candidate_dir/fullchain.pem" -pubkey -noout \
+        | /usr/bin/openssl pkey -pubin -outform DER \
+        | /usr/bin/sha256sum
+)
+private_public_key=$(
+    /usr/bin/openssl pkey -in "$candidate_dir/privkey.pem" -pubout -outform DER \
+        | /usr/bin/sha256sum
+)
+if [ "$cert_public_key" != "$private_public_key" ]; then
+    echo 'The renewed certificate does not match its private key.' >&2
+    exit 1
+fi
+
+/bin/ln -s "releases/$release_name" "$next_link"
+/bin/mv -Tf "$next_link" "$current_link"
+switched=1
+
+if ! "$nginx" -t || ! "$nginx" -s reload; then
+    /bin/ln -s "$previous_target" "$next_link"
+    /bin/mv -Tf "$next_link" "$current_link"
+    switched=0
+    if "$nginx" -t; then
+        "$nginx" -s reload || true
+    fi
+    echo 'Nginx rejected the renewed certificate; the previous pair was restored.' >&2
+    exit 1
+fi
+
+/bin/rm -f "$retry_marker"
