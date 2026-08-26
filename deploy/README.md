@@ -8,8 +8,8 @@ the production request path.
 
 - BT Panel site: `norenspring.com`
 - Site root: `/www/wwwroot/norenspring.com`
-- Canonical URL: `https://norenspring.com`
-- Redirect host: `www.norenspring.com`
+- Canonical URL: `https://www.norenspring.com`
+- Redirect host: `norenspring.com`
 - Nginx vhost: `/www/server/panel/vhost/nginx/norenspring.com.conf`
 - WordPress database: managed and visible in BT Panel
 - Production backups: managed as BT Panel scheduled tasks and copied to the
@@ -145,12 +145,12 @@ install -d -o springapex-deploy -g www -m 2750 \
 Run these after a release; a green GitHub Actions run alone is insufficient.
 
 ```bash
-curl -fsS --resolve norenspring.com:443:127.0.0.1 \
-  https://norenspring.com/ >/dev/null
-curl -fsSI https://norenspring.com/
+curl -fsS --resolve www.norenspring.com:443:127.0.0.1 \
+  https://www.norenspring.com/ >/dev/null
 curl -fsSI https://www.norenspring.com/
+curl -fsSI https://norenspring.com/
 curl -sS -o /dev/null -w '%{http_code}\n' \
-  https://norenspring.com/wp-content/uploads/springapex-private/probe.txt
+  https://www.norenspring.com/wp-content/uploads/springapex-private/probe.txt
 ```
 
 Verify in BT Panel as well:
@@ -158,7 +158,7 @@ Verify in BT Panel as well:
 - Nginx, PHP and database services are running.
 - PHP upload limits are 10 MB per file and 12 MB per request.
 - The private attachment URL returns 403 or 404.
-- WordPress `home` and `siteurl` are `https://norenspring.com`.
+- WordPress `home` and `siteurl` are `https://www.norenspring.com`.
 - WordPress `blog_public` is `1`.
 - Recent Nginx, PHP and WordPress logs contain no fatal errors.
 - Let's Encrypt renewal covers all production hostnames.
