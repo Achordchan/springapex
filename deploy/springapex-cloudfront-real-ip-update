@@ -41,7 +41,11 @@ fi
 if [ -f "$target" ] && /usr/bin/cmp -s "$candidate" "$target" && [ ! -f "$reload_pending" ]; then
     exit 0
 fi
-if [ -f "$target" ]; then
+had_pending=0
+if [ -f "$reload_pending" ]; then
+    had_pending=1
+fi
+if [ -f "$target" ] && [ "$had_pending" -eq 0 ]; then
     /bin/cp -p "$target" "$previous"
 fi
 
