@@ -50,8 +50,8 @@ fi
 if ! "$nginx" -t; then
     if [ -f "$previous" ]; then
         /usr/bin/install -o root -g root -m 0644 "$previous" "$target"
+        /bin/rm -f "$reload_pending"
     fi
-    /bin/rm -f "$reload_pending"
     echo 'Nginx rejected the refreshed CloudFront real-IP configuration.' >&2
     exit 1
 fi
