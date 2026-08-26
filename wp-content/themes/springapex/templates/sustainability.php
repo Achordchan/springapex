@@ -132,7 +132,7 @@ $sustainability_hero = springapex_get('sustainability.hero', []);
         <?php foreach ($certificates as $certificate) : ?>
           <?php
           $document = trim((string) ($certificate['document'] ?? ''));
-          $document_url = springapex_file_url($document, 'assets/documents');
+          $document_url = springapex_file_delivery_urls($document, 'assets/documents')['original'];
           ?>
           <a class="sa-sustainability-certificate" href="<?php echo esc_url($document_url); ?>" target="_blank" rel="noopener noreferrer">
             <figure>

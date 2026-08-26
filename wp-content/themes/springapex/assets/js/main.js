@@ -1110,12 +1110,18 @@
         trigger.addEventListener('click', () => {
           const src = trigger.dataset.certificateSrc || '';
           if (!src) return;
+          const fallbackSrc = trigger.dataset.certificateFallback || '';
 
           activeTrigger = trigger;
           const certificateTitle = trigger.dataset.certificateTitle || '';
           const certificateScope = trigger.dataset.certificateScope || '';
           const certificateValidity = trigger.dataset.certificateValidity || '';
 
+          image.onerror = () => {
+            if (!fallbackSrc || image.src === fallbackSrc) return;
+            image.onerror = null;
+            image.src = fallbackSrc;
+          };
           image.src = src;
           image.alt = certificateTitle;
           if (title) title.textContent = certificateTitle;
@@ -1135,6 +1141,7 @@
         closeViewer();
       });
       dialog.addEventListener('close', () => {
+        image.onerror = null;
         image.removeAttribute('src');
         image.alt = '';
         document.body.classList.remove('certificate-viewer-open');
