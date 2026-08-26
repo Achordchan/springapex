@@ -1,0 +1,56 @@
+#!/bin/sh
+set -eu
+
+aws_ranges_url='https://ip-ranges.amazonaws.com/ip-ranges.json'
+target='/www/server/panel/vhost/nginx/cloudfront-real-ip.conf'
+target_dir=${target%/*}
+nginx='/www/server/nginx/sbin/nginx'
+
+work_dir=$(/usr/bin/mktemp -d)
+trap '/bin/rm -rf "$work_dir"' EXIT HUP INT TERM
+ranges_json="$work_dir/ip-ranges.json"
+candidate="$work_dir/cloudfront-real-ip.conf"
+previous="$work_dir/cloudfront-real-ip.previous"
+
+/usr/bin/curl --proto '=https' --tlsv1.2 -fsS "$aws_ranges_url" -o "$ranges_json"
+
+{
+    echo '# Generated from AWS ip-ranges.json. Do not edit manually.'
+    /usr/bin/jq -r '
+        .prefixes[]
+        | select(.service == "CLOUDFRONT_ORIGIN_FACING")
+        | "set_real_ip_from \(.ip_prefix);"
+    ' "$ranges_json"
+    /usr/bin/jq -r '
+        .ipv6_prefixes[]
+        | select(.service == "CLOUDFRONT_ORIGIN_FACING")
+        | "set_real_ip_from \(.ipv6_prefix);"
+    ' "$ranges_json"
+    echo 'real_ip_header CloudFront-Viewer-Address;'
+    echo 'real_ip_recursive on;'
+} > "$candidate"
+
+range_count=$(/usr/bin/grep -c '^set_real_ip_from ' "$candidate" || true)
+if [ "$range_count" -lt 10 ]; then
+    echo 'AWS returned too few CloudFront origin-facing ranges.' >&2
+    exit 1
+fi
+
+/usr/bin/install -d -o root -g root -m 0755 "$target_dir"
+if [ -f "$target" ] && /usr/bin/cmp -s "$candidate" "$target"; then
+    exit 0
+fi
+if [ -f "$target" ]; then
+    /bin/cp -p "$target" "$previous"
+fi
+
+/usr/bin/install -o root -g root -m 0644 "$candidate" "$target"
+if ! "$nginx" -t; then
+    if [ -f "$previous" ]; then
+        /usr/bin/install -o root -g root -m 0644 "$previous" "$target"
+    fi
+    echo 'Nginx rejected the refreshed CloudFront real-IP configuration.' >&2
+    exit 1
+fi
+
+"$nginx" -s reload

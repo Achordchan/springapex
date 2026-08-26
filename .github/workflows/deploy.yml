@@ -47,6 +47,7 @@ jobs:
           sh -n deploy/verify-asset-version-bump.sh
           sh -n deploy/springapex-backup-to-s3
           sh -n deploy/springapex-certbot-deploy
+          sh -n deploy/springapex-cloudfront-real-ip-update
           sh -n deploy/springapex-pull-production
 
       - name: Check theme JavaScript syntax

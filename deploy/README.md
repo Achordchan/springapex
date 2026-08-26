@@ -47,6 +47,17 @@ CloudFront can reach it directly. The Nginx certificate must cover
 Certbot renewals then copy the renewed certificate into BT Panel's certificate
 directory, validate Nginx and reload it.
 
+CloudFront sends the viewer address in `CloudFront-Viewer-Address`, while PHP
+otherwise sees the CloudFront edge address as `REMOTE_ADDR`. Install
+`deploy/springapex-cloudfront-real-ip-update` as the root-owned executable
+`/usr/local/sbin/springapex-cloudfront-real-ip-update`, run it once before
+activating the repository Nginx vhost, then schedule it in BT Panel once daily.
+The script builds Nginx trust directives only from AWS's
+`CLOUDFRONT_ORIGIN_FACING` ranges, rejects unexpectedly empty responses,
+validates Nginx and reloads it only when the range file changes. This keeps the
+contact-form IP rate limit isolated per visitor without trusting a forged
+viewer header from a direct origin request.
+
 Production `wp-config.php` must define:
 
 ```php
@@ -187,6 +198,8 @@ Verify in BT Panel as well:
   headers, and the public DNS answers no longer expose the EC2 address.
 - `norenspring.com` redirects to `https://www.norenspring.com` while retaining
   the original path and query string.
+- A CloudFront request reaches PHP with the viewer IP in `REMOTE_ADDR`, so the
+  inquiry IP rate limit is not shared by an entire CloudFront edge.
 - WordPress `home` and `siteurl` are `https://www.norenspring.com`.
 - WordPress `blog_public` is `1`.
 - Recent Nginx, PHP and WordPress logs contain no fatal errors.
