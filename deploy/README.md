@@ -45,7 +45,11 @@ CloudFront can reach it directly. The Nginx certificate must cover
 `deploy/springapex-certbot-deploy` as the root-owned executable
 `/etc/letsencrypt/renewal-hooks/deploy/springapex-certbot-deploy`; successful
 Certbot renewals then copy the renewed certificate into BT Panel's certificate
-directory, validate Nginx and reload it.
+directory, validate Nginx and reload it. Also schedule the same executable as a
+daily BT Panel Shell task after the normal Certbot renewal task. Failed
+certificate deployments retain a pending marker and are retried by that task;
+unchanged certificate pairs without a pending marker exit without reloading
+Nginx.
 
 CloudFront sends the viewer address in `CloudFront-Viewer-Address`, while PHP
 otherwise sees the CloudFront edge address as `REMOTE_ADDR`. Install

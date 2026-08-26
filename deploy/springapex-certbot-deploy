@@ -3,6 +3,7 @@ set -eu
 
 source_dir='/etc/letsencrypt/live/norenspring.com'
 target_dir='/www/server/panel/vhost/cert/norenspring.com'
+retry_marker="$target_dir/.springapex-certbot-deploy-pending"
 nginx='/www/server/nginx/sbin/nginx'
 
 /usr/bin/install -d -o root -g root -m 0700 "$target_dir"
@@ -10,7 +11,13 @@ if [ ! -f "$target_dir/fullchain.pem" ] || [ ! -f "$target_dir/privkey.pem" ]; t
     echo 'The existing BT Panel certificate pair is incomplete.' >&2
     exit 1
 fi
+if /usr/bin/cmp -s "$source_dir/fullchain.pem" "$target_dir/fullchain.pem" \
+    && /usr/bin/cmp -s "$source_dir/privkey.pem" "$target_dir/privkey.pem" \
+    && [ ! -f "$retry_marker" ]; then
+    exit 0
+fi
 
+/usr/bin/touch "$retry_marker"
 work_dir=$(/usr/bin/mktemp -d "$target_dir/.springapex-certbot.XXXXXX")
 rollback_required=0
 
@@ -42,3 +49,4 @@ rollback_required=1
 "$nginx" -t
 "$nginx" -s reload
 rollback_required=0
+/bin/rm -f "$retry_marker"
