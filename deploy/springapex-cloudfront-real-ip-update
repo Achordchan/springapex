@@ -4,6 +4,7 @@ set -eu
 aws_ranges_url='https://ip-ranges.amazonaws.com/ip-ranges.json'
 target='/www/server/panel/vhost/nginx/cloudfront-real-ip.conf'
 target_dir=${target%/*}
+reload_pending="$target.reload-pending"
 nginx='/www/server/nginx/sbin/nginx'
 
 work_dir=$(/usr/bin/mktemp -d)
@@ -37,20 +38,33 @@ if [ "$range_count" -lt 10 ]; then
 fi
 
 /usr/bin/install -d -o root -g root -m 0755 "$target_dir"
-if [ -f "$target" ] && /usr/bin/cmp -s "$candidate" "$target"; then
+if [ -f "$target" ] && /usr/bin/cmp -s "$candidate" "$target" && [ ! -f "$reload_pending" ]; then
     exit 0
 fi
 if [ -f "$target" ]; then
     /bin/cp -p "$target" "$previous"
 fi
 
+/usr/bin/touch "$reload_pending"
 /usr/bin/install -o root -g root -m 0644 "$candidate" "$target"
 if ! "$nginx" -t; then
     if [ -f "$previous" ]; then
         /usr/bin/install -o root -g root -m 0644 "$previous" "$target"
     fi
+    /bin/rm -f "$reload_pending"
     echo 'Nginx rejected the refreshed CloudFront real-IP configuration.' >&2
     exit 1
 fi
 
-"$nginx" -s reload
+if ! "$nginx" -s reload; then
+    if [ -f "$previous" ]; then
+        /usr/bin/install -o root -g root -m 0644 "$previous" "$target"
+        if "$nginx" -t; then
+            "$nginx" -s reload || true
+        fi
+        /bin/rm -f "$reload_pending"
+    fi
+    echo 'Nginx failed to reload the refreshed CloudFront real-IP configuration.' >&2
+    exit 1
+fi
+/bin/rm -f "$reload_pending"
