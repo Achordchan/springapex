@@ -57,6 +57,28 @@ function springapex_system_status_s3_retry_count(): int
     return max(0, (int) $count);
 }
 
+function springapex_system_status_queue_s3_probe_cleanup(
+    string $bucket,
+    string $region,
+    string $key,
+    string $payload
+): bool {
+    if (!function_exists('springapex_queue_s3_delete_retry')) {
+        return false;
+    }
+    springapex_queue_s3_delete_retry([
+        'storage' => 's3',
+        'bucket' => $bucket,
+        'region' => $region,
+        'key' => $key,
+        'original_name' => 'springapex-health-probe.txt',
+        'mime' => 'text/plain',
+        'size' => strlen($payload),
+        'sha256' => hash('sha256', $payload),
+    ]);
+    return true;
+}
+
 /** @return array<string, mixed> */
 function springapex_system_status_snapshot(): array
 {
@@ -153,23 +175,39 @@ function springapex_system_status_s3_probe(): array
 
     $put = springapex_s3_signed_request('PUT', $bucket, $region, $key, $payload, 'text/plain');
     if (is_wp_error($put) || is_wp_error($put['response'] ?? null)) {
-        springapex_s3_signed_request('DELETE', $bucket, $region, $key);
+        $cleanup = springapex_s3_signed_request('DELETE', $bucket, $region, $key);
+        $cleanup_code = !is_wp_error($cleanup) && !is_wp_error($cleanup['response'] ?? null)
+            ? wp_remote_retrieve_response_code($cleanup['response'])
+            : 0;
+        $cleanup_queued = !in_array($cleanup_code, [200, 204, 404], true)
+            && springapex_system_status_queue_s3_probe_cleanup($bucket, $region, $key, $payload);
         $error_code = is_wp_error($put) ? $put->get_error_code() : 's3_request_failed';
         return [
             'state' => 'error',
             'label' => '连接失败',
             'message' => '无法取得 EC2 临时凭据或访问 S3（' . sanitize_key((string) $error_code) . '）。',
-            'details' => ['耗时' => (int) round((microtime(true) - $started) * 1000) . ' ms'],
+            'details' => array_filter([
+                '耗时' => (int) round((microtime(true) - $started) * 1000) . ' ms',
+                '清理队列' => $cleanup_queued ? '已加入删除重试' : '',
+            ]),
         ];
     }
     $put_code = wp_remote_retrieve_response_code($put['response']);
     if (!in_array($put_code, [200, 201], true)) {
-        springapex_s3_signed_request('DELETE', $bucket, $region, $key);
+        $cleanup = springapex_s3_signed_request('DELETE', $bucket, $region, $key);
+        $cleanup_code = !is_wp_error($cleanup) && !is_wp_error($cleanup['response'] ?? null)
+            ? wp_remote_retrieve_response_code($cleanup['response'])
+            : 0;
+        $cleanup_queued = !in_array($cleanup_code, [200, 204, 404], true)
+            && springapex_system_status_queue_s3_probe_cleanup($bucket, $region, $key, $payload);
         return [
             'state' => 'error',
             'label' => '写入失败',
             'message' => 'S3 返回 HTTP ' . $put_code . '。',
-            'details' => ['耗时' => (int) round((microtime(true) - $started) * 1000) . ' ms'],
+            'details' => array_filter([
+                '耗时' => (int) round((microtime(true) - $started) * 1000) . ' ms',
+                '清理队列' => $cleanup_queued ? '已加入删除重试' : '',
+            ]),
         ];
     }
 
@@ -183,6 +221,8 @@ function springapex_system_status_s3_probe(): array
         ? wp_remote_retrieve_response_code($delete['response'])
         : 0;
     $delete_ok = in_array($delete_code, [200, 204, 404], true);
+    $cleanup_queued = !$delete_ok
+        && springapex_system_status_queue_s3_probe_cleanup($bucket, $region, $key, $payload);
     $duration = (int) round((microtime(true) - $started) * 1000);
 
     if (!$read_ok || !$delete_ok) {
@@ -190,7 +230,11 @@ function springapex_system_status_s3_probe(): array
             'state' => 'error',
             'label' => '校验失败',
             'message' => !$read_ok ? '测试对象未能完整读取。' : '测试对象未能确认删除。',
-            'details' => ['耗时' => $duration . ' ms', '删除响应' => $delete_code ?: '请求失败'],
+            'details' => array_filter([
+                '耗时' => $duration . ' ms',
+                '删除响应' => $delete_code ?: '请求失败',
+                '清理队列' => $cleanup_queued ? '已加入删除重试' : '',
+            ]),
         ];
     }
 

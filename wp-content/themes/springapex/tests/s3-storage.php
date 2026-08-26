@@ -107,6 +107,7 @@ function wp_tempnam(string $filename = ''): string
 }
 
 require dirname(__DIR__) . '/inc/s3-storage.php';
+require dirname(__DIR__) . '/inc/system-status.php';
 
 $source = (string) tempnam(sys_get_temp_dir(), 'springapex-source-');
 $contents = 'private-drawing-test';
@@ -142,6 +143,27 @@ if (!is_wp_error($ambiguous) || count($springapex_test_delete_retries) !== 1) {
 if (!springapex_s3_delete_private_file($springapex_test_delete_retries[0])) {
     throw new RuntimeException('Ambiguous S3 upload cleanup failed.');
 }
+
+$probe_payload = 'springapex-health-test';
+if (!springapex_system_status_queue_s3_probe_cleanup(
+    'example-private-bucket',
+    'us-east-1',
+    'private/inquiries/.health/probe.txt',
+    $probe_payload
+)) {
+    throw new RuntimeException('S3 health probe cleanup was not queued.');
+}
+$probe_cleanup = $springapex_test_delete_retries[array_key_last($springapex_test_delete_retries)] ?? [];
+if (
+    ($probe_cleanup['storage'] ?? '') !== 's3'
+    || ($probe_cleanup['bucket'] ?? '') !== 'example-private-bucket'
+    || ($probe_cleanup['region'] ?? '') !== 'us-east-1'
+    || ($probe_cleanup['key'] ?? '') !== 'private/inquiries/.health/probe.txt'
+    || (int) ($probe_cleanup['size'] ?? 0) !== strlen($probe_payload)
+    || ($probe_cleanup['sha256'] ?? '') !== hash('sha256', $probe_payload)
+) {
+    throw new RuntimeException('S3 health probe cleanup metadata is incomplete.');
+}
 @unlink($source);
 @unlink($download);
-echo "s3-storage: signed upload/download/delete and ambiguous cleanup flow ok\n";
+echo "s3-storage: signed upload/download/delete and queued cleanup flows ok\n";
