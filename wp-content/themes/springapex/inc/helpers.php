@@ -83,6 +83,39 @@ function springapex_file_url(int|string $value, string $base): string
     return springapex_asset(rtrim($base, '/') . '/' . ltrim($value, '/'));
 }
 
+/**
+ * Resolve a content-managed image document to its optimized delivery URL and
+ * retained original. Media Library IDs and external URLs stay unchanged;
+ * bundled JPG/PNG documents prefer a same-name WebP variant when present.
+ *
+ * @return array{preferred: string, original: string}
+ */
+function springapex_file_delivery_urls(int|string $value, string $base): array
+{
+    $original = springapex_file_url($value, $base);
+    $preferred = $original;
+    $raw_value = is_int($value) ? (string) $value : trim($value);
+
+    if (
+        $raw_value !== '' &&
+        !ctype_digit($raw_value) &&
+        !str_starts_with($raw_value, 'http://') &&
+        !str_starts_with($raw_value, 'https://') &&
+        preg_match('/\.(?:jpe?g|png)$/i', $raw_value) === 1
+    ) {
+        $webp_value = (string) preg_replace('/\.(?:jpe?g|png)$/i', '.webp', $raw_value);
+        $webp_path = rtrim($base, '/') . '/' . ltrim($webp_value, '/');
+        if (is_file(springapex_asset_path($webp_path))) {
+            $preferred = springapex_asset($webp_path);
+        }
+    }
+
+    return [
+        'preferred' => $preferred,
+        'original' => $original,
+    ];
+}
+
 function springapex_is_route(string $route): bool
 {
     if (!defined('SPRINGAPEX_PREVIEW')) {

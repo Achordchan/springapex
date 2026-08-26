@@ -26,7 +26,9 @@ if (!$certificates) {
     <?php foreach ($certificates as $certificate) : ?>
       <?php
       $document = trim((string) ($certificate['document'] ?? ''));
-      $document_url = springapex_file_url($document, 'assets/documents');
+      $document_urls = springapex_file_delivery_urls($document, 'assets/documents');
+      $document_url = $document_urls['preferred'];
+      $document_original_url = $document_urls['original'];
       ?>
       <?php if ($viewer) : ?>
         <button
@@ -34,6 +36,7 @@ if (!$certificates) {
           type="button"
           data-certificate-open
           data-certificate-src="<?php echo esc_url($document_url); ?>"
+          data-certificate-fallback="<?php echo esc_url($document_original_url); ?>"
           data-certificate-title="<?php echo esc_attr((string) ($certificate['name'] ?? '')); ?>"
           data-certificate-scope="<?php echo esc_attr((string) ($certificate['scope'] ?? '')); ?>"
           data-certificate-validity="<?php echo esc_attr((string) ($certificate['valid_until'] ?? '')); ?>"
