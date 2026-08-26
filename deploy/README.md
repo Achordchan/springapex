@@ -77,6 +77,33 @@ define('SPRINGAPEX_S3_PRIVATE_PREFIX', 'private/inquiries');
 define('SPRINGAPEX_CDN_URL', 'https://cdn.norenspring.com');
 ```
 
+## Media conversion
+
+Converter for Media uses the BT Panel PHP 8.3 runtime to generate WebP and
+AVIF files under `wp-content/uploads-webpc/`. That runtime must load the
+Imagick extension; checking only the operating system PHP is insufficient.
+Production currently uses PECL Imagick 3.8.1 compiled with
+`/www/server/php/83/bin/phpize` and
+`/www/server/php/83/bin/php-config`, backed by ImageMagick 6 with WebP and AVIF
+delegates. Both `/www/server/php/83/etc/php.ini` and `php-cli.ini` load
+`imagick.so`.
+
+The repository Nginx vhost also performs content negotiation for public images
+under `wp-content/`: it prefers a generated AVIF file when the browser accepts
+AVIF, falls back to WebP, and finally serves the original file. The private
+inquiry upload location remains protected by its higher-priority `^~` rule.
+After changing PHP or Nginx, verify all three layers:
+
+```bash
+/www/server/php/83/bin/php -r 'echo phpversion("imagick"), PHP_EOL;'
+/www/server/php/83/sbin/php-fpm -i | grep 'imagick module version'
+curl -I -H 'Accept: image/webp' \
+  https://www.norenspring.com/wp-content/uploads/webp-converter-for-media-test.png
+```
+
+The last response must retain the original URL while returning
+`Content-Type: image/webp` and `Vary: Accept`.
+
 AWS credentials must not be stored in WordPress, BT Panel or GitHub. The theme
 uses IMDSv2 to obtain short-lived credentials from the attached EC2 role.
 The production puller calls the local `springapex-cdn-prepare <version>`
