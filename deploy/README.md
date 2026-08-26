@@ -49,7 +49,13 @@ directory, validate Nginx and reload it. Also schedule the same executable as a
 daily BT Panel Shell task after the normal Certbot renewal task. Failed
 certificate deployments retain a pending marker and are retried by that task;
 unchanged certificate pairs without a pending marker exit without reloading
-Nginx.
+Nginx. Before enabling the vhost, create a root-owned `releases/` directory,
+copy the current certificate pair into a version directory, and atomically
+point `current` at that directory. The top-level BT Panel `fullchain.pem` and
+`privkey.pem` entries may be relative symlinks to `current/` for panel
+compatibility. Renewals write and verify a complete new version directory,
+then atomically replace only the `current` symlink, so an interruption cannot
+leave Nginx with a mismatched certificate and private key.
 
 CloudFront sends the viewer address in `CloudFront-Viewer-Address`, while PHP
 otherwise sees the CloudFront edge address as `REMOTE_ADDR`. Install

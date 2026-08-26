@@ -3,50 +3,84 @@ set -eu
 
 source_dir='/etc/letsencrypt/live/norenspring.com'
 target_dir='/www/server/panel/vhost/cert/norenspring.com'
+releases_dir="$target_dir/releases"
+current_link="$target_dir/current"
 retry_marker="$target_dir/.springapex-certbot-deploy-pending"
 nginx='/www/server/nginx/sbin/nginx'
 
-/usr/bin/install -d -o root -g root -m 0700 "$target_dir"
-if [ ! -f "$target_dir/fullchain.pem" ] || [ ! -f "$target_dir/privkey.pem" ]; then
-    echo 'The existing BT Panel certificate pair is incomplete.' >&2
+if [ ! -L "$current_link" ]; then
+    echo 'The BT Panel certificate current symlink is missing.' >&2
     exit 1
 fi
-if /usr/bin/cmp -s "$source_dir/fullchain.pem" "$target_dir/fullchain.pem" \
-    && /usr/bin/cmp -s "$source_dir/privkey.pem" "$target_dir/privkey.pem" \
+current_dir=$(/usr/bin/readlink -f "$current_link")
+case "$current_dir" in
+    "$releases_dir"/*) ;;
+    *)
+        echo 'The BT Panel certificate current symlink escaped its releases directory.' >&2
+        exit 1
+        ;;
+esac
+if [ ! -f "$current_dir/fullchain.pem" ] || [ ! -f "$current_dir/privkey.pem" ]; then
+    echo 'The active BT Panel certificate pair is incomplete.' >&2
+    exit 1
+fi
+if /usr/bin/cmp -s "$source_dir/fullchain.pem" "$current_dir/fullchain.pem" \
+    && /usr/bin/cmp -s "$source_dir/privkey.pem" "$current_dir/privkey.pem" \
     && [ ! -f "$retry_marker" ]; then
     exit 0
 fi
 
 /usr/bin/touch "$retry_marker"
-work_dir=$(/usr/bin/mktemp -d "$target_dir/.springapex-certbot.XXXXXX")
-rollback_required=0
+release_name="cert-$(/usr/bin/date +%s)-$$"
+candidate_dir="$releases_dir/$release_name"
+next_link="$target_dir/.springapex-current-next-$$"
+previous_target=$(/usr/bin/readlink "$current_link")
+switched=0
 
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
-    if [ "$rollback_required" -eq 1 ]; then
-        /usr/bin/install -o root -g root -m 0644 "$work_dir/fullchain.previous" "$target_dir/fullchain.pem"
-        /usr/bin/install -o root -g root -m 0600 "$work_dir/privkey.previous" "$target_dir/privkey.pem"
-        if "$nginx" -t; then
-            "$nginx" -s reload
-        else
-            echo 'The previous certificate pair was restored, but Nginx validation still failed.' >&2
-        fi
+    /bin/rm -f "$next_link"
+    if [ "$status" -ne 0 ] && [ "$switched" -eq 0 ]; then
+        /bin/rm -rf "$candidate_dir"
     fi
-    /bin/rm -rf "$work_dir"
     exit "$status"
 }
-trap cleanup EXIT HUP INT TERM
+trap cleanup EXIT
+trap 'exit 1' HUP INT TERM
 
-/bin/cp -p "$target_dir/fullchain.pem" "$work_dir/fullchain.previous"
-/bin/cp -p "$target_dir/privkey.pem" "$work_dir/privkey.previous"
-/usr/bin/install -o root -g root -m 0644 "$source_dir/fullchain.pem" "$work_dir/fullchain.next"
-/usr/bin/install -o root -g root -m 0600 "$source_dir/privkey.pem" "$work_dir/privkey.next"
+/usr/bin/install -d -o root -g root -m 0700 "$releases_dir"
+/usr/bin/install -d -o root -g root -m 0700 "$candidate_dir"
+/usr/bin/install -o root -g root -m 0644 "$source_dir/fullchain.pem" "$candidate_dir/fullchain.pem"
+/usr/bin/install -o root -g root -m 0600 "$source_dir/privkey.pem" "$candidate_dir/privkey.pem"
 
-rollback_required=1
-/usr/bin/install -o root -g root -m 0644 "$work_dir/fullchain.next" "$target_dir/fullchain.pem"
-/usr/bin/install -o root -g root -m 0600 "$work_dir/privkey.next" "$target_dir/privkey.pem"
-"$nginx" -t
-"$nginx" -s reload
-rollback_required=0
+cert_public_key=$(
+    /usr/bin/openssl x509 -in "$candidate_dir/fullchain.pem" -pubkey -noout \
+        | /usr/bin/openssl pkey -pubin -outform DER \
+        | /usr/bin/sha256sum
+)
+private_public_key=$(
+    /usr/bin/openssl pkey -in "$candidate_dir/privkey.pem" -pubout -outform DER \
+        | /usr/bin/sha256sum
+)
+if [ "$cert_public_key" != "$private_public_key" ]; then
+    echo 'The renewed certificate does not match its private key.' >&2
+    exit 1
+fi
+
+/bin/ln -s "releases/$release_name" "$next_link"
+/bin/mv -Tf "$next_link" "$current_link"
+switched=1
+
+if ! "$nginx" -t || ! "$nginx" -s reload; then
+    /bin/ln -s "$previous_target" "$next_link"
+    /bin/mv -Tf "$next_link" "$current_link"
+    switched=0
+    if "$nginx" -t; then
+        "$nginx" -s reload || true
+    fi
+    echo 'Nginx rejected the renewed certificate; the previous pair was restored.' >&2
+    exit 1
+fi
+
 /bin/rm -f "$retry_marker"
