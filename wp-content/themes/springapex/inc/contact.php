@@ -108,6 +108,11 @@ function springapex_process_contact_submission(): array|WP_Error
     $phone = springapex_limited_text($_POST['phone'] ?? '', 80);
     $country = springapex_limited_text($_POST['country'] ?? $_POST['region'] ?? '', 100);
     $type = springapex_limited_text($_POST['inquiry_type'] ?? '', 100);
+    // 快速留言窗不让访客选类型：由服务端固定为 Quick Message（与其它询盘类型、
+    // 英文邮件主题一致），不信任前台隐藏字段，也不参与联系页下拉清单校验。
+    if ($form_context === 'quick') {
+        $type = 'Quick Message';
+    }
     $message = springapex_limited_textarea($_POST['message'] ?? '', 5000);
     $wire_diameter = springapex_limited_text($_POST['wire_diameter'] ?? '', 80);
     $outside_diameter = springapex_limited_text($_POST['outside_diameter'] ?? '', 80);
@@ -236,8 +241,8 @@ function springapex_process_contact_submission(): array|WP_Error
         !is_email($email) ||
         $schema_missing !== [] ||
         $type === '' ||
-        !is_array($allowed_types) ||
-        !in_array($type, $allowed_types, true)
+        // quick 的类型由服务端固定（见上），不在联系页下拉清单里，故豁免该校验。
+        ($form_context !== 'quick' && (!is_array($allowed_types) || !in_array($type, $allowed_types, true)))
     ) {
         $detail = $schema_missing !== [] ? ' (' . implode(', ', array_slice($schema_missing, 0, 4)) . ')' : '';
         return springapex_contact_error(
@@ -268,10 +273,14 @@ function springapex_process_contact_submission(): array|WP_Error
         springapex_register_post_types();
     }
 
+    // 姓名字段现在可被运营者设为非必填或删除，提交可能留空。列表标题与
+    // 通知邮件用一个展示名兜底（记为「匿名」），存库的 _springapex_name 仍存原值。
+    $display_name = $name !== '' ? $name : '匿名';
+
     $inquiry_id = wp_insert_post([
         'post_type' => 'spring_inquiry',
         'post_status' => 'private',
-        'post_title' => sprintf('%s — %s', $name, $type),
+        'post_title' => sprintf('%s — %s', $display_name, $type),
         'post_content' => $message,
     ], true);
 
@@ -352,48 +361,103 @@ function springapex_process_contact_submission(): array|WP_Error
     }
 
     $recipient = springapex_inquiry_recipient();
-    // 通知邮件模板在「表单设置」维护：占位符替换成询盘真实值；
-    // 块占位符（尺寸/自定义字段）有内容时以换行结尾，空块不占行。
-    // 自定义字段随 main 的 PR #8 格式演进为 id => {label, value} 列表。
-    $dimension_block = '';
-    foreach ([
+    $inquiry_link = admin_url('post.php?post=' . (int) $inquiry_id . '&action=edit');
+    $site_name = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
+    $document_id = sanitize_key(springapex_request_scalar($_POST['document'] ?? ''));
+    $drawings_list = $private_files
+        ? implode(', ', array_map(static fn(array $file): string => (string) ($file['original_name'] ?? ''), $private_files))
+        : '';
+
+    $dimension_rows = [
         [$dimension_labels[0], $wire_diameter],
         [$dimension_labels[1], $outside_diameter],
         [$dimension_labels[2], $free_length],
-    ] as [$dimension_label, $dimension_value]) {
-        $dimension_block .= sprintf("%s: %s\n", $dimension_label, $dimension_value);
-    }
-    $custom_block = '';
+    ];
+    $custom_rows = [];
     foreach ($custom_fields as $custom_field) {
-        $custom_block .= sprintf("%s: %s\n", (string) ($custom_field['label'] ?? ''), (string) ($custom_field['value'] ?? ''));
+        $custom_rows[] = [(string) ($custom_field['label'] ?? ''), (string) ($custom_field['value'] ?? '')];
     }
-    $mail_vars = [
-        '{name}' => $name,
+
+    // 询盘信息表数据：[label, value] 列表（列表而非关联数组，避免同名标签覆盖）。
+    // {fields_table} 与纯文本兜底共用同一份数据；空值由渲染侧自动跳过。
+    $fields_rows = [
+        ['姓名', $display_name],
+        ['邮箱', $email],
+        ['公司', $company],
+        ['电话', $phone],
+        ['国家/地区', $country],
+        ['询盘类型', $type],
+    ];
+    array_push($fields_rows, ...$dimension_rows);
+    array_push($fields_rows,
+        ['数量', $quantity],
+        ['材料', $material],
+        ['工作环境', $operating_environment],
+        ['相关产品', $product],
+        ['相关行业', $industry],
+        ['合作意向', $intent],
+        ...$custom_rows
+    );
+    $fields_rows[] = ['图纸', $drawings_list];
+    $fields_rows[] = ['随附文档', $document_id];
+
+    // 主题走纯文本，用原值并兼容旧模板曾经支持的全部占位符；最后统一
+    // sanitize_text_field，避免留言或多行字段把邮件标题拆成多行。
+    $subject_vars = [
+        '{type}' => $type,
+        '{name}' => $display_name,
         '{email}' => $email,
         '{company}' => $company,
         '{phone}' => $phone,
         '{country}' => $country,
-        '{type}' => $type,
         '{product}' => $product,
         '{industry}' => $industry,
         '{intent}' => $intent,
         '{quantity}' => $quantity,
         '{material}' => $material,
         '{operating_environment}' => $operating_environment,
-        '{dimensions}' => $dimension_block,
-        '{custom_fields}' => $custom_block,
+        '{dimensions}' => springapex_inquiry_mail_text_lines($dimension_rows, ' · '),
+        '{custom_fields}' => springapex_inquiry_mail_text_lines($custom_rows, ' · '),
         '{message}' => $message,
-        '{document}' => sanitize_key(springapex_request_scalar($_POST['document'] ?? '')),
-        '{drawings}' => $private_files
-            ? implode(', ', array_map(static fn(array $file): string => (string) ($file['original_name'] ?? ''), $private_files))
-            : 'None',
-        '{inquiry_link}' => admin_url('post.php?post=' . (int) $inquiry_id . '&action=edit'),
-        '{site_name}' => wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES),
+        '{document}' => $document_id,
+        '{drawings}' => $drawings_list !== '' ? $drawings_list : 'None',
+        '{inquiry_link}' => $inquiry_link,
+        '{site_name}' => $site_name,
         '{site_url}' => home_url('/'),
+        '{fields_table}' => '',
     ];
-    $subject = springapex_fill_mail_template(springapex_inquiry_mail_subject(), $mail_vars);
-    $body = springapex_fill_mail_template(springapex_inquiry_mail_body(), $mail_vars);
-    $headers = ['Content-Type: text/plain; charset=UTF-8', "Reply-To: {$name} <{$email}>"];
+    $subject = sanitize_text_field(springapex_fill_mail_template(springapex_inquiry_mail_subject(), $subject_vars));
+
+    // HTML 正文：访客输入的标量占位符必须转义（防注入 / 渲染错乱）；
+    // {fields_table} 是本主题生成的可信 HTML（内部已 esc_html），不再转义。
+    $body_vars = [
+        '{fields_table}' => springapex_inquiry_mail_fields_table($fields_rows),
+        '{name}' => esc_html($display_name),
+        '{email}' => esc_html($email),
+        '{company}' => esc_html($company),
+        '{phone}' => esc_html($phone),
+        '{country}' => esc_html($country),
+        '{type}' => esc_html($type),
+        '{product}' => esc_html($product),
+        '{industry}' => esc_html($industry),
+        '{intent}' => esc_html($intent),
+        '{quantity}' => esc_html($quantity),
+        '{material}' => esc_html($material),
+        '{operating_environment}' => esc_html($operating_environment),
+        '{dimensions}' => springapex_inquiry_mail_lines($dimension_rows),
+        '{custom_fields}' => springapex_inquiry_mail_lines($custom_rows),
+        '{message}' => esc_html($message),
+        '{document}' => esc_html($document_id),
+        '{drawings}' => esc_html($drawings_list !== '' ? $drawings_list : 'None'),
+        '{inquiry_link}' => esc_url($inquiry_link),
+        '{site_name}' => esc_html($site_name),
+        '{site_url}' => esc_url(home_url('/')),
+    ];
+    $html_body = springapex_fill_mail_template(springapex_inquiry_mail_body(), $body_vars);
+    $document = springapex_inquiry_mail_document($html_body);
+    $plain = springapex_inquiry_mail_plaintext($fields_rows, $message, $inquiry_link);
+
+    $headers = ['Content-Type: text/html; charset=UTF-8', "Reply-To: {$display_name} <{$email}>"];
     $attachments = [];
     foreach ($private_files as $private_file) {
         $private_path = springapex_private_file_path($private_file);
@@ -402,7 +466,13 @@ function springapex_process_contact_submission(): array|WP_Error
         }
     }
 
-    $sent = $recipient !== '' && wp_mail($recipient, $subject, $body, $headers, $attachments);
+    // 多部分：给 HTML 邮件补一份纯文本 AltBody，利于送达与老客户端。
+    $set_alt_body = static function ($phpmailer) use ($plain): void {
+        $phpmailer->AltBody = $plain;
+    };
+    add_action('phpmailer_init', $set_alt_body);
+    $sent = $recipient !== '' && wp_mail($recipient, $subject, $document, $headers, $attachments);
+    remove_action('phpmailer_init', $set_alt_body);
     springapex_cleanup_temporary_private_files($private_files);
     // 与后台询盘视图（inquiry-view.php）约定的状态值：sent / failed（初始 pending）。
     if (!springapex_contact_update_meta((int) $inquiry_id, '_springapex_mail_sent', $sent ? 'sent' : 'failed')) {
@@ -1187,109 +1257,124 @@ function springapex_inquiry_form_context_labels(): array
     ];
 }
 
+// 询盘列表列。中文、按运营者的浏览动线分组（客户 → 联系 → 公司 → 来源 →
+// 规格 → 图纸 → 邮件状态 → 时间），取代原先一堆英文单值列的「文章列表」观感。
+// 样式类在 assets/css/inquiry-view.css，仅作用于询盘屏。
 add_filter('manage_spring_inquiry_posts_columns', static function (array $columns): array {
     return [
         'cb' => $columns['cb'] ?? '<input type="checkbox">',
-        'title' => __('Inquiry', 'springapex'),
-        'springapex_email' => __('Email', 'springapex'),
-        'springapex_company' => __('Company', 'springapex'),
-        'springapex_country' => __('Country', 'springapex'),
-        'springapex_type' => __('Type', 'springapex'),
+        'title' => '客户 / 类型',
+        'springapex_contact' => '联系方式',
+        'springapex_company' => '公司 · 地区',
         'springapex_source' => '来源',
-        'springapex_specs' => __('Spring Specs', 'springapex'),
-        'springapex_file' => __('Drawings', 'springapex'),
-        'date' => __('Date', 'springapex'),
+        'springapex_specs' => '规格 / 数量',
+        'springapex_file' => '图纸',
+        'springapex_mail' => '邮件通知',
+        'date' => '提交时间',
     ];
 });
 
 add_action('manage_spring_inquiry_posts_custom_column', static function (string $column, int $post_id): void {
-    $map = [
-        'springapex_email' => '_springapex_email',
-        'springapex_company' => '_springapex_company',
-        'springapex_type' => '_springapex_type',
-    ];
-    if (isset($map[$column])) {
-        echo esc_html((string) get_post_meta($post_id, $map[$column], true));
-        return;
-    }
-    if ($column === 'springapex_country') {
-        $country = (string) get_post_meta($post_id, '_springapex_country', true);
-        if ($country === '') {
-            $country = (string) get_post_meta($post_id, '_springapex_region', true);
-        }
-        echo $country !== '' ? esc_html($country) : '&mdash;';
-        return;
-    }
-    if ($column === 'springapex_source') {
-        $context = (string) get_post_meta($post_id, '_springapex_form_context', true);
-        $labels = springapex_inquiry_form_context_labels();
-        $label = $labels[$context] ?? ($context !== '' ? $context : '&mdash;');
+    $meta = static fn(string $key): string => trim((string) get_post_meta($post_id, $key, true));
+    $empty = '<span class="sa-inq-col__empty">&mdash;</span>';
+    $stack = static function (array $lines) use ($empty): void {
+        $lines = array_values(array_filter($lines, static fn(string $line): bool => $line !== ''));
+        echo $lines ? implode('<br>', $lines) : $empty; // 各行已在下方转义
+    };
 
-        $source_id = (int) get_post_meta($post_id, '_springapex_source_id', true);
-        $page = '';
-        if ($source_id > 0) {
-            $title = get_the_title($source_id);
-            if ($title !== '') {
+    switch ($column) {
+        case 'springapex_contact':
+            $email = $meta('_springapex_email');
+            $phone = $meta('_springapex_phone');
+            $stack([
+                $email !== '' ? sprintf('<a href="%s">%s</a>', esc_url('mailto:' . $email), esc_html($email)) : '',
+                $phone !== '' ? '<span class="sa-inq-col__sub">' . esc_html($phone) . '</span>' : '',
+            ]);
+            return;
+
+        case 'springapex_company':
+            $company = $meta('_springapex_company');
+            $country = $meta('_springapex_country') ?: $meta('_springapex_region');
+            $stack([
+                $company !== '' ? esc_html($company) : '',
+                $country !== '' ? '<span class="sa-inq-col__sub">' . esc_html($country) . '</span>' : '',
+            ]);
+            return;
+
+        case 'springapex_source':
+            $context = $meta('_springapex_form_context');
+            $labels = springapex_inquiry_form_context_labels();
+            $label = $labels[$context] ?? ($context !== '' ? $context : '');
+            $source_id = (int) $meta('_springapex_source_id');
+            $page = '';
+            if ($source_id > 0 && ($title = get_the_title($source_id)) !== '') {
                 $page = $title;
-            }
-        }
-        if ($page === '') {
-            $url = (string) get_post_meta($post_id, '_springapex_source_url', true);
-            if ($url !== '') {
+            } elseif (($url = $meta('_springapex_source_url')) !== '') {
                 $page = wp_parse_url($url, PHP_URL_PATH) ?: $url;
+            } elseif (($path = $meta('_springapex_source_path')) !== '') {
+                $page = $path;
             }
-        }
+            $stack([
+                $label !== '' ? esc_html($label) : '',
+                $page !== '' ? '<span class="sa-inq-col__sub">' . esc_html($page) . '</span>' : '',
+            ]);
+            return;
 
-        echo '<strong>' . wp_kses($label, ['br' => []]) . '</strong>';
-        if ($page !== '') {
-            echo '<br><span class="description">' . esc_html($page) . '</span>';
-        }
-        return;
-    }
-    if ($column === 'springapex_specs') {
-        $wire = (string) get_post_meta($post_id, '_springapex_wire_diameter', true);
-        $outside = (string) get_post_meta($post_id, '_springapex_outside_diameter', true);
-        $length = (string) get_post_meta($post_id, '_springapex_free_length', true);
-        $dimension_labels = [
-            (string) get_post_meta($post_id, '_springapex_dimension_label_1', true) ?: __('Wire', 'springapex'),
-            (string) get_post_meta($post_id, '_springapex_dimension_label_2', true) ?: __('OD', 'springapex'),
-            (string) get_post_meta($post_id, '_springapex_dimension_label_3', true) ?: __('Length', 'springapex'),
-        ];
-        $quantity = (string) get_post_meta($post_id, '_springapex_quantity', true);
-        $values = array_filter([
-            $wire !== '' ? sprintf('%s: %s', $dimension_labels[0], $wire) : '',
-            $outside !== '' ? sprintf('%s: %s', $dimension_labels[1], $outside) : '',
-            $length !== '' ? sprintf('%s: %s', $dimension_labels[2], $length) : '',
-            $quantity !== '' ? sprintf(__('Qty: %s', 'springapex'), $quantity) : '',
-        ]);
-        echo $values ? esc_html(implode(' · ', $values)) : '&mdash;';
-        return;
-    }
-    if ($column !== 'springapex_file') {
-        return;
-    }
+        case 'springapex_specs':
+            $dimension_labels = [
+                $meta('_springapex_dimension_label_1') ?: '线径',
+                $meta('_springapex_dimension_label_2') ?: '外径',
+                $meta('_springapex_dimension_label_3') ?: '自由长度',
+            ];
+            $values = array_filter([
+                ($wire = $meta('_springapex_wire_diameter')) !== '' ? $dimension_labels[0] . '：' . $wire : '',
+                ($outside = $meta('_springapex_outside_diameter')) !== '' ? $dimension_labels[1] . '：' . $outside : '',
+                ($length = $meta('_springapex_free_length')) !== '' ? $dimension_labels[2] . '：' . $length : '',
+                ($quantity = $meta('_springapex_quantity')) !== '' ? '数量：' . $quantity : '',
+            ]);
+            echo $values ? esc_html(implode(' · ', $values)) : $empty;
+            return;
 
-    $files = springapex_inquiry_private_files($post_id);
-    if (!$files) {
-        echo '&mdash;';
-        return;
-    }
-    foreach ($files as $index => $metadata) {
-        $url = wp_nonce_url(
-            add_query_arg([
-                'action' => 'springapex_download_inquiry_file',
-                'inquiry_id' => $post_id,
-                'file' => $index,
-            ], admin_url('admin-post.php')),
-            'springapex_download_inquiry_' . $post_id . '_' . $index
-        );
-        $label = sanitize_file_name((string) ($metadata['original_name'] ?? ''));
-        printf(
-            '%s<a href="%s">%s</a>',
-            $index > 0 ? '<br>' : '',
-            esc_url($url),
-            esc_html($label !== '' ? $label : sprintf(__('Download %d', 'springapex'), $index + 1))
-        );
+        case 'springapex_file':
+            $files = springapex_inquiry_private_files($post_id);
+            if (!$files) {
+                echo $empty;
+                return;
+            }
+            $links = [];
+            foreach ($files as $index => $metadata) {
+                $url = wp_nonce_url(
+                    add_query_arg([
+                        'action' => 'springapex_download_inquiry_file',
+                        'inquiry_id' => $post_id,
+                        'file' => $index,
+                    ], admin_url('admin-post.php')),
+                    'springapex_download_inquiry_' . $post_id . '_' . $index
+                );
+                $name = sanitize_file_name((string) ($metadata['original_name'] ?? ''));
+                $links[] = sprintf(
+                    '<a href="%s">%s</a>',
+                    esc_url($url),
+                    esc_html($name !== '' ? $name : sprintf('图纸 %d', (int) $index + 1))
+                );
+            }
+            echo implode('<br>', $links);
+            return;
+
+        case 'springapex_mail':
+            $mail = $meta('_springapex_mail_sent');
+            $label = springapex_inquiry_mail_status_label($mail);
+            if ($label === '') {
+                echo $empty;
+                return;
+            }
+            $modifier = match ($mail) {
+                'sent', '1' => 'ok',
+                'failed', '0' => 'err',
+                default => 'warn',
+            };
+            printf('<span class="sa-inq-mail sa-inq-mail--%s">%s</span>', esc_attr($modifier), esc_html($label));
+            return;
     }
 }, 10, 2);
 

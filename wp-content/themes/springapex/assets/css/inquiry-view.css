@@ -1,3 +1,59 @@
+/* 询盘列表（edit.php）：为询盘定制的列，取代通用「标题｜日期」文章列表观感。
+   仅作用于询盘屏（body.post-type-spring_inquiry），不影响其它列表。 */
+.post-type-spring_inquiry .wp-list-table .column-springapex_company,
+.post-type-spring_inquiry .wp-list-table .column-springapex_source {
+  width: 12%;
+}
+
+.post-type-spring_inquiry .wp-list-table .column-springapex_contact,
+.post-type-spring_inquiry .wp-list-table .column-springapex_specs {
+  width: 15%;
+}
+
+.post-type-spring_inquiry .wp-list-table .column-springapex_mail {
+  width: 104px;
+}
+
+.post-type-spring_inquiry .wp-list-table tbody td.column-springapex_contact,
+.post-type-spring_inquiry .wp-list-table tbody td.column-springapex_company,
+.post-type-spring_inquiry .wp-list-table tbody td.column-springapex_source {
+  line-height: 1.5;
+}
+
+.post-type-spring_inquiry .sa-inq-col__sub {
+  color: #646970;
+  font-size: 12px;
+}
+
+.post-type-spring_inquiry .sa-inq-col__empty {
+  color: #a7aaad;
+}
+
+.post-type-spring_inquiry .sa-inq-mail {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.7;
+  white-space: nowrap;
+}
+
+.post-type-spring_inquiry .sa-inq-mail--ok {
+  background: #edfaef;
+  color: #0a7d2c;
+}
+
+.post-type-spring_inquiry .sa-inq-mail--warn {
+  background: #fcf3e6;
+  color: #8a6100;
+}
+
+.post-type-spring_inquiry .sa-inq-mail--err {
+  background: #fcebec;
+  color: #b32d2e;
+}
+
 /* 询盘只读视图：客户信息 / 规格 / 来源 / 留言 / 图纸。 */
 
 .sa-iv__head {
@@ -64,5 +120,22 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  font-size: 13px;
+}
+
+/* 只读询盘的「操作」侧栏框：返回列表 + 移到回收站。 */
+.post-type-spring_inquiry .sa-iv-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.post-type-spring_inquiry .sa-iv-actions .button {
+  width: 100%;
+  text-align: center;
+}
+
+.post-type-spring_inquiry .sa-iv-actions__trash {
   font-size: 13px;
 }

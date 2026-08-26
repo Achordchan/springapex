@@ -48,7 +48,7 @@
     display: none;
   }
 
-  .language-switcher summary {
+  .language-switcher__badge {
     min-width: 74px;
     padding-inline: 9px;
     gap: 6px;
@@ -131,7 +131,7 @@
     display: none;
   }
 
-  .language-switcher summary {
+  .language-switcher__badge {
     min-width: 76px;
     padding-inline: 10px;
   }
@@ -1179,22 +1179,14 @@
     font-size: 11px;
   }
 
-  .language-switcher summary {
+  .language-switcher__badge {
     min-width: 68px;
     gap: 6px;
     padding-inline: 8px;
   }
 
-  .language-switcher summary > .icon:first-child {
+  .language-switcher__badge > .icon:first-child {
     display: none;
-  }
-
-  .language-switcher__menu {
-    position: fixed;
-    top: calc(var(--sa-header-height) + 8px);
-    right: 12px;
-    left: 12px;
-    width: auto;
   }
 
   .header-actions {

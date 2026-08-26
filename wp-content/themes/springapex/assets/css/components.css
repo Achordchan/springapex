@@ -177,11 +177,12 @@
   gap: 12px;
 }
 
+/* Single-language site: a static "EN" indicator, not a switcher. */
 .language-switcher {
-  position: relative;
+  display: inline-flex;
 }
 
-.language-switcher summary {
+.language-switcher__badge {
   display: flex;
   min-width: 86px;
   height: 44px;
@@ -196,105 +197,11 @@
   box-shadow: var(--sa-shadow-sm);
   font-size: 12px;
   font-weight: 700;
-  cursor: pointer;
-  list-style: none;
-  transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
 }
 
-.language-switcher summary::-webkit-details-marker {
-  display: none;
-}
-
-.language-switcher summary:hover,
-.language-switcher[open] summary {
-  border-color: var(--sa-border-strong);
-  background: var(--sa-bg-soft);
-  box-shadow: var(--sa-shadow);
-}
-
-.language-switcher summary .icon {
+.language-switcher__badge .icon {
   width: 16px;
   height: 16px;
-}
-
-.language-switcher__arrow {
-  width: 13px !important;
-  height: 13px !important;
-  transform: rotate(90deg);
-  transition: transform .2s ease;
-}
-
-.language-switcher[open] .language-switcher__arrow {
-  transform: rotate(-90deg);
-}
-
-.language-switcher__menu {
-  position: absolute;
-  z-index: 20;
-  top: calc(100% + 12px);
-  right: 0;
-  width: 300px;
-  padding: 18px;
-  border: 1px solid var(--sa-border);
-  border-radius: var(--sa-radius-lg);
-  background: var(--sa-surface);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, .16);
-}
-
-.language-switcher__head {
-  display: flex;
-  margin-bottom: 14px;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.language-switcher__head strong {
-  color: var(--sa-primary);
-  font-size: 14px;
-}
-
-.language-switcher__head small {
-  color: var(--sa-text-3);
-  font-size: 10px;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-}
-
-.language-switcher__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.language-switcher__grid > span {
-  display: flex;
-  min-height: 44px;
-  padding: 10px;
-  align-items: center;
-  gap: 9px;
-  border: 1px solid var(--sa-border);
-  border-radius: var(--sa-radius-sm);
-  color: var(--sa-text-2);
-  background: var(--sa-bg-soft);
-  font-size: 12px;
-}
-
-.language-switcher__flag {
-  display: block;
-  flex: 0 0 auto;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  box-shadow: 0 0 0 1px var(--sa-border);
-  object-fit: cover;
-}
-
-.language-switcher__grid .is-current {
-  border-color: var(--sa-primary);
-  color: var(--sa-primary);
-  background: var(--sa-surface);
-  font-weight: 600;
 }
 
 .icon-btn {
@@ -628,12 +535,62 @@ body.menu-open {
   font-size: 14px;
 }
 
+/* Feedback after a submit attempt (validation, upload limits, anti-spam /
+   Turnstile failures, success). Rendered as a bordered, tinted alert with an
+   icon so the message is hard to miss — a plain red line below the button was
+   too easy to overlook. Shown by showStatus() in main.js; the element stays
+   [hidden] until there is a message, so no empty box appears. */
+.form-status.is-error,
+.form-status.is-success {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid;
+  border-radius: var(--sa-radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.form-status.is-error::before,
+.form-status.is-success::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  background: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
 .form-status.is-error {
   color: var(--sa-danger);
+  border-color: var(--sa-danger);
+  background: var(--sa-danger-soft);
+}
+
+.form-status.is-error::before {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cline x1='12' y1='8' x2='12' y2='13'/%3E%3Cline x1='12' y1='16.5' x2='12' y2='16.5'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cline x1='12' y1='8' x2='12' y2='13'/%3E%3Cline x1='12' y1='16.5' x2='12' y2='16.5'/%3E%3C/svg%3E");
 }
 
 .form-status.is-success {
   color: var(--sa-success);
+  border-color: var(--sa-success);
+  background: var(--sa-success-soft);
+}
+
+.form-status.is-success::before {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M8.5 12.5l2.5 2.5 4.5-5'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M8.5 12.5l2.5 2.5 4.5-5'/%3E%3C/svg%3E");
 }
 
 .product-tabs-section {

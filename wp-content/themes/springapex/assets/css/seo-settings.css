@@ -1,0 +1,112 @@
+/* SEO / TDK admin UI. Scoped to the dedicated page and meta box. */
+
+.sa-seo-admin { max-width: 1120px; }
+
+.sa-seo-route .sa-card__body { padding-top: 18px; }
+
+.sa-seo-fields {
+  display: grid;
+  gap: 16px;
+}
+
+.sa-seo-field {
+  display: grid;
+  gap: 6px;
+}
+
+.sa-seo-field__label {
+  color: #1d2327;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sa-seo-field input,
+.sa-seo-field textarea {
+  width: 100%;
+  max-width: none;
+}
+
+.sa-seo-field textarea {
+  min-height: 78px;
+  resize: vertical;
+}
+
+.sa-seo-field__meta {
+  color: #646970;
+  font-size: 12px;
+}
+
+.sa-seo-field.is-over-recommended .sa-seo-field__meta {
+  color: #b32d2e;
+  font-weight: 600;
+}
+
+.sa-seo-preview {
+  margin-top: 18px;
+  padding: 16px 18px;
+  border: 1px solid #dcdcde;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.sa-seo-preview__url {
+  display: block;
+  overflow: hidden;
+  margin-bottom: 4px;
+  color: #202124;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sa-seo-preview strong {
+  display: block;
+  color: #1a0dab;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.sa-seo-preview p {
+  margin: 5px 0 0;
+  color: #4d5156;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.sa-seo-savebar {
+  position: sticky;
+  z-index: 20;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 12px 14px;
+  border: 1px solid #dcdcde;
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 -3px 12px rgba(0, 0, 0, .06);
+}
+
+.sa-seo-savebar .button { margin: 0; }
+.sa-seo-savebar span { color: #646970; font-size: 12.5px; }
+
+.springapex-seo-meta {
+  display: grid;
+  gap: 14px;
+}
+
+.springapex-seo-meta > p {
+  margin: 0;
+  color: #646970;
+}
+
+@media (max-width: 782px) {
+  .sa-seo-savebar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 6px;
+  }
+}

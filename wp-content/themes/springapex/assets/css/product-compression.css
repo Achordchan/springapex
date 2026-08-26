@@ -671,21 +671,16 @@
   border-radius: 5px;
 }
 
-.sa-compression-form__privacy,
-.sa-compression-form .form-status {
+.sa-compression-form__privacy {
   margin: -8px 0 0;
   color: var(--sa-text-3, #6b7280);
   font-size: 11px;
   text-align: center;
 }
 
-.sa-compression-form .form-status.is-error {
-  color: var(--sa-danger, #dc2626);
-}
-
-.sa-compression-form .form-status.is-success {
-  color: var(--sa-success, #059669);
-}
+/* The status message defers to the shared .form-status.is-error/.is-success
+   alert box (components.css); no compression-specific override here, so the
+   bordered/tinted alert renders on this form too. */
 
 .sa-compression-quality {
   border-top: 1px solid #eef1f4;

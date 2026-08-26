@@ -50,7 +50,7 @@ if (!springapex_form_enabled('quick')) {
         <input type="hidden" name="intent" value="quote">
         <input type="hidden" name="form_context" value="quick">
         <input type="hidden" name="source" value="<?php echo esc_attr((string) get_queried_object_id()); ?>">
-        <input type="hidden" name="inquiry_type" value="Request a Quote">
+        <?php // 询盘类型由服务端按 form_context=quick 固定为 Quick Message，无需前台传。 ?>
         <input type="hidden" name="started_at" value="<?php echo esc_attr((string) time()); ?>" data-form-started-at>
         <label class="honeypot" aria-hidden="true">Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
 
@@ -108,7 +108,7 @@ if (!springapex_form_enabled('quick')) {
       </a>
     <?php endif; ?>
     <?php if ($hours !== '') : ?>
-      <span class="support-contact-dock__hours" aria-label="<?php echo esc_attr($hours); ?>">
+      <span class="support-contact-dock__hours">
         <span class="support-contact-dock__icon"><?php echo springapex_icon('clock', 'icon'); ?></span>
         <span class="support-contact-dock__label"><small><?php esc_html_e('Working hours', 'springapex'); ?></small><strong><?php echo esc_html($hours); ?></strong></span>
       </span>

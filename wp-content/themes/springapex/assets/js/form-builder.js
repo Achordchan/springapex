@@ -3,6 +3,88 @@
  * 标题与 ID 跟随名称）。行名 schema[form][fields][i][…] 由保存前的
  * reindex 统一维护。
  */
+// 标签页：表单字段 / 通知与人机验证 / 邮件模板。三个面板同处一个 <form>，
+// 只切换显示，隐藏面板的输入照常提交，单个「保存设置」一次性入库。
+(function () {
+  'use strict';
+
+  const tabs = [...document.querySelectorAll('[data-fs-tab]')];
+  const panels = [...document.querySelectorAll('[data-fs-panel]')];
+  if (!tabs.length || !panels.length) return;
+
+  const form = panels[0].closest('form');
+  const STORE_KEY = 'springapex_form_settings_tab';
+  const names = tabs.map((t) => t.dataset.fsTab);
+
+  const activate = (name, persist) => {
+    if (!names.includes(name)) name = names[0];
+    tabs.forEach((t) => {
+      const on = t.dataset.fsTab === name;
+      t.classList.toggle('nav-tab-active', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    panels.forEach((p) => {
+      const on = p.dataset.fsPanel === name;
+      p.classList.toggle('is-active', on);
+      p.hidden = !on;
+    });
+    if (persist) {
+      try { sessionStorage.setItem(STORE_KEY, name); } catch (e) { /* 隐私模式忽略 */ }
+    }
+  };
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', (event) => {
+      event.preventDefault();
+      activate(tab.dataset.fsTab, true);
+    });
+  });
+
+  // 必填控件（如收件邮箱）若落在隐藏面板里，浏览器无法聚焦、会静默拒绝提交。
+  // 校验失败时切到第一个非法字段所在的标签页，让原生提示能正常显示。
+  if (form) {
+    form.addEventListener('invalid', () => {
+      const firstInvalid = form.querySelector(':invalid');
+      const panel = firstInvalid ? firstInvalid.closest('[data-fs-panel]') : null;
+      if (panel) activate(panel.dataset.fsPanel, true);
+    }, true);
+  }
+
+  let initial = names[0];
+  try {
+    const stored = sessionStorage.getItem(STORE_KEY);
+    if (stored) initial = stored;
+  } catch (e) { /* ignore */ }
+  const hash = (window.location.hash || '').replace('#sa-fs-', '');
+  if (names.includes(hash)) initial = hash;
+  activate(initial, false);
+})();
+
+// 三个表单卡（details.sa-card）默认折叠、展开需要的那个；记住展开状态，
+// 保存回跳后不复位（与网站内容屏一致）。原生 <details> 负责开合，这里只做持久化。
+(function () {
+  'use strict';
+
+  const cards = [...document.querySelectorAll('[data-sa-form-card]')];
+  if (!cards.length) return;
+
+  const KEY = 'springapex_form_settings_open';
+  let openIds = [];
+  try { openIds = JSON.parse(sessionStorage.getItem(KEY) || '[]'); } catch (e) { openIds = []; }
+
+  cards.forEach((card) => {
+    if (Array.isArray(openIds) && openIds.includes(card.dataset.formBuilder)) {
+      card.open = true;
+    }
+    card.addEventListener('toggle', () => {
+      try {
+        const open = cards.filter((c) => c.open).map((c) => c.dataset.formBuilder);
+        sessionStorage.setItem(KEY, JSON.stringify(open));
+      } catch (e) { /* 隐私模式忽略 */ }
+    });
+  });
+})();
+
 (function () {
   'use strict';
 

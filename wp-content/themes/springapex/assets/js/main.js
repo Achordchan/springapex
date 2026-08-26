@@ -2,6 +2,44 @@
   'use strict';
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const config = window.NorenSpring || {};
+  let turnstileLoadPromise = null;
+
+  function loadTurnstile() {
+    if (window.turnstile) return Promise.resolve(window.turnstile);
+    if (turnstileLoadPromise) return turnstileLoadPromise;
+
+    const url = String(config.turnstileUrl || '');
+    if (!url) return Promise.reject(new Error('Turnstile URL is unavailable.'));
+
+    turnstileLoadPromise = new Promise((resolve, reject) => {
+      const existing = document.querySelector('script[data-springapex-turnstile]');
+      const script = existing instanceof HTMLScriptElement ? existing : document.createElement('script');
+      const onLoad = () => {
+        if (window.turnstile) {
+          resolve(window.turnstile);
+          return;
+        }
+        reject(new Error('Turnstile did not initialize.'));
+      };
+      const onError = () => reject(new Error('Turnstile could not be loaded.'));
+
+      script.addEventListener('load', onLoad, { once: true });
+      script.addEventListener('error', onError, { once: true });
+      if (!existing) {
+        script.src = url;
+        script.async = true;
+        script.defer = true;
+        script.dataset.springapexTurnstile = 'true';
+        document.head.appendChild(script);
+      }
+    }).catch((error) => {
+      turnstileLoadPromise = null;
+      throw error;
+    });
+
+    return turnstileLoadPromise;
+  }
 
   function onReady(callback) {
     if (document.readyState === 'loading') {
@@ -213,7 +251,6 @@
       });
 
       document.querySelector('[data-search-toggle]')?.addEventListener('click', () => setDesktopOpen(false));
-      document.querySelector('[data-language-switcher] summary')?.addEventListener('click', () => setDesktopOpen(false));
     }
 
     const setMobileOpen = (open) => {
@@ -663,8 +700,18 @@
       const drawingGuideOpen = form.querySelector('[data-drawing-guide-open]');
       const drawingGuideDialog = form.querySelector('[data-drawing-guide-dialog]');
       const drawingGuideClose = form.querySelector('[data-drawing-guide-close]');
-      const config = window.NorenSpring || {};
+      const captcha = form.querySelector('.cf-turnstile');
       if (startedAt) startedAt.value = String(Math.floor(Date.now() / 1000));
+
+      if (captcha) {
+        const warmTurnstile = () => {
+          loadTurnstile().catch(() => {
+            // 提交时会给出可见错误；预加载失败不打断当前输入操作。
+          });
+        };
+        form.addEventListener('focusin', warmTurnstile, { once: true });
+        form.addEventListener('pointerdown', warmTurnstile, { once: true });
+      }
 
       const closeDrawingGuide = () => {
         if (!drawingGuideDialog) return;
@@ -772,8 +819,51 @@
         status.classList.toggle('is-success', type === 'success');
       };
 
+      const clearStatus = () => {
+        if (!status) return;
+        status.hidden = true;
+        status.textContent = '';
+        status.classList.remove('is-error', 'is-success');
+      };
+
+      // Front-end debounce guard: blocks a second submit (double-click, Enter,
+      // or a programmatic submit) while a request is already in flight.
+      let submitting = false;
+
+      // Show the "submitting" state ON the button itself (spinner + label),
+      // not only in the status line below it, so the state is obvious. The
+      // busy label can be overridden per button via data-busy-label.
+      const setSubmitBusy = (busy) => {
+        if (!submit) return;
+        if (busy) {
+          if (submit.dataset.originalHtml === undefined) {
+            submit.dataset.originalHtml = submit.innerHTML;
+          }
+          submit.disabled = true;
+          submit.setAttribute('aria-busy', 'true');
+          submit.classList.add('is-submitting');
+          const spinner = document.createElement('span');
+          spinner.className = 'btn-spinner';
+          spinner.setAttribute('aria-hidden', 'true');
+          const label = document.createElement('span');
+          label.className = 'btn-label';
+          label.textContent = submit.getAttribute('data-busy-label') || 'Submitting…';
+          submit.replaceChildren(spinner, label);
+        } else {
+          submit.disabled = false;
+          submit.removeAttribute('aria-busy');
+          submit.classList.remove('is-submitting');
+          if (submit.dataset.originalHtml !== undefined) {
+            submit.innerHTML = submit.dataset.originalHtml;
+            delete submit.dataset.originalHtml;
+          }
+        }
+      };
+
       form.addEventListener('submit', async (event) => {
       event.preventDefault();
+
+      if (submitting) return;
 
       if (!form.checkValidity()) {
         showStatus('Please complete the required fields.', 'error');
@@ -806,11 +896,21 @@
         return;
       }
 
-      if (submit) {
-        submit.disabled = true;
-        submit.setAttribute('aria-busy', 'true');
+      if (captcha && !window.turnstile) {
+        showStatus('Loading the anti-spam check. Please wait a moment and submit again.', 'error');
+        try {
+          await loadTurnstile();
+        } catch (error) {
+          showStatus('The anti-spam check is temporarily unavailable. Please try again.', 'error');
+        }
+        return;
       }
-      showStatus('Submitting your request…', '');
+
+      submitting = true;
+      setSubmitBusy(true);
+      // The "submitting" feedback now lives on the button, so clear any prior
+      // error/success line rather than repeating it below the button.
+      clearStatus();
 
       const data = new FormData(form);
       data.append('action', 'springapex_contact');
@@ -858,13 +958,10 @@
       } catch (error) {
         showStatus(error instanceof Error ? error.message : 'Unable to submit right now.', 'error');
       } finally {
-        if (submit) {
-          submit.disabled = false;
-          submit.removeAttribute('aria-busy');
-        }
+        submitting = false;
+        setSubmitBusy(false);
         // Turnstile tokens are single-use; refresh the widget so a follow-up
         // submission (after an error, or a second inquiry) gets a fresh token.
-        const captcha = form.querySelector('.cf-turnstile');
         if (captcha && window.turnstile && typeof window.turnstile.reset === 'function') {
           try {
             window.turnstile.reset(captcha);
@@ -928,6 +1025,11 @@
         toggle.setAttribute('aria-label', open ? 'Close quick inquiry form' : 'Open quick inquiry form');
       });
       if (open) {
+        if (panel.querySelector('.cf-turnstile')) {
+          loadTurnstile().catch(() => {
+            // 表单提交时展示具体错误，不在打开动画期间插入额外提示。
+          });
+        }
         const firstField = panel.querySelector('[data-support-first-field]');
         (firstField || close).focus({ preventScroll: true });
       } else if (restoreFocus) {
@@ -1001,22 +1103,6 @@
       if (event.key === 'Escape' && !overlay.hidden) {
         setOverlay(false);
         toggle.focus();
-      }
-    });
-  }
-
-  function initLanguageSwitcher() {
-    const switcher = document.querySelector('[data-language-switcher]');
-    if (!(switcher instanceof HTMLDetailsElement)) return;
-
-    document.addEventListener('click', (event) => {
-      if (switcher.open && !switcher.contains(event.target)) switcher.open = false;
-    });
-
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && switcher.open) {
-        switcher.open = false;
-        switcher.querySelector('summary')?.focus();
       }
     });
   }
@@ -1168,8 +1254,9 @@
       });
 
       let paused = false;
-      let loopWidth = carousel.scrollWidth / 2;
+      let loopWidth = 0;
       let previousTime = 0;
+      let resizeFrame = 0;
 
       const pause = () => {
         paused = true;
@@ -1191,6 +1278,31 @@
         window.requestAnimationFrame(animate);
       };
 
+      // 上面刚把克隆卡片写入 DOM；同步读取 scrollWidth 会迫使浏览器立刻
+      // 完成样式与布局。跨两个动画帧后再测量，让首次布局自然结算，再启动
+      // 连续滚动。resize 同样延后测量，避免在 resize 事件中同步求布局。
+      const measureLoop = () => {
+        loopWidth = carousel.scrollWidth / 2;
+        previousTime = 0;
+      };
+      const scheduleMeasure = () => {
+        window.cancelAnimationFrame(resizeFrame);
+        resizeFrame = window.requestAnimationFrame(() => {
+          resizeFrame = window.requestAnimationFrame(() => {
+            resizeFrame = 0;
+            measureLoop();
+          });
+        });
+      };
+      const startAnimation = () => {
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            measureLoop();
+            window.requestAnimationFrame(animate);
+          });
+        });
+      };
+
       carousel.addEventListener('mouseenter', pause);
       carousel.addEventListener('mouseleave', resume);
       carousel.addEventListener('focusin', pause);
@@ -1202,11 +1314,9 @@
       carousel.addEventListener('pointerdown', pause);
       carousel.addEventListener('pointerup', resume);
       carousel.addEventListener('pointercancel', resume);
-      window.addEventListener('resize', () => {
-        loopWidth = carousel.scrollWidth / 2;
-      });
+      window.addEventListener('resize', () => scheduleMeasure());
 
-      window.requestAnimationFrame(animate);
+      startAnimation();
     });
   }
 
@@ -1340,7 +1450,6 @@
     initContactForms();
     initSupportWidget();
     initSearchOverlay();
-    initLanguageSwitcher();
     initHeroVideo();
     initContactRegions();
     initCertificateCarousels();
