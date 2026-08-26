@@ -13,24 +13,48 @@
     if (!url) return Promise.reject(new Error('Turnstile URL is unavailable.'));
 
     turnstileLoadPromise = new Promise((resolve, reject) => {
-      const existing = document.querySelector('script[data-springapex-turnstile]');
-      const script = existing instanceof HTMLScriptElement ? existing : document.createElement('script');
+      const found = document.querySelector('script[data-springapex-turnstile]');
+      // 只复用仍在加载的脚本；已结束却没有 API 的元素属于失败残留，先移除。
+      const existing = found instanceof HTMLScriptElement && found.dataset.springapexTurnstile === 'loading'
+        ? found
+        : null;
+      if (found instanceof HTMLScriptElement && !existing) found.remove();
+      const script = existing || document.createElement('script');
+      let settled = false;
+      let timeoutId = 0;
+      const cleanup = () => {
+        window.clearTimeout(timeoutId);
+        script.removeEventListener('load', onLoad);
+        script.removeEventListener('error', onError);
+      };
+      const fail = (message) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        script.remove();
+        reject(new Error(message));
+      };
       const onLoad = () => {
+        if (settled) return;
         if (window.turnstile) {
+          settled = true;
+          script.dataset.springapexTurnstile = 'loaded';
+          cleanup();
           resolve(window.turnstile);
           return;
         }
-        reject(new Error('Turnstile did not initialize.'));
+        fail('Turnstile did not initialize.');
       };
-      const onError = () => reject(new Error('Turnstile could not be loaded.'));
+      const onError = () => fail('Turnstile could not be loaded.');
 
       script.addEventListener('load', onLoad, { once: true });
       script.addEventListener('error', onError, { once: true });
+      timeoutId = window.setTimeout(() => fail('Turnstile loading timed out.'), 15000);
       if (!existing) {
         script.src = url;
         script.async = true;
         script.defer = true;
-        script.dataset.springapexTurnstile = 'true';
+        script.dataset.springapexTurnstile = 'loading';
         document.head.appendChild(script);
       }
     }).catch((error) => {
