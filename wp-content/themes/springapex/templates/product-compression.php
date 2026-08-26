@@ -332,7 +332,6 @@ $documents = [
           $skip_ids = array_map(static fn (array $f): string => (string) $f['name'], $dimension_fields);
           springapex_render_form_schema_fields('product', 'field', '', $skip_ids);
           ?>
-          <input type="hidden" name="full_name" value="Product detail inquiry">
           <button class="btn btn-primary btn-block" type="submit" data-submit-button><?php esc_html_e('Send for Engineering Review', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?></button>
           <?php if (springapex_form_turnstile_enabled('product')) : ?>
           <div class="sa-turnstile-widget">

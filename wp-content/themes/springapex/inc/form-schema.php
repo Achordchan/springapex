@@ -39,10 +39,14 @@ function springapex_form_field_types(): array
     ];
 }
 
-/** 不可删除、缺失时强制补回的字段（询盘成立的基础），与映射表分离。 */
+/**
+ * 不可删除、缺失时强制补回的字段（询盘成立的基础），与映射表分离。
+ * 邮箱与留言是询盘回复与内容的底线；姓名允许运营者按需删除/设为非必填
+ * （提交留空时询盘标题回退为「匿名」，见 inc/contact.php）。
+ */
 function springapex_form_locked_fields(): array
 {
-    return ['name', 'email', 'message'];
+    return ['email', 'message'];
 }
 
 /**
@@ -276,7 +280,8 @@ function springapex_normalize_form_field(array $field, array $defaults_by_id, ar
     }
 
     $required = !empty($field['required']);
-    if ($is_system && in_array($id, ['name', 'email'], true)) {
+    // 邮箱强制必填（询盘无邮箱无法回复）；姓名由运营者自行决定是否必填。
+    if ($is_system && $id === 'email') {
         $required = true;
     }
 

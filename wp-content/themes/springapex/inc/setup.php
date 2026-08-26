@@ -30,150 +30,78 @@ add_action('after_setup_theme', static function (): void {
 });
 
 add_action('wp_enqueue_scripts', static function (): void {
-    wp_enqueue_style(
-        'springapex-foundation',
-        SPRINGAPEX_URI . '/assets/css/foundation.css',
-        [],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-components',
-        SPRINGAPEX_URI . '/assets/css/components.css',
-        ['springapex-foundation'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-product-mega-menu',
-        SPRINGAPEX_URI . '/assets/css/product-mega-menu.css',
-        ['springapex-components'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-pages',
-        SPRINGAPEX_URI . '/assets/css/pages.css',
-        ['springapex-product-mega-menu'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-company-introduction',
-        SPRINGAPEX_URI . '/assets/css/company-introduction.css',
-        ['springapex-pages'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-responsive',
-        SPRINGAPEX_URI . '/assets/css/responsive.css',
-        ['springapex-company-introduction'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-enhancements',
-        SPRINGAPEX_URI . '/assets/css/enhancements.css',
-        ['springapex-responsive'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-audit-fixes',
-        SPRINGAPEX_URI . '/assets/css/audit-fixes.css',
-        ['springapex-enhancements'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-content-dedup',
-        SPRINGAPEX_URI . '/assets/css/content-dedup.css',
-        ['springapex-audit-fixes'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-news',
-        SPRINGAPEX_URI . '/assets/css/news.css',
-        ['springapex-content-dedup'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-capabilities-page',
-        SPRINGAPEX_URI . '/assets/css/capabilities-page.css',
-        ['springapex-news'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-about-page',
-        SPRINGAPEX_URI . '/assets/css/about-page.css',
-        ['springapex-capabilities-page'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-about-team',
-        SPRINGAPEX_URI . '/assets/css/about-team.css',
-        ['springapex-about-page'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-about-sections',
-        SPRINGAPEX_URI . '/assets/css/about-sections.css',
-        ['springapex-about-team'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-search-page',
-        SPRINGAPEX_URI . '/assets/css/search-page.css',
-        ['springapex-about-sections'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-products-page',
-        SPRINGAPEX_URI . '/assets/css/products-page.css',
-        ['springapex-search-page'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-mobile-polish',
-        SPRINGAPEX_URI . '/assets/css/mobile-polish.css',
-        ['springapex-products-page'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-contact-network',
-        SPRINGAPEX_URI . '/assets/css/contact-network.css',
-        ['springapex-mobile-polish'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-case-studies',
-        SPRINGAPEX_URI . '/assets/css/case-studies.css',
-        ['springapex-contact-network'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-manufacturing-videos',
-        SPRINGAPEX_URI . '/assets/css/manufacturing-videos.css',
-        ['springapex-case-studies'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-product-details',
-        SPRINGAPEX_URI . '/assets/css/product-details.css',
-        ['springapex-manufacturing-videos'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-product-compression',
-        SPRINGAPEX_URI . '/assets/css/product-compression.css',
-        ['springapex-product-details'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-solution-detail',
-        SPRINGAPEX_URI . '/assets/css/solution-detail.css',
-        ['springapex-product-compression'],
-        SPRINGAPEX_VERSION
-    );
-    wp_enqueue_style(
-        'springapex-solution-detail-responsive',
-        SPRINGAPEX_URI . '/assets/css/solution-detail-responsive.css',
-        ['springapex-solution-detail'],
-        SPRINGAPEX_VERSION
-    );
+    $route = springapex_current_route();
+    $last_style = '';
+    // 保持历史 CSS 的精确级联顺序，但只输出当前路由真正需要的文件。
+    // 每个已加载文件依赖上一个已加载文件，避免条件分支改变覆盖顺序。
+    $enqueue_style = static function (string $handle, string $file) use (&$last_style): void {
+        wp_enqueue_style(
+            $handle,
+            SPRINGAPEX_URI . '/assets/css/' . $file,
+            $last_style !== '' ? [$last_style] : [],
+            SPRINGAPEX_VERSION
+        );
+        $last_style = $handle;
+    };
+
+    $enqueue_style('springapex-foundation', 'foundation.css');
+    $enqueue_style('springapex-components', 'components.css');
+    $enqueue_style('springapex-product-mega-menu', 'product-mega-menu.css');
+    $enqueue_style('springapex-pages', 'pages.css');
+
+    if (in_array($route, ['home', 'about', 'about-story'], true)) {
+        $enqueue_style('springapex-company-introduction', 'company-introduction.css');
+    }
+
+    $enqueue_style('springapex-responsive', 'responsive.css');
+    $enqueue_style('springapex-enhancements', 'enhancements.css');
+    $enqueue_style('springapex-audit-fixes', 'audit-fixes.css');
+
+    if (in_array($route, ['home', 'products', 'product', 'capabilities', 'about', 'about-story'], true)) {
+        $enqueue_style('springapex-content-dedup', 'content-dedup.css');
+    }
+    if (in_array($route, ['news', 'news-single'], true)) {
+        $enqueue_style('springapex-news', 'news.css');
+    }
+    if ($route === 'capabilities') {
+        $enqueue_style('springapex-capabilities-page', 'capabilities-page.css');
+    }
+    if (in_array($route, ['about', 'about-story'], true)) {
+        $enqueue_style('springapex-about-page', 'about-page.css');
+        $enqueue_style('springapex-about-team', 'about-team.css');
+    }
+    if (in_array($route, ['about', 'about-story', 'sustainability', 'resources'], true)) {
+        $enqueue_style('springapex-about-sections', 'about-sections.css');
+    }
+    if ($route === 'search') {
+        $enqueue_style('springapex-search-page', 'search-page.css');
+    }
+    if ($route === 'products') {
+        $enqueue_style('springapex-products-page', 'products-page.css');
+    }
+
+    // 跨页面移动端覆盖必须晚于上面的基础和第一组页面样式。
+    $enqueue_style('springapex-mobile-polish', 'mobile-polish.css');
+
+    if ($route === 'contact') {
+        $enqueue_style('springapex-contact-network', 'contact-network.css');
+    }
+    if (in_array($route, ['solutions', 'case-studies', 'case-study'], true)) {
+        $enqueue_style('springapex-case-studies', 'case-studies.css');
+    }
+    if (in_array($route, ['capabilities', 'manufacturing-videos'], true)) {
+        $enqueue_style('springapex-manufacturing-videos', 'manufacturing-videos.css');
+    }
+    if ($route === 'product') {
+        $enqueue_style('springapex-product-details', 'product-details.css');
+    }
+    if (in_array($route, ['product', 'capabilities'], true)) {
+        $enqueue_style('springapex-product-compression', 'product-compression.css');
+    }
+    if ($route === 'solution') {
+        $enqueue_style('springapex-solution-detail', 'solution-detail.css');
+        $enqueue_style('springapex-solution-detail-responsive', 'solution-detail-responsive.css');
+    }
 
     wp_enqueue_script(
         'springapex-main',
@@ -182,24 +110,15 @@ add_action('wp_enqueue_scripts', static function (): void {
         SPRINGAPEX_VERSION,
         ['strategy' => 'defer', 'in_footer' => true]
     );
-    wp_enqueue_script(
-        'springapex-product-compression',
-        SPRINGAPEX_URI . '/assets/js/product-compression.js',
-        ['springapex-main'],
-        SPRINGAPEX_VERSION,
-        ['strategy' => 'defer', 'in_footer' => true]
-    );
-
-    // Cloudflare Turnstile auto-render script. Enqueued site-wide (not tied to
-    // the support widget, which is hidden on the contact and compression pages
-    // where the inquiry forms — and their widgets — actually live).
-    wp_enqueue_script(
-        'springapex-turnstile',
-        'https://challenges.cloudflare.com/turnstile/v0/api.js',
-        [],
-        null,
-        ['strategy' => 'defer', 'in_footer' => true]
-    );
+    if (in_array($route, ['product', 'capabilities'], true)) {
+        wp_enqueue_script(
+            'springapex-product-compression',
+            SPRINGAPEX_URI . '/assets/js/product-compression.js',
+            ['springapex-main'],
+            SPRINGAPEX_VERSION,
+            ['strategy' => 'defer', 'in_footer' => true]
+        );
+    }
 
     // Interactive contact map: Leaflet + open tiles, only on the contact page.
     if (springapex_current_route() === 'contact') {
@@ -239,6 +158,8 @@ add_action('wp_enqueue_scripts', static function (): void {
         'nonce' => wp_create_nonce('springapex_contact'),
         'maxFileSize' => 10 * MB_IN_BYTES,
         'contactEmail' => $brand['email'] ?? '',
+        // 第三方 CAPTCHA 不进入首屏关键路径；main.js 在用户接近表单时加载。
+        'turnstileUrl' => 'https://challenges.cloudflare.com/turnstile/v0/api.js',
         // 非弹窗表单提交成功后跳转的落地页，用于转化统计。
         'successUrl' => home_url('/success/'),
     ]);

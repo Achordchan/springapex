@@ -114,7 +114,11 @@ command publishes
 that succeeds does rsync activate the new theme version, so a failed CDN
 publish cannot leave production pointing at missing assets. The command rejects
 every symbolic link and tells AWS CLI not to follow links; PHP source files and
-server-local files are never published.
+server-local files are never published. Every object in this versioned prefix
+is uploaded with `Cache-Control: public,max-age=31536000,immutable`; the deploy
+command reads the metadata back from S3 and fails before theme activation if it
+is missing. Because the version directory is never overwritten with different
+content, no CloudFront invalidation is required for a normal release.
 
 PR and `main` workflows run `verify-asset-version-bump.sh`: any change under
 the theme's `assets/` directory must also advance `SPRINGAPEX_VERSION`, so an

@@ -111,28 +111,13 @@ $product_menu_feature_image = $product_menu['feature_image'] ?? 'product-compres
           </div>
         </div>
       </div>
-      <details class="language-switcher" data-language-switcher>
-        <summary aria-label="<?php esc_attr_e('Choose language', 'springapex'); ?>">
+      <?php // 站点仅提供英文：这是一个静态「本站英文」标识，不再是可切换的语言下拉。 ?>
+      <span class="language-switcher">
+        <span class="language-switcher__badge">
           <?php echo springapex_icon('globe', 'icon icon-sm'); ?>
           <span>EN</span>
-          <?php echo springapex_icon('arrow-right', 'icon icon-sm language-switcher__arrow'); ?>
-        </summary>
-        <div class="language-switcher__menu">
-          <div class="language-switcher__head">
-            <strong><?php esc_html_e('Languages', 'springapex'); ?></strong>
-            <small><?php esc_html_e('Display preview', 'springapex'); ?></small>
-          </div>
-          <div class="language-switcher__grid" aria-label="<?php esc_attr_e('Available language placeholders', 'springapex'); ?>">
-            <span class="is-current"><img class="language-switcher__flag" src="<?php echo esc_url(springapex_asset('assets/icons/flags/gb.svg')); ?>" alt="" aria-hidden="true">English</span>
-            <span aria-disabled="true"><img class="language-switcher__flag" src="<?php echo esc_url(springapex_asset('assets/icons/flags/de.svg')); ?>" alt="" aria-hidden="true">Deutsch</span>
-            <span aria-disabled="true"><img class="language-switcher__flag" src="<?php echo esc_url(springapex_asset('assets/icons/flags/fr.svg')); ?>" alt="" aria-hidden="true">Français</span>
-            <span aria-disabled="true"><img class="language-switcher__flag" src="<?php echo esc_url(springapex_asset('assets/icons/flags/es.svg')); ?>" alt="" aria-hidden="true">Español</span>
-            <span aria-disabled="true"><img class="language-switcher__flag" src="<?php echo esc_url(springapex_asset('assets/icons/flags/jp.svg')); ?>" alt="" aria-hidden="true">日本語</span>
-            <span aria-disabled="true"><img class="language-switcher__flag" src="<?php echo esc_url(springapex_asset('assets/icons/flags/kr.svg')); ?>" alt="" aria-hidden="true">한국어</span>
-            <span aria-disabled="true"><img class="language-switcher__flag" src="<?php echo esc_url(springapex_asset('assets/icons/flags/cn.svg')); ?>" alt="" aria-hidden="true">中文</span>
-          </div>
-        </div>
-      </details>
+        </span>
+      </span>
       <button class="icon-btn menu-toggle" type="button" data-menu-toggle aria-label="<?php esc_attr_e('Open menu', 'springapex'); ?>" aria-expanded="false" aria-controls="mobile-navigation">
         <?php echo springapex_icon('menu', 'icon menu-icon-open'); ?>
         <?php echo springapex_icon('close', 'icon menu-icon-close'); ?>

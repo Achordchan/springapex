@@ -235,6 +235,12 @@ figure {
   margin-bottom: 12px;
 }
 
+/* 首页眉题均位于白色或浅灰表面；默认 muted 色只有约 2.4–2.5:1。
+   使用现有三级正文色后达到普通文本 AA 对比度，同时不改变其他路由。 */
+.sa-route-home .section-kicker {
+  color: var(--sa-text-3);
+}
+
 .muted {
   color: var(--sa-text-3);
 }
@@ -357,6 +363,40 @@ figure {
 .btn-primary .icon,
 .application-card .icon {
   filter: invert(1);
+}
+
+/* Submit buttons: in-flight "submitting" state (set by initContactForms in
+   main.js). The spinner + label render inside the button so the state is
+   visible on the control itself, not only in the status line below it. */
+.btn:disabled,
+.btn[disabled] {
+  cursor: not-allowed;
+}
+
+.btn.is-submitting,
+.btn.is-submitting:hover {
+  opacity: .9;
+  cursor: progress;
+  transform: none;
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  animation: sa-btn-spin .6s linear infinite;
+}
+
+@keyframes sa-btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-spinner { animation-duration: 1.4s; }
 }
 
 .icon-circle {

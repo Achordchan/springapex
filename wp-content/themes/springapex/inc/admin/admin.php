@@ -20,6 +20,8 @@ require_once __DIR__ . '/render.php';
 require_once __DIR__ . '/search.php';
 require_once __DIR__ . '/sanitize.php';
 require_once __DIR__ . '/save.php';
+require_once __DIR__ . '/system-status.php';
+require_once __DIR__ . '/seo-settings.php';
 
 add_action('admin_menu', 'springapex_admin_menu');
 function springapex_admin_menu(): void
@@ -171,6 +173,7 @@ function springapex_admin_overview_page(): void
         ['label' => '新闻文章', 'desc' => '每篇新闻的正文、图集和所属类型。', 'url' => 'edit.php?post_type=spring_news'],
         ['label' => '客户询盘', 'desc' => '客户从联系页提交的询盘和附件。', 'url' => 'edit.php?post_type=spring_inquiry'],
         ['label' => '媒体库', 'desc' => '所有上传过的图片和文件。', 'url' => 'upload.php'],
+        ['label' => 'SEO / TDK', 'desc' => '首页、静态页和列表页的搜索标题、描述与关键词。', 'url' => 'admin.php?page=springapex-content-seo'],
     ];
     ?>
     <div class="wrap sa-admin">

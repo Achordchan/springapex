@@ -75,12 +75,28 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
             echo 'Symbolic links are not allowed in staged CDN assets.' >&2
             exit 1
         fi
+        bucket='norenspring-prod-storage-20260825-7e4c9a'
+        object_prefix="public/theme/$version/assets"
+        cache_control='public,max-age=31536000,immutable'
         /usr/local/bin/aws s3 sync \
             "$stage/" \
-            "s3://norenspring-prod-storage-20260825-7e4c9a/public/theme/$version/assets/" \
+            "s3://$bucket/$object_prefix/" \
             --delete \
             --no-follow-symlinks \
+            --cache-control "$cache_control" \
             --only-show-errors
+        # The version path is immutable, so every uploaded asset must tell both
+        # CloudFront and the browser that it can be retained for one year. Fail
+        # before theme activation if S3 did not persist that metadata.
+        stored_cache_control=$(/usr/local/bin/aws s3api head-object \
+            --bucket "$bucket" \
+            --key "$object_prefix/css/foundation.css" \
+            --query 'CacheControl' \
+            --output text)
+        if [ "$stored_cache_control" != "$cache_control" ]; then
+            echo 'The NorenSpring CDN assets are missing immutable cache metadata.' >&2
+            exit 1
+        fi
         /bin/rm -rf -- "$version_dir"
         ;;
     *)

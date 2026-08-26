@@ -31,6 +31,12 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
 });
 
 add_action('add_meta_boxes_spring_inquiry', static function (): void {
+    // 询盘是访客提交的只读数据，没有可编辑字段。核心默认的「发布」框会给它一个
+    // 私密可见性下拉 + 更新/移到回收站按钮，让人误以为要在这里设状态、能改内容——
+    // 全部去掉，换成一个只有「返回列表 / 移到回收站」的精简操作框。
+    remove_meta_box('submitdiv', 'spring_inquiry', 'side');
+    remove_meta_box('slugdiv', 'spring_inquiry', 'normal');
+
     add_meta_box(
         'springapex-inquiry-view',
         '询盘内容（只读）',
@@ -39,7 +45,32 @@ add_action('add_meta_boxes_spring_inquiry', static function (): void {
         'normal',
         'high'
     );
+
+    add_meta_box(
+        'springapex-inquiry-actions',
+        '操作',
+        'springapex_render_inquiry_actions',
+        'spring_inquiry',
+        'side',
+        'high'
+    );
 });
+
+/** 只读询盘的操作框：返回列表 + 移到回收站（无状态、无更新）。 */
+function springapex_render_inquiry_actions(WP_Post $post): void
+{
+    $list_url = admin_url('edit.php?post_type=spring_inquiry');
+    $trash_url = current_user_can('delete_post', $post->ID) ? get_delete_post_link($post->ID) : '';
+    ?>
+    <div class="sa-iv-actions">
+      <a class="button" href="<?php echo esc_url($list_url); ?>">返回询盘列表</a>
+      <?php if ($trash_url !== '') : ?>
+        <a class="sa-iv-actions__trash submitdelete" href="<?php echo esc_url($trash_url); ?>"
+           onclick="return confirm('确定把这条询盘移到回收站吗？');">移到回收站</a>
+      <?php endif; ?>
+    </div>
+    <?php
+}
 
 /** 邮件通知状态的统一文案；兼容邮件模板改造前落库的 '1'/'0' 旧值。 */
 function springapex_inquiry_mail_status_label(string $status): string
@@ -68,23 +99,42 @@ add_filter('post_row_actions', static function (array $actions, WP_Post $post): 
     return $actions;
 }, 10, 2);
 
-// 状态列：「私密」（private post_status）对询盘语境毫无意义，
-// 换成邮件通知状态——运营者真正关心的信号。
+// 询盘只读：去掉批量「编辑」（它能批量改状态），只保留「移到回收站」。
+// 行内快速编辑已在 post_row_actions 里移除，这里补齐批量入口。
+add_filter('bulk_actions-edit-spring_inquiry', static function (array $actions): array {
+    unset($actions['edit']);
+
+    return $actions;
+});
+
+// 标题后的「私密」状态徽标（private post_status）对询盘语境毫无意义：
+// 询盘天生就是后台私密数据，不对外公开，这个标签只是噪音。
 add_filter('display_post_states', static function (array $post_states, WP_Post $post): array {
     if ((string) $post->post_type !== 'spring_inquiry') {
         return $post_states;
     }
     unset($post_states['private']);
-    $mail = (string) get_post_meta((int) $post->ID, '_springapex_mail_sent', true);
-    $mail_label = springapex_inquiry_mail_status_label($mail);
-    if ($mail_label !== '') {
-        $post_states['springapex_mail'] = in_array($mail, ['pending', 'failed', '0'], true)
-            ? '<span style="color:#d63638;">' . $mail_label . '</span>'
-            : $mail_label;
-    }
 
     return $post_states;
 }, 10, 2);
+
+// 列表顶部的状态筛选链接：所有询盘都是 private，「私密(N)」与「全部(N)」
+// 完全等价，纯属重复。其余发布态在询盘里也不会出现，一并去掉，只留「全部」
+// 和「回收站」。
+add_filter('views_edit-spring_inquiry', static function (array $views): array {
+    unset(
+        $views['private'],
+        $views['publish'],
+        $views['draft'],
+        $views['pending'],
+        $views['future'],
+        $views['sticky']
+    );
+
+    return $views;
+});
+
+// 列表列的定义在 inc/contact.php，与来源筛选、下载处理放在一起（单一来源）。
 
 function springapex_render_inquiry_view(object $post): void
 {

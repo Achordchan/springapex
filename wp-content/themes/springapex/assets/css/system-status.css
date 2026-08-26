@@ -1,0 +1,214 @@
+/* 系统与存储页。仅在该后台页面加载，并始终限制在 .sa-system-status。 */
+
+.sa-system-status {
+  max-width: 1180px;
+}
+
+.sa-system-status__header form {
+  flex: none;
+  margin-top: 2px;
+}
+
+.sa-system-status__summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.sa-system-status__summary-card {
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid var(--sa-a-line);
+  border-top: 3px solid #a7aaad;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.sa-system-status__summary-card--ok { border-top-color: #00a32a; }
+.sa-system-status__summary-card--ready { border-top-color: #2271b1; }
+.sa-system-status__summary-card--warning { border-top-color: #dba617; }
+.sa-system-status__summary-card--error { border-top-color: #d63638; }
+
+.sa-system-status__summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.sa-system-status__summary-head h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sa-system-status__summary-head span {
+  flex: none;
+  padding: 2px 7px;
+  border-radius: 9px;
+  background: #f0f0f1;
+  color: #50575e;
+  font-size: 11px;
+}
+
+.sa-system-status__summary-card > strong {
+  display: block;
+  overflow: hidden;
+  color: #1d2327;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sa-system-status__summary-card > p {
+  min-height: 40px;
+  margin: 7px 0 0;
+  color: #646970;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.sa-system-status__probe-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding-top: 18px;
+}
+
+.sa-system-status__probe {
+  padding: 15px 16px;
+  border: 1px solid #dcdcde;
+  border-left: 4px solid #a7aaad;
+  border-radius: 5px;
+  background: #fff;
+}
+
+.sa-system-status__probe--ok { border-left-color: #00a32a; }
+.sa-system-status__probe--warning { border-left-color: #dba617; }
+.sa-system-status__probe--error { border-left-color: #d63638; }
+
+.sa-system-status__probe header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sa-system-status__probe h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.sa-system-status__probe header span {
+  color: #50575e;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sa-system-status__probe > p {
+  margin: 8px 0 12px;
+  color: #50575e;
+  line-height: 1.6;
+}
+
+.sa-system-status__probe dl,
+.sa-system-status__probe dl div {
+  margin: 0;
+}
+
+.sa-system-status__probe dl div {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+  padding: 5px 0;
+  border-top: 1px solid #f0f0f1;
+}
+
+.sa-system-status__probe dt { color: #646970; }
+.sa-system-status__probe dd { overflow-wrap: anywhere; }
+
+.sa-system-status__table {
+  margin-top: 12px;
+  border: 0;
+}
+
+.sa-system-status__table th {
+  width: 210px;
+  color: #50575e;
+  font-weight: 600;
+}
+
+.sa-system-status__table td {
+  overflow-wrap: anywhere;
+}
+
+.sa-system-status__details .sa-card__body {
+  padding-top: 16px;
+}
+
+.sa-system-status__details ul {
+  margin: 0 0 12px 20px;
+  list-style: disc;
+}
+
+.sa-system-status__details li {
+  margin-bottom: 7px;
+}
+
+.sa-system-status__report {
+  min-height: 320px;
+  margin-top: 10px;
+  resize: vertical;
+  white-space: pre;
+}
+
+.sa-system-status__copy-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.sa-system-status__copy-row span {
+  color: #2271b1;
+  font-size: 12.5px;
+}
+
+@media (max-width: 1000px) {
+  .sa-system-status__summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 782px) {
+  .sa-system-status__header {
+    flex-direction: column;
+  }
+
+  .sa-system-status__summary,
+  .sa-system-status__probe-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sa-system-status__summary-card > p {
+    min-height: 0;
+  }
+
+  .sa-system-status__table th,
+  .sa-system-status__table td {
+    display: block;
+    width: auto;
+  }
+
+  .sa-system-status__table th {
+    padding-bottom: 2px;
+  }
+
+  .sa-system-status__table td {
+    padding-top: 2px;
+  }
+}

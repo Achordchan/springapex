@@ -1,38 +1,117 @@
-/* 表单字段构建器（表单设置页）。 */
+/* 表单设置页：标签页 + 卡片式字段构建器。
+   本样式表仅在表单设置屏加载（inc/admin/form-settings.php enqueue），
+   故类名不做全局兜底，但整体收在 .springapex-form-settings 之内。 */
 
-.springapex-form-builder {
-  margin: 28px 0 8px;
-  padding: 18px 20px 20px;
-  border: 1px solid #dcdcde;
-  border-radius: 8px;
-  background: #fff;
+/* ---------- 页面骨架 ---------- */
+/* 折叠卡片 .sa-card 的样式复用自 admin.css（网站内容屏），其配色变量原本
+   定义在 .sa-admin 上；本页容器不是 .sa-admin，这里补一份同名变量，卡片
+   的边框/底色/序号徽标才能正确取色。 */
+.springapex-form-settings {
+  --sa-a-ink: #1d2327;
+  --sa-a-muted: #646970;
+  --sa-a-line: #dcdcde;
+  --sa-a-bg: #f6f7f7;
+  --sa-a-accent: #2271b1;
+  --sa-a-danger: #b32d2e;
 }
 
-.springapex-form-builder > .title {
-  margin: 0 0 12px;
+.springapex-form-settings .sa-fs-intro {
+  max-width: 860px;
+  margin: 6px 0 2px;
+  font-size: 13.5px;
+  line-height: 1.7;
 }
 
-.form-builder-flags {
-  display: flex;
+.springapex-form-settings .sa-fs-fields-hint {
+  margin: 4px 0 12px;
+  color: #646970;
+}
+
+/* ---------- 标签页 ---------- */
+.springapex-form-settings .sa-fs-tabs {
+  margin: 16px 0 0;
+}
+
+.springapex-form-settings .sa-fs-panel {
+  margin-top: 20px;
+}
+
+.springapex-form-settings .sa-fs-panel[hidden] {
+  display: none;
+}
+
+/* ---------- 卡片（复用 .sa-card）内的排版微调 ---------- */
+.springapex-form-settings .sa-card {
   margin-bottom: 14px;
-  flex-wrap: wrap;
-  gap: 18px;
 }
 
-.form-builder-flags label {
+.springapex-form-settings .sa-card .form-table {
+  margin-top: 0;
+}
+
+.springapex-form-settings .sa-card .form-table th {
+  padding-left: 0;
+}
+
+/* ---------- 表单启停 / 开关 ---------- */
+.springapex-form-settings .form-builder-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 6px 0 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f0f0f1;
+}
+
+.springapex-form-settings .form-builder-flags label {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  margin: 0;
+  padding: 4px 12px;
+  border: 1px solid #dcdcde;
+  border-radius: 999px;
+  background: #f6f7f7;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.springapex-form-settings .form-builder-flags label:has(input:checked) {
+  border-color: #2271b1;
+  background: #eef5fb;
+  color: #135e96;
+}
+
+.springapex-form-settings .sa-fs-flag--fixed {
+  color: #646970;
+}
+
+/* ---------- 字段列表 ---------- */
+.springapex-form-settings .form-builder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.springapex-form-settings [data-builder-add] {
+  --add-accent: #2271b1;
 }
 
 .builder-field {
   position: relative;
-  margin-bottom: 10px;
+  margin: 0;
   padding: 12px 14px;
   border: 1px solid #dcdcde;
-  border-left: 3px solid #2271b1;
-  border-radius: 6px;
-  background: #f9f9fa;
+  border-left: 3px solid #c3c4c7;
+  border-radius: 8px;
+  background: #fff;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.builder-field:hover {
+  border-left-color: #2271b1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
 }
 
 .builder-field.is-dragging {
@@ -48,48 +127,86 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+}
+
+.builder-field__head strong {
+  font-size: 13.5px;
 }
 
 .builder-field__drag {
-  color: #8c8f94;
+  color: #a7aaad;
   cursor: grab;
   font-size: 15px;
+  line-height: 1;
+}
+
+.builder-field__drag:active {
+  cursor: grabbing;
 }
 
 .builder-field__type {
-  padding: 1px 8px;
+  padding: 1px 9px;
   border-radius: 9px;
   background: #e7f1f8;
-  color: #2271b1;
+  color: #135e96;
   font-size: 11.5px;
+  font-weight: 600;
 }
 
 .builder-field__system {
-  padding: 1px 8px;
+  padding: 1px 9px;
   border-radius: 9px;
   background: #f0f0f1;
   color: #646970;
+  font-size: 11.5px;
+  cursor: help;
+}
+
+.builder-field__system--locked {
+  background: #fbeecf;
+  color: #7a5c00;
+}
+
+.builder-field__locknote {
+  margin-left: auto;
+  color: #a7aaad;
   font-size: 11.5px;
 }
 
 .builder-field__remove {
   margin-left: auto;
-  color: #d63638;
+  padding: 2px 6px;
+  border: 0;
+  background: none;
+  color: #b32d2e;
   cursor: pointer;
+  font-size: 12.5px;
+}
+
+.builder-field__remove:hover {
+  color: #8a1f1f;
+  text-decoration: underline;
 }
 
 .builder-field__grid {
   display: grid;
   grid-template-columns: 2fr 1fr 2fr 1fr auto;
-  gap: 10px;
+  gap: 10px 12px;
   align-items: end;
 }
 
 .builder-field__grid label {
   display: block;
-  font-size: 12px;
   color: #50575e;
+  font-size: 12px;
+}
+
+/* 选项框（仅 select 类型用）默认带 hidden 属性，由 JS 按类型开关。上面的
+   `label { display: block }` 优先级高于 UA 的 [hidden]{display:none}，会让它
+   对文本等非 select 字段照样显示——这里显式让 hidden 生效。 */
+.builder-field__grid label[hidden] {
+  display: none;
 }
 
 .builder-field__grid input[type="text"],
@@ -107,6 +224,18 @@
   white-space: nowrap;
 }
 
+.builder-field__required.is-locked {
+  cursor: help;
+}
+
+.builder-field__reqlock {
+  padding: 0 6px;
+  border-radius: 8px;
+  background: #fbeecf;
+  color: #7a5c00;
+  font-size: 10.5px;
+}
+
 .builder-field__options {
   grid-column: 1 / -1;
 }
@@ -117,23 +246,179 @@
   }
 }
 
-/* 邮件通知模板：占位符速查标签 */
-.springapex-mail-tokens {
+/* ---------- 保存栏 ---------- */
+.springapex-form-settings .sa-fs-savebar {
+  position: sticky;
+  z-index: 20;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 12px 14px;
+  border: 1px solid #dcdcde;
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 -3px 12px rgba(0, 0, 0, .06);
+  backdrop-filter: blur(8px);
+}
+
+.springapex-form-settings .sa-fs-savebar .button {
+  margin: 0;
+}
+
+.springapex-form-settings .sa-fs-savebar__hint {
+  color: #646970;
+  font-size: 12.5px;
+}
+
+/* ---------- 邮件 HTML 编辑器 / 预览 ---------- */
+.springapex-form-settings .sa-mail-editor {
+  max-width: 920px;
+}
+
+.springapex-form-settings .sa-mail-editor__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.springapex-form-settings .sa-mail-editor__modes {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.springapex-form-settings .sa-mail-editor__modes .button.is-active {
+  border-color: #2271b1;
+  background: #2271b1;
+  color: #fff;
+}
+
+.springapex-form-settings #springapex_inquiry_mail_body {
+  min-height: 520px;
+  font-family: Consolas, Monaco, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.springapex-form-settings .CodeMirror {
+  height: min(64vh, 680px);
+  min-height: 520px;
+  border: 1px solid #8c8f94;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.springapex-form-settings .sa-mail-preview {
+  overflow: hidden;
+  border: 1px solid #dcdcde;
+  border-radius: 6px;
+  background: #f4f7fa;
+}
+
+.springapex-form-settings .sa-mail-preview__subject {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #dcdcde;
+  background: #fff;
+}
+
+.springapex-form-settings .sa-mail-preview__subject span {
+  flex: 0 0 auto;
+  color: #646970;
+  font-size: 12px;
+}
+
+.springapex-form-settings .sa-mail-preview__subject strong {
+  color: #1d2327;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.springapex-form-settings .sa-mail-preview iframe {
+  display: block;
+  width: 100%;
+  min-height: 760px;
+  border: 0;
+  background: #f4f7fa;
+}
+
+.springapex-form-settings .sa-mail-editor__help {
+  margin-top: 10px;
+}
+
+.springapex-form-settings .sa-mail-editor__status {
+  min-height: 18px;
+  margin: 6px 0 0;
+  color: #2271b1;
+  font-size: 12.5px;
+}
+
+/* ---------- 邮件占位符速查 ---------- */
+.springapex-form-settings .springapex-mail-tokens {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.springapex-mail-token {
+.springapex-form-settings .sa-mail-token-hint {
+  flex-basis: 100%;
+  margin: 0 0 2px;
+}
+
+.springapex-form-settings .springapex-mail-token {
   display: inline-flex;
   align-items: baseline;
   gap: 4px;
   padding: 2px 8px;
   border: 1px solid #dcdcde;
-  border-radius: 3px;
+  border-radius: 4px;
   background: #f6f7f7;
+  color: #1d2327;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
 }
 
-.springapex-mail-token small {
+.springapex-form-settings .springapex-mail-token:hover,
+.springapex-form-settings .springapex-mail-token:focus-visible {
+  border-color: #2271b1;
+  background: #eef5fb;
+}
+
+.springapex-form-settings .springapex-mail-token small {
   color: #646970;
+}
+
+@media (max-width: 782px) {
+  .springapex-form-settings .sa-mail-editor__toolbar,
+  .springapex-form-settings .sa-mail-preview__subject {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .springapex-form-settings .sa-mail-editor__modes {
+    width: 100%;
+  }
+
+  .springapex-form-settings .sa-mail-editor__modes .button {
+    flex: 1;
+  }
+
+  .springapex-form-settings .sa-fs-savebar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .springapex-form-settings .CodeMirror,
+  .springapex-form-settings #springapex_inquiry_mail_body {
+    min-height: 440px;
+  }
 }
