@@ -250,9 +250,10 @@ Verify in BT Panel as well:
   inquiry IP rate limit is not shared by an entire CloudFront edge.
 - WordPress `home` and `siteurl` are `https://www.norenspring.com`.
 - WordPress `blog_public` is `1`.
-- `/xmlrpc.php` returns 404 at the Nginx layer and the homepage response
-  carries no `X-Pingback` header. The theme additionally disables XML-RPC in
-  PHP (`inc/hardening.php`), so either layer alone is sufficient.
+- `/xmlrpc.php` returns 404 at the Nginx layer. A post with pingbacks
+  allowed carries no `X-Pingback` header, and an XML-RPC `system.listMethods`
+  call returns no methods (the theme empties the method table in
+  `inc/hardening.php`), so either layer alone keeps the endpoint closed.
 - The `Simple History` plugin is installed from the WordPress directory. It is
   NOT deployed by the pipeline (only the two managed plugin directories are
   rsynced) and must be maintained manually: record updates in this file when
