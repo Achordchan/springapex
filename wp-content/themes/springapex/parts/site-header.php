@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) {
 }
 $nav = springapex_navigation_items();
 $brand = springapex_brand();
-$products = springapex_products();
+$products = springapex_mega_menu_products();
 $product_menu = springapex_get('products.mega_menu', []);
 $product_menu = is_array($product_menu) ? $product_menu : [];
 $product_menu_feature_image = $product_menu['feature_image'] ?? 'product-compression-menu-v2.png';

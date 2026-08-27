@@ -578,6 +578,7 @@ function springapex_product_from_post(object $post): array
     $catalog_url = $meta_or_seed('_springapex_catalog_url', $seed['catalog_url'] ?? '');
     $seed_image = $meta_or_seed('_springapex_seed_image', $seed['image'] ?? '');
     $featured = $meta_or_seed('_springapex_featured', !empty($seed['featured']) ? '1' : '0');
+    $mega_menu = $meta_or_seed('_springapex_mega_menu', '1');
     $database_image = ['id' => $thumbnail_id, 'file' => (string) $seed_image];
     $has_custom_file = (string) $seed_image !== '' && (string) $seed_image !== (string) ($seed['image'] ?? '');
     $listing_image = $thumbnail_id > 0 || $has_custom_file ? $database_image : null;
@@ -636,6 +637,7 @@ function springapex_product_from_post(object $post): array
         'applications' => is_array($applications) ? array_values(array_filter($applications, 'is_array')) : [],
         'catalog_url' => (string) $catalog_url,
         'featured' => (bool) $featured,
+        'mega_menu' => (bool) $mega_menu,
     ]);
 }
 
@@ -704,6 +706,9 @@ function springapex_products(): array
     $posts = get_posts([
         'post_type' => 'spring_product',
         'post_status' => 'publish',
+        // Shared catalog source (header menu, products page, footer, sitemap,
+        // search) — must stay complete. The mega menu caps rendering in
+        // springapex_mega_menu_products() instead.
         'posts_per_page' => -1,
         'orderby' => ['menu_order' => 'ASC', 'title' => 'ASC'],
     ]);
@@ -754,6 +759,23 @@ function springapex_featured_products(?array $products = null): array
 
     $products ??= springapex_products();
     return array_values(array_filter($products, static fn(array $product): bool => !empty($product['featured'])));
+}
+
+function springapex_mega_menu_products(?array $products = null): array
+{
+    if (defined('SPRINGAPEX_PREVIEW')) {
+        return array_slice($products ?? springapex_products(), 0, 12);
+    }
+
+    $products ??= springapex_products();
+    $eligible = array_values(array_filter(
+        $products,
+        static fn(array $product): bool => !empty($product['mega_menu'])
+    ));
+
+    // The header panel is a fixed-height two-column list; cap the menu to what
+    // stays browsable and let /products/ carry the full range.
+    return array_slice($eligible, 0, 12);
 }
 
 function springapex_solutions(): array
