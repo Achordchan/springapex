@@ -254,8 +254,16 @@ add_action('login_init', static function (): void {
         return;
     }
 
-    // 优先级 5：赶在核心用户名/密码校验之前短路，不给爆破探测凭据的机会。
+    // apply_filters 不短路：在优先级 20 的核心校验之前返回 WP_Error 会作为入参
+    // 穿透 wp_authenticate_username_password()（它只对 WP_User 提前返回），
+    // 被有效凭据的全新 WP_User 覆盖。所以必须挂在 25——核心用户名/密码/邮箱/
+    // 应用密码校验（20）之后、cookie 认证（30）之前：仅当凭据确实通过拿到
+    // WP_User 时才要求已通过人机验证；错误凭据沿用核心原有报错。
     add_filter('authenticate', static function ($user) {
+        if (!$user instanceof WP_User) {
+            return $user;
+        }
+
         if (springapex_verify_turnstile('') !== true) {
             return new WP_Error(
                 'springapex_login_turnstile',
@@ -264,5 +272,5 @@ add_action('login_init', static function (): void {
         }
 
         return $user;
-    }, 5);
+    }, 25);
 });
