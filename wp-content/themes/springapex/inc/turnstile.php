@@ -254,31 +254,29 @@ add_action('login_init', static function (): void {
         return;
     }
 
-    // apply_filters('authenticate') 不短路，任何一段单独成事都防不住：
-    // 早于核心校验返回 WP_Error 会穿透 wp_authenticate_username_password()
-    // （它只对 WP_User 提前返回）被有效凭据的全新结果覆盖；晚于核心校验
-    // 拦截则给正确密码留出免 token 探测通道。所以两段配合：
-    //
-    //   ① 优先级 1：先跑完 Turnstile 校验并只记录结果（不改变链路）。
-    //      空 token 在 springapex_verify_turnstile() 内部就地判错，不出站。
-    //   ② 优先级 25（核心用户名/密码/邮箱/应用密码校验 20 之后、cookie 认证
-    //      30 之前）：校验失败时无论凭据对错都返回同一条拒绝——每个登录
-    //      尝试都必须消耗一次性的有效 token，且不泄露「密码是否已猜中」。
-    $failure = false;
+    // 只处理真实的登录提交（含 interim login 的 iframe 登录）。首次 GET 打开
+    // 登录页、找回密码等其他动作不注册任何过滤——否则 GET 路径上的 wp_signon()
+    // 会产生空字段错误并被这里的统一拒绝替换，访客第一次打开就报人机验证失败。
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST' || !isset($_POST['log'], $_POST['pwd'])) {
+        return;
+    }
 
-    add_filter('authenticate', static function ($user) use (&$failure) {
-        $failure = springapex_verify_turnstile('') !== true;
-        return $user;
-    }, 1);
+    // apply_filters('authenticate') 不短路：留在链上的核心回调只对 WP_User
+    // 入参提前返回，非空凭据下无视一切前置错误，一定会执行用户查询和密码
+    // 哈希再覆盖结果。所以人机验证失败的请求直接把核心三个凭据回调从本次
+    // 请求里摘除，让统一拒绝成为唯一结论——不出用户查询、不算密码哈希。
+    // 空 token 由 verify helper 就地判错，不产生对 Cloudflare 的出站请求。
+    if (springapex_verify_turnstile('') !== true) {
+        remove_filter('authenticate', 'wp_authenticate_username_password', 20);
+        remove_filter('authenticate', 'wp_authenticate_email_password', 20);
+        remove_filter('authenticate', 'wp_authenticate_application_password', 20);
 
-    add_filter('authenticate', static function ($user) use (&$failure) {
-        if ($failure !== true) {
-            return $user;
-        }
-
-        return new WP_Error(
+        add_filter('authenticate', static fn () => new WP_Error(
             'springapex_login_turnstile',
             __('The anti-spam check could not be verified. Please try again.', 'springapex')
-        );
-    }, 25);
+        ));
+        return;
+    }
+
+    // 验证通过的提交不注册任何拦截，走完整原生认证链。
 });

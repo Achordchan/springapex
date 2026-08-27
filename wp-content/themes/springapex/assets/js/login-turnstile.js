@@ -73,10 +73,18 @@
   const widget = document.querySelector('.cf-turnstile');
   if (!widget) return;
 
-  // 进入登录页即加载；加载失败后聚焦重试（与联系表单同策略）。无 token 的
-  // 提交由服务端拒绝并给出可读错误，不会静默放行。
+  let lastKick = 0;
+
+  // 进入登录页即加载；监听器常驻不 { once: true }——首次加载仍 pending 时
+  // 被点击只会复用同一个 Promise，一旦失败必须有仍可触发的重试入口。3 秒
+  // 退避防止连点/离线状态下反复注入脚本。无 token 的提交由服务端统一拒绝。
   loadTurnstile().catch(() => {});
-  ['focusin', 'pointerdown'].forEach((type) => {
-    widget.addEventListener(type, () => loadTurnstile().catch(() => {}), { once: true });
-  });
+  const kick = () => {
+    if (window.turnstile || loadPromise) return;
+    const now = Date.now();
+    if (now - lastKick < 3000) return;
+    lastKick = now;
+    loadTurnstile().catch(() => {});
+  };
+  ['focusin', 'pointerdown'].forEach((type) => widget.addEventListener(type, kick));
 })();
