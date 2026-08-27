@@ -92,7 +92,7 @@ function springapex_turnstile_noscript(): string
  */
 function springapex_turnstile_actions(): array
 {
-    return ['contact-inquiry', 'product-inquiry', 'capability-inquiry', 'quick-inquiry'];
+    return ['contact-inquiry', 'product-inquiry', 'capability-inquiry', 'quick-inquiry', 'wp-login'];
 }
 
 /**
@@ -193,4 +193,76 @@ add_action('admin_notices', static function (): void {
         '<div class="notice notice-warning"><p>%s</p></div>',
         esc_html__('NorenSpring: the Cloudflare Turnstile widget is shown on the contact forms, but submissions are NOT verified yet. Define SPRINGAPEX_TURNSTILE_SECRET in wp-config.php to activate anti-spam verification.', 'springapex')
     );
+});
+
+/**
+ * Login-page protection.
+ *
+ * 挂件只在 wp-login.php 渲染；authenticate 校验也只在 login_init 之后注册，
+ * 因此 REST / 应用密码等非表单登录永远不受影响。未配置 secret 时全部跳过——
+ * 与联系表单同一套优雅降级（既有 admin notice 会提醒补配置）。
+ * 登录保护刻意不走「表单设置」的按表单开关（verify 时传空 key），避免被
+ * 误关掉唯一的人机验证防线。
+ */
+add_action('login_enqueue_scripts', static function (): void {
+    if (!springapex_turnstile_enabled()) {
+        return;
+    }
+
+    wp_enqueue_script(
+        'springapex-login-turnstile',
+        SPRINGAPEX_URI . '/assets/js/login-turnstile.js',
+        [],
+        SPRINGAPEX_VERSION,
+        true
+    );
+    wp_add_inline_script(
+        'springapex-login-turnstile',
+        'window.NorenSpringLogin={turnstileUrl:"https://challenges.cloudflare.com/turnstile/v0/api.js"};',
+        'before'
+    );
+});
+
+add_action('login_head', static function (): void {
+    if (!springapex_turnstile_enabled()) {
+        return;
+    }
+
+    echo '<style>.sa-login-turnstile{margin:16px 0 4px}</style>';
+});
+
+add_action('login_form', static function (): void {
+    if (!springapex_turnstile_enabled()) {
+        return;
+    }
+    ?>
+    <div class="sa-login-turnstile">
+      <div
+        class="cf-turnstile"
+        data-sitekey="<?php echo esc_attr(springapex_turnstile_site_key()); ?>"
+        data-theme="light"
+        data-language="en"
+        data-action="wp-login"
+      ></div>
+      <?php echo springapex_turnstile_noscript(); ?>
+    </div>
+    <?php
+});
+
+add_action('login_init', static function (): void {
+    if (!springapex_turnstile_enabled()) {
+        return;
+    }
+
+    // 优先级 5：赶在核心用户名/密码校验之前短路，不给爆破探测凭据的机会。
+    add_filter('authenticate', static function ($user) {
+        if (springapex_verify_turnstile('') !== true) {
+            return new WP_Error(
+                'springapex_login_turnstile',
+                __('The anti-spam check could not be verified. Please try again.', 'springapex')
+            );
+        }
+
+        return $user;
+    }, 5);
 });

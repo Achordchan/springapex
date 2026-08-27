@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SPRINGAPEX_VERSION', '2.9.104');
+define('SPRINGAPEX_VERSION', '2.9.105');
 define('SPRINGAPEX_DIR', get_template_directory());
 $springapex_uri = get_template_directory_uri();
 if (defined('SPRINGAPEX_CDN_URL') && is_string(SPRINGAPEX_CDN_URL) && SPRINGAPEX_CDN_URL !== '') {
