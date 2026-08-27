@@ -4,6 +4,7 @@ node_modules/
 /index.php
 /wp-*.php
 !/wp-router.php
+!/wp-config-sample.php
 /wp-admin/
 /wp-includes/
 /license.txt

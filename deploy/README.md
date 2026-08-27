@@ -75,7 +75,14 @@ define('SPRINGAPEX_S3_BUCKET', 'norenspring-prod-storage-20260825-7e4c9a');
 define('SPRINGAPEX_S3_REGION', 'us-east-1');
 define('SPRINGAPEX_S3_PRIVATE_PREFIX', 'private/inquiries');
 define('SPRINGAPEX_CDN_URL', 'https://cdn.norenspring.com');
+define('DISALLOW_FILE_EDIT', true);
 ```
+
+`DISALLOW_FILE_EDIT` disables the appearance/plugin file editors in wp-admin:
+all code reaches production through the GitHub pipeline, so the editor only
+serves as a webshell shortcut for a compromised admin session. Keep it defined
+in the production `wp-config.php` (that file is outside the deployment
+pipeline and must be edited on the host).
 
 ## Media conversion
 
@@ -243,6 +250,15 @@ Verify in BT Panel as well:
   inquiry IP rate limit is not shared by an entire CloudFront edge.
 - WordPress `home` and `siteurl` are `https://www.norenspring.com`.
 - WordPress `blog_public` is `1`.
+- `/xmlrpc.php` returns 404 at the Nginx layer. A post with pingbacks
+  allowed carries no `X-Pingback` header, and an XML-RPC `system.listMethods`
+  call returns no methods (the theme empties the method table in
+  `inc/hardening.php`), so either layer alone keeps the endpoint closed.
+- The `Simple History` plugin is installed from the WordPress directory. It is
+  NOT deployed by the pipeline (only the two managed plugin directories are
+  rsynced) and must be maintained manually: record updates in this file when
+  its version changes. Audit logs live in its own database tables and survive
+  deployments.
 - Recent Nginx, PHP and WordPress logs contain no fatal errors.
 - Let's Encrypt renewal covers all production hostnames.
 - Daily site and database backup tasks are enabled and have a successful run.
