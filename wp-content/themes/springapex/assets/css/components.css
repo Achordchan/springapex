@@ -744,7 +744,7 @@ body.menu-open {
 .footer-kicker {
   display: block;
   margin-bottom: 16px;
-  color: var(--sa-text-muted);
+  color: var(--sa-text-2);
   font-size: 12px;
   font-weight: 600;
   letter-spacing: .1em;
@@ -1423,7 +1423,7 @@ body.support-panel-open .support-contact-dock {
 
 .support-bottom-link--quote {
   flex: 1.4;
-  background: var(--sa-accent);
+  background: var(--sa-accent-deep);
   font-size: 14px;
   letter-spacing: .01em;
 }
@@ -1433,7 +1433,7 @@ body.support-panel-open .support-contact-dock {
 }
 
 .support-bottom-link--whatsapp {
-  background: #25d366;
+  background: #075e54;
   color: #fff;
 }
 
