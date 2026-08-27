@@ -75,7 +75,14 @@ define('SPRINGAPEX_S3_BUCKET', 'norenspring-prod-storage-20260825-7e4c9a');
 define('SPRINGAPEX_S3_REGION', 'us-east-1');
 define('SPRINGAPEX_S3_PRIVATE_PREFIX', 'private/inquiries');
 define('SPRINGAPEX_CDN_URL', 'https://cdn.norenspring.com');
+define('DISALLOW_FILE_EDIT', true);
 ```
+
+`DISALLOW_FILE_EDIT` disables the appearance/plugin file editors in wp-admin:
+all code reaches production through the GitHub pipeline, so the editor only
+serves as a webshell shortcut for a compromised admin session. Keep it defined
+in the production `wp-config.php` (that file is outside the deployment
+pipeline and must be edited on the host).
 
 ## Media conversion
 
