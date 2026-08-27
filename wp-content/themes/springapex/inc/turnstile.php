@@ -92,7 +92,7 @@ function springapex_turnstile_noscript(): string
  */
 function springapex_turnstile_actions(): array
 {
-    return ['contact-inquiry', 'product-inquiry', 'capability-inquiry', 'quick-inquiry'];
+    return ['contact-inquiry', 'product-inquiry', 'capability-inquiry', 'quick-inquiry', 'wp-login'];
 }
 
 /**
@@ -193,4 +193,90 @@ add_action('admin_notices', static function (): void {
         '<div class="notice notice-warning"><p>%s</p></div>',
         esc_html__('NorenSpring: the Cloudflare Turnstile widget is shown on the contact forms, but submissions are NOT verified yet. Define SPRINGAPEX_TURNSTILE_SECRET in wp-config.php to activate anti-spam verification.', 'springapex')
     );
+});
+
+/**
+ * Login-page protection.
+ *
+ * 挂件只在 wp-login.php 渲染；authenticate 校验也只在 login_init 之后注册，
+ * 因此 REST / 应用密码等非表单登录永远不受影响。未配置 secret 时全部跳过——
+ * 与联系表单同一套优雅降级（既有 admin notice 会提醒补配置）。
+ * 登录保护刻意不走「表单设置」的按表单开关（verify 时传空 key），避免被
+ * 误关掉唯一的人机验证防线。
+ */
+add_action('login_enqueue_scripts', static function (): void {
+    if (!springapex_turnstile_enabled()) {
+        return;
+    }
+
+    wp_enqueue_script(
+        'springapex-login-turnstile',
+        SPRINGAPEX_URI . '/assets/js/login-turnstile.js',
+        [],
+        SPRINGAPEX_VERSION,
+        true
+    );
+    wp_add_inline_script(
+        'springapex-login-turnstile',
+        'window.NorenSpringLogin={turnstileUrl:"https://challenges.cloudflare.com/turnstile/v0/api.js"};',
+        'before'
+    );
+});
+
+add_action('login_head', static function (): void {
+    if (!springapex_turnstile_enabled()) {
+        return;
+    }
+
+    echo '<style>.sa-login-turnstile{margin:16px 0 4px}</style>';
+});
+
+add_action('login_form', static function (): void {
+    if (!springapex_turnstile_enabled()) {
+        return;
+    }
+    ?>
+    <div class="sa-login-turnstile">
+      <div
+        class="cf-turnstile"
+        data-sitekey="<?php echo esc_attr(springapex_turnstile_site_key()); ?>"
+        data-theme="light"
+        data-language="en"
+        data-action="wp-login"
+      ></div>
+      <?php echo springapex_turnstile_noscript(); ?>
+    </div>
+    <?php
+});
+
+add_action('login_init', static function (): void {
+    if (!springapex_turnstile_enabled()) {
+        return;
+    }
+
+    // 只处理真实的登录提交（含 interim login 的 iframe 登录）。首次 GET 打开
+    // 登录页、找回密码等其他动作不注册任何过滤——否则 GET 路径上的 wp_signon()
+    // 会产生空字段错误并被这里的统一拒绝替换，访客第一次打开就报人机验证失败。
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST' || !isset($_POST['log'], $_POST['pwd'])) {
+        return;
+    }
+
+    // apply_filters('authenticate') 不短路：留在链上的核心回调只对 WP_User
+    // 入参提前返回，非空凭据下无视一切前置错误，一定会执行用户查询和密码
+    // 哈希再覆盖结果。所以人机验证失败的请求直接把核心三个凭据回调从本次
+    // 请求里摘除，让统一拒绝成为唯一结论——不出用户查询、不算密码哈希。
+    // 空 token 由 verify helper 就地判错，不产生对 Cloudflare 的出站请求。
+    if (springapex_verify_turnstile('') !== true) {
+        remove_filter('authenticate', 'wp_authenticate_username_password', 20);
+        remove_filter('authenticate', 'wp_authenticate_email_password', 20);
+        remove_filter('authenticate', 'wp_authenticate_application_password', 20);
+
+        add_filter('authenticate', static fn () => new WP_Error(
+            'springapex_login_turnstile',
+            __('The anti-spam check could not be verified. Please try again.', 'springapex')
+        ));
+        return;
+    }
+
+    // 验证通过的提交不注册任何拦截，走完整原生认证链。
 });
