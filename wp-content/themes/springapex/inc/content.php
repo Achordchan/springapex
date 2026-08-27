@@ -706,9 +706,10 @@ function springapex_products(): array
     $posts = get_posts([
         'post_type' => 'spring_product',
         'post_status' => 'publish',
-        // Upper bound keeps the header/footer queries sane if the catalog ever
-        // grows pathologically; a spring catalog stays far below this.
-        'posts_per_page' => 200,
+        // Shared catalog source (header menu, products page, footer, sitemap,
+        // search) — must stay complete. The mega menu caps rendering in
+        // springapex_mega_menu_products() instead.
+        'posts_per_page' => -1,
         'orderby' => ['menu_order' => 'ASC', 'title' => 'ASC'],
     ]);
 
