@@ -127,12 +127,12 @@
 }
 
 .sa-product-card .text-link {
-  color: var(--sa-accent);
+  color: var(--sa-accent-deep);
   margin-top: auto;
 }
 
 .sa-product-card:hover .text-link {
-  color: var(--sa-accent-hover);
+  color: var(--sa-accent-deep-hover);
 }
 
 .sa-quality__grid,

@@ -18,6 +18,10 @@
   --sa-accent: #0ea5e9;
   --sa-accent-hover: #0284c7;
   --sa-accent-soft: #e0f2fe;
+  /* AA text/background variants: #0369a1 clears 4.5:1 both as text on light
+     surfaces and behind white text; the base accent (#0ea5e9) does not. */
+  --sa-accent-deep: #0369a1;
+  --sa-accent-deep-hover: #075985;
 
   --sa-primary: #0f172a;
   --sa-primary-hover: #1e293b;
