@@ -255,10 +255,10 @@ add_action('add_meta_boxes_spring_product', static function (): void {
         'high'
     );
     // 画廊是唯一图片来源（第一张自动同步特色图像），原生特色图像框只会
-    // 制造第二个事实来源，藏掉。原生「属性」框同理：排序字段已移入产品
-    // 数据面板（同名 menu_order 输入，仍走 WP 标准持久化流程）。
+    // 制造第二个事实来源，藏掉。原生「属性」框（注册 ID 是 pageparentdiv）
+    // 同理：排序字段已移入产品数据面板，留着会形成同名 menu_order 双输入。
     remove_meta_box('postimagediv', 'spring_product', 'side');
-    remove_meta_box('postattributes', 'spring_product', 'side');
+    remove_meta_box('pageparentdiv', 'spring_product', 'side');
 });
 
 /**
