@@ -254,23 +254,31 @@ add_action('login_init', static function (): void {
         return;
     }
 
-    // apply_filters 不短路：在优先级 20 的核心校验之前返回 WP_Error 会作为入参
-    // 穿透 wp_authenticate_username_password()（它只对 WP_User 提前返回），
-    // 被有效凭据的全新 WP_User 覆盖。所以必须挂在 25——核心用户名/密码/邮箱/
-    // 应用密码校验（20）之后、cookie 认证（30）之前：仅当凭据确实通过拿到
-    // WP_User 时才要求已通过人机验证；错误凭据沿用核心原有报错。
-    add_filter('authenticate', static function ($user) {
-        if (!$user instanceof WP_User) {
+    // apply_filters('authenticate') 不短路，任何一段单独成事都防不住：
+    // 早于核心校验返回 WP_Error 会穿透 wp_authenticate_username_password()
+    // （它只对 WP_User 提前返回）被有效凭据的全新结果覆盖；晚于核心校验
+    // 拦截则给正确密码留出免 token 探测通道。所以两段配合：
+    //
+    //   ① 优先级 1：先跑完 Turnstile 校验并只记录结果（不改变链路）。
+    //      空 token 在 springapex_verify_turnstile() 内部就地判错，不出站。
+    //   ② 优先级 25（核心用户名/密码/邮箱/应用密码校验 20 之后、cookie 认证
+    //      30 之前）：校验失败时无论凭据对错都返回同一条拒绝——每个登录
+    //      尝试都必须消耗一次性的有效 token，且不泄露「密码是否已猜中」。
+    $failure = false;
+
+    add_filter('authenticate', static function ($user) use (&$failure) {
+        $failure = springapex_verify_turnstile('') !== true;
+        return $user;
+    }, 1);
+
+    add_filter('authenticate', static function ($user) use (&$failure) {
+        if ($failure !== true) {
             return $user;
         }
 
-        if (springapex_verify_turnstile('') !== true) {
-            return new WP_Error(
-                'springapex_login_turnstile',
-                __('The anti-spam check could not be verified. Please try again.', 'springapex')
-            );
-        }
-
-        return $user;
+        return new WP_Error(
+            'springapex_login_turnstile',
+            __('The anti-spam check could not be verified. Please try again.', 'springapex')
+        );
     }, 25);
 });
