@@ -160,7 +160,7 @@ function springapex_render_product_panel(object $post): void
 
           <div class="sa-pp__field">
             <label for="springapex-menu-order"><?php esc_html_e('菜单排序', 'springapex'); ?></label>
-            <input type="number" class="small-text" min="0" step="1" id="springapex-menu-order" name="menu_order" value="<?php echo esc_attr((string) $menu_order); ?>">
+            <input type="number" class="small-text" step="1" id="springapex-menu-order" name="menu_order" value="<?php echo esc_attr((string) $menu_order); ?>">
             <p class="description"><?php esc_html_e('数字越小越靠前。这个顺序同时决定首页推荐、产品列表页和页脚里产品的先后。', 'springapex'); ?></p>
           </div>
         </section>
