@@ -74,6 +74,8 @@ function springapex_render_product_panel(object $post): void
 
     $subtitle = (string) $value('_springapex_subtitle', $seed['subtitle'] ?? '');
     $featured = (bool) $value('_springapex_featured', !empty($seed['featured']));
+    $mega_menu = (bool) $value('_springapex_mega_menu', true);
+    $menu_order = (int) $post->menu_order;
 
     // 与前台 springapex_product_from_post() 使用相同的有效性口径：
     // 已删除的附件、空行和损坏行不应阻止特色图 / seed 画廊兜底。
@@ -144,6 +146,22 @@ function springapex_render_product_panel(object $post): void
               <span class="sa-pp__switch-track" aria-hidden="true"></span>
               <span class="sa-pp__switch-text"><?php esc_html_e('在首页的产品推荐区域显示这个产品', 'springapex'); ?></span>
             </label>
+          </div>
+
+          <div class="sa-pp__field">
+            <label><?php esc_html_e('大菜单展示', 'springapex'); ?></label>
+            <label class="sa-pp__switch">
+              <input type="checkbox" name="springapex_mega_menu" value="1" <?php checked($mega_menu); ?>>
+              <span class="sa-pp__switch-track" aria-hidden="true"></span>
+              <span class="sa-pp__switch-text"><?php esc_html_e('在页头 Products 大菜单中显示这个产品', 'springapex'); ?></span>
+            </label>
+            <p class="description"><?php esc_html_e('大菜单按「菜单排序」最多显示 12 个产品；未入选的产品仍会出现在产品列表页和页脚。', 'springapex'); ?></p>
+          </div>
+
+          <div class="sa-pp__field">
+            <label for="springapex-menu-order"><?php esc_html_e('菜单排序', 'springapex'); ?></label>
+            <input type="number" class="small-text" min="0" step="1" id="springapex-menu-order" name="menu_order" value="<?php echo esc_attr((string) $menu_order); ?>">
+            <p class="description"><?php esc_html_e('数字越小越靠前。这个顺序同时决定首页推荐、产品列表页和页脚里产品的先后。', 'springapex'); ?></p>
           </div>
         </section>
 
