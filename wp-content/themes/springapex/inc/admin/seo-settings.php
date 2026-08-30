@@ -136,6 +136,11 @@ function springapex_render_seo_settings_page(): void
                 <?php springapex_render_seo_field($base . '[title]', 'Title 搜索标题', $title, (string) $definition['title'], 60, false, '', true); ?>
                 <?php springapex_render_seo_field($base . '[description]', 'Description 元描述', $description, (string) $definition['description'], 160, true, '', true); ?>
                 <?php springapex_render_seo_field($base . '[keywords]', 'Keywords 关键词', $keywords, '', 200, false, '使用英文逗号分隔，可留空'); ?>
+                <?php // 与 meta box 相同的归一化基线：记录本次渲染实际预填的值，
+                  // 保存端对它比对。页面开着跨部署时，提交的旧默认不会因与新
+                  // 默认比对而被误存成自定义快照。 ?>
+                <input type="hidden" name="springapex_seo_settings[prefilled][<?php echo esc_attr($route); ?>][title]" value="<?php echo esc_attr((string) $definition['title']); ?>">
+                <input type="hidden" name="springapex_seo_settings[prefilled][<?php echo esc_attr($route); ?>][description]" value="<?php echo esc_attr((string) $definition['description']); ?>">
               </div>
               <div class="sa-seo-preview" aria-label="搜索结果预览">
                 <span class="sa-seo-preview__url"><?php echo esc_html(home_url((string) $definition['path'])); ?></span>

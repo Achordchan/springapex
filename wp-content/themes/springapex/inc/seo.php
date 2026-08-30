@@ -134,18 +134,30 @@ function springapex_sanitize_seo_settings(mixed $input): array
 {
     $input = is_array($input) ? $input : [];
     $submitted_routes = is_array($input['routes'] ?? null) ? $input['routes'] : [];
+    // 归一化基线：表单渲染时写入 hidden 字段的预填值。比对用它而不是当前
+    // 代码里的默认值——页面开着跨部署保存时，旧预填值不应因与新默认不符
+    // 而被误存成自定义快照。
+    $prefilled = is_array($input['prefilled'] ?? null) ? $input['prefilled'] : [];
     $output = ['routes' => []];
 
     foreach (springapex_seo_route_definitions() as $route => $definition) {
         $row = is_array($submitted_routes[$route] ?? null) ? $submitted_routes[$route] : [];
-        // 表单预填了内置默认值，原样提交回来时归一化为空：留空才意味着
-        // 「使用内置默认」，内置默认更新时前台能直接跟进，不被快照冻结。
+        // 与渲染时预填的基线一致即视为「未自定义」，归一化为空：数据库只存
+        // 真正的自定义值，内置默认更新时前台能直接跟进。
+        $title_baseline = trim(sanitize_text_field((string) ($prefilled[$route]['title'] ?? '')));
+        $description_baseline = trim(sanitize_textarea_field((string) ($prefilled[$route]['description'] ?? '')));
+        if ($title_baseline === '') {
+            $title_baseline = trim((string) $definition['title']);
+        }
+        if ($description_baseline === '') {
+            $description_baseline = trim((string) $definition['description']);
+        }
         $title = trim(sanitize_text_field((string) ($row['title'] ?? '')));
         $description = trim(sanitize_textarea_field((string) ($row['description'] ?? '')));
-        if ($title === trim((string) $definition['title'])) {
+        if ($title === $title_baseline) {
             $title = '';
         }
-        if ($description === trim((string) $definition['description'])) {
+        if ($description === $description_baseline) {
             $description = '';
         }
         $output['routes'][$route] = [
