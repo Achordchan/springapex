@@ -13,10 +13,16 @@ $product_menu_feature_image = $product_menu['feature_image'] ?? 'product-compres
 <header class="site-header" data-header>
   <div class="container container-wide header-inner">
     <div class="brand-wrap">
-      <?php if (!defined('SPRINGAPEX_PREVIEW') && function_exists('has_custom_logo') && has_custom_logo()) : ?>
-        <?php echo get_custom_logo(); ?>
-      <?php else : ?>
-        <a class="brand brand--image" href="<?php echo esc_url(springapex_url('/')); ?>" aria-label="<?php echo esc_attr($brand['name'] ?? 'NorenSpring'); ?> home">
+      <?php $site_logo = springapex_logo(); ?>
+      <a class="brand brand--image" href="<?php echo esc_url(springapex_url('/')); ?>" aria-label="<?php echo esc_attr($brand['name'] ?? 'NorenSpring'); ?> home">
+        <?php if ($site_logo !== '') : ?>
+          <?php echo springapex_image($site_logo, (string) ($brand['name'] ?? 'NorenSpring'), [
+              'class' => 'site-logo site-logo--header',
+              'loading' => 'eager',
+              'fetchpriority' => 'high',
+              'sizes' => '110px',
+          ]); ?>
+        <?php else : ?>
           <?php echo springapex_image('logo-site-norenspring-v1.png', (string) ($brand['name'] ?? 'NorenSpring'), [
               'class' => 'site-logo site-logo--header',
               'loading' => 'eager',
@@ -25,8 +31,8 @@ $product_menu_feature_image = $product_menu['feature_image'] ?? 'product-compres
               'height' => 529,
               'sizes' => '110px',
           ]); ?>
-        </a>
-      <?php endif; ?>
+        <?php endif; ?>
+      </a>
     </div>
 
     <nav class="nav-desktop" aria-label="<?php esc_attr_e('Primary navigation', 'springapex'); ?>">
