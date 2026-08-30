@@ -1289,7 +1289,7 @@
       // 悬停、聚焦、按住是三个各自独立的暂停理由，共用一个布尔会互相解除：
       // 鼠标停在证书条上时在别处点一下，抬起就会把悬停暂停一起清掉。
       const pauseReasons = new Set();
-      let activePointerId = null;
+      const activePointers = new Set();
 
       const pause = (reason) => {
         pauseReasons.add(reason);
@@ -1364,7 +1364,10 @@
         } catch (error) {
           keyboardFocus = true;
         }
+        // 焦点在证书条内部从键盘转成指针（点另一张卡片）时不会有 focusout，
+        // 这里不主动清掉的话键盘那次暂停就再也解不开了。
         if (keyboardFocus) pause('focus');
+        else resume('focus');
       });
       carousel.addEventListener('focusout', () => {
         window.setTimeout(() => {
@@ -1372,15 +1375,16 @@
         }, 0);
       });
       carousel.addEventListener('pointerdown', (event) => {
-        activePointerId = event.pointerId;
+        activePointers.add(event.pointerId);
         pause('pointer');
       });
       // 手指可能滑出轮播之后才抬起，抬起事件挂在 window 上才不会漏掉恢复；
-      // 但只认在这条证书条上按下的那个指针，别处松开的指针不该解除暂停。
+      // 但只认在这条证书条上按下的那些指针，别处松开的指针不该解除暂停。
+      // 多指按住时要等最后一根抬起才恢复，否则第二根先松开就会在第一根还
+      // 拖着的时候重新开始写 scrollLeft。
       const releasePointer = (event) => {
-        if (activePointerId === null || event.pointerId !== activePointerId) return;
-        activePointerId = null;
-        resume('pointer');
+        if (!activePointers.delete(event.pointerId)) return;
+        if (!activePointers.size) resume('pointer');
       };
       window.addEventListener('pointerup', releasePointer);
       window.addEventListener('pointercancel', releasePointer);
