@@ -136,11 +136,21 @@ function springapex_sanitize_seo_settings(mixed $input): array
     $submitted_routes = is_array($input['routes'] ?? null) ? $input['routes'] : [];
     $output = ['routes' => []];
 
-    foreach (springapex_seo_route_definitions() as $route => $_definition) {
+    foreach (springapex_seo_route_definitions() as $route => $definition) {
         $row = is_array($submitted_routes[$route] ?? null) ? $submitted_routes[$route] : [];
+        // 表单预填了内置默认值，原样提交回来时归一化为空：留空才意味着
+        // 「使用内置默认」，内置默认更新时前台能直接跟进，不被快照冻结。
+        $title = trim(sanitize_text_field((string) ($row['title'] ?? '')));
+        $description = trim(sanitize_textarea_field((string) ($row['description'] ?? '')));
+        if ($title === trim((string) $definition['title'])) {
+            $title = '';
+        }
+        if ($description === trim((string) $definition['description'])) {
+            $description = '';
+        }
         $output['routes'][$route] = [
-            'title' => sanitize_text_field((string) ($row['title'] ?? '')),
-            'description' => sanitize_textarea_field((string) ($row['description'] ?? '')),
+            'title' => $title,
+            'description' => $description,
             'keywords' => sanitize_text_field((string) ($row['keywords'] ?? '')),
         ];
     }

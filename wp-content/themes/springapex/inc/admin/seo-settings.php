@@ -60,15 +60,23 @@ function springapex_render_seo_field(
     string $default,
     int $recommended,
     bool $textarea = false,
-    string $help = ''
+    string $help = '',
+    bool $prefill = false
 ): void {
+    // 预填模式：把内置默认当作真实值展示，运营在此基础上改而不是凭空填。
+    // 与默认完全一致的提交值会在保存端归一化为空，内置默认不会被冻结。
+    // 默认已在框里，就不再需要 placeholder 示例；非预填的 meta box 仍保留它。
+    $show_placeholder = !$prefill || $default === '';
+    if ($prefill && trim($value) === '' && $default !== '') {
+        $value = $default;
+    }
     ?>
     <label class="sa-seo-field">
       <span class="sa-seo-field__label"><?php echo esc_html($label); ?></span>
       <?php if ($textarea) : ?>
-        <textarea name="<?php echo esc_attr($name); ?>" rows="3" maxlength="500" placeholder="<?php echo esc_attr($default); ?>" data-seo-field data-seo-recommended="<?php echo (int) $recommended; ?>" data-seo-default="<?php echo esc_attr($default); ?>"><?php echo esc_textarea($value); ?></textarea>
+        <textarea name="<?php echo esc_attr($name); ?>" rows="3" maxlength="500" <?php if ($show_placeholder) : ?>placeholder="<?php echo esc_attr($default); ?>"<?php endif; ?> data-seo-field data-seo-recommended="<?php echo (int) $recommended; ?>" data-seo-default="<?php echo esc_attr($default); ?>"><?php echo esc_textarea($value); ?></textarea>
       <?php else : ?>
-        <input type="text" name="<?php echo esc_attr($name); ?>" value="<?php echo esc_attr($value); ?>" maxlength="500" placeholder="<?php echo esc_attr($default); ?>" data-seo-field data-seo-recommended="<?php echo (int) $recommended; ?>" data-seo-default="<?php echo esc_attr($default); ?>">
+        <input type="text" name="<?php echo esc_attr($name); ?>" value="<?php echo esc_attr($value); ?>" maxlength="500" <?php if ($show_placeholder) : ?>placeholder="<?php echo esc_attr($default); ?>"<?php endif; ?> data-seo-field data-seo-recommended="<?php echo (int) $recommended; ?>" data-seo-default="<?php echo esc_attr($default); ?>">
       <?php endif; ?>
       <span class="sa-seo-field__meta"><span data-seo-count>0</span> / 建议 <?php echo (int) $recommended; ?> 字符<?php echo $help !== '' ? ' · ' . esc_html($help) : ''; ?></span>
     </label>
@@ -125,8 +133,8 @@ function springapex_render_seo_settings_page(): void
             </summary>
             <div class="sa-card__body">
               <div class="sa-seo-fields">
-                <?php springapex_render_seo_field($base . '[title]', 'Title 搜索标题', $title, (string) $definition['title'], 60); ?>
-                <?php springapex_render_seo_field($base . '[description]', 'Description 元描述', $description, (string) $definition['description'], 160, true); ?>
+                <?php springapex_render_seo_field($base . '[title]', 'Title 搜索标题', $title, (string) $definition['title'], 60, false, '', true); ?>
+                <?php springapex_render_seo_field($base . '[description]', 'Description 元描述', $description, (string) $definition['description'], 160, true, '', true); ?>
                 <?php springapex_render_seo_field($base . '[keywords]', 'Keywords 关键词', $keywords, '', 200, false, '使用英文逗号分隔，可留空'); ?>
               </div>
               <div class="sa-seo-preview" aria-label="搜索结果预览">
@@ -140,7 +148,7 @@ function springapex_render_seo_settings_page(): void
 
         <div class="sa-seo-savebar">
           <?php submit_button('保存全部 SEO 设置', 'primary', 'submit', false); ?>
-          <span>留空即使用主题内置默认，不会输出空的 meta description。</span>
+          <span>输入框已预填主题内置默认；改成新内容即生效，改回与默认一致或清空则恢复使用内置默认。</span>
         </div>
       </form>
     </div>
@@ -166,14 +174,19 @@ function springapex_render_seo_meta_box(WP_Post $post): void
     $title = (string) get_post_meta($post->ID, '_springapex_seo_title', true);
     $description = (string) get_post_meta($post->ID, '_springapex_seo_description', true);
     $keywords = (string) get_post_meta($post->ID, '_springapex_seo_keywords', true);
+    // 预填用的回退值与前台 springapex_seo_post_values() 的解析顺序一致：
+    // 先摘要/正文清洗，为空时再用按类型生成的文案。
     $fallback_description = springapex_seo_clean_description(
         $post->post_excerpt !== '' ? $post->post_excerpt : $post->post_content
     );
+    if ($fallback_description === '') {
+        $fallback_description = springapex_seo_post_fallback_description($post);
+    }
     ?>
     <div class="springapex-seo-meta" data-seo-scope>
-      <p>留空时标题使用 WordPress 默认标题，描述使用摘要或正文自动生成。建议为重要详情页单独填写。</p>
-      <?php springapex_render_seo_field('springapex_seo_title', 'Title 搜索标题', $title, get_the_title($post), 60); ?>
-      <?php springapex_render_seo_field('springapex_seo_description', 'Description 元描述', $description, $fallback_description, 160, true); ?>
+      <p>输入框已预填自动回退值；改成新内容即生效，改回与回退值一致或清空则恢复自动回退。</p>
+      <?php springapex_render_seo_field('springapex_seo_title', 'Title 搜索标题', $title, get_the_title($post), 60, false, '', true); ?>
+      <?php springapex_render_seo_field('springapex_seo_description', 'Description 元描述', $description, $fallback_description, 160, true, '', true); ?>
       <?php springapex_render_seo_field('springapex_seo_keywords', 'Keywords 关键词', $keywords, '', 200, false, 'Google 不使用，可留空'); ?>
       <div class="sa-seo-preview" aria-label="搜索结果预览">
         <span class="sa-seo-preview__url"><?php echo esc_html(get_permalink($post)); ?></span>
@@ -204,14 +217,21 @@ add_action('save_post', static function (int $post_id, WP_Post $post): void {
         return;
     }
 
+    // 表单预填了回退值（文章标题 / 摘要正文生成的描述），原样提交回来时
+    // 归一化为空、不写 meta：留空才意味着用自动回退，正文后续更新时前台
+    // 描述能跟着内容走，不被编辑时的快照冻住。
     $fields = [
-        '_springapex_seo_title' => ['post' => 'springapex_seo_title', 'textarea' => false],
-        '_springapex_seo_description' => ['post' => 'springapex_seo_description', 'textarea' => true],
-        '_springapex_seo_keywords' => ['post' => 'springapex_seo_keywords', 'textarea' => false],
+        '_springapex_seo_title' => ['post' => 'springapex_seo_title', 'textarea' => false, 'fallback' => trim(get_the_title($post))],
+        '_springapex_seo_description' => ['post' => 'springapex_seo_description', 'textarea' => true, 'fallback' => ''],
+        '_springapex_seo_keywords' => ['post' => 'springapex_seo_keywords', 'textarea' => false, 'fallback' => ''],
     ];
     foreach ($fields as $meta_key => $field) {
         $raw = (string) wp_unslash($_POST[$field['post']] ?? '');
         $value = $field['textarea'] ? sanitize_textarea_field($raw) : sanitize_text_field($raw);
+        $value = trim($value);
+        if ($value !== '' && $value === $field['fallback']) {
+            $value = '';
+        }
         if ($value === '') {
             delete_post_meta($post_id, $meta_key);
         } else {

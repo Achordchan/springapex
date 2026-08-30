@@ -564,6 +564,34 @@ function springapex_static_image_variants(string $file): array
     return $cache[$file];
 }
 
+/**
+ * Resolves the logo the header and footer render, in priority order:
+ * 1. brand.logo set on the 网站内容 → 品牌与联系方式 screen (attachment id or
+ *    theme static filename),
+ * 2. the Customizer's custom logo,
+ * 3. the bundled NorenSpring wordmark that ships with the theme.
+ * Returns whatever springapex_image() accepts: ['id' => int, 'file' => string]
+ * when a value is set, '' (caller falls back to the wordmark) otherwise.
+ */
+function springapex_logo(): int|string|array
+{
+    $panel_logo = springapex_get('brand.logo', '');
+    if (is_array($panel_logo) && (int) ($panel_logo['id'] ?? 0) > 0) {
+        return ['id' => (int) $panel_logo['id'], 'file' => (string) ($panel_logo['file'] ?? '')];
+    }
+    if ((is_int($panel_logo) && $panel_logo > 0) || (is_string($panel_logo) && $panel_logo !== '')) {
+        return is_int($panel_logo) ? ['id' => $panel_logo, 'file' => ''] : (string) $panel_logo;
+    }
+
+    if (!defined('SPRINGAPEX_PREVIEW') && function_exists('get_theme_mod')) {
+        $custom_logo_id = (int) get_theme_mod('custom_logo', 0);
+        if ($custom_logo_id > 0) {
+            return ['id' => $custom_logo_id, 'file' => ''];
+        }
+    }
+    return '';
+}
+
 function springapex_image(int|string|array $image, string $alt, array $args = []): string
 {
     $defaults = [

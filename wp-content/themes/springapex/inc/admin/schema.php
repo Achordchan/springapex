@@ -38,6 +38,7 @@ function springapex_admin_screens(): array
                     'title' => '公司名称',
                     'desc' => '客户在页头、页脚和邮件里看到的名字。',
                     'fields' => [
+                        ['path' => 'brand.logo', 'label' => '站点 LOGO', 'type' => 'image', 'help' => '透明背景的横版 PNG/SVG，会替换页头和页脚的 Logo。选好后请在定制器「站点身份」里同步设置站点图标（浏览器标签页小图标）。'],
                         ['path' => 'brand.name', 'label' => '品牌名', 'type' => 'text', 'help' => '显示在页头 Logo 旁，例如 NorenSpring。'],
                         ['path' => 'brand.tagline', 'label' => '品牌标语', 'type' => 'text', 'help' => '品牌名下方的一行小字，全大写效果由前台自动处理。'],
                         ['path' => 'brand.company', 'label' => '公司全称', 'type' => 'text', 'help' => '用于页脚版权行和询盘邮件签名，请填写营业执照上的英文全称。'],
@@ -1076,6 +1077,9 @@ function springapex_admin_icon_choices(): array
 function springapex_admin_image_dimensions_map(): array
 {
     return [
+        // 品牌
+        'brand.logo' => '916 × 529 px 或同比例横版（透明背景 PNG/SVG）',
+
         // 页面头图 · 电脑端（各页宽幅不一，按现有图比例）
         'home.hero.image' => '1920 × 1080 px（16:9，横版）',
         'products.hero.image' => '2400 × 1050 px（16:7，横版宽幅）',
