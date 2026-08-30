@@ -1281,6 +1281,12 @@
       let loopWidth = 0;
       let previousTime = 0;
       let resizeFrame = 0;
+      // scrollLeft 读回会被浏览器量化成整像素，而每帧位移不到 1px（高刷新率
+      // 屏幕上只有 0.3px 左右），`scrollLeft +=` 的增量会被整个吞掉，轮播就停在
+      // 原地不动。位置改用这个浮点累加器保存，每帧整体写回；用户自己滑动时
+      // 再把累加器同步回真实位置。
+      let position = 0;
+      let lastWritten = -1;
 
       const pause = () => {
         paused = true;
@@ -1295,8 +1301,14 @@
         previousTime = time;
 
         if (!paused && !document.hidden && loopWidth > 0) {
-          carousel.scrollLeft += elapsed * 0.04;
-          if (carousel.scrollLeft >= loopWidth) carousel.scrollLeft -= loopWidth;
+          const actual = carousel.scrollLeft;
+          if (lastWritten < 0 || Math.abs(actual - lastWritten) > 2) position = actual;
+          position += elapsed * 0.04;
+          if (position >= loopWidth) position %= loopWidth;
+          carousel.scrollLeft = position;
+          lastWritten = carousel.scrollLeft;
+        } else {
+          lastWritten = -1;
         }
 
         window.requestAnimationFrame(animate);
@@ -1308,6 +1320,7 @@
       const measureLoop = () => {
         loopWidth = carousel.scrollWidth / 2;
         previousTime = 0;
+        lastWritten = -1;
       };
       const scheduleMeasure = () => {
         window.cancelAnimationFrame(resizeFrame);
@@ -1336,8 +1349,9 @@
         }, 0);
       });
       carousel.addEventListener('pointerdown', pause);
-      carousel.addEventListener('pointerup', resume);
-      carousel.addEventListener('pointercancel', resume);
+      // 手指可能滑出轮播之后才抬起，抬起事件挂在 window 上才不会漏掉恢复。
+      window.addEventListener('pointerup', resume);
+      window.addEventListener('pointercancel', resume);
       window.addEventListener('resize', () => scheduleMeasure());
 
       startAnimation();
