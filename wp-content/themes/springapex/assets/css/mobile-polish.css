@@ -18,6 +18,11 @@
   content: "";
 }
 
+/* The home hero media spans the full viewport; keep its readability layer inside the copy column. */
+.hero-home .hero-media-home::after {
+  right: 50%;
+}
+
 .inner-hero:not(.inner-hero--product):not(.inner-hero--solution-detail) .inner-hero-copy,
 .inner-hero:not(.inner-hero--product):not(.inner-hero--solution-detail) .display {
   color: #0b1528;

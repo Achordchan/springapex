@@ -254,10 +254,10 @@ Verify in BT Panel as well:
   allowed carries no `X-Pingback` header, and an XML-RPC `system.listMethods`
   call returns no methods (the theme empties the method table in
   `inc/hardening.php`), so either layer alone keeps the endpoint closed.
-- The `Simple History` plugin is installed from the WordPress directory. It is
-  NOT deployed by the pipeline (only the two managed plugin directories are
-  rsynced) and must be maintained manually: record updates in this file when
-  its version changes. Audit logs live in its own database tables and survive
+- `Simple History 5.31.0` is installed from the WordPress directory. It is
+  maintained manually and is NOT part of the deployment pipeline (only the two
+  managed plugin directories are rsynced): record updates in this file when its
+  version changes. Audit logs live in its own database tables and survive
   deployments.
 - Recent Nginx, PHP and WordPress logs contain no fatal errors.
 - Let's Encrypt renewal covers all production hostnames.
