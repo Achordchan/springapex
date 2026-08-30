@@ -188,6 +188,8 @@ function springapex_render_seo_meta_box(WP_Post $post): void
       <?php springapex_render_seo_field('springapex_seo_title', 'Title 搜索标题', $title, get_the_title($post), 60, false, '', true); ?>
       <?php springapex_render_seo_field('springapex_seo_description', 'Description 元描述', $description, $fallback_description, 160, true, '', true); ?>
       <?php springapex_render_seo_field('springapex_seo_keywords', 'Keywords 关键词', $keywords, '', 200, false, 'Google 不使用，可留空'); ?>
+      <input type="hidden" name="springapex_seo_prefilled[title]" value="<?php echo esc_attr(get_the_title($post)); ?>">
+      <input type="hidden" name="springapex_seo_prefilled[description]" value="<?php echo esc_attr($fallback_description); ?>">
       <div class="sa-seo-preview" aria-label="搜索结果预览">
         <span class="sa-seo-preview__url"><?php echo esc_html(get_permalink($post)); ?></span>
         <strong data-seo-preview-title><?php echo esc_html($title !== '' ? $title : get_the_title($post)); ?></strong>
@@ -219,17 +221,22 @@ add_action('save_post', static function (int $post_id, WP_Post $post): void {
 
     // 表单预填了回退值（文章标题 / 摘要正文生成的描述），原样提交回来时
     // 归一化为空、不写 meta：留空才意味着用自动回退，正文后续更新时前台
-    // 描述能跟着内容走，不被编辑时的快照冻住。
+    // 描述能跟着内容走，不被编辑时的快照冻住。比较基准用 hidden 字段里
+    // 本次渲染实际预填的值（渲染时生成，保存时可能已变化），所见即所比。
+    $prefilled = is_array($_POST['springapex_seo_prefilled'] ?? null)
+        ? wp_unslash($_POST['springapex_seo_prefilled'])
+        : [];
     $fields = [
-        '_springapex_seo_title' => ['post' => 'springapex_seo_title', 'textarea' => false, 'fallback' => trim(get_the_title($post))],
-        '_springapex_seo_description' => ['post' => 'springapex_seo_description', 'textarea' => true, 'fallback' => ''],
+        '_springapex_seo_title' => ['post' => 'springapex_seo_title', 'textarea' => false, 'fallback' => (string) ($prefilled['title'] ?? '')],
+        '_springapex_seo_description' => ['post' => 'springapex_seo_description', 'textarea' => true, 'fallback' => (string) ($prefilled['description'] ?? '')],
         '_springapex_seo_keywords' => ['post' => 'springapex_seo_keywords', 'textarea' => false, 'fallback' => ''],
     ];
     foreach ($fields as $meta_key => $field) {
         $raw = (string) wp_unslash($_POST[$field['post']] ?? '');
         $value = $field['textarea'] ? sanitize_textarea_field($raw) : sanitize_text_field($raw);
         $value = trim($value);
-        if ($value !== '' && $value === $field['fallback']) {
+        $fallback = trim((string) sanitize_text_field($field['fallback']));
+        if ($value !== '' && $value === $fallback) {
             $value = '';
         }
         if ($value === '') {
