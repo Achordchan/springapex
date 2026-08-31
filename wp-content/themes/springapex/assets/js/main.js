@@ -1382,6 +1382,10 @@
       carousel.addEventListener('pointerdown', (event) => {
         activePointers.add(event.pointerId);
         pause('pointer');
+        // 指针一按下，之前那次键盘焦点暂停就该让位给 pointer 暂停：点的如果正是
+        // 当前聚焦的卡片，焦点根本没变，focusin/focusout 都不会再触发，光靠它们
+        // 清不掉这个理由。
+        resume('focus');
       });
       // 手指可能滑出轮播之后才抬起，抬起事件挂在 window 上才不会漏掉恢复；
       // 但只认在这条证书条上按下的那些指针，别处松开的指针不该解除暂停。
