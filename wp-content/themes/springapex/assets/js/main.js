@@ -1304,14 +1304,19 @@
         previousTime = time;
 
         if (!pauseReasons.size && !document.hidden && loopWidth > 0) {
-          const actual = carousel.scrollLeft;
-          // iOS 的橡皮筋回弹会让 scrollLeft 短暂为负，直接抄进累加器的话要等它
-          // 以 40px/s 爬回 0 才重新动起来，所以负值一律按起点算。
-          if (lastWritten < 0 || Math.abs(actual - lastWritten) > 2) position = Math.max(actual, 0);
+          // iOS 的橡皮筋回弹会让 scrollLeft 短暂为负，一律按起点算：既不用等它
+          // 以 40px/s 爬回 0，回弹归位时也不会被当成访客往前滑了一段。
+          const actual = Math.max(carousel.scrollLeft, 0);
+          // lastWritten 是上一帧写完后读回的位置，两者之差就是这一帧里外部造成
+          // 的位移（拖拽、惯性、滚轮）。把差值并进累加器而不是直接覆盖，累加器的
+          // 小数才不会被抹掉，慢速滑动那种每帧一两像素的位移也不会被吞掉。
+          if (lastWritten < 0) position = actual;
+          else position += actual - lastWritten;
           position += elapsed * 0.04;
-          if (position >= loopWidth) position %= loopWidth;
+          if (position < 0) position = 0;
+          else if (position >= loopWidth) position %= loopWidth;
           carousel.scrollLeft = position;
-          lastWritten = carousel.scrollLeft;
+          lastWritten = Math.max(carousel.scrollLeft, 0);
         } else {
           lastWritten = -1;
         }
