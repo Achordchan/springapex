@@ -1277,26 +1277,48 @@
         carousel.appendChild(clone);
       });
 
-      let paused = false;
       let loopWidth = 0;
       let previousTime = 0;
       let resizeFrame = 0;
+      // scrollLeft 读回会被浏览器量化成整像素，而每帧位移不到 1px（高刷新率
+      // 屏幕上只有 0.3px 左右），`scrollLeft +=` 的增量会被整个吞掉，轮播就停在
+      // 原地不动。位置改用这个浮点累加器保存，每帧整体写回；用户自己滑动时
+      // 再把累加器同步回真实位置。
+      let position = 0;
+      let lastWritten = -1;
+      // 悬停、聚焦、按住是三个各自独立的暂停理由，共用一个布尔会互相解除：
+      // 鼠标停在证书条上时在别处点一下，抬起就会把悬停暂停一起清掉。
+      const pauseReasons = new Set();
+      const activePointers = new Set();
 
-      const pause = () => {
-        paused = true;
+      const pause = (reason) => {
+        pauseReasons.add(reason);
       };
 
-      const resume = () => {
-        paused = false;
+      const resume = (reason) => {
+        pauseReasons.delete(reason);
       };
 
       const animate = (time) => {
         const elapsed = previousTime ? Math.min(time - previousTime, 50) : 0;
         previousTime = time;
 
-        if (!paused && !document.hidden && loopWidth > 0) {
-          carousel.scrollLeft += elapsed * 0.04;
-          if (carousel.scrollLeft >= loopWidth) carousel.scrollLeft -= loopWidth;
+        if (!pauseReasons.size && !document.hidden && loopWidth > 0) {
+          // iOS 的橡皮筋回弹会让 scrollLeft 短暂为负，一律按起点算：既不用等它
+          // 以 40px/s 爬回 0，回弹归位时也不会被当成访客往前滑了一段。
+          const actual = Math.max(carousel.scrollLeft, 0);
+          // lastWritten 是上一帧写完后读回的位置，两者之差就是这一帧里外部造成
+          // 的位移（拖拽、惯性、滚轮）。把差值并进累加器而不是直接覆盖，累加器的
+          // 小数才不会被抹掉，慢速滑动那种每帧一两像素的位移也不会被吞掉。
+          if (lastWritten < 0) position = actual;
+          else position += actual - lastWritten;
+          position += elapsed * 0.04;
+          if (position < 0) position = 0;
+          else if (position >= loopWidth) position %= loopWidth;
+          carousel.scrollLeft = position;
+          lastWritten = Math.max(carousel.scrollLeft, 0);
+        } else {
+          lastWritten = -1;
         }
 
         window.requestAnimationFrame(animate);
@@ -1308,6 +1330,7 @@
       const measureLoop = () => {
         loopWidth = carousel.scrollWidth / 2;
         previousTime = 0;
+        lastWritten = -1;
       };
       const scheduleMeasure = () => {
         window.cancelAnimationFrame(resizeFrame);
@@ -1327,17 +1350,53 @@
         });
       };
 
-      carousel.addEventListener('mouseenter', pause);
-      carousel.addEventListener('mouseleave', resume);
-      carousel.addEventListener('focusin', pause);
+      // 悬停暂停只认真实鼠标：触摸的合成 mouseenter 之后往往等不到 mouseleave，
+      // 会把证书条永久停住。pointerenter/leave 带 pointerType，可以直接筛掉。
+      carousel.addEventListener('pointerenter', (event) => {
+        if (event.pointerType === 'mouse') pause('hover');
+      });
+      carousel.addEventListener('pointerleave', (event) => {
+        if (event.pointerType === 'mouse') resume('hover');
+      });
+      // 只有键盘焦点才暂停：触摸点开证书弹窗、关掉之后焦点会落回卡片，
+      // 手机上再也等不到 focusout，无条件暂停会把证书条永久停住。
+      carousel.addEventListener('focusin', (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        let keyboardFocus = true;
+        try {
+          keyboardFocus = target.matches(':focus-visible');
+        } catch (error) {
+          keyboardFocus = true;
+        }
+        // 焦点在证书条内部从键盘转成指针（点另一张卡片）时不会有 focusout，
+        // 这里不主动清掉的话键盘那次暂停就再也解不开了。
+        if (keyboardFocus) pause('focus');
+        else resume('focus');
+      });
       carousel.addEventListener('focusout', () => {
         window.setTimeout(() => {
-          if (!carousel.contains(document.activeElement)) resume();
+          if (!carousel.contains(document.activeElement)) resume('focus');
         }, 0);
       });
-      carousel.addEventListener('pointerdown', pause);
-      carousel.addEventListener('pointerup', resume);
-      carousel.addEventListener('pointercancel', resume);
+      carousel.addEventListener('pointerdown', (event) => {
+        activePointers.add(event.pointerId);
+        pause('pointer');
+        // 指针一按下，之前那次键盘焦点暂停就该让位给 pointer 暂停：点的如果正是
+        // 当前聚焦的卡片，焦点根本没变，focusin/focusout 都不会再触发，光靠它们
+        // 清不掉这个理由。
+        resume('focus');
+      });
+      // 手指可能滑出轮播之后才抬起，抬起事件挂在 window 上才不会漏掉恢复；
+      // 但只认在这条证书条上按下的那些指针，别处松开的指针不该解除暂停。
+      // 多指按住时要等最后一根抬起才恢复，否则第二根先松开就会在第一根还
+      // 拖着的时候重新开始写 scrollLeft。
+      const releasePointer = (event) => {
+        if (!activePointers.delete(event.pointerId)) return;
+        if (!activePointers.size) resume('pointer');
+      };
+      window.addEventListener('pointerup', releasePointer);
+      window.addEventListener('pointercancel', releasePointer);
       window.addEventListener('resize', () => scheduleMeasure());
 
       startAnimation();
