@@ -932,7 +932,9 @@
         uploadUi.label.textContent = 'Upload complete. Submitting your inquiry…';
         uploadUi.pct.hidden = true;
         uploadUi.meta.textContent = '';
-        uploadUi.bar.style.width = '100%';
+        // 清掉上传阶段留下的内联宽度，否则它会盖过 .is-processing 的 width，
+        // 来回滑动的就成了占满整条轨道的一大块。宽度交给 CSS。
+        uploadUi.bar.style.width = '';
         uploadUi.track.setAttribute('aria-valuenow', '100');
       };
 
