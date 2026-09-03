@@ -71,7 +71,7 @@ function springapex_run_system_status_check(): void
 
     set_transient($lock_key, 1, 30);
     // 顺带刷新附件存储统计缓存，让检测后的页面显示最新占用。
-    delete_transient('springapex_attachment_footprint_v2');
+    delete_transient('springapex_attachment_footprint_v3');
     try {
         $result = [
             'checked_at' => time(),
@@ -257,7 +257,7 @@ function springapex_render_system_status_page(): void
               <tr><th>附件总占用</th><td><?php echo esc_html(size_format($storage_bytes, 1) ?: '0 B'); ?> · 共 <?php echo (int) ($storage['files'] ?? 0); ?> 个文件</td></tr>
               <tr><th>其中 S3 对象</th><td><?php echo (int) ($storage['s3_files'] ?? 0); ?> 个 · <?php echo esc_html(size_format($s3_bytes, 1) ?: '0 B'); ?>（按量计费的部分）</td></tr>
               <tr><th>有附件的询盘</th><td><?php echo (int) ($storage['inquiries'] ?? 0); ?> 封（询盘总数 <?php echo (int) $inquiry_total; ?> 封）</td></tr>
-              <tr><th>回收站待清理</th><td><?php echo (int) ($storage['trashed_files'] ?? 0); ?> 个附件 · <?php echo esc_html(size_format((int) ($storage['trashed_bytes'] ?? 0), 1) ?: '0 B'); ?>（永久删除后释放，此前仍在计费）</td></tr>
+              <tr><th>回收站待清理</th><td><?php echo (int) ($storage['trashed_files'] ?? 0); ?> 个附件 · <?php echo esc_html(size_format((int) ($storage['trashed_bytes'] ?? 0), 1) ?: '0 B'); ?>；其中 S3 <?php echo (int) ($storage['trashed_s3_files'] ?? 0); ?> 个 · <?php echo esc_html(size_format((int) ($storage['trashed_s3_bytes'] ?? 0), 1) ?: '0 B'); ?>（永久删除后释放，S3 部分此前仍在计费）</td></tr>
               <tr><th>回收站自动清空</th><td><?php echo $trash_days > 0 ? esc_html($trash_days . ' 天后自动永久删除，届时清理对应 S3 文件') : '已关闭：删除即永久删除并立刻清理 S3'; ?></td></tr>
               <tr><th>S3 删除重试队列</th><td><?php echo $retry_count; ?> 项<?php echo $next_retry > 0 ? '；下次：' . esc_html(wp_date('Y-m-d H:i:s', $next_retry)) : ''; ?></td></tr>
               <tr><th>估算月度存储成本</th><td><?php echo esc_html($cost_text); ?> <span class="description">（仅按 S3 对象体积、S3 标准存储约 $0.023/GB 粗估，未含流量与取回）</span></td></tr>
@@ -266,7 +266,11 @@ function springapex_render_system_status_page(): void
           </table>
           <div class="sa-notice">
             <strong>清理机制：</strong>
-            <span>后台删除询盘分两步——先进「回收站」（图纸仍在 S3、仍计费），永久删除或 <?php echo (int) $trash_days; ?> 天后自动清空回收站时，系统才删掉对应 S3 文件；删除若遇网络故障会自动排队重试。保留中的询盘，其图纸会一直占用存储。</span>
+            <?php if ($trash_days > 0) : ?>
+              <span>后台删除询盘分两步——先进「回收站」（图纸仍在 S3、仍计费），永久删除或 <?php echo (int) $trash_days; ?> 天后自动清空回收站时，系统才删掉对应 S3 文件；删除若遇网络故障会自动排队重试。保留中的询盘，其图纸会一直占用存储。</span>
+            <?php else : ?>
+              <span>本站已关闭回收站（EMPTY_TRASH_DAYS 为 0）：删除询盘即永久删除，系统立刻删掉对应 S3 文件，没有回收站缓冲；删除若遇网络故障会自动排队重试。保留中的询盘，其图纸会一直占用存储。</span>
+            <?php endif; ?>
           </div>
         </div>
       </section>

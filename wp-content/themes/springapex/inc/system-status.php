@@ -83,7 +83,7 @@ function springapex_system_status_is_stored_file(array $file): bool
  * 直接 LIMIT，否则同一询盘的新旧两行可能被截断边界劈开、错配或漏配。结果缓存
  * 5 分钟，运行连接检测时清掉重算。
  *
- * @return array{files:int,bytes:int,s3_files:int,s3_bytes:int,inquiries:int,trashed_files:int,trashed_bytes:int,trashed_inquiries:int,generated_at:int,truncated:bool}
+ * @return array{files:int,bytes:int,s3_files:int,s3_bytes:int,inquiries:int,trashed_files:int,trashed_bytes:int,trashed_s3_files:int,trashed_s3_bytes:int,trashed_inquiries:int,generated_at:int,truncated:bool}
  */
 function springapex_system_status_attachment_footprint(): array
 {
@@ -95,12 +95,14 @@ function springapex_system_status_attachment_footprint(): array
         'inquiries' => 0,
         'trashed_files' => 0,
         'trashed_bytes' => 0,
+        'trashed_s3_files' => 0,
+        'trashed_s3_bytes' => 0,
         'trashed_inquiries' => 0,
         'generated_at' => time(),
         'truncated' => false,
     ];
 
-    $cached = get_transient('springapex_attachment_footprint_v2');
+    $cached = get_transient('springapex_attachment_footprint_v3');
     if (is_array($cached)) {
         return array_merge($empty, $cached);
     }
@@ -143,7 +145,7 @@ function springapex_system_status_attachment_footprint(): array
     }
     if ($status_by_id === []) {
         $result['generated_at'] = time();
-        set_transient('springapex_attachment_footprint_v2', $result, 5 * MINUTE_IN_SECONDS);
+        set_transient('springapex_attachment_footprint_v3', $result, 5 * MINUTE_IN_SECONDS);
         return $result;
     }
 
@@ -212,12 +214,16 @@ function springapex_system_status_attachment_footprint(): array
             if ($trashed) {
                 $result['trashed_files']++;
                 $result['trashed_bytes'] += $bytes;
+                if ($is_s3) {
+                    $result['trashed_s3_files']++;
+                    $result['trashed_s3_bytes'] += $bytes;
+                }
             }
         }
     }
 
     $result['generated_at'] = time();
-    set_transient('springapex_attachment_footprint_v2', $result, 5 * MINUTE_IN_SECONDS);
+    set_transient('springapex_attachment_footprint_v3', $result, 5 * MINUTE_IN_SECONDS);
     return $result;
 }
 

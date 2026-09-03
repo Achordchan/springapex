@@ -98,6 +98,7 @@ $GLOBALS['wpdb']->inquiry_rows = [
     springapex_test_inquiry(4, 'private'),
     springapex_test_inquiry(5, 'private'),
     springapex_test_inquiry(6, 'private'),
+    springapex_test_inquiry(7, 'trash'),
 ];
 $GLOBALS['wpdb']->meta_rows = [
     // 普通询盘，两个 S3 附件。
@@ -130,18 +131,25 @@ $GLOBALS['wpdb']->meta_rows = [
         ['size' => 888, 'storage' => 'local', 'relative_path' => ''],
         ['size' => 50, 'storage' => 's3', 'key' => 'ok'],
     ]),
+    // 回收站里的本地旧附件：计入 trashed_*，但不计入 trashed_s3_*（不占 S3 账单）。
+    springapex_test_meta(7, '_springapex_private_file', [
+        'relative_path' => 'old/trash.pdf', 'size' => 600, 'storage' => 'local',
+    ]),
 ];
 
 $fp = springapex_system_status_attachment_footprint();
 
-springapex_test_assert($fp['files'] === 7, 'File count wrong: got ' . $fp['files']);
-springapex_test_assert($fp['bytes'] === 3000 + 500 + 400 + 100 + 700 + 50, 'Byte total wrong: got ' . $fp['bytes']);
+springapex_test_assert($fp['files'] === 8, 'File count wrong: got ' . $fp['files']);
+springapex_test_assert($fp['bytes'] === 3000 + 500 + 400 + 100 + 700 + 50 + 600, 'Byte total wrong: got ' . $fp['bytes']);
 springapex_test_assert($fp['s3_files'] === 6, 'S3 object count wrong: got ' . $fp['s3_files']);
 springapex_test_assert($fp['s3_bytes'] === 3000 + 500 + 100 + 700 + 50, 'S3 byte total wrong: got ' . $fp['s3_bytes']);
-springapex_test_assert($fp['inquiries'] === 6, 'Inquiry-with-attachment count wrong: got ' . $fp['inquiries']);
-springapex_test_assert($fp['trashed_files'] === 1, 'Trashed file count wrong: got ' . $fp['trashed_files']);
-springapex_test_assert($fp['trashed_bytes'] === 500, 'Trashed byte total wrong: got ' . $fp['trashed_bytes']);
-springapex_test_assert($fp['trashed_inquiries'] === 1, 'Trashed inquiry count wrong: got ' . $fp['trashed_inquiries']);
+springapex_test_assert($fp['inquiries'] === 7, 'Inquiry-with-attachment count wrong: got ' . $fp['inquiries']);
+springapex_test_assert($fp['trashed_files'] === 2, 'Trashed file count wrong: got ' . $fp['trashed_files']);
+springapex_test_assert($fp['trashed_bytes'] === 500 + 600, 'Trashed byte total wrong: got ' . $fp['trashed_bytes']);
+// 回收站里的本地旧附件进 trashed_bytes、但不进 trashed_s3_bytes（不占 S3 账单）。
+springapex_test_assert($fp['trashed_s3_files'] === 1, 'Trashed S3 file count wrong: got ' . $fp['trashed_s3_files']);
+springapex_test_assert($fp['trashed_s3_bytes'] === 500, 'Trashed S3 byte total wrong: got ' . $fp['trashed_s3_bytes']);
+springapex_test_assert($fp['trashed_inquiries'] === 2, 'Trashed inquiry count wrong: got ' . $fp['trashed_inquiries']);
 springapex_test_assert($fp['truncated'] === false, 'Small dataset must not be flagged truncated.');
 
 // 没有任何有附件的询盘时返回全零，不报错，且不查第二步 meta。
