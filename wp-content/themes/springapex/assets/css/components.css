@@ -535,6 +535,83 @@ body.menu-open {
   font-size: 14px;
 }
 
+/* 附件上传进度。带图纸的询盘要传上来好几 MB，光靠按钮转圈访客判断不出是在传
+   还是已经卡死，于是会重复点或者直接关掉页面。由 main.js 在提交时插入。 */
+.form-upload {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--sa-border);
+  border-radius: var(--sa-radius-sm);
+  background: var(--sa-bg-inset);
+}
+
+.form-upload__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.form-upload__pct {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.form-upload__track {
+  overflow: hidden;
+  height: 6px;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: var(--sa-border);
+}
+
+.form-upload__bar {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--sa-primary);
+  transition: width .18s var(--sa-ease);
+}
+
+.form-upload__meta {
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  opacity: .75;
+}
+
+.form-upload__meta:empty {
+  display: none;
+}
+
+/* 文件传完之后服务器还要存盘和发通知邮件，那一段没有进度可报：进度条停在
+   100% 会被当成又卡住了，所以换成一条来回滑动的不确定态。 */
+.form-upload.is-processing .form-upload__bar {
+  width: 40%;
+  animation: sa-upload-indeterminate 1.1s var(--sa-ease) infinite;
+}
+
+@keyframes sa-upload-indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .form-upload__bar {
+    transition: none;
+  }
+
+  .form-upload.is-processing .form-upload__bar {
+    width: 100%;
+    animation: none;
+    opacity: .6;
+  }
+}
+
 /* Feedback after a submit attempt (validation, upload limits, anti-spam /
    Turnstile failures, success). Rendered as a bordered, tinted alert with an
    icon so the message is hard to miss — a plain red line below the button was

@@ -850,6 +850,125 @@
         status.classList.remove('is-error', 'is-success');
       };
 
+      // 上传进度。fetch() 拿不到上传进度，所以带附件的提交走 XMLHttpRequest：
+      // 传 10 MB 图纸时按钮只是转圈的话，访客无从判断是在传还是已经卡死。
+      let uploadUi = null;
+
+      const buildUploadUi = () => {
+        if (uploadUi) return uploadUi;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'form-upload';
+        wrap.hidden = true;
+
+        const row = document.createElement('div');
+        row.className = 'form-upload__row';
+        const label = document.createElement('span');
+        label.className = 'form-upload__label';
+        const pct = document.createElement('span');
+        pct.className = 'form-upload__pct';
+        row.append(label, pct);
+
+        const track = document.createElement('div');
+        track.className = 'form-upload__track';
+        track.setAttribute('role', 'progressbar');
+        track.setAttribute('aria-valuemin', '0');
+        track.setAttribute('aria-valuemax', '100');
+        track.setAttribute('aria-label', 'File upload progress');
+        const bar = document.createElement('span');
+        bar.className = 'form-upload__bar';
+        track.appendChild(bar);
+
+        const meta = document.createElement('p');
+        meta.className = 'form-upload__meta';
+
+        wrap.append(row, track, meta);
+
+        // 紧跟提交按钮，就在刚被点击的那个元素下面。放到状态行前面的话，中间
+        // 还隔着 Turnstile 挂件，正盯着按钮的人不一定会注意到。
+        if (submit && submit.parentNode) {
+          submit.parentNode.insertBefore(wrap, submit.nextSibling);
+        } else if (status && status.parentNode) {
+          status.parentNode.insertBefore(wrap, status);
+        } else {
+          form.appendChild(wrap);
+        }
+
+        uploadUi = { wrap, label, pct, track, bar, meta };
+        return uploadUi;
+      };
+
+      const formatSize = (bytes) => {
+        if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+        return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+      };
+
+      const startUpload = () => {
+        const ui = buildUploadUi();
+        ui.wrap.hidden = false;
+        ui.wrap.classList.remove('is-processing');
+        ui.label.textContent = 'Uploading your files…';
+        ui.pct.hidden = false;
+        ui.pct.textContent = '0%';
+        ui.meta.textContent = '';
+        ui.bar.style.width = '0%';
+        ui.track.setAttribute('aria-valuenow', '0');
+      };
+
+      const updateUpload = (loaded, total) => {
+        if (!uploadUi || !total) return;
+        const percent = Math.min(100, Math.round((loaded / total) * 100));
+        uploadUi.pct.textContent = `${percent}%`;
+        uploadUi.bar.style.width = `${percent}%`;
+        uploadUi.track.setAttribute('aria-valuenow', String(percent));
+        uploadUi.meta.textContent = `${formatSize(loaded)} of ${formatSize(total)}`;
+      };
+
+      // 文件传完了，但服务器还要存文件、发带附件的通知邮件 —— 这一段没有进度可
+      // 言，所以换成不确定态，别让进度条停在 100% 上装作还在动。
+      const finishUpload = () => {
+        if (!uploadUi) return;
+        uploadUi.wrap.classList.add('is-processing');
+        uploadUi.label.textContent = 'Upload complete. Submitting your inquiry…';
+        uploadUi.pct.hidden = true;
+        uploadUi.meta.textContent = '';
+        uploadUi.bar.style.width = '100%';
+        uploadUi.track.setAttribute('aria-valuenow', '100');
+      };
+
+      const hideUpload = () => {
+        if (!uploadUi) return;
+        uploadUi.wrap.hidden = true;
+        uploadUi.wrap.classList.remove('is-processing');
+      };
+
+      const sendForm = (payload, onProgress) => new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', config.ajaxUrl, true);
+        xhr.withCredentials = true;
+        xhr.setRequestHeader('Accept', 'application/json');
+
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) onProgress(event.loaded, event.total);
+        });
+        // 请求体发完 = 进入服务器处理阶段。
+        xhr.upload.addEventListener('load', () => onProgress(-1, 0));
+
+        xhr.addEventListener('load', () => {
+          let body = null;
+          try {
+            body = JSON.parse(xhr.responseText);
+          } catch (parseError) {
+            body = null;
+          }
+          resolve({ ok: xhr.status >= 200 && xhr.status < 300, body });
+        });
+        xhr.addEventListener('error', () => reject(new Error('Unable to submit right now.')));
+        xhr.addEventListener('abort', () => reject(new Error('Unable to submit right now.')));
+
+        xhr.send(payload);
+      });
+
       // Front-end debounce guard: blocks a second submit (double-click, Enter,
       // or a programmatic submit) while a request is already in flight.
       let submitting = false;
@@ -857,7 +976,7 @@
       // Show the "submitting" state ON the button itself (spinner + label),
       // not only in the status line below it, so the state is obvious. The
       // busy label can be overridden per button via data-busy-label.
-      const setSubmitBusy = (busy) => {
+      const setSubmitBusy = (busy, busyLabel) => {
         if (!submit) return;
         if (busy) {
           if (submit.dataset.originalHtml === undefined) {
@@ -871,7 +990,7 @@
           spinner.setAttribute('aria-hidden', 'true');
           const label = document.createElement('span');
           label.className = 'btn-label';
-          label.textContent = submit.getAttribute('data-busy-label') || 'Submitting…';
+          label.textContent = busyLabel || submit.getAttribute('data-busy-label') || 'Submitting…';
           submit.replaceChildren(spinner, label);
         } else {
           submit.disabled = false;
@@ -931,25 +1050,36 @@
       }
 
       submitting = true;
-      setSubmitBusy(true);
+      // 有附件时先报「正在上传」，别一上来就说「提交中」—— 大文件那几十秒里
+      // 真正在发生的是上传。
+      const attachedBytes = fileInput && fileInput.files.length
+        ? Array.from(fileInput.files).reduce((total, file) => total + file.size, 0)
+        : 0;
+      const tracksUpload = attachedBytes > 0;
+      setSubmitBusy(true, tracksUpload ? 'Uploading…' : undefined);
       // The "submitting" feedback now lives on the button, so clear any prior
       // error/success line rather than repeating it below the button.
       clearStatus();
+      if (tracksUpload) startUpload();
 
       const data = new FormData(form);
       data.append('action', 'springapex_contact');
       data.append('nonce', config.nonce || '');
 
       try {
-        const response = await fetch(config.ajaxUrl, {
-          method: 'POST',
-          body: data,
-          credentials: 'same-origin',
-          headers: { Accept: 'application/json' },
+        const { ok, body: payload } = await sendForm(data, (loaded, total) => {
+          if (!tracksUpload) return;
+          if (loaded < 0) {
+            finishUpload();
+            setSubmitBusy(true);
+            return;
+          }
+          updateUpload(loaded, total);
         });
-        const payload = await response.json();
-        if (!response.ok || !payload.success) {
-          const message = payload.data && payload.data.message ? payload.data.message : 'Unable to submit right now.';
+        if (!ok || !payload || !payload.success) {
+          const message = payload && payload.data && payload.data.message
+            ? payload.data.message
+            : 'Unable to submit right now.';
           throw new Error(message);
         }
         const successMode = form.dataset.success || 'redirect';
@@ -984,6 +1114,7 @@
       } finally {
         submitting = false;
         setSubmitBusy(false);
+        hideUpload();
         // Turnstile tokens are single-use; refresh the widget so a follow-up
         // submission (after an error, or a second inquiry) gets a fresh token.
         if (captcha && window.turnstile && typeof window.turnstile.reset === 'function') {
