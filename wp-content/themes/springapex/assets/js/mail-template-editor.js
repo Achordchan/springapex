@@ -104,6 +104,16 @@
       return hasList && hasLink ? html : html + notice;
     };
 
+    // 与 PHP 的 springapex_inquiry_mail_clarify_missing_attachments() 对应：不发
+    // 附件时，正文里若还留着旧的「附件」说法，末尾会补一句澄清。顺序与发送端一致，
+    // 先补取件提示再补澄清。
+    const withAttachmentClarification = (html) => {
+      const block = config.attachmentClarification || '';
+      if (!block || !config.recipientReadsBackend || !config.previewDrawings) return html;
+      const text = html.replace(/<[^>]*>/g, ' ');
+      return /附件|attachment/i.test(text) ? html + block : html;
+    };
+
     const getBody = () => editor ? editor.codemirror.getValue() : bodyInput.value;
     const setBody = (value) => {
       bodyInput.value = value;
@@ -115,7 +125,7 @@
       previewSubject.textContent = fillTemplate(subjectInput.value);
       previewFrame.srcdoc = '<!doctype html><html lang="zh"><head><meta charset="utf-8">'
         + '<meta name="viewport" content="width=device-width,initial-scale=1"></head>'
-        + `<body style="margin:0;padding:0;background:#f4f7fa;">${withDrawingNotice(fillTemplate(getBody()))}</body></html>`;
+        + `<body style="margin:0;padding:0;background:#f4f7fa;">${withAttachmentClarification(withDrawingNotice(fillTemplate(getBody())))}</body></html>`;
     };
 
     const schedulePreview = () => {

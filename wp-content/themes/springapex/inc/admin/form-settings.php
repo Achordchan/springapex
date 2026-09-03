@@ -113,6 +113,9 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
             'recipientReadsBackend' => springapex_inquiry_recipient_reads_backend(
                 springapex_form_settings_effective_recipient()
             ),
+            // 停发附件时，正文里若还留着旧的「附件」说法，实际发出的邮件会多这一段。
+            // 预览也得照着补，否则管理员看不到真实排版。
+            'attachmentClarification' => springapex_inquiry_mail_attachment_clarification_html(),
         ]) . ';',
         'before'
     );

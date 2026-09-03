@@ -56,7 +56,9 @@ class WP_User
     public function __construct(
         public string $user_email,
         public bool $can_edit_private = true,
-        public array $editable_inquiries = []
+        public array $editable_inquiries = [],
+        public bool $can_read_private = true,
+        public array $readable_inquiries = []
     ) {
     }
 }
@@ -69,11 +71,17 @@ function get_user_by(string $field, string $value): WP_User|false
 
 function user_can(WP_User $user, string $capability, mixed ...$args): bool
 {
-    // 邮件里的链接是 post.php?action=edit，WordPress 用 per-post 的 edit_post 把关。
+    // 详情页由 per-post 的 edit_post 把守，页面上的下载入口另外校验 read_post。
     if ($capability === 'edit_post') {
         return in_array((int) ($args[0] ?? 0), $user->editable_inquiries, true);
     }
-    return $capability === 'edit_private_spring_inquiries' ? $user->can_edit_private : false;
+    if ($capability === 'read_post') {
+        return in_array((int) ($args[0] ?? 0), $user->readable_inquiries, true);
+    }
+    if ($capability === 'edit_private_spring_inquiries') {
+        return $user->can_edit_private;
+    }
+    return $capability === 'read_private_spring_inquiries' ? $user->can_read_private : false;
 }
 
 /** 询盘 CPT 注册时用 capability_type ['spring_inquiry','spring_inquiries']。 */
@@ -156,12 +164,14 @@ springapex_test_assert(str_contains($escaped, esc_html($tricky)), 'The escaped f
 
 // 收件人能不能自己去后台取件，决定了这封邮件还要不要夹带图纸。
 $springapex_test_users = [
-    // 管理员：能打开询盘 #12 的详情页
-    'admin@example.com' => new WP_User('admin@example.com', true, [12]),
-    // 只读角色：CPT 能力不足，详情页也打不开
-    'editor@example.com' => new WP_User('editor@example.com', false, []),
+    // 管理员：详情页打得开，下载端点也过得去
+    'admin@example.com' => new WP_User('admin@example.com', true, [12], true, [12]),
+    // CPT 能力不足：详情页打不开
+    'editor@example.com' => new WP_User('editor@example.com', false, [], false, []),
     // 能读私密文章、却没有这条询盘的编辑权 —— 打不开带下载入口的详情页
-    'readonly@example.com' => new WP_User('readonly@example.com', true, []),
+    'readonly@example.com' => new WP_User('readonly@example.com', false, [], true, [12]),
+    // 有编辑权却没有读权限：页面进得去，下载端点会当场拒绝
+    'editonly@example.com' => new WP_User('editonly@example.com', true, [12], false, []),
 ];
 springapex_test_assert(
     springapex_inquiry_recipient_reads_backend('admin@example.com'),
@@ -177,6 +187,16 @@ springapex_test_assert(
 springapex_test_assert(
     !springapex_inquiry_recipient_reads_backend('readonly@example.com', 12),
     'A user who cannot edit the inquiry was assumed to reach its download links.'
+);
+// 下载端点校验的是 read_post，和详情页的 edit_post 互不蕴含：只有编辑权的角色
+// 点得开页面，却会被下载端点当场拒绝，附件更不能省。
+springapex_test_assert(
+    !springapex_inquiry_recipient_reads_backend('editonly@example.com', 12),
+    'A user who cannot pass the download endpoint was assumed to fetch the files.'
+);
+springapex_test_assert(
+    !springapex_inquiry_recipient_reads_backend('editonly@example.com'),
+    'The settings-page approximation ignored the download capability.'
 );
 // 外部共享销售邮箱：没有站内账号，后台链接对他没用，必须继续收到附件。
 springapex_test_assert(

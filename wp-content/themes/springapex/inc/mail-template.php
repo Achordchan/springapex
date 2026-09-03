@@ -249,16 +249,25 @@ function springapex_inquiry_recipient_reads_backend(string $recipient, int $inqu
         return false;
     }
 
+    // 取件要过两道关：详情页 post.php?action=edit 由 per-post 的 edit_post 把守，
+    // 页面上的下载入口（admin_post_springapex_download_inquiry_file）另外校验
+    // read_post。两个能力互不蕴含 —— 只有 edit 的角色点得开页面却下不了文件，
+    // 只有 read 的角色连页面都进不去。缺一个就不能把附件从邮件里拿掉。
     if ($inquiry_id > 0) {
-        return user_can($user, 'edit_post', $inquiry_id);
+        return user_can($user, 'edit_post', $inquiry_id)
+            && user_can($user, 'read_post', $inquiry_id);
     }
 
     $post_type = get_post_type_object('spring_inquiry');
-    $capability = is_object($post_type) && isset($post_type->cap->edit_private_posts)
-        ? (string) $post_type->cap->edit_private_posts
+    $caps = is_object($post_type) && isset($post_type->cap) ? $post_type->cap : null;
+    $edit_capability = isset($caps->edit_private_posts)
+        ? (string) $caps->edit_private_posts
         : 'edit_private_spring_inquiries';
+    $read_capability = isset($caps->read_private_posts)
+        ? (string) $caps->read_private_posts
+        : 'read_private_spring_inquiries';
 
-    return user_can($user, $capability);
+    return user_can($user, $edit_capability) && user_can($user, $read_capability);
 }
 
 /**
@@ -278,8 +287,16 @@ function springapex_inquiry_mail_clarify_missing_attachments(string $html, strin
         return $html;
     }
 
-    return $html
-        . '<div style="margin:12px 0 0;padding:12px 14px;background:#f8fafc;border-left:4px solid #64748b;'
+    return $html . springapex_inquiry_mail_attachment_clarification_html();
+}
+
+/**
+ * 「这封信没有附件」那一段的 HTML。抽出来是为了让后台的邮件预览用同一份，
+ * 别在 JS 里再抄一遍样式和文案。
+ */
+function springapex_inquiry_mail_attachment_clarification_html(): string
+{
+    return '<div style="margin:12px 0 0;padding:12px 14px;background:#f8fafc;border-left:4px solid #64748b;'
         . 'border-radius:6px;font-size:13px;line-height:1.7;color:#475569;">'
         . '本次通知没有夹带附件，上面提到的图纸请到后台询盘详情页下载。'
         . '</div>';
