@@ -224,17 +224,20 @@ function springapex_inquiry_mail_placeholders(): array
  * 不改写模板空白，避免破坏运营者在 HTML / pre 标签中的排版。
  */
 /**
- * 这个收件人能不能自己去后台取图纸。
+ * 这个收件人能不能自己去后台把图纸取走。
  *
  * 询盘收件邮箱是运营在「表单设置」里填的任意地址，常常是外部的共享销售邮箱，
- * 背后没有 WordPress 账号 —— 对这种收件人，后台下载链接毫无用处。只有确认他
- * 既是本站用户、又读得了询盘时，才好把图纸从邮件里拿掉。
+ * 背后没有 WordPress 账号 —— 对这种收件人，后台链接毫无用处。只有确认他真能打开
+ * 那一页时，才好把图纸从邮件里拿掉。
  *
- * 判断落在 CPT 的 read_private 能力上：询盘存为 private 文章，读它要的就是这个
- * 能力（本主题只授予管理员，Editor 有 edit_posts 也读不了）。设置页的提示、编辑器
- * 预览和真正的发送必须共用这一个判断，否则页面上承诺的和实际发出的会对不上。
+ * 判断落在 edit 能力上而不是 read：邮件里的链接指向 post.php?action=edit，
+ * WordPress 用 per-post 的 edit_post 把关，光能读私密文章是打不开那一页的，
+ * 也就拿不到页面上带 nonce 的下载入口。
+ *
+ * 设置页和编辑器预览没有具体的询盘 id，退一步用 CPT 的 edit_private_posts 近似；
+ * 真正发送时带上 id，走最准确的 per-post 判断。
  */
-function springapex_inquiry_recipient_reads_backend(string $recipient): bool
+function springapex_inquiry_recipient_reads_backend(string $recipient, int $inquiry_id = 0): bool
 {
     $recipient = trim($recipient);
     if ($recipient === '') {
@@ -246,12 +249,40 @@ function springapex_inquiry_recipient_reads_backend(string $recipient): bool
         return false;
     }
 
+    if ($inquiry_id > 0) {
+        return user_can($user, 'edit_post', $inquiry_id);
+    }
+
     $post_type = get_post_type_object('spring_inquiry');
-    $capability = is_object($post_type) && isset($post_type->cap->read_private_posts)
-        ? (string) $post_type->cap->read_private_posts
-        : 'read_private_spring_inquiries';
+    $capability = is_object($post_type) && isset($post_type->cap->edit_private_posts)
+        ? (string) $post_type->cap->edit_private_posts
+        : 'edit_private_spring_inquiries';
 
     return user_can($user, $capability);
+}
+
+/**
+ * 停发附件时，澄清模板里残留的「附件」说法。
+ *
+ * 照着旧默认模板存下来的副本已经含 {fields_table} 和 {inquiry_link}，图纸清单和
+ * 入口都在，所以 springapex_inquiry_mail_with_drawing_notice() 不会补东西 ——
+ * 可那份模板底部往往还写着「附件为客户上传的图纸文件」。附件已经不发了，这句话
+ * 就成了错误指引，收件人会在邮件里翻一个不存在的附件。
+ */
+function springapex_inquiry_mail_clarify_missing_attachments(string $html, string $drawings_list): string
+{
+    if (trim($drawings_list) === '') {
+        return $html;
+    }
+    if (preg_match('/附件|attachment/iu', wp_strip_all_tags($html)) !== 1) {
+        return $html;
+    }
+
+    return $html
+        . '<div style="margin:12px 0 0;padding:12px 14px;background:#f8fafc;border-left:4px solid #64748b;'
+        . 'border-radius:6px;font-size:13px;line-height:1.7;color:#475569;">'
+        . '本次通知没有夹带附件，上面提到的图纸请到后台询盘详情页下载。'
+        . '</div>';
 }
 
 /**

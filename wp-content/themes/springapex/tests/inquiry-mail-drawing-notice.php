@@ -49,8 +49,15 @@ $springapex_test_users = [];
 
 class WP_User
 {
-    public function __construct(public string $user_email, public bool $can_read = true)
-    {
+    /**
+     * @param bool $can_edit_private CPT 的 edit_private_posts（设置页/预览用的近似判断）
+     * @param array<int, int> $editable_inquiries 能打开哪几条询盘详情页（发送时的精确判断）
+     */
+    public function __construct(
+        public string $user_email,
+        public bool $can_edit_private = true,
+        public array $editable_inquiries = []
+    ) {
     }
 }
 
@@ -62,14 +69,18 @@ function get_user_by(string $field, string $value): WP_User|false
 
 function user_can(WP_User $user, string $capability, mixed ...$args): bool
 {
-    return $capability === 'read_private_spring_inquiries' ? $user->can_read : false;
+    // 邮件里的链接是 post.php?action=edit，WordPress 用 per-post 的 edit_post 把关。
+    if ($capability === 'edit_post') {
+        return in_array((int) ($args[0] ?? 0), $user->editable_inquiries, true);
+    }
+    return $capability === 'edit_private_spring_inquiries' ? $user->can_edit_private : false;
 }
 
 /** 询盘 CPT 注册时用 capability_type ['spring_inquiry','spring_inquiries']。 */
 function get_post_type_object(string $post_type): ?object
 {
     return $post_type === 'spring_inquiry'
-        ? (object) ['cap' => (object) ['read_private_posts' => 'read_private_spring_inquiries']]
+        ? (object) ['cap' => (object) ['edit_private_posts' => 'edit_private_spring_inquiries']]
         : null;
 }
 
@@ -145,12 +156,27 @@ springapex_test_assert(str_contains($escaped, esc_html($tricky)), 'The escaped f
 
 // 收件人能不能自己去后台取件，决定了这封邮件还要不要夹带图纸。
 $springapex_test_users = [
-    'admin@example.com' => new WP_User('admin@example.com', true),
-    'editor@example.com' => new WP_User('editor@example.com', false),
+    // 管理员：能打开询盘 #12 的详情页
+    'admin@example.com' => new WP_User('admin@example.com', true, [12]),
+    // 只读角色：CPT 能力不足，详情页也打不开
+    'editor@example.com' => new WP_User('editor@example.com', false, []),
+    // 能读私密文章、却没有这条询盘的编辑权 —— 打不开带下载入口的详情页
+    'readonly@example.com' => new WP_User('readonly@example.com', true, []),
 ];
 springapex_test_assert(
     springapex_inquiry_recipient_reads_backend('admin@example.com'),
-    'An administrator able to read inquiries was treated as unable to fetch the files.'
+    'An administrator able to open inquiries was treated as unable to fetch the files.'
+);
+// 发送时带上具体询盘 id，走 per-post 判断。
+springapex_test_assert(
+    springapex_inquiry_recipient_reads_backend('admin@example.com', 12),
+    'An administrator could not open the very inquiry being mailed.'
+);
+// 能读私密文章不等于打得开 post.php?action=edit 那一页 —— 那里才有带 nonce 的
+// 下载入口。这种收件人必须继续收到附件。
+springapex_test_assert(
+    !springapex_inquiry_recipient_reads_backend('readonly@example.com', 12),
+    'A user who cannot edit the inquiry was assumed to reach its download links.'
 );
 // 外部共享销售邮箱：没有站内账号，后台链接对他没用，必须继续收到附件。
 springapex_test_assert(
@@ -172,4 +198,28 @@ springapex_test_assert(
     'A blank recipient was treated as a backend user.'
 );
 
-echo "inquiry-mail-drawing-notice: legacy templates, complete templates, partial templates, no-drawing inquiries, unsafe names and recipient access ok\n";
+// 照旧默认模板存下来的副本：清单和入口都在，但底部还写着「附件为客户上传的图纸
+// 文件」。附件已经不发了，这句话会让收件人去翻一个不存在的附件。
+$legacy_default = '<p>' . esc_html($drawings) . '</p><a href="' . esc_url($link) . '">查看询盘</a>'
+    . '<p>本邮件自动发送。附件为客户上传的图纸文件，请按内部流程妥善处理。</p>';
+springapex_test_assert(
+    springapex_inquiry_mail_with_drawing_notice($legacy_default, $drawings, $link) === $legacy_default,
+    'A template that already lists the drawings got a duplicate notice.'
+);
+$clarified = springapex_inquiry_mail_clarify_missing_attachments($legacy_default, $drawings);
+springapex_test_assert($clarified !== $legacy_default, 'Legacy attachment wording was left uncorrected.');
+springapex_test_assert(str_contains($clarified, '没有夹带附件'), 'The clarification text is missing.');
+
+// 模板没提附件时不该平白多一句。
+$clean = '<p>' . esc_html($drawings) . '</p><a href="' . esc_url($link) . '">查看询盘</a>';
+springapex_test_assert(
+    springapex_inquiry_mail_clarify_missing_attachments($clean, $drawings) === $clean,
+    'A template without attachment wording got an unnecessary clarification.'
+);
+// 没有图纸的询盘同样不需要澄清。
+springapex_test_assert(
+    springapex_inquiry_mail_clarify_missing_attachments($legacy_default, '') === $legacy_default,
+    'An inquiry without drawings got an attachment clarification.'
+);
+
+echo "inquiry-mail-drawing-notice: legacy templates, complete templates, partial templates, no-drawing inquiries, unsafe names, recipient access and legacy attachment wording ok\n";

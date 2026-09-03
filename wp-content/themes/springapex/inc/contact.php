@@ -456,13 +456,15 @@ function springapex_process_contact_submission(): array|WP_Error
     // 收件邮箱是运营在「表单设置」里填的任意地址，很可能是外部的共享销售邮箱，
     // 背后没有 WordPress 账号 —— 后台链接对这种收件人毫无用处。只有确认他能在
     // 后台打开这条询盘时才省掉附件；否则照旧夹带，慢一点也好过让人拿不到图纸。
-    $recipient_reads_backend = springapex_inquiry_recipient_reads_backend($recipient);
+    $recipient_reads_backend = springapex_inquiry_recipient_reads_backend($recipient, (int) $inquiry_id);
 
     $html_body = springapex_fill_mail_template(springapex_inquiry_mail_body(), $body_vars);
     if ($recipient_reads_backend) {
         // 自定义模板可能既没有图纸清单也没有后台入口（停发附件之前那样写完全
         // 合理），缺了就补一段，别让图纸在邮件里无迹可寻。
         $html_body = springapex_inquiry_mail_with_drawing_notice($html_body, $drawings_list, $inquiry_link);
+        // 照旧默认模板存下来的副本里往往还写着「附件为…」，可这封信没有附件。
+        $html_body = springapex_inquiry_mail_clarify_missing_attachments($html_body, $drawings_list);
     }
     $document = springapex_inquiry_mail_document($html_body);
     $plain = springapex_inquiry_mail_plaintext($fields_rows, $message, $inquiry_link);
