@@ -85,6 +85,112 @@ function springapex_migrate_public_brand_options(): void
 }
 add_action('init', 'springapex_migrate_public_brand_options', 1);
 
+const SPRINGAPEX_BRAND_CONTACT_SOURCE_VERSION = '1';
+
+/**
+ * 按类型清洗一份来自 customizer 的旧值，脏数据一律丢弃（返回空串）。
+ */
+function springapex_content_clean_legacy_brand_value(string $value, string $type): string
+{
+    $value = trim($value);
+    if ($value === '') {
+        return '';
+    }
+
+    switch ($type) {
+        case 'email':
+            $email = sanitize_email($value);
+            return is_email($email) ? $email : '';
+
+        case 'url':
+            $url = (string) esc_url_raw($value, ['http', 'https']);
+            return preg_match('#^https?://#i', $url) === 1 ? $url : '';
+
+        case 'textarea':
+            return sanitize_textarea_field($value);
+
+        default:
+            return sanitize_text_field($value);
+    }
+}
+
+/**
+ * 联系方式和社交链接过去有两个入口：后台「网站内容」写内容覆盖表，
+ * customizer 写 theme_mod，而 theme_mod 只要非空就压过覆盖表 —— 运营在后台
+ * 清空的社交链接会被旧 theme_mod 顶回来。customizer 的这些控件已下线，这里
+ * 把残留的 theme_mod 值一次性搬进覆盖表（迁移前 theme_mod 胜出，所以照搬即可
+ * 保持访客看到的内容不变），再清掉 theme_mod，让覆盖表成为唯一来源。
+ */
+function springapex_migrate_brand_contact_source(): void
+{
+    if ((string) get_option('springapex_brand_contact_source_version', '') === SPRINGAPEX_BRAND_CONTACT_SOURCE_VERSION) {
+        return;
+    }
+
+    // 询盘收件邮箱和邮件模板不在这里：它们归「表单设置」页管，仍然存 theme_mod。
+    $legacy = [
+        'email'     => ['springapex_email', 'email'],
+        'phone'     => ['springapex_phone', 'text'],
+        'whatsapp'  => ['springapex_whatsapp', 'text'],
+        'address'   => ['springapex_address', 'textarea'],
+        'hours'     => ['springapex_hours', 'text'],
+        'linkedin'  => ['springapex_linkedin', 'url'],
+        'facebook'  => ['springapex_facebook', 'url'],
+        'x'         => ['springapex_x', 'url'],
+        'instagram' => ['springapex_instagram', 'url'],
+        'tiktok'    => ['springapex_tiktok', 'url'],
+    ];
+
+    $overrides = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, []);
+    if (!is_array($overrides)) {
+        $overrides = [];
+    }
+    $brand = isset($overrides['brand']) && is_array($overrides['brand']) ? $overrides['brand'] : [];
+    $moved = false;
+
+    foreach ($legacy as $key => [$setting, $type]) {
+        $stored = get_theme_mod($setting, '');
+        remove_theme_mod($setting);
+        if (!is_string($stored)) {
+            continue;
+        }
+        // 空的 theme_mod 当年也不会覆盖内容，丢掉就是。
+        $value = springapex_content_clean_legacy_brand_value($stored, $type);
+        if ($value === '') {
+            continue;
+        }
+        $brand[$key] = $value;
+        $moved = true;
+    }
+
+    if ($moved) {
+        $overrides['brand'] = $brand;
+        springapex_content_store_overrides($overrides);
+    }
+
+    $success = true;
+    foreach ($legacy as [$setting, $_type]) {
+        $success = get_theme_mod($setting, '') === '' && $success;
+    }
+    if ($moved) {
+        $stored_overrides = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, []);
+        $stored_brand = is_array($stored_overrides) && isset($stored_overrides['brand']) && is_array($stored_overrides['brand'])
+            ? $stored_overrides['brand']
+            : [];
+        // 落库前会跑一次公开品牌名替换，所以拿替换后的值做对照。
+        $expected = (array) springapex_replace_public_brand($brand);
+        foreach ($expected as $key => $value) {
+            $success = ($stored_brand[$key] ?? null) === $value && $success;
+        }
+    }
+
+    // 没搬干净就不写版本号，下次请求再试一遍。
+    if ($success) {
+        update_option('springapex_brand_contact_source_version', SPRINGAPEX_BRAND_CONTACT_SOURCE_VERSION, false);
+    }
+}
+add_action('init', 'springapex_migrate_brand_contact_source', 1);
+
 // Keep old database-authored post content from leaking the retired brand while
 // the versioned seed migration updates untouched records in the background.
 add_filter('the_title', 'springapex_replace_public_brand', 20);

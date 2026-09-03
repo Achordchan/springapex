@@ -234,34 +234,16 @@ function springapex_about_navigation_items(): array
     ];
 }
 
+/**
+ * 联系方式和社交链接只有一个来源：后台「网站内容 → 公司信息 / 社交媒体」
+ * 写入的内容覆盖表。早期版本还会读一份 customizer 的 theme_mod，且非空即
+ * 覆盖 —— 运营在后台清空的社交链接会被旧 theme_mod 顶回来，前台照样显示
+ * 图标。那些控件已下线，残留值由 springapex_migrate_brand_contact_source()
+ * 一次性搬进覆盖表。
+ */
 function springapex_brand(): array
 {
-    $brand = springapex_get('brand', []);
-    if (!function_exists('get_theme_mod') || defined('SPRINGAPEX_PREVIEW')) {
-        return $brand;
-    }
-
-    $theme_mods = [
-        'email'    => 'springapex_email',
-        'phone'    => 'springapex_phone',
-        'whatsapp' => 'springapex_whatsapp',
-        'address'  => 'springapex_address',
-        'hours'    => 'springapex_hours',
-        'linkedin' => 'springapex_linkedin',
-        'facebook' => 'springapex_facebook',
-        'x'         => 'springapex_x',
-        'instagram' => 'springapex_instagram',
-        'tiktok'    => 'springapex_tiktok',
-    ];
-
-    foreach ($theme_mods as $key => $setting) {
-        $value = get_theme_mod($setting, $brand[$key] ?? '');
-        if (is_string($value) && $value !== '') {
-            $brand[$key] = $value;
-        }
-    }
-
-    return $brand;
+    return springapex_get('brand', []);
 }
 
 function springapex_navigation_items(string $location = 'primary'): array

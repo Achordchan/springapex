@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SPRINGAPEX_VERSION', '2.9.108');
+define('SPRINGAPEX_VERSION', '2.9.109');
 define('SPRINGAPEX_DIR', get_template_directory());
 $springapex_uri = get_template_directory_uri();
 if (defined('SPRINGAPEX_CDN_URL') && is_string(SPRINGAPEX_CDN_URL) && SPRINGAPEX_CDN_URL !== '') {
@@ -32,7 +32,6 @@ require_once SPRINGAPEX_DIR . '/inc/admin/form-settings.php';
 require_once SPRINGAPEX_DIR . '/inc/admin/row-editor.php';
 require_once SPRINGAPEX_DIR . '/inc/solution-meta.php';
 require_once SPRINGAPEX_DIR . '/inc/news-meta.php';
-require_once SPRINGAPEX_DIR . '/inc/customizer.php';
 require_once SPRINGAPEX_DIR . '/inc/form-schema.php';
 require_once SPRINGAPEX_DIR . '/inc/s3-storage.php';
 require_once SPRINGAPEX_DIR . '/inc/system-status.php';
