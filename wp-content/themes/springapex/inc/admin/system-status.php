@@ -70,6 +70,8 @@ function springapex_run_system_status_check(): void
     }
 
     set_transient($lock_key, 1, 30);
+    // 顺带刷新附件存储统计缓存，让检测后的页面显示最新占用。
+    delete_transient('springapex_attachment_footprint_v1');
     try {
         $result = [
             'checked_at' => time(),
@@ -209,7 +211,61 @@ function springapex_render_system_status_page(): void
             ),
             $images_ok ? 'ok' : 'warning'
         );
+        $storage = is_array($snapshot['storage'] ?? null) ? $snapshot['storage'] : [];
+        $storage_files = (int) ($storage['files'] ?? 0);
+        $storage_bytes = (int) ($storage['bytes'] ?? 0);
+        $storage_trashed = (int) ($storage['trashed_files'] ?? 0);
+        springapex_system_status_card(
+            '询盘附件存储',
+            $storage_files > 0 ? size_format($storage_bytes, 1) : '0 B',
+            $storage_files > 0
+                ? sprintf(
+                    '%d 个附件 · %d 封询盘%s',
+                    $storage_files,
+                    (int) ($storage['inquiries'] ?? 0),
+                    $storage_trashed > 0 ? '；回收站 ' . $storage_trashed . ' 个待清理' : ''
+                )
+                : '目前没有询盘上传过图纸。',
+            $storage_files > 0 ? 'ok' : 'neutral'
+        );
         ?>
+      </section>
+
+      <?php
+      $storage = is_array($snapshot['storage'] ?? null) ? $snapshot['storage'] : [];
+      $trash_days = (int) ($snapshot['trash']['empty_days'] ?? 30);
+      $inquiry_counts = (array) wp_count_posts('spring_inquiry');
+      $inquiry_total = array_sum(array_map('intval', $inquiry_counts));
+      $storage_bytes = (int) ($storage['bytes'] ?? 0);
+      $monthly_cost = ($storage_bytes / GB_IN_BYTES) * 0.023; // S3 标准存储粗估
+      $cost_text = $storage_bytes <= 0
+          ? '$0.00/月'
+          : ($monthly_cost < 0.01 ? '不到 $0.01/月' : sprintf('约 $%.2f/月', $monthly_cost));
+      $retry_count = (int) ($snapshot['s3']['retry_count'] ?? 0);
+      $next_retry = (int) ($snapshot['s3']['next_retry'] ?? 0);
+      ?>
+      <section class="sa-card">
+        <header class="sa-card__head">
+          <h2 class="sa-card__title">存储占用与清理</h2>
+          <p class="sa-card__desc">询盘图纸存放在 S3。删除询盘会连带清理对应文件，不会无限堆积——下面是当前占用与清理机制。</p>
+        </header>
+        <div class="sa-card__body">
+          <table class="widefat striped sa-system-status__table">
+            <tbody>
+              <tr><th>附件总占用</th><td><?php echo esc_html(size_format($storage_bytes, 1) ?: '0 B'); ?> · 共 <?php echo (int) ($storage['files'] ?? 0); ?> 个文件（其中 S3 对象 <?php echo (int) ($storage['s3_files'] ?? 0); ?> 个）</td></tr>
+              <tr><th>有附件的询盘</th><td><?php echo (int) ($storage['inquiries'] ?? 0); ?> 封（询盘总数 <?php echo (int) $inquiry_total; ?> 封）</td></tr>
+              <tr><th>回收站待清理</th><td><?php echo (int) ($storage['trashed_files'] ?? 0); ?> 个附件 · <?php echo esc_html(size_format((int) ($storage['trashed_bytes'] ?? 0), 1) ?: '0 B'); ?>（永久删除后释放，此前仍在计费）</td></tr>
+              <tr><th>回收站自动清空</th><td><?php echo $trash_days > 0 ? esc_html($trash_days . ' 天后自动永久删除，届时清理对应 S3 文件') : '已关闭：删除即永久删除并立刻清理 S3'; ?></td></tr>
+              <tr><th>S3 删除重试队列</th><td><?php echo $retry_count; ?> 项<?php echo $next_retry > 0 ? '；下次：' . esc_html(wp_date('Y-m-d H:i:s', $next_retry)) : ''; ?></td></tr>
+              <tr><th>估算月度存储成本</th><td><?php echo esc_html($cost_text); ?> <span class="description">（S3 标准存储约 $0.023/GB 粗估，未含流量与取回）</span></td></tr>
+              <tr><th>统计时间</th><td><?php echo esc_html(wp_date('Y-m-d H:i:s', (int) ($storage['generated_at'] ?? time()))); ?><?php echo !empty($storage['truncated']) ? '（数量较多，以上为前 20000 封的下限统计）' : ''; ?> · 点右上角「运行连接检测」可刷新</td></tr>
+            </tbody>
+          </table>
+          <div class="sa-notice">
+            <strong>清理机制：</strong>
+            <span>后台删除询盘分两步——先进「回收站」（图纸仍在 S3、仍计费），永久删除或 <?php echo (int) $trash_days; ?> 天后自动清空回收站时，系统才删掉对应 S3 文件；删除若遇网络故障会自动排队重试。保留中的询盘，其图纸会一直占用存储。</span>
+          </div>
+        </div>
       </section>
 
       <?php if ($probe !== null) : ?>

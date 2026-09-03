@@ -57,6 +57,117 @@ function springapex_system_status_s3_retry_count(): int
     return max(0, (int) $count);
 }
 
+/**
+ * 询盘附件在 S3/本地的存储占用统计（跨全部询盘，含回收站）。
+ *
+ * 「系统与存储」页用它把存储摊开：存了多少个文件、多大、其中多少还躺在回收站
+ * 里等待永久删除（仍在计费）。附件元数据是本主题自己写入的序列化数组，每个
+ * 文件带 size（字节）与 storage（s3/本地）。只连有附件的询盘（大多数没有），
+ * 行数远小于询盘总数；结果缓存 5 分钟，避免刷新页面反复全表扫描——运行连接
+ * 检测时会清掉缓存重新统计。
+ *
+ * @return array{files:int,bytes:int,s3_files:int,inquiries:int,trashed_files:int,trashed_bytes:int,trashed_inquiries:int,generated_at:int,truncated:bool}
+ */
+function springapex_system_status_attachment_footprint(): array
+{
+    $empty = [
+        'files' => 0,
+        'bytes' => 0,
+        's3_files' => 0,
+        'inquiries' => 0,
+        'trashed_files' => 0,
+        'trashed_bytes' => 0,
+        'trashed_inquiries' => 0,
+        'generated_at' => time(),
+        'truncated' => false,
+    ];
+
+    $cached = get_transient('springapex_attachment_footprint_v1');
+    if (is_array($cached)) {
+        return array_merge($empty, $cached);
+    }
+
+    global $wpdb;
+    if (!isset($wpdb->posts, $wpdb->postmeta) || !is_string($wpdb->posts) || !is_string($wpdb->postmeta)) {
+        return $empty;
+    }
+
+    // 极端量级下的兜底上限：超过则标记为下限统计，避免管理页被一次性反序列化拖垮。
+    $limit = 20000;
+    $rows = $wpdb->get_results($wpdb->prepare(
+        "SELECT p.ID, p.post_status, pm.meta_key, pm.meta_value
+         FROM {$wpdb->posts} p
+         INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
+         WHERE p.post_type = 'spring_inquiry'
+           AND pm.meta_key IN ('_springapex_private_files', '_springapex_private_file')
+         LIMIT %d",
+        $limit + 1
+    ));
+    $rows = is_array($rows) ? $rows : [];
+
+    $result = $empty;
+    $result['truncated'] = count($rows) > $limit;
+    if ($result['truncated']) {
+        $rows = array_slice($rows, 0, $limit);
+    }
+
+    // 同一询盘可能同时有新旧两个 meta：优先新版 _private_files、回退旧版单文件，
+    // 与 springapex_inquiry_private_files() 的取值一致，避免重复计数。
+    $by_post = [];
+    foreach ($rows as $row) {
+        if (!is_object($row)) {
+            continue;
+        }
+        $id = (int) ($row->ID ?? 0);
+        $key = (string) ($row->meta_key ?? '');
+        if ($id < 1 || $key === '') {
+            continue;
+        }
+        if (!isset($by_post[$id])) {
+            $by_post[$id] = ['status' => (string) ($row->post_status ?? ''), 'files' => null, 'legacy' => null];
+        }
+        $value = (string) ($row->meta_value ?? '');
+        // 自有可信数据，但仍禁止实例化对象，纯取数组。
+        $data = is_serialized($value) ? unserialize($value, ['allowed_classes' => false]) : $value;
+        if ($key === '_springapex_private_files') {
+            $by_post[$id]['files'] = is_array($data) ? $data : [];
+        } else {
+            $by_post[$id]['legacy'] = is_array($data) ? $data : null;
+        }
+    }
+
+    foreach ($by_post as $entry) {
+        $files = is_array($entry['files']) ? array_values(array_filter($entry['files'], 'is_array')) : [];
+        if ($files === [] && is_array($entry['legacy']) && ($entry['legacy']['relative_path'] ?? '') !== '') {
+            $files = [$entry['legacy']];
+        }
+        if ($files === []) {
+            continue;
+        }
+        $trashed = $entry['status'] === 'trash';
+        $result['inquiries']++;
+        if ($trashed) {
+            $result['trashed_inquiries']++;
+        }
+        foreach ($files as $file) {
+            $bytes = max(0, (int) ($file['size'] ?? 0));
+            $result['files']++;
+            $result['bytes'] += $bytes;
+            if (($file['storage'] ?? '') === 's3') {
+                $result['s3_files']++;
+            }
+            if ($trashed) {
+                $result['trashed_files']++;
+                $result['trashed_bytes'] += $bytes;
+            }
+        }
+    }
+
+    $result['generated_at'] = time();
+    set_transient('springapex_attachment_footprint_v1', $result, 5 * MINUTE_IN_SECONDS);
+    return $result;
+}
+
 function springapex_system_status_queue_s3_probe_cleanup(
     string $bucket,
     string $region,
@@ -144,6 +255,11 @@ function springapex_system_status_snapshot(): array
             'deployment' => 'GitHub Actions + 服务器受限部署命令',
             'backup' => '宝塔定时任务 + S3 备份脚本',
             'status_feed' => '尚未接入服务器任务结果回传',
+        ],
+        'storage' => springapex_system_status_attachment_footprint(),
+        'trash' => [
+            // 询盘被删除后先进回收站，多少天后自动永久删除（届时才清理 S3）。
+            'empty_days' => defined('EMPTY_TRASH_DAYS') ? (int) EMPTY_TRASH_DAYS : 30,
         ],
     ];
 }
@@ -339,6 +455,8 @@ function springapex_system_status_diagnostic_report(array $snapshot, ?array $pro
         'images' => $snapshot['images'],
         'uploads' => $snapshot['uploads'],
         'operations' => $snapshot['operations'],
+        'storage' => $snapshot['storage'] ?? [],
+        'trash' => $snapshot['trash'] ?? [],
         'last_probe' => $probe,
     ];
 }
