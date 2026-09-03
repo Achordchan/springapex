@@ -42,7 +42,9 @@
       ['自由长度', '45 mm'],
       ['数量', '5,000 件'],
       ['材料', 'SUS304'],
-      ['图纸', 'compression-spring-drawing.pdf'],
+      // 与 PHP 传来的示例清单保持同一个值：真实邮件里这一行带文件大小，预览
+      // 里若还写旧格式，判断会以为模板没显示图纸，于是多补一段出来。
+      ['图纸', config.previewDrawings || 'compression-spring-drawing.pdf (3.0 MB)'],
     ];
 
     const fieldsTable = '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:4px 0 10px;">'
@@ -74,8 +76,8 @@
       '{custom_fields}': '目标交期：30 天内',
       '{message}': '我们需要 5,000 件压缩弹簧，请协助评估可行性、交期与报价。\n图纸已随询盘上传。',
       '{document}': 'product-datasheet',
-      '{drawings}': 'compression-spring-drawing.pdf',
-      '{inquiry_link}': '#',
+      '{drawings}': config.previewDrawings || 'compression-spring-drawing.pdf (3.0 MB)',
+      '{inquiry_link}': config.previewInquiryLink || '#',
       '{site_name}': 'NorenSpring',
       '{site_url}': 'https://www.springapex.cn/',
     };
@@ -84,6 +86,33 @@
       (filled, [token, value]) => filled.split(token).join(value),
       String(template || '')
     );
+
+    // 与 PHP 的 springapex_inquiry_mail_with_drawing_notice() 对应：正文里既有图纸
+    // 清单又有后台入口才放过，缺任一就补一段。老模板（图纸当年靠附件送达，模板里
+    // 什么都不用写）实际发出的邮件会多这一块，预览必须照样显示出来，否则管理员既
+    // 看不到它，也发现不了它带来的排版问题。补的 HTML 由 PHP 生成后传过来。
+    const withDrawingNotice = (html) => {
+      const notice = config.drawingNotice || '';
+      const drawings = config.previewDrawings || '';
+      const link = config.previewInquiryLink || '';
+      // 收件人读不了后台时，图纸照旧作为附件发出，正文里不会补取件提示 ——
+      // 预览跟着同一个条件走，否则展示的是一封根本不会存在的邮件。
+      if (!config.recipientReadsBackend) return html;
+      if (!notice || !drawings) return html;
+      const hasList = html.includes(drawings);
+      const hasLink = link !== '' && html.includes(link);
+      return hasList && hasLink ? html : html + notice;
+    };
+
+    // 与 PHP 的 springapex_inquiry_mail_clarify_missing_attachments() 对应：不发
+    // 附件时，正文里若还留着旧的「附件」说法，末尾会补一句澄清。顺序与发送端一致，
+    // 先补取件提示再补澄清。
+    const withAttachmentClarification = (html) => {
+      const block = config.attachmentClarification || '';
+      if (!block || !config.recipientReadsBackend || !config.previewDrawings) return html;
+      const text = html.replace(/<[^>]*>/g, ' ');
+      return /附件|attachment/i.test(text) ? html + block : html;
+    };
 
     const getBody = () => editor ? editor.codemirror.getValue() : bodyInput.value;
     const setBody = (value) => {
@@ -96,7 +125,7 @@
       previewSubject.textContent = fillTemplate(subjectInput.value);
       previewFrame.srcdoc = '<!doctype html><html lang="zh"><head><meta charset="utf-8">'
         + '<meta name="viewport" content="width=device-width,initial-scale=1"></head>'
-        + `<body style="margin:0;padding:0;background:#f4f7fa;">${fillTemplate(getBody())}</body></html>`;
+        + `<body style="margin:0;padding:0;background:#f4f7fa;">${withAttachmentClarification(withDrawingNotice(fillTemplate(getBody())))}</body></html>`;
     };
 
     const schedulePreview = () => {

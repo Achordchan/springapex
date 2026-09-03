@@ -25,6 +25,35 @@ add_action('admin_menu', static function (): void {
     );
 });
 
+/**
+ * 这次请求结束后真正生效的询盘收件邮箱。
+ *
+ * 保存是在页面渲染时处理的，比 admin_enqueue_scripts 晚 —— 那时候 get_theme_mod()
+ * 读到的还是上一个收件人。刚把收件邮箱在外部邮箱和管理员账号之间切换过的话，
+ * 保存后的页面会一边显示新收件人的结论，一边用旧收件人的模式渲染预览，直到手动
+ * 刷新才对得上。所以这里优先看本次提交的值。
+ */
+function springapex_form_settings_effective_recipient(): string
+{
+    $stored = (string) get_theme_mod('springapex_inquiry_email', (string) get_option('admin_email'));
+
+    if (
+        !isset($_POST['springapex_inquiry_email'], $_POST['springapex_form_settings_nonce'])
+        || !current_user_can('manage_options')
+        || !wp_verify_nonce(
+            sanitize_text_field((string) wp_unslash($_POST['springapex_form_settings_nonce'])),
+            'springapex_save_form_settings'
+        )
+    ) {
+        return $stored;
+    }
+
+    // 无效邮箱会被保存流程拒掉，那时生效的仍然是原值。
+    $submitted = sanitize_email((string) wp_unslash($_POST['springapex_inquiry_email']));
+
+    return $submitted !== '' && is_email($submitted) ? $submitted : $stored;
+}
+
 add_action('admin_enqueue_scripts', static function (string $hook): void {
     if ($hook !== 'spring_inquiry_page_springapex-form-settings') {
         return;
@@ -65,12 +94,28 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         SPRINGAPEX_VERSION,
         true
     );
+    // 预览要和真正发出去的邮件一致：带图纸的邮件在渲染之后会补一段清单 + 取件
+    // 入口（见 springapex_inquiry_mail_with_drawing_notice()）。那段 HTML 由 PHP
+    // 生成后交给预览用，两边不各写一份，免得样式和文案各自漂移。
+    $preview_drawings = 'compression-spring-drawing.pdf (3.0 MB)';
+    $preview_inquiry_link = 'https://example.com/wp-admin/post.php?post=123&action=edit';
     wp_add_inline_script(
         'springapex-mail-template-editor',
         'window.springapexMailTemplateEditor = ' . wp_json_encode([
             'codeEditor' => $code_editor_settings,
             'defaultSubject' => springapex_inquiry_mail_default_subject(),
             'defaultBody' => springapex_inquiry_mail_default_body(),
+            'previewDrawings' => $preview_drawings,
+            'previewInquiryLink' => $preview_inquiry_link,
+            'drawingNotice' => springapex_inquiry_mail_with_drawing_notice('', $preview_drawings, $preview_inquiry_link),
+            // 收件人拿不到后台时图纸照旧作为附件发出，正文里不会补那段取件提示 ——
+            // 预览必须跟着同一个条件，否则它展示的是一封不会存在的邮件。
+            'recipientReadsBackend' => springapex_inquiry_recipient_reads_backend(
+                springapex_form_settings_effective_recipient()
+            ),
+            // 停发附件时，正文里若还留着旧的「附件」说法，实际发出的邮件会多这一段。
+            // 预览也得照着补，否则管理员看不到真实排版。
+            'attachmentClarification' => springapex_inquiry_mail_attachment_clarification_html(),
         ]) . ';',
         'before'
     );
@@ -267,6 +312,20 @@ function springapex_render_form_settings_page(): void
                 <th scope="row"><label for="springapex_inquiry_email">询盘收件邮箱</label></th>
                 <td>
                   <input name="springapex_inquiry_email" id="springapex_inquiry_email" type="email" class="regular-text" value="<?php echo esc_attr($recipient); ?>" required>
+                  <?php
+                  // 与真正发送时同一个判断（询盘是 private 文章，读它要 CPT 的
+                  // read_private 能力），否则这里承诺的和实际发出的会对不上：
+                  // Editor 有 edit_posts，却读不了询盘。
+                  $springapex_recipient_backend = springapex_inquiry_recipient_reads_backend($recipient);
+                  $springapex_recipient_user = $springapex_recipient_backend ? get_user_by('email', $recipient) : false;
+                  ?>
+                  <p class="description">
+                    <?php if ($springapex_recipient_backend && $springapex_recipient_user instanceof WP_User) : ?>
+                      这个邮箱能在后台读询盘（<?php echo esc_html($springapex_recipient_user->user_login); ?>），图纸不夹带在邮件里，改到询盘详情页下载 —— 客户提交会快很多。
+                    <?php else : ?>
+                      这个邮箱读不了后台的询盘（没有账号，或账号权限不够），图纸会照旧作为附件发出，收件人才拿得到。想让提交更快，可以改填一个管理员账号的邮箱。
+                    <?php endif; ?>
+                  </p>
                   <p class="description">每条询盘的通知邮件发送到这里；访客邮箱会设为回复地址。</p>
                 </td>
               </tr>
@@ -329,7 +388,23 @@ function springapex_render_form_settings_page(): void
                       <div class="sa-mail-preview__subject"><span>预览主题</span><strong data-mail-preview-subject></strong></div>
                       <iframe title="询盘通知邮件预览" sandbox="allow-same-origin" referrerpolicy="no-referrer" data-mail-preview-frame></iframe>
                     </div>
-                    <p class="description sa-mail-editor__help">推荐保留 <code>{fields_table}</code> 自动生成完整询盘信息表，<code>{message}</code> 显示客户留言。系统会另外生成纯文本版本、设置 Reply-To，并附上客户上传的图纸；无需写进模板。预览使用示例数据，且在禁止脚本的沙箱中渲染。</p>
+                    <p class="description sa-mail-editor__help">推荐保留 <code>{fields_table}</code> 自动生成完整询盘信息表，<code>{message}</code> 显示客户留言。系统会另外生成纯文本版本并设置 Reply-To；无需写进模板。<code>{fields_table}</code> 里会列出图纸的文件名和大小。上面那个收件邮箱能在后台读询盘时，图纸就不再夹带在邮件里（大附件会拖慢客户提交、也容易被邮件网关拦下），改到询盘详情页下载；读不了的时候图纸仍按原样作为附件发出，否则收件人就取不到了。当前收件邮箱属于<strong><?php echo $springapex_recipient_backend ? '前者（不夹带附件）' : '后者（照旧夹带附件）'; ?></strong>。预览使用示例数据，且在禁止脚本的沙箱中渲染。</p>
+                    <?php
+                    // 自定义过模板的站点不会跟着默认模板一起更新文案：图纸已经不随
+                    // 邮件发送，模板里若还写着「附件」，收件人会去找一个不存在的附件。
+                    // 这里只提示，不去改运营自己写的内容。
+                    $springapex_mail_body_now = springapex_inquiry_mail_body();
+                    // 收件人拿不到后台时图纸仍按附件发出，那种情况下模板里写「附件」
+                    // 是对的，不该催运营去改。
+                    $springapex_mail_mentions_attachment = springapex_inquiry_recipient_reads_backend($recipient)
+                        && $springapex_mail_body_now !== springapex_inquiry_mail_default_body()
+                        && preg_match('/附件|attachment/iu', wp_strip_all_tags($springapex_mail_body_now)) === 1;
+                    ?>
+                    <?php if ($springapex_mail_mentions_attachment) : ?>
+                      <p class="description sa-mail-editor__help" style="color:#8a6100;">
+                        提醒：你的自定义模板里提到了「附件」，但图纸已经不随邮件发送了。建议把那句话改成让收件人到后台询盘详情页下载，或点「载入默认模板」取用新版文案。
+                      </p>
+                    <?php endif; ?>
                     <p class="sa-mail-editor__status" role="status" aria-live="polite" data-mail-status></p>
                   </div>
                 </td>

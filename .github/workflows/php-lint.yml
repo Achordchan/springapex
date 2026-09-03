@@ -37,6 +37,9 @@ jobs:
       - name: Verify form select options
         run: php wp-content/themes/springapex/tests/form-select-options.php
 
+      - name: Verify inquiry mail drawing notice
+        run: php wp-content/themes/springapex/tests/inquiry-mail-drawing-notice.php
+
       - name: Require a new version for changed CDN assets
         run: sh deploy/verify-asset-version-bump.sh "${{ github.event.pull_request.base.sha }}"
 

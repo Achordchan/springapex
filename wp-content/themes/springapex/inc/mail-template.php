@@ -71,7 +71,7 @@ function springapex_inquiry_mail_default_body(): string
         </tr>
         <tr>
           <td style="padding:17px 30px;background:#f8fafc;border-top:1px solid #e5e7eb;font-size:12px;line-height:1.6;color:#9ca3af;">
-            本邮件由 {site_name} 自动发送。附件为客户上传的图纸文件，请按内部流程妥善处理。
+            本邮件由 {site_name} 自动发送。客户上传的图纸见上方清单：随邮件附上时可直接下载，未附上时请点上方按钮到后台询盘详情页取件。
           </td>
         </tr>
       </table>
@@ -212,7 +212,7 @@ function springapex_inquiry_mail_placeholders(): array
         '{custom_fields}' => '自定义字段块（兼容旧模板，HTML 多行）',
         '{message}' => '留言正文',
         '{document}' => '随附文档标识',
-        '{drawings}' => '图纸文件名列表（无则 None）',
+        '{drawings}' => '图纸文件名与大小列表（无则 None）；图纸本身随邮件附上还是到后台取，取决于收件邮箱能否打开询盘',
         '{inquiry_link}' => '后台询盘记录链接',
         '{site_name}' => '站点名称',
         '{site_url}' => '站点地址',
@@ -223,6 +223,132 @@ function springapex_inquiry_mail_placeholders(): array
  * 占位符替换：未识别的 {token} 原样保留（运营者能立刻看出写错了）；
  * 不改写模板空白，避免破坏运营者在 HTML / pre 标签中的排版。
  */
+/**
+ * 这个收件人能不能自己去后台把图纸取走。
+ *
+ * 询盘收件邮箱是运营在「表单设置」里填的任意地址，常常是外部的共享销售邮箱，
+ * 背后没有 WordPress 账号 —— 对这种收件人，后台链接毫无用处。只有确认他真能打开
+ * 那一页时，才好把图纸从邮件里拿掉。
+ *
+ * 判断落在 edit 能力上而不是 read：邮件里的链接指向 post.php?action=edit，
+ * WordPress 用 per-post 的 edit_post 把关，光能读私密文章是打不开那一页的，
+ * 也就拿不到页面上带 nonce 的下载入口。
+ *
+ * 设置页和编辑器预览没有具体的询盘 id，退一步用 CPT 的 edit_private_posts 近似；
+ * 真正发送时带上 id，走最准确的 per-post 判断。
+ */
+function springapex_inquiry_recipient_reads_backend(string $recipient, int $inquiry_id = 0): bool
+{
+    $recipient = trim($recipient);
+    if ($recipient === '') {
+        return false;
+    }
+
+    $user = get_user_by('email', $recipient);
+    if (!$user instanceof WP_User) {
+        return false;
+    }
+
+    // 取件要过两道关：详情页 post.php?action=edit 由 per-post 的 edit_post 把守，
+    // 页面上的下载入口（admin_post_springapex_download_inquiry_file）另外校验
+    // read_post。两个能力互不蕴含 —— 只有 edit 的角色点得开页面却下不了文件，
+    // 只有 read 的角色连页面都进不去。缺一个就不能把附件从邮件里拿掉。
+    if ($inquiry_id > 0) {
+        return user_can($user, 'edit_post', $inquiry_id)
+            && user_can($user, 'read_post', $inquiry_id);
+    }
+
+    $post_type = get_post_type_object('spring_inquiry');
+    $caps = is_object($post_type) && isset($post_type->cap) ? $post_type->cap : null;
+    $edit_capability = isset($caps->edit_private_posts)
+        ? (string) $caps->edit_private_posts
+        : 'edit_private_spring_inquiries';
+    $read_capability = isset($caps->read_private_posts)
+        ? (string) $caps->read_private_posts
+        : 'read_private_spring_inquiries';
+
+    return user_can($user, $edit_capability) && user_can($user, $read_capability);
+}
+
+/**
+ * 停发附件时，澄清模板里残留的「附件」说法。
+ *
+ * 照着旧默认模板存下来的副本已经含 {fields_table} 和 {inquiry_link}，图纸清单和
+ * 入口都在，所以 springapex_inquiry_mail_with_drawing_notice() 不会补东西 ——
+ * 可那份模板底部往往还写着「附件为客户上传的图纸文件」。附件已经不发了，这句话
+ * 就成了错误指引，收件人会在邮件里翻一个不存在的附件。
+ */
+function springapex_inquiry_mail_clarify_missing_attachments(string $html, string $drawings_list): string
+{
+    if (trim($drawings_list) === '') {
+        return $html;
+    }
+    if (preg_match('/附件|attachment/iu', wp_strip_all_tags($html)) !== 1) {
+        return $html;
+    }
+
+    return $html . springapex_inquiry_mail_attachment_clarification_html();
+}
+
+/**
+ * 「这封信没有附件」那一段的 HTML。抽出来是为了让后台的邮件预览用同一份，
+ * 别在 JS 里再抄一遍样式和文案。
+ */
+function springapex_inquiry_mail_attachment_clarification_html(): string
+{
+    return '<div style="margin:12px 0 0;padding:12px 14px;background:#f8fafc;border-left:4px solid #64748b;'
+        . 'border-radius:6px;font-size:13px;line-height:1.7;color:#475569;">'
+        . '本次通知没有夹带附件，上面提到的图纸请到后台询盘详情页下载。'
+        . '</div>';
+}
+
+/**
+ * 保证带图纸的通知邮件在 HTML 正文里一定看得到图纸清单和取件入口。
+ *
+ * 图纸过去是无条件作为附件发出的，旧版编辑器的说明还写着「系统会附上客户上传的
+ * 图纸；无需写进模板」—— 所以存量的自定义模板完全可能既没有 {fields_table}
+ * 也没有 {drawings} 和 {inquiry_link}，那在当时是完全正确的写法。停发附件之后，
+ * 这类模板渲染出来的邮件既看不出客户传过图纸，也没有任何入口，图纸就静默丢了。
+ *
+ * 设置页那条提醒只有管理员碰巧打开那一页才看得到，救不了已经发出去的邮件；纯文本
+ * 版（AltBody）虽然一直带着图纸行，但绝大多数人看的是 HTML 部分。所以这里在渲染
+ * 完成之后补一段，不去改运营写的模板内容。
+ *
+ * @param string $html          模板渲染后的 HTML 正文
+ * @param string $drawings_list 「文件名 (大小)」清单，空字符串表示这封询盘没有图纸
+ * @param string $inquiry_link  后台询盘详情页地址
+ */
+function springapex_inquiry_mail_with_drawing_notice(string $html, string $drawings_list, string $inquiry_link): string
+{
+    $drawings_list = trim($drawings_list);
+    if ($drawings_list === '') {
+        return $html;
+    }
+
+    // 模板可能用 {drawings} 或 {fields_table} 呈现，两处都是转义后写进 HTML 的。
+    $has_list = str_contains($html, esc_html($drawings_list)) || str_contains($html, $drawings_list);
+    $has_link = $inquiry_link !== ''
+        && (str_contains($html, esc_url($inquiry_link)) || str_contains($html, $inquiry_link));
+
+    if ($has_list && $has_link) {
+        return $html;
+    }
+
+    $notice = '<div style="margin:16px 0 0;padding:16px 18px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;font-size:14px;line-height:1.7;color:#7c2d12;">'
+        . '<div style="font-weight:700;">客户上传了图纸</div>'
+        . '<div style="margin-top:6px;color:#9a3412;">' . esc_html($drawings_list) . '</div>';
+
+    if ($inquiry_link !== '') {
+        $notice .= '<div style="margin-top:10px;">'
+            . '<a href="' . esc_url($inquiry_link) . '" target="_blank" style="color:#c2410c;font-weight:700;text-decoration:underline;">'
+            . '到后台询盘详情页下载 →</a></div>';
+    }
+
+    $notice .= '</div>';
+
+    return $html . $notice;
+}
+
 function springapex_fill_mail_template(string $template, array $vars): string
 {
     return strtr($template, $vars);
