@@ -95,6 +95,9 @@
       const notice = config.drawingNotice || '';
       const drawings = config.previewDrawings || '';
       const link = config.previewInquiryLink || '';
+      // 收件人读不了后台时，图纸照旧作为附件发出，正文里不会补取件提示 ——
+      // 预览跟着同一个条件走，否则展示的是一封根本不会存在的邮件。
+      if (!config.recipientReadsBackend) return html;
       if (!notice || !drawings) return html;
       const hasList = html.includes(drawings);
       const hasLink = link !== '' && html.includes(link);

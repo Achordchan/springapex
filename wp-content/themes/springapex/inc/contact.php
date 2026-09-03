@@ -456,7 +456,7 @@ function springapex_process_contact_submission(): array|WP_Error
     // 收件邮箱是运营在「表单设置」里填的任意地址，很可能是外部的共享销售邮箱，
     // 背后没有 WordPress 账号 —— 后台链接对这种收件人毫无用处。只有确认他能在
     // 后台打开这条询盘时才省掉附件；否则照旧夹带，慢一点也好过让人拿不到图纸。
-    $recipient_reads_backend = springapex_inquiry_recipient_reads_backend($recipient, (int) $inquiry_id);
+    $recipient_reads_backend = springapex_inquiry_recipient_reads_backend($recipient);
 
     $html_body = springapex_fill_mail_template(springapex_inquiry_mail_body(), $body_vars);
     if ($recipient_reads_backend) {

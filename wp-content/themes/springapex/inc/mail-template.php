@@ -71,7 +71,7 @@ function springapex_inquiry_mail_default_body(): string
         </tr>
         <tr>
           <td style="padding:17px 30px;background:#f8fafc;border-top:1px solid #e5e7eb;font-size:12px;line-height:1.6;color:#9ca3af;">
-            本邮件由 {site_name} 自动发送。客户上传的图纸不随邮件发送，请点上方按钮到后台询盘详情页下载。
+            本邮件由 {site_name} 自动发送。客户上传的图纸见上方清单：随邮件附上时可直接下载，未附上时请点上方按钮到后台询盘详情页取件。
           </td>
         </tr>
       </table>
@@ -228,12 +228,16 @@ function springapex_inquiry_mail_placeholders(): array
  *
  * 询盘收件邮箱是运营在「表单设置」里填的任意地址，常常是外部的共享销售邮箱，
  * 背后没有 WordPress 账号 —— 对这种收件人，后台下载链接毫无用处。只有确认他
- * 既是本站用户、又有权限打开这条询盘时，才好把图纸从邮件里拿掉。
+ * 既是本站用户、又读得了询盘时，才好把图纸从邮件里拿掉。
+ *
+ * 判断落在 CPT 的 read_private 能力上：询盘存为 private 文章，读它要的就是这个
+ * 能力（本主题只授予管理员，Editor 有 edit_posts 也读不了）。设置页的提示、编辑器
+ * 预览和真正的发送必须共用这一个判断，否则页面上承诺的和实际发出的会对不上。
  */
-function springapex_inquiry_recipient_reads_backend(string $recipient, int $inquiry_id): bool
+function springapex_inquiry_recipient_reads_backend(string $recipient): bool
 {
     $recipient = trim($recipient);
-    if ($recipient === '' || $inquiry_id < 1) {
+    if ($recipient === '') {
         return false;
     }
 
@@ -242,7 +246,12 @@ function springapex_inquiry_recipient_reads_backend(string $recipient, int $inqu
         return false;
     }
 
-    return user_can($user, 'read_post', $inquiry_id);
+    $post_type = get_post_type_object('spring_inquiry');
+    $capability = is_object($post_type) && isset($post_type->cap->read_private_posts)
+        ? (string) $post_type->cap->read_private_posts
+        : 'read_private_spring_inquiries';
+
+    return user_can($user, $capability);
 }
 
 /**

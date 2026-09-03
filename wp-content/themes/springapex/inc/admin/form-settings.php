@@ -79,6 +79,11 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
             'previewDrawings' => $preview_drawings,
             'previewInquiryLink' => $preview_inquiry_link,
             'drawingNotice' => springapex_inquiry_mail_with_drawing_notice('', $preview_drawings, $preview_inquiry_link),
+            // 收件人拿不到后台时图纸照旧作为附件发出，正文里不会补那段取件提示 ——
+            // 预览必须跟着同一个条件，否则它展示的是一封不会存在的邮件。
+            'recipientReadsBackend' => springapex_inquiry_recipient_reads_backend(
+                (string) get_theme_mod('springapex_inquiry_email', (string) get_option('admin_email'))
+            ),
         ]) . ';',
         'before'
     );
@@ -276,15 +281,17 @@ function springapex_render_form_settings_page(): void
                 <td>
                   <input name="springapex_inquiry_email" id="springapex_inquiry_email" type="email" class="regular-text" value="<?php echo esc_attr($recipient); ?>" required>
                   <?php
-                  $springapex_recipient_user = $recipient !== '' ? get_user_by('email', $recipient) : false;
-                  $springapex_recipient_backend = $springapex_recipient_user instanceof WP_User
-                      && user_can($springapex_recipient_user, 'edit_posts');
+                  // 与真正发送时同一个判断（询盘是 private 文章，读它要 CPT 的
+                  // read_private 能力），否则这里承诺的和实际发出的会对不上：
+                  // Editor 有 edit_posts，却读不了询盘。
+                  $springapex_recipient_backend = springapex_inquiry_recipient_reads_backend($recipient);
+                  $springapex_recipient_user = $springapex_recipient_backend ? get_user_by('email', $recipient) : false;
                   ?>
                   <p class="description">
-                    <?php if ($springapex_recipient_backend) : ?>
-                      这个邮箱是本站后台账号（<?php echo esc_html($springapex_recipient_user->user_login); ?>），图纸不夹带在邮件里，改到询盘详情页下载 —— 客户提交会快很多。
+                    <?php if ($springapex_recipient_backend && $springapex_recipient_user instanceof WP_User) : ?>
+                      这个邮箱能在后台读询盘（<?php echo esc_html($springapex_recipient_user->user_login); ?>），图纸不夹带在邮件里，改到询盘详情页下载 —— 客户提交会快很多。
                     <?php else : ?>
-                      这个邮箱没有对应的后台账号，图纸会照旧作为附件发出，收件人才拿得到。想让提交更快，可以改填一个有后台账号的邮箱。
+                      这个邮箱读不了后台的询盘（没有账号，或账号权限不够），图纸会照旧作为附件发出，收件人才拿得到。想让提交更快，可以改填一个管理员账号的邮箱。
                     <?php endif; ?>
                   </p>
                   <p class="description">每条询盘的通知邮件发送到这里；访客邮箱会设为回复地址。</p>
@@ -349,13 +356,16 @@ function springapex_render_form_settings_page(): void
                       <div class="sa-mail-preview__subject"><span>预览主题</span><strong data-mail-preview-subject></strong></div>
                       <iframe title="询盘通知邮件预览" sandbox="allow-same-origin" referrerpolicy="no-referrer" data-mail-preview-frame></iframe>
                     </div>
-                    <p class="description sa-mail-editor__help">推荐保留 <code>{fields_table}</code> 自动生成完整询盘信息表，<code>{message}</code> 显示客户留言。系统会另外生成纯文本版本并设置 Reply-To；无需写进模板。<code>{fields_table}</code> 里会列出图纸的文件名和大小。上面那个收件邮箱如果是本站后台账号，图纸就不再夹带在邮件里（大附件会拖慢客户提交、也容易被邮件网关拦下），改到后台询盘详情页下载；如果是没有后台账号的外部邮箱，图纸仍按原样作为附件发出，否则收件人就取不到了。预览使用示例数据，且在禁止脚本的沙箱中渲染。</p>
+                    <p class="description sa-mail-editor__help">推荐保留 <code>{fields_table}</code> 自动生成完整询盘信息表，<code>{message}</code> 显示客户留言。系统会另外生成纯文本版本并设置 Reply-To；无需写进模板。<code>{fields_table}</code> 里会列出图纸的文件名和大小。上面那个收件邮箱能在后台读询盘时，图纸就不再夹带在邮件里（大附件会拖慢客户提交、也容易被邮件网关拦下），改到询盘详情页下载；读不了的时候图纸仍按原样作为附件发出，否则收件人就取不到了。当前收件邮箱属于<strong><?php echo $springapex_recipient_backend ? '前者（不夹带附件）' : '后者（照旧夹带附件）'; ?></strong>。预览使用示例数据，且在禁止脚本的沙箱中渲染。</p>
                     <?php
                     // 自定义过模板的站点不会跟着默认模板一起更新文案：图纸已经不随
                     // 邮件发送，模板里若还写着「附件」，收件人会去找一个不存在的附件。
                     // 这里只提示，不去改运营自己写的内容。
                     $springapex_mail_body_now = springapex_inquiry_mail_body();
-                    $springapex_mail_mentions_attachment = $springapex_mail_body_now !== springapex_inquiry_mail_default_body()
+                    // 收件人拿不到后台时图纸仍按附件发出，那种情况下模板里写「附件」
+                    // 是对的，不该催运营去改。
+                    $springapex_mail_mentions_attachment = springapex_inquiry_recipient_reads_backend($recipient)
+                        && $springapex_mail_body_now !== springapex_inquiry_mail_default_body()
                         && preg_match('/附件|attachment/iu', wp_strip_all_tags($springapex_mail_body_now)) === 1;
                     ?>
                     <?php if ($springapex_mail_mentions_attachment) : ?>
