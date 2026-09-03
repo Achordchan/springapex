@@ -58,6 +58,44 @@ function springapex_release_option_lock(string $option_name, string $token): voi
 }
 
 /**
+ * 只有这一行还不存在时才插入。add_option() 不顶用：它先 get_option() 看一眼再
+ * INSERT ... ON DUPLICATE KEY UPDATE，中间的空档足够别人把行建起来，然后这条
+ * 语句把人家的内容整份覆盖掉；notoptions 缓存里存着「没有这个 option」时它
+ * 连那一眼都省了，覆盖是必然的。INSERT IGNORE 靠 option_name 上的唯一索引，
+ * 由数据库来判断，没有空档。
+ */
+function springapex_add_option_if_absent(string $option_name, mixed $value, bool $autoload): bool
+{
+    global $wpdb;
+
+    if (!is_object($wpdb) || !is_string($wpdb->options ?? null) || $wpdb->options === '') {
+        return false;
+    }
+
+    $serialized = maybe_serialize($value);
+    $autoload_value = function_exists('wp_determine_option_autoload_value')
+        ? wp_determine_option_autoload_value($option_name, $value, $serialized, $autoload)
+        : ($autoload ? 'yes' : 'no');
+
+    $inserted = $wpdb->query($wpdb->prepare(
+        "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, %s)",
+        $option_name,
+        $serialized,
+        $autoload_value
+    ));
+
+    if ($inserted !== 1) {
+        return false;
+    }
+
+    wp_cache_delete($option_name, 'options');
+    wp_cache_delete('alloptions', 'options');
+    // 这一行刚从「不存在」变成存在，notoptions 里那条记录必须跟着作废。
+    wp_cache_delete('notoptions', 'options');
+    return true;
+}
+
+/**
  * option 的 compare-and-swap 写入：只有当库里存的仍是 $expected_value 时才写进
  * $value，期间被别人改过就返回 false，由调用方重读重算。给 get_option() 读、
  * 改、再 update_option() 写这种流程用 —— 那中间的空档足够让另一个请求（或后台

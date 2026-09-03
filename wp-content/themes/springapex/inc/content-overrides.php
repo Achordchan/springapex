@@ -341,9 +341,12 @@ function springapex_content_store_overrides(array $overrides): void
 function springapex_content_update_overrides(callable $mutate, int $attempts = 3): bool
 {
     for ($attempt = 0; $attempt < $attempts; $attempt++) {
-        // 上一轮 CAS 失败正说明有人刚写过，缓存里那份已经不作数了。
+        // 上一轮 CAS 失败正说明有人刚写过，缓存里那份已经不作数了。notoptions 也要
+        // 清：这一行原本不存在时，get_option() 会把「没有这个 option」记进去，别人
+        // 抢先建好行之后，这边照样读不到，add_option() 每轮都插不进去直到重试耗尽。
         wp_cache_delete(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, 'options');
         wp_cache_delete('alloptions', 'options');
+        wp_cache_delete('notoptions', 'options');
 
         $current = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, null);
         $exists = is_array($current);
@@ -366,8 +369,9 @@ function springapex_content_update_overrides(callable $mutate, int $attempts = 3
                 return true;
             }
             $autoload = strlen(serialize($next)) <= SPRINGAPEX_CONTENT_AUTOLOAD_LIMIT;
-            // add_option() 不会覆盖别人刚插进去的行，插不进去就重读重来。
-            if (add_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, $next, '', $autoload)) {
+            // 别人抢先建好行时必须插不进去（而不是覆盖），所以走 INSERT IGNORE
+            // 而不是 add_option()；插不进去就重读重来。
+            if (springapex_add_option_if_absent(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, $next, $autoload)) {
                 return true;
             }
             continue;

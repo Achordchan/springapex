@@ -112,7 +112,23 @@ final class Springapex_Test_WPDB
     {
         global $springapex_test_rows, $springapex_test_block_overrides_write;
 
-        $is_update = str_starts_with($prepared['sql'], 'UPDATE');
+        $sql = $prepared['sql'];
+
+        if (str_starts_with($sql, 'INSERT IGNORE')) {
+            [$option, $value] = [$prepared['args'][0], $prepared['args'][1]];
+            if ($springapex_test_block_overrides_write && $option === 'springapex_content_overrides') {
+                return false;
+            }
+            // The unique index on option_name is what makes this atomic: an
+            // existing row is left exactly as it is.
+            if (array_key_exists($option, $springapex_test_rows)) {
+                return 0;
+            }
+            $springapex_test_rows[$option] = $value;
+            return 1;
+        }
+
+        $is_update = str_starts_with($sql, 'UPDATE');
         [$option, $expected] = $is_update
             ? [$prepared['args'][1], $prepared['args'][2]]
             : [$prepared['args'][0], $prepared['args'][1]];
@@ -359,4 +375,22 @@ springapex_test_assert($springapex_test_on_overrides_read === null, 'The competi
 springapex_test_assert(springapex_test_brand('hours') === 'Sat only', 'A stale migration retry rolled back a concurrent edit.');
 springapex_test_assert(springapex_test_brand('x') === '', 'A stale migration retry restored a link the operator had cleared.');
 
-echo "brand-contact-migration: failed write, completion, re-entry, concurrent save, admin save, stale retry and fallback ok\n";
+// Creating the row is a race too: another request can insert it between this
+// request reading "no row" and writing. The insert must lose that race instead
+// of overwriting what the other one just stored.
+delete_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION);
+$springapex_test_on_overrides_read = static function (): void {
+    global $springapex_test_rows;
+    $springapex_test_rows[SPRINGAPEX_CONTENT_OVERRIDES_OPTION] = maybe_serialize(['brand' => ['hours' => 'Created by another request']]);
+};
+$springapex_test_created = springapex_content_update_overrides(
+    static function (array $overrides): array {
+        $overrides['brand']['phone'] = '+86 100 0000 0000';
+        return $overrides;
+    }
+);
+springapex_test_assert($springapex_test_created, 'Creating the overrides row gave up instead of retrying.');
+springapex_test_assert(springapex_test_brand('hours') === 'Created by another request', 'The insert overwrote a row another request had just created.');
+springapex_test_assert(springapex_test_brand('phone') === '+86 100 0000 0000', 'The retry did not reapply this request own change.');
+
+echo "brand-contact-migration: failed write, completion, re-entry, concurrent save, admin save, stale retry, row creation and fallback ok\n";
