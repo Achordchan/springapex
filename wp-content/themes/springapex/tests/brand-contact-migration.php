@@ -91,30 +91,45 @@ function wp_cache_delete(string $key, string $group = ''): bool
     return true;
 }
 
-/** Stands in for $wpdb, with update() honouring the WHERE clause the CAS relies on. */
+/**
+ * Stands in for $wpdb. prepare() just carries the arguments through, and query()
+ * applies the two statements the CAS helpers issue, comparing option_value
+ * byte-for-byte the way CAST(... AS BINARY) does in MySQL — the column's own
+ * collation is case-insensitive, which is exactly what the SQL has to override.
+ */
 final class Springapex_Test_WPDB
 {
     public string $options = 'wp_options';
 
-    /**
-     * @param array<string, string> $data
-     * @param array<string, string> $where
-     * @param array<int, string> $format
-     * @param array<int, string> $where_format
-     */
-    public function update(string $table, array $data, array $where, array $format = [], array $where_format = []): int|false
+    /** @return array{sql: string, args: array<int, mixed>} */
+    public function prepare(string $query, mixed ...$args): array
+    {
+        return ['sql' => $query, 'args' => $args];
+    }
+
+    /** @param array{sql: string, args: array<int, mixed>} $prepared */
+    public function query(array $prepared): int|false
     {
         global $springapex_test_rows, $springapex_test_block_overrides_write;
 
-        $option = $where['option_name'] ?? '';
+        $is_update = str_starts_with($prepared['sql'], 'UPDATE');
+        [$option, $expected] = $is_update
+            ? [$prepared['args'][1], $prepared['args'][2]]
+            : [$prepared['args'][0], $prepared['args'][1]];
+
         if ($springapex_test_block_overrides_write && $option === 'springapex_content_overrides') {
             return false;
         }
         // The row only moves when nobody rewrote it since the caller read it.
-        if (($springapex_test_rows[$option] ?? null) !== ($where['option_value'] ?? null)) {
+        if (($springapex_test_rows[$option] ?? null) !== $expected) {
             return 0;
         }
-        $springapex_test_rows[$option] = $data['option_value'];
+
+        if ($is_update) {
+            $springapex_test_rows[$option] = $prepared['args'][0];
+        } else {
+            unset($springapex_test_rows[$option]);
+        }
         return 1;
     }
 }
@@ -322,4 +337,26 @@ springapex_test_assert($springapex_test_saved, 'The admin save gave up instead o
 springapex_test_assert(springapex_test_brand('hours') === 'Mon – Sat', 'The admin save did not land.');
 springapex_test_assert(springapex_test_brand('x') === 'https://x.com/legacy_handle', 'A stale admin save wiped out the values the migration had just committed.');
 
-echo "brand-contact-migration: failed write, completion, re-entry, concurrent save, admin save and fallback ok\n";
+// A migrating request that stalls must not resume and reapply its theme-mod
+// snapshot: another request can finish the migration while it waits, and the
+// operator can clear one of those links right after. The snapshot is stale from
+// that moment on, so the retry has to give up rather than merge it back in.
+springapex_test_set_overrides(['x' => '', 'hours' => 'Mon – Fri']);
+delete_option('springapex_brand_contact_source_version');
+set_theme_mod('springapex_x', 'https://x.com/legacy_handle');
+$springapex_test_on_overrides_read = static function (): void {
+    // Another request migrates the link in, and an operator then clears it and
+    // edits something else — so this row no longer matches the stalled snapshot.
+    $overrides = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, []);
+    $overrides['brand']['x'] = '';
+    $overrides['brand']['hours'] = 'Sat only';
+    update_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, $overrides);
+    remove_theme_mod('springapex_x');
+    update_option('springapex_brand_contact_source_version', SPRINGAPEX_BRAND_CONTACT_SOURCE_VERSION);
+};
+springapex_migrate_brand_contact_source();
+springapex_test_assert($springapex_test_on_overrides_read === null, 'The competing migration never ran; the interleaving was not exercised.');
+springapex_test_assert(springapex_test_brand('hours') === 'Sat only', 'A stale migration retry rolled back a concurrent edit.');
+springapex_test_assert(springapex_test_brand('x') === '', 'A stale migration retry restored a link the operator had cleared.');
+
+echo "brand-contact-migration: failed write, completion, re-entry, concurrent save, admin save, stale retry and fallback ok\n";

@@ -73,16 +73,16 @@ function springapex_update_option_if_unchanged(string $option_name, mixed $expec
         return false;
     }
 
-    $updated = $wpdb->update(
-        $wpdb->options,
-        ['option_value' => maybe_serialize($value)],
-        [
-            'option_name' => $option_name,
-            'option_value' => maybe_serialize($expected_value),
-        ],
-        ['%s'],
-        ['%s', '%s']
-    );
+    // option_value 的 collation 是大小写不敏感的（utf8mb4_*_ci），直接用 = 比较，
+    // 一次只改了字母大小写的并发保存会被判成「没变过」，然后被这里覆盖掉。
+    // 逐字节比较才是 compare-and-swap 要的语义。
+    $updated = $wpdb->query($wpdb->prepare(
+        "UPDATE {$wpdb->options} SET option_value = %s"
+        . " WHERE option_name = %s AND CAST(option_value AS BINARY) = CAST(%s AS BINARY)",
+        maybe_serialize($value),
+        $option_name,
+        maybe_serialize($expected_value)
+    ));
 
     if ($updated !== 1) {
         return false;
@@ -103,19 +103,21 @@ function springapex_delete_option_if_unchanged(string $option_name, mixed $expec
         return false;
     }
 
-    $deleted = $wpdb->delete(
-        $wpdb->options,
-        [
-            'option_name' => $option_name,
-            'option_value' => maybe_serialize($expected_value),
-        ],
-        ['%s', '%s']
-    );
+    // 同上：逐字节比较，否则只差大小写的并发改动会被当成没变过。
+    $deleted = $wpdb->query($wpdb->prepare(
+        "DELETE FROM {$wpdb->options}"
+        . " WHERE option_name = %s AND CAST(option_value AS BINARY) = CAST(%s AS BINARY)",
+        $option_name,
+        maybe_serialize($expected_value)
+    ));
 
     if ($deleted !== 1) {
         return false;
     }
 
     wp_cache_delete($option_name, 'options');
+    // autoload 的 option 还躺在 alloptions 里，只删单键的话同一请求后面读回来
+    // 的是已经删掉的那份。
+    wp_cache_delete('alloptions', 'options');
     return true;
 }

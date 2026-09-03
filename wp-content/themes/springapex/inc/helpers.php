@@ -252,15 +252,11 @@ function springapex_brand(): array
 
     if (
         defined('SPRINGAPEX_PREVIEW')
-        || !function_exists('get_option')
         || !function_exists('get_theme_mod')
         || !function_exists('springapex_brand_legacy_theme_mods')
-        || !defined('SPRINGAPEX_BRAND_CONTACT_SOURCE_VERSION')
+        || !function_exists('springapex_brand_contact_source_migrated')
+        || springapex_brand_contact_source_migrated()
     ) {
-        return $brand;
-    }
-
-    if ((string) get_option('springapex_brand_contact_source_version', '') === SPRINGAPEX_BRAND_CONTACT_SOURCE_VERSION) {
         return $brand;
     }
 

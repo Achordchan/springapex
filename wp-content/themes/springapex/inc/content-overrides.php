@@ -89,6 +89,23 @@ const SPRINGAPEX_BRAND_CONTACT_SOURCE_VERSION = '1';
 const SPRINGAPEX_BRAND_CONTACT_SWAP_ATTEMPTS = 3;
 
 /**
+ * 迁移是否已经确认完成（覆盖表落库 + 源值清空之后才会记上版本号）。
+ *
+ * $fresh 用于 compare-and-swap 冲突之后再确认一次：这一整个请求开头很可能已经
+ * 读过一次「没有这个 option」，get_option() 会记在 notoptions 名单里，之后哪怕
+ * 别的请求刚写完版本号，这边读到的还是旧结论。
+ */
+function springapex_brand_contact_source_migrated(bool $fresh = false): bool
+{
+    if ($fresh && function_exists('wp_cache_delete')) {
+        wp_cache_delete('springapex_brand_contact_source_version', 'options');
+        wp_cache_delete('notoptions', 'options');
+    }
+
+    return (string) get_option('springapex_brand_contact_source_version', '') === SPRINGAPEX_BRAND_CONTACT_SOURCE_VERSION;
+}
+
+/**
  * customizer 时代的联系方式/社交 theme_mod，键是 brand 底下的字段名，值是
  * [theme_mod 名, 清洗类型]。迁移拿它搬值，springapex_brand() 拿它在迁移落库
  * 之前兜底，两边必须是同一份名单。
@@ -154,7 +171,7 @@ function springapex_content_clean_legacy_brand_value(string $value, string $type
  */
 function springapex_migrate_brand_contact_source(): void
 {
-    if ((string) get_option('springapex_brand_contact_source_version', '') === SPRINGAPEX_BRAND_CONTACT_SOURCE_VERSION) {
+    if (springapex_brand_contact_source_migrated()) {
         return;
     }
 
@@ -179,13 +196,25 @@ function springapex_migrate_brand_contact_source(): void
         // 落库前会跑一次公开品牌名替换，所以拿替换后的值做对照。
         $expected = (array) springapex_replace_public_brand($incoming);
         $persisted = springapex_content_update_overrides(
-            static function (array $overrides) use ($incoming): array {
+            static function (array $overrides) use ($incoming): ?array {
+                // 每次重试都会重新走到这里。别的请求要是已经把迁移做完了，手上
+                // 这份 theme_mod 快照就作废了 —— 运营完全可能在那之后清空过某个
+                // 链接，再把旧值合并上去就是把人家的编辑抹掉。
+                if (springapex_brand_contact_source_migrated(true)) {
+                    return null;
+                }
+
                 $brand = isset($overrides['brand']) && is_array($overrides['brand']) ? $overrides['brand'] : [];
                 $overrides['brand'] = array_merge($brand, $incoming);
                 return $overrides;
             },
             SPRINGAPEX_BRAND_CONTACT_SWAP_ATTEMPTS
         );
+
+        // 别人已经搬完并且可能又被编辑过，这里就不该再动 theme_mod 和版本号了。
+        if (springapex_brand_contact_source_migrated(true)) {
+            return;
+        }
 
         // 写进去了还得确认值真是想要的那份：并发的另一个请求可能刚好把同一批键
         // 写成了别的内容。
@@ -304,7 +333,10 @@ function springapex_content_store_overrides(array $overrides): void
  * autoload 沿用行上已有的设置：只有新建这一行时才按大小决定，这样 CAS 只需要
  * 比对 option_value 一列。
  *
- * @param callable(array<string, mixed>): array<string, mixed> $mutate
+ * $mutate 返回非数组表示放弃这次写入（比如发现该做的事别人已经做完了），
+ * 此时不写库，函数返回 false。
+ *
+ * @param callable(array<string, mixed>): (array<string, mixed>|null) $mutate
  */
 function springapex_content_update_overrides(callable $mutate, int $attempts = 3): bool
 {
