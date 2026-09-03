@@ -329,7 +329,20 @@ function springapex_render_form_settings_page(): void
                       <div class="sa-mail-preview__subject"><span>预览主题</span><strong data-mail-preview-subject></strong></div>
                       <iframe title="询盘通知邮件预览" sandbox="allow-same-origin" referrerpolicy="no-referrer" data-mail-preview-frame></iframe>
                     </div>
-                    <p class="description sa-mail-editor__help">推荐保留 <code>{fields_table}</code> 自动生成完整询盘信息表，<code>{message}</code> 显示客户留言。系统会另外生成纯文本版本、设置 Reply-To，并附上客户上传的图纸；无需写进模板。预览使用示例数据，且在禁止脚本的沙箱中渲染。</p>
+                    <p class="description sa-mail-editor__help">推荐保留 <code>{fields_table}</code> 自动生成完整询盘信息表，<code>{message}</code> 显示客户留言。系统会另外生成纯文本版本并设置 Reply-To；无需写进模板。图纸不随邮件发送（大附件会拖慢客户提交、也容易被邮件网关拦下），<code>{fields_table}</code> 里会列出文件名和大小，收件人点邮件里的按钮到后台询盘详情页下载。预览使用示例数据，且在禁止脚本的沙箱中渲染。</p>
+                    <?php
+                    // 自定义过模板的站点不会跟着默认模板一起更新文案：图纸已经不随
+                    // 邮件发送，模板里若还写着「附件」，收件人会去找一个不存在的附件。
+                    // 这里只提示，不去改运营自己写的内容。
+                    $springapex_mail_body_now = springapex_inquiry_mail_body();
+                    $springapex_mail_mentions_attachment = $springapex_mail_body_now !== springapex_inquiry_mail_default_body()
+                        && preg_match('/附件|attachment/iu', wp_strip_all_tags($springapex_mail_body_now)) === 1;
+                    ?>
+                    <?php if ($springapex_mail_mentions_attachment) : ?>
+                      <p class="description sa-mail-editor__help" style="color:#8a6100;">
+                        提醒：你的自定义模板里提到了「附件」，但图纸已经不随邮件发送了。建议把那句话改成让收件人到后台询盘详情页下载，或点「载入默认模板」取用新版文案。
+                      </p>
+                    <?php endif; ?>
                     <p class="sa-mail-editor__status" role="status" aria-live="polite" data-mail-status></p>
                   </div>
                 </td>

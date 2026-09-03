@@ -71,7 +71,7 @@ function springapex_inquiry_mail_default_body(): string
         </tr>
         <tr>
           <td style="padding:17px 30px;background:#f8fafc;border-top:1px solid #e5e7eb;font-size:12px;line-height:1.6;color:#9ca3af;">
-            本邮件由 {site_name} 自动发送。附件为客户上传的图纸文件，请按内部流程妥善处理。
+            本邮件由 {site_name} 自动发送。客户上传的图纸不随邮件发送，请点上方按钮到后台询盘详情页下载。
           </td>
         </tr>
       </table>
@@ -212,7 +212,7 @@ function springapex_inquiry_mail_placeholders(): array
         '{custom_fields}' => '自定义字段块（兼容旧模板，HTML 多行）',
         '{message}' => '留言正文',
         '{document}' => '随附文档标识',
-        '{drawings}' => '图纸文件名列表（无则 None）',
+        '{drawings}' => '图纸文件名与大小列表（无则 None）；图纸本身在后台询盘详情页下载',
         '{inquiry_link}' => '后台询盘记录链接',
         '{site_name}' => '站点名称',
         '{site_url}' => '站点地址',

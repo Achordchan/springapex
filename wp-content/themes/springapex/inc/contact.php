@@ -358,8 +358,14 @@ function springapex_process_contact_submission(): array|WP_Error
     $inquiry_link = admin_url('post.php?post=' . (int) $inquiry_id . '&action=edit');
     $site_name = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
     $document_id = sanitize_key(springapex_request_scalar($_POST['document'] ?? ''));
+    // 邮件不再夹带附件，所以这份清单要能替代它：文件名之外还给出大小，收件人
+    // 一眼就知道有几个图纸、多大，再决定什么时候去后台下载。
     $drawings_list = $private_files
-        ? implode(', ', array_map(static fn(array $file): string => (string) ($file['original_name'] ?? ''), $private_files))
+        ? implode(', ', array_map(static function (array $file): string {
+            $name = (string) ($file['original_name'] ?? '');
+            $size = (int) ($file['size'] ?? 0);
+            return $size > 0 ? $name . ' (' . size_format($size, 1) . ')' : $name;
+        }, $private_files))
         : '';
 
     $dimension_rows = [
@@ -452,20 +458,18 @@ function springapex_process_contact_submission(): array|WP_Error
     $plain = springapex_inquiry_mail_plaintext($fields_rows, $message, $inquiry_link);
 
     $headers = ['Content-Type: text/html; charset=UTF-8', "Reply-To: {$display_name} <{$email}>"];
-    $attachments = [];
-    foreach ($private_files as $private_file) {
-        $private_path = springapex_private_file_path($private_file);
-        if ($private_path !== '') {
-            $attachments[] = $private_path;
-        }
-    }
+
+    // 图纸不再作为附件发出：一份 5 MB 的图纸 base64 之后约 6.7 MB，要在提交请求
+    // 里同步塞给 SMTP 服务器，客户就卡在「正在提交询盘」那一步干等；大附件还
+    // 常被邮件网关拒收或丢进垃圾箱。邮件里给出文件清单，图纸到后台询盘详情页
+    // 下载（走登录 + 权限校验的既有入口，不额外开放访问面）。
 
     // 多部分：给 HTML 邮件补一份纯文本 AltBody，利于送达与老客户端。
     $set_alt_body = static function ($phpmailer) use ($plain): void {
         $phpmailer->AltBody = $plain;
     };
     add_action('phpmailer_init', $set_alt_body);
-    $sent = $recipient !== '' && wp_mail($recipient, $subject, $document, $headers, $attachments);
+    $sent = $recipient !== '' && wp_mail($recipient, $subject, $document, $headers);
     remove_action('phpmailer_init', $set_alt_body);
     springapex_cleanup_temporary_private_files($private_files);
     // 与后台询盘视图（inquiry-view.php）约定的状态值：sent / failed（初始 pending）。
