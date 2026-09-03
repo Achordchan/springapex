@@ -262,8 +262,8 @@ function springapex_render_system_status_page(): void
               <tr><th>有附件的询盘</th><td><?php echo (int) ($storage['inquiries'] ?? 0); ?> 封（询盘总数 <?php echo (int) $inquiry_total; ?> 封）</td></tr>
               <tr><th>回收站待清理</th><td><?php echo (int) ($storage['trashed_files'] ?? 0); ?> 个附件 · <?php echo esc_html(size_format((int) ($storage['trashed_bytes'] ?? 0), 1) ?: '0 B'); ?>；其中 S3 <?php echo (int) ($storage['trashed_s3_files'] ?? 0); ?> 个 · <?php echo esc_html(size_format((int) ($storage['trashed_s3_bytes'] ?? 0), 1) ?: '0 B'); ?>（永久删除后释放，S3 部分此前仍在计费）</td></tr>
               <tr><th>回收站自动清空</th><td><?php echo $trash_days > 0 ? esc_html($trash_days . ' 天后自动永久删除，届时清理对应文件') : '已关闭：删除即永久删除并立刻清理对应文件'; ?></td></tr>
-              <tr><th>S3 删除重试队列</th><td><?php echo $retry_count; ?> 项<?php echo $retry_count > 0 ? ' · ' . esc_html(size_format($retry_bytes, 1) ?: '0 B') . '（删除失败、仍在 S3 计费，系统重试中）' : ''; ?><?php echo $next_retry > 0 ? '；下次：' . esc_html(wp_date('Y-m-d H:i:s', $next_retry)) : ''; ?></td></tr>
-              <tr><th>估算月度存储成本</th><td><?php echo esc_html($cost_text); ?> <span class="description">（按 S3 计费体积 <?php echo esc_html(size_format($billable_s3_bytes, 1) ?: '0 B'); ?>＝附件 S3 对象＋重试队列孤儿对象，S3 标准存储约 $0.023/GB 粗估，未含流量与取回）</span></td></tr>
+              <tr><th>S3 删除重试队列</th><td><?php echo $retry_count; ?> 项<?php echo $retry_count > 0 ? ' · 最多 ' . esc_html(size_format($retry_bytes, 1) ?: '0 B') . '（删除待重试；部分可能删除本就失败、对象已不存在，故为上限）' : ''; ?><?php echo $next_retry > 0 ? '；下次：' . esc_html(wp_date('Y-m-d H:i:s', $next_retry)) : ''; ?></td></tr>
+              <tr><th>估算月度存储成本</th><td><?php echo esc_html($cost_text); ?> <span class="description">（上限估算，按 S3 计费体积 ≤ <?php echo esc_html(size_format($billable_s3_bytes, 1) ?: '0 B'); ?>＝附件 S3 对象＋重试队列待清理对象；后者部分可能已不存在，故取上限。S3 标准存储约 $0.023/GB 粗估，未含流量与取回）</span></td></tr>
               <tr><th>统计时间</th><td><?php echo esc_html(wp_date('Y-m-d H:i:s', (int) ($storage['generated_at'] ?? time()))); ?><?php echo !empty($storage['truncated']) ? '（数量较多，以上为前 20000 封的下限统计）' : ''; ?> · 点右上角「运行连接检测」可刷新</td></tr>
             </tbody>
           </table>
