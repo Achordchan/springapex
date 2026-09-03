@@ -177,9 +177,32 @@ foreach ($required_routes as $route) {
     }
 }
 
+// 一个内容根只能归一个屏：「恢复默认」是按屏幕根 unset 的（见 save.php 的
+// springapex_admin_reset_screen()），两个屏共管同一个根时，在其中一屏点恢复
+// 默认会把另一屏的内容一起清掉。跨屏引用请用 signpost 指路，别把字段搬过去。
+if (!function_exists('add_action')) {
+    function add_action(string $hook, callable|string $callback, int $priority = 10, int $args = 1): bool
+    {
+        return true;
+    }
+}
+require_once dirname(__DIR__) . '/inc/admin/save.php';
+
+$root_owners = [];
+foreach (array_keys($screens) as $screen_key) {
+    foreach (springapex_admin_screen_roots($screen_key) as $root) {
+        $root_owners[$root][] = $screen_key;
+    }
+}
+foreach ($root_owners as $root => $owners) {
+    if (count($owners) > 1) {
+        $errors[] = "内容根「{$root}」同时归属 " . implode(' / ', $owners) . " 屏：任一屏「恢复默认」都会清掉其它屏的内容，请改用 signpost 指路。";
+    }
+}
+
 if ($errors !== []) {
     fwrite(STDERR, implode(PHP_EOL, $errors) . PHP_EOL);
     exit(1);
 }
 
-echo "admin-content-coverage: {$checked} paths ok" . PHP_EOL;
+echo "admin-content-coverage: {$checked} paths ok, " . count($root_owners) . " roots each owned by one screen" . PHP_EOL;

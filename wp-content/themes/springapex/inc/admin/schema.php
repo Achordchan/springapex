@@ -566,6 +566,18 @@ function springapex_admin_screens(): array
                     ],
                 ],
                 [
+                    'title' => '公司简介',
+                    'desc' => 'ABOUT NORENSPRING 区块：小标签、标题、正文段落，以及下面那排关键数据。',
+                    'signpost' => [
+                        'path' => 'about-company-profile',
+                        'title' => '关于页开头的公司简介请到「公司实力与资质」编辑',
+                        'text' => '小标签、标题、正文段落和关键数据都在那一页的「公司简介」「关键事实」两节；首页用的短版本也在同一处，改长版本不会影响首页。',
+                        'button' => '前往公司实力与资质',
+                        'url' => 'admin.php?page=springapex-content-company',
+                    ],
+                    'fields' => [],
+                ],
+                [
                     'title' => '为什么选择我们',
                     'desc' => '从需求评审到量产的五个步骤。',
                     'fields' => [
@@ -611,6 +623,18 @@ function springapex_admin_screens(): array
                     ],
                 ],
                 [
+                    'title' => '体系证书',
+                    'desc' => '关于页中部的证书墙。',
+                    'signpost' => [
+                        'path' => 'about-quality-certificates',
+                        'title' => '关于页的体系证书请到「公司实力与资质」编辑',
+                        'text' => '证书图片、名称和适用范围在那一页的「体系证书」一节维护。',
+                        'button' => '前往公司实力与资质',
+                        'url' => 'admin.php?page=springapex-content-company',
+                    ],
+                    'fields' => [],
+                ],
+                [
                     'title' => '团队',
                     'desc' => '创始人单独展示，其余成员按分组显示。照片请用同一尺寸的方形头像。',
                     'fields' => [
@@ -643,6 +667,18 @@ function springapex_admin_screens(): array
                             ],
                         ],
                     ],
+                ],
+                [
+                    'title' => '公司发展历程',
+                    'desc' => '关于页底部的发展历程时间轴。',
+                    'signpost' => [
+                        'path' => 'about-timeline',
+                        'title' => '关于页底部的发展历程请到「公司实力与资质」编辑',
+                        'text' => '小标签、标题和各个节点的年份、说明、配图在那一页的「公司发展历程」一节维护。',
+                        'button' => '前往公司实力与资质',
+                        'url' => 'admin.php?page=springapex-content-company',
+                    ],
+                    'fields' => [],
                 ],
                 [
                     'title' => '全球支持',
@@ -739,7 +775,7 @@ function springapex_admin_screens(): array
                 ],
                 [
                     'title' => '体系证书',
-                    'desc' => '证书图片会放大查看，请上传清晰的扫描件。',
+                    'desc' => '显示在关于我们页中部。证书图片会放大查看，请上传清晰的扫描件。',
                     'fields' => [
                         ['path' => 'company.quality.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => ''],
                         ['path' => 'company.quality.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
