@@ -61,7 +61,10 @@ function springapex_system_status_s3_retry_count(): int
  * S3 删除重试队列里那些对象的总字节。删除 S3 对象失败时，询盘文章连同 meta 会被
  * 删掉，但对象仍留在 S3、其元数据进了重试队列（springapex_s3_delete_retry_v1_*）
  * 直到重试成功。这部分对象已不挂在任何询盘上、却仍在计费——单独报出来，别让它
- * 从存储成本里凭空消失。队列正常为空，逐条求和成本可忽略；仍设上限兜底。
+ * 从存储成本里凭空消失。
+ *
+ * 按 option_id 游标分页把全部队列条目求和（与 retry_count 的 COUNT(*) 一致、不
+ * 截断），每页只驻留 1000 行，避免长时间 S3 故障堆积大量条目时撑爆内存。
  */
 function springapex_system_status_s3_retry_bytes(): int
 {
@@ -69,20 +72,31 @@ function springapex_system_status_s3_retry_bytes(): int
     if (!isset($wpdb->options) || !is_string($wpdb->options)) {
         return 0;
     }
-    $prefix = 'springapex_s3_delete_retry_v1_';
-    $rows = $wpdb->get_results($wpdb->prepare(
-        "SELECT option_value FROM {$wpdb->options} WHERE option_name LIKE %s LIMIT 5000",
-        $wpdb->esc_like($prefix) . '%'
-    ));
-    $rows = is_array($rows) ? $rows : [];
+    $like = $wpdb->esc_like('springapex_s3_delete_retry_v1_') . '%';
     $bytes = 0;
-    foreach ($rows as $row) {
-        $value = is_object($row) ? (string) ($row->option_value ?? '') : '';
-        $entry = is_serialized($value) ? unserialize($value, ['allowed_classes' => false]) : $value;
-        if (is_array($entry) && is_array($entry['metadata'] ?? null)) {
-            $bytes += max(0, (int) ($entry['metadata']['size'] ?? 0));
+    $cursor = 0;
+    do {
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT option_id, option_value FROM {$wpdb->options}
+             WHERE option_name LIKE %s AND option_id > %d
+             ORDER BY option_id ASC
+             LIMIT 1000",
+            $like,
+            $cursor
+        ));
+        $rows = is_array($rows) ? $rows : [];
+        foreach ($rows as $row) {
+            if (!is_object($row)) {
+                continue;
+            }
+            $cursor = max($cursor, (int) ($row->option_id ?? 0));
+            $value = (string) ($row->option_value ?? '');
+            $entry = is_serialized($value) ? unserialize($value, ['allowed_classes' => false]) : $value;
+            if (is_array($entry) && is_array($entry['metadata'] ?? null)) {
+                $bytes += max(0, (int) ($entry['metadata']['size'] ?? 0));
+            }
         }
-    }
+    } while (count($rows) === 1000);
     return $bytes;
 }
 

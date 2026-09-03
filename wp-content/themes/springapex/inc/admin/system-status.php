@@ -238,14 +238,16 @@ function springapex_render_system_status_page(): void
       $inquiry_total = array_sum(array_map('intval', $inquiry_counts));
       $storage_bytes = (int) ($storage['bytes'] ?? 0);
       $s3_bytes = (int) ($storage['s3_bytes'] ?? 0);
-      // 成本只按 S3 字节算：本地存储的旧附件不计入 S3 账单。
-      $monthly_cost = ($s3_bytes / GB_IN_BYTES) * 0.023; // S3 标准存储粗估
-      $cost_text = $s3_bytes <= 0
-          ? '$0.00/月'
-          : ($monthly_cost < 0.01 ? '不到 $0.01/月' : sprintf('约 $%.2f/月', $monthly_cost));
       $retry_count = (int) ($snapshot['s3']['retry_count'] ?? 0);
       $retry_bytes = (int) ($snapshot['s3']['retry_bytes'] ?? 0);
       $next_retry = (int) ($snapshot['s3']['next_retry'] ?? 0);
+      // 成本按 S3 计费口径：询盘附件里的 S3 对象 + 删除失败仍留在 S3 的孤儿对象。
+      // 本地存储的旧附件不进 S3 账单，不计入。
+      $billable_s3_bytes = $s3_bytes + $retry_bytes;
+      $monthly_cost = ($billable_s3_bytes / GB_IN_BYTES) * 0.023; // S3 标准存储粗估
+      $cost_text = $billable_s3_bytes <= 0
+          ? '$0.00/月'
+          : ($monthly_cost < 0.01 ? '不到 $0.01/月' : sprintf('约 $%.2f/月', $monthly_cost));
       ?>
       <section class="sa-card">
         <header class="sa-card__head">
@@ -261,7 +263,7 @@ function springapex_render_system_status_page(): void
               <tr><th>回收站待清理</th><td><?php echo (int) ($storage['trashed_files'] ?? 0); ?> 个附件 · <?php echo esc_html(size_format((int) ($storage['trashed_bytes'] ?? 0), 1) ?: '0 B'); ?>；其中 S3 <?php echo (int) ($storage['trashed_s3_files'] ?? 0); ?> 个 · <?php echo esc_html(size_format((int) ($storage['trashed_s3_bytes'] ?? 0), 1) ?: '0 B'); ?>（永久删除后释放，S3 部分此前仍在计费）</td></tr>
               <tr><th>回收站自动清空</th><td><?php echo $trash_days > 0 ? esc_html($trash_days . ' 天后自动永久删除，届时清理对应 S3 文件') : '已关闭：删除即永久删除并立刻清理 S3'; ?></td></tr>
               <tr><th>S3 删除重试队列</th><td><?php echo $retry_count; ?> 项<?php echo $retry_count > 0 ? ' · ' . esc_html(size_format($retry_bytes, 1) ?: '0 B') . '（删除失败、仍在 S3 计费，系统重试中）' : ''; ?><?php echo $next_retry > 0 ? '；下次：' . esc_html(wp_date('Y-m-d H:i:s', $next_retry)) : ''; ?></td></tr>
-              <tr><th>估算月度存储成本</th><td><?php echo esc_html($cost_text); ?> <span class="description">（仅按 S3 对象体积、S3 标准存储约 $0.023/GB 粗估，未含流量与取回）</span></td></tr>
+              <tr><th>估算月度存储成本</th><td><?php echo esc_html($cost_text); ?> <span class="description">（按 S3 计费体积 <?php echo esc_html(size_format($billable_s3_bytes, 1) ?: '0 B'); ?>＝附件 S3 对象＋重试队列孤儿对象，S3 标准存储约 $0.023/GB 粗估，未含流量与取回）</span></td></tr>
               <tr><th>统计时间</th><td><?php echo esc_html(wp_date('Y-m-d H:i:s', (int) ($storage['generated_at'] ?? time()))); ?><?php echo !empty($storage['truncated']) ? '（数量较多，以上为前 20000 封的下限统计）' : ''; ?> · 点右上角「运行连接检测」可刷新</td></tr>
             </tbody>
           </table>
