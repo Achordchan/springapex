@@ -275,6 +275,18 @@ function springapex_render_form_settings_page(): void
                 <th scope="row"><label for="springapex_inquiry_email">询盘收件邮箱</label></th>
                 <td>
                   <input name="springapex_inquiry_email" id="springapex_inquiry_email" type="email" class="regular-text" value="<?php echo esc_attr($recipient); ?>" required>
+                  <?php
+                  $springapex_recipient_user = $recipient !== '' ? get_user_by('email', $recipient) : false;
+                  $springapex_recipient_backend = $springapex_recipient_user instanceof WP_User
+                      && user_can($springapex_recipient_user, 'edit_posts');
+                  ?>
+                  <p class="description">
+                    <?php if ($springapex_recipient_backend) : ?>
+                      这个邮箱是本站后台账号（<?php echo esc_html($springapex_recipient_user->user_login); ?>），图纸不夹带在邮件里，改到询盘详情页下载 —— 客户提交会快很多。
+                    <?php else : ?>
+                      这个邮箱没有对应的后台账号，图纸会照旧作为附件发出，收件人才拿得到。想让提交更快，可以改填一个有后台账号的邮箱。
+                    <?php endif; ?>
+                  </p>
                   <p class="description">每条询盘的通知邮件发送到这里；访客邮箱会设为回复地址。</p>
                 </td>
               </tr>
@@ -337,7 +349,7 @@ function springapex_render_form_settings_page(): void
                       <div class="sa-mail-preview__subject"><span>预览主题</span><strong data-mail-preview-subject></strong></div>
                       <iframe title="询盘通知邮件预览" sandbox="allow-same-origin" referrerpolicy="no-referrer" data-mail-preview-frame></iframe>
                     </div>
-                    <p class="description sa-mail-editor__help">推荐保留 <code>{fields_table}</code> 自动生成完整询盘信息表，<code>{message}</code> 显示客户留言。系统会另外生成纯文本版本并设置 Reply-To；无需写进模板。图纸不随邮件发送（大附件会拖慢客户提交、也容易被邮件网关拦下），<code>{fields_table}</code> 里会列出文件名和大小，收件人点邮件里的按钮到后台询盘详情页下载。预览使用示例数据，且在禁止脚本的沙箱中渲染。</p>
+                    <p class="description sa-mail-editor__help">推荐保留 <code>{fields_table}</code> 自动生成完整询盘信息表，<code>{message}</code> 显示客户留言。系统会另外生成纯文本版本并设置 Reply-To；无需写进模板。<code>{fields_table}</code> 里会列出图纸的文件名和大小。上面那个收件邮箱如果是本站后台账号，图纸就不再夹带在邮件里（大附件会拖慢客户提交、也容易被邮件网关拦下），改到后台询盘详情页下载；如果是没有后台账号的外部邮箱，图纸仍按原样作为附件发出，否则收件人就取不到了。预览使用示例数据，且在禁止脚本的沙箱中渲染。</p>
                     <?php
                     // 自定义过模板的站点不会跟着默认模板一起更新文案：图纸已经不随
                     // 邮件发送，模板里若还写着「附件」，收件人会去找一个不存在的附件。

@@ -224,6 +224,28 @@ function springapex_inquiry_mail_placeholders(): array
  * 不改写模板空白，避免破坏运营者在 HTML / pre 标签中的排版。
  */
 /**
+ * 这个收件人能不能自己去后台取图纸。
+ *
+ * 询盘收件邮箱是运营在「表单设置」里填的任意地址，常常是外部的共享销售邮箱，
+ * 背后没有 WordPress 账号 —— 对这种收件人，后台下载链接毫无用处。只有确认他
+ * 既是本站用户、又有权限打开这条询盘时，才好把图纸从邮件里拿掉。
+ */
+function springapex_inquiry_recipient_reads_backend(string $recipient, int $inquiry_id): bool
+{
+    $recipient = trim($recipient);
+    if ($recipient === '' || $inquiry_id < 1) {
+        return false;
+    }
+
+    $user = get_user_by('email', $recipient);
+    if (!$user instanceof WP_User) {
+        return false;
+    }
+
+    return user_can($user, 'read_post', $inquiry_id);
+}
+
+/**
  * 保证带图纸的通知邮件在 HTML 正文里一定看得到图纸清单和取件入口。
  *
  * 图纸过去是无条件作为附件发出的，旧版编辑器的说明还写着「系统会附上客户上传的

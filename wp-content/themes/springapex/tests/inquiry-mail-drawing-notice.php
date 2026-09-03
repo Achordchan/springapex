@@ -44,6 +44,27 @@ function wp_kses_post(string $text): string
     return $text;
 }
 
+/** 站内用户表：邮箱 => [是否能读这条询盘] */
+$springapex_test_users = [];
+
+class WP_User
+{
+    public function __construct(public string $user_email, public bool $can_read = true)
+    {
+    }
+}
+
+function get_user_by(string $field, string $value): WP_User|false
+{
+    global $springapex_test_users;
+    return $springapex_test_users[$value] ?? false;
+}
+
+function user_can(WP_User $user, string $capability, mixed ...$args): bool
+{
+    return $capability === 'read_post' ? $user->can_read : false;
+}
+
 require __DIR__ . '/../inc/mail-template.php';
 
 function springapex_test_assert(bool $condition, string $message): void
@@ -114,4 +135,32 @@ $escaped = springapex_inquiry_mail_with_drawing_notice($legacy, $tricky, $link);
 springapex_test_assert(!str_contains($escaped, '<script>'), 'A crafted file name was injected into the mail body.');
 springapex_test_assert(str_contains($escaped, esc_html($tricky)), 'The escaped file name is missing.');
 
-echo "inquiry-mail-drawing-notice: legacy templates, complete templates, partial templates, no-drawing inquiries and unsafe names ok\n";
+// 收件人能不能自己去后台取件，决定了这封邮件还要不要夹带图纸。
+$springapex_test_users = [
+    'admin@example.com' => new WP_User('admin@example.com', true),
+    'reader@example.com' => new WP_User('reader@example.com', false),
+];
+springapex_test_assert(
+    springapex_inquiry_recipient_reads_backend('admin@example.com', 12),
+    'A backend user with read access was treated as unable to fetch the files.'
+);
+// 外部共享销售邮箱：没有站内账号，后台链接对他没用，必须继续收到附件。
+springapex_test_assert(
+    !springapex_inquiry_recipient_reads_backend('sales@partner.example', 12),
+    'A recipient without a WordPress account was assumed to have backend access.'
+);
+// 有账号但读不了这条询盘，同样取不到文件。
+springapex_test_assert(
+    !springapex_inquiry_recipient_reads_backend('reader@example.com', 12),
+    'A user without read_post on the inquiry was assumed to have access.'
+);
+springapex_test_assert(
+    !springapex_inquiry_recipient_reads_backend('', 12),
+    'An empty recipient was treated as a backend user.'
+);
+springapex_test_assert(
+    !springapex_inquiry_recipient_reads_backend('admin@example.com', 0),
+    'A missing inquiry id was treated as readable.'
+);
+
+echo "inquiry-mail-drawing-notice: legacy templates, complete templates, partial templates, no-drawing inquiries, unsafe names and recipient access ok\n";

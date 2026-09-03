@@ -453,26 +453,42 @@ function springapex_process_contact_submission(): array|WP_Error
         '{site_name}' => esc_html($site_name),
         '{site_url}' => esc_url(home_url('/')),
     ];
+    // 收件邮箱是运营在「表单设置」里填的任意地址，很可能是外部的共享销售邮箱，
+    // 背后没有 WordPress 账号 —— 后台链接对这种收件人毫无用处。只有确认他能在
+    // 后台打开这条询盘时才省掉附件；否则照旧夹带，慢一点也好过让人拿不到图纸。
+    $recipient_reads_backend = springapex_inquiry_recipient_reads_backend($recipient, (int) $inquiry_id);
+
     $html_body = springapex_fill_mail_template(springapex_inquiry_mail_body(), $body_vars);
-    // 自定义模板可能既没有图纸清单也没有后台入口（停发附件之前那样写完全合理），
-    // 缺了就补一段，别让图纸在邮件里无迹可寻。
-    $html_body = springapex_inquiry_mail_with_drawing_notice($html_body, $drawings_list, $inquiry_link);
+    if ($recipient_reads_backend) {
+        // 自定义模板可能既没有图纸清单也没有后台入口（停发附件之前那样写完全
+        // 合理），缺了就补一段，别让图纸在邮件里无迹可寻。
+        $html_body = springapex_inquiry_mail_with_drawing_notice($html_body, $drawings_list, $inquiry_link);
+    }
     $document = springapex_inquiry_mail_document($html_body);
     $plain = springapex_inquiry_mail_plaintext($fields_rows, $message, $inquiry_link);
 
     $headers = ['Content-Type: text/html; charset=UTF-8', "Reply-To: {$display_name} <{$email}>"];
 
-    // 图纸不再作为附件发出：一份 5 MB 的图纸 base64 之后约 6.7 MB，要在提交请求
-    // 里同步塞给 SMTP 服务器，客户就卡在「正在提交询盘」那一步干等；大附件还
-    // 常被邮件网关拒收或丢进垃圾箱。邮件里给出文件清单，图纸到后台询盘详情页
-    // 下载（走登录 + 权限校验的既有入口，不额外开放访问面）。
+    // 能进后台的收件人不再收到附件：一份 5 MB 的图纸 base64 之后约 6.7 MB，要在
+    // 提交请求里同步塞给 SMTP 服务器，客户就卡在「正在提交询盘」那一步干等；大
+    // 附件还常被邮件网关拒收或丢进垃圾箱。这类收件人改从后台询盘详情页取件，
+    // 走登录 + 权限校验的既有入口，不额外开放访问面。
+    $attachments = [];
+    if (!$recipient_reads_backend) {
+        foreach ($private_files as $private_file) {
+            $private_path = springapex_private_file_path($private_file);
+            if ($private_path !== '') {
+                $attachments[] = $private_path;
+            }
+        }
+    }
 
     // 多部分：给 HTML 邮件补一份纯文本 AltBody，利于送达与老客户端。
     $set_alt_body = static function ($phpmailer) use ($plain): void {
         $phpmailer->AltBody = $plain;
     };
     add_action('phpmailer_init', $set_alt_body);
-    $sent = $recipient !== '' && wp_mail($recipient, $subject, $document, $headers);
+    $sent = $recipient !== '' && wp_mail($recipient, $subject, $document, $headers, $attachments);
     remove_action('phpmailer_init', $set_alt_body);
     springapex_cleanup_temporary_private_files($private_files);
     // 与后台询盘视图（inquiry-view.php）约定的状态值：sent / failed（初始 pending）。
