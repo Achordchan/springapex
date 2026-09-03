@@ -120,6 +120,10 @@ function springapex_content_clean_legacy_brand_value(string $value, string $type
  * 清空的社交链接会被旧 theme_mod 顶回来。customizer 的这些控件已下线，这里
  * 把残留的 theme_mod 值一次性搬进覆盖表（迁移前 theme_mod 胜出，所以照搬即可
  * 保持访客看到的内容不变），再清掉 theme_mod，让覆盖表成为唯一来源。
+ *
+ * 全程可重入，不需要加锁：写覆盖表在前、删 theme_mod 在后，任何一步中断都还
+ * 留着源值，下次请求原样再跑一遍；写之前才读覆盖表，读到的已经包含并发请求
+ * 刚搬完的值，比对一致就不写，所以两个请求同时跑也不会互相顶掉。
  */
 function springapex_migrate_brand_contact_source(): void
 {
@@ -141,16 +145,9 @@ function springapex_migrate_brand_contact_source(): void
         'tiktok'    => ['springapex_tiktok', 'url'],
     ];
 
-    $overrides = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, []);
-    if (!is_array($overrides)) {
-        $overrides = [];
-    }
-    $brand = isset($overrides['brand']) && is_array($overrides['brand']) ? $overrides['brand'] : [];
-    $moved = false;
-
+    $incoming = [];
     foreach ($legacy as $key => [$setting, $type]) {
         $stored = get_theme_mod($setting, '');
-        remove_theme_mod($setting);
         if (!is_string($stored)) {
             continue;
         }
@@ -159,33 +156,58 @@ function springapex_migrate_brand_contact_source(): void
         if ($value === '') {
             continue;
         }
-        $brand[$key] = $value;
-        $moved = true;
+        $incoming[$key] = $value;
     }
 
-    if ($moved) {
-        $overrides['brand'] = $brand;
-        springapex_content_store_overrides($overrides);
-    }
+    $persisted = true;
+    if ($incoming !== []) {
+        // 落库前会跑一次公开品牌名替换，所以拿替换后的值做对照。
+        $expected = (array) springapex_replace_public_brand($incoming);
 
-    $success = true;
-    foreach ($legacy as [$setting, $_type]) {
-        $success = get_theme_mod($setting, '') === '' && $success;
-    }
-    if ($moved) {
+        // 紧挨着写入才读覆盖表，不用函数开头的旧快照：并发的另一个请求可能刚
+        // 搬完，拿旧快照回写会把它的结果连同运营的编辑一起顶掉。
+        $overrides = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, []);
+        if (!is_array($overrides)) {
+            $overrides = [];
+        }
+        $brand = isset($overrides['brand']) && is_array($overrides['brand']) ? $overrides['brand'] : [];
+
+        $needs_write = false;
+        foreach ($expected as $key => $value) {
+            if (($brand[$key] ?? null) !== $value) {
+                $needs_write = true;
+                break;
+            }
+        }
+
+        if ($needs_write) {
+            $overrides['brand'] = array_merge($brand, $incoming);
+            springapex_content_store_overrides($overrides);
+        }
+
         $stored_overrides = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, []);
         $stored_brand = is_array($stored_overrides) && isset($stored_overrides['brand']) && is_array($stored_overrides['brand'])
             ? $stored_overrides['brand']
             : [];
-        // 落库前会跑一次公开品牌名替换，所以拿替换后的值做对照。
-        $expected = (array) springapex_replace_public_brand($brand);
         foreach ($expected as $key => $value) {
-            $success = ($stored_brand[$key] ?? null) === $value && $success;
+            $persisted = ($stored_brand[$key] ?? null) === $value && $persisted;
         }
     }
 
-    // 没搬干净就不写版本号，下次请求再试一遍。
-    if ($success) {
+    // 覆盖表没落库就绝不动源值：先删后写的话，写失败或进程中断就把 customizer
+    // 里的联系方式永久丢掉了，而且下一个请求会看到「没有值可搬」直接收工。
+    if (!$persisted) {
+        return;
+    }
+
+    $cleared = true;
+    foreach ($legacy as [$setting, $_type]) {
+        remove_theme_mod($setting);
+        $cleared = get_theme_mod($setting, '') === '' && $cleared;
+    }
+
+    // 没清干净就不写版本号，下次请求再试一遍。
+    if ($cleared) {
         update_option('springapex_brand_contact_source_version', SPRINGAPEX_BRAND_CONTACT_SOURCE_VERSION, false);
     }
 }
