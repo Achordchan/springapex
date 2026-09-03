@@ -15,6 +15,16 @@
  * 直接编辑主题文件，所以这里没有制造新的权限提升面。多站点下只有超级管理员具备，
  * 普通站点管理员提交会被明确拒绝并保留原值，而不是静默清洗成半截脚本——半截脚本
  * 比拒绝难查得多。
+ *
+ * 这道门槛同样适用于 GTM 容器号，虽然它看起来只是一串受格式校验的标识符。容器
+ * 本身就是远程注入任意脚本的入口：把容器号换成自己控制的容器，效果与直接粘贴
+ * <script> 完全一样，而且更难看出来——页面源码里只剩一串合法的 GTM-XXXX。格式
+ * 校验管的是笔误，不是信任。放行容器号等于给 unfiltered_html 开一条旁路，多站点
+ * 下的站点管理员即可借它拿到前台任意 JS 执行。
+ *
+ * 拦截分三层，任一层存活都拦得住：option_page_capability 让 options.php 在框架层
+ * 就拒收提交，下面的 sanitize 回调再拒一次（覆盖绕过表单直接 POST 的情况），页面
+ * 本身则把字段渲染成只读。
  */
 
 declare(strict_types=1);
@@ -33,7 +43,9 @@ add_action('admin_init', static function (): void {
     ]);
 });
 
-add_filter('option_page_capability_springapex_tracking', static fn(): string => SPRINGAPEX_ADMIN_CAP);
+// 框架层第一道：options.php 用这个能力决定收不收提交。这里要的是写入权限，
+// 比进入页面的 SPRINGAPEX_ADMIN_CAP 更严——页面本身仍允许只读查看当前配置。
+add_filter('option_page_capability_springapex_tracking', static fn(): string => 'unfiltered_html');
 
 add_action('admin_menu', static function (): void {
     add_submenu_page(
@@ -49,8 +61,8 @@ add_action('admin_menu', static function (): void {
 /**
  * 保存端校验。
  *
- * 两类字段的门槛不同：容器号是受格式约束的纯标识符，不含标记，任何能进这个页面
- * 的人都能改；三段自定义代码是原始标记，要求 unfiltered_html。
+ * 第二道能力检查，覆盖绕过表单直接 POST 到 options.php 的情况。容器号与三段代码
+ * 同属一道门槛，理由见文件头：容器号也是任意脚本的入口。
  *
  * 校验不通过时一律「保留原值 + 明确报错」，不静默丢弃：运营配好的代码被无声抹掉，
  * 现场只剩「统计怎么没了」，比当场报错难查得多。
@@ -62,6 +74,17 @@ function springapex_sanitize_tracking_settings(mixed $input): array
         $result['slots'] = [];
     }
     if (!is_array($input)) {
+        return $result;
+    }
+
+    if (!current_user_can('unfiltered_html')) {
+        add_settings_error(
+            SPRINGAPEX_TRACKING_OPTION,
+            'springapex_tracking_cap',
+            '你的账号没有「发布未过滤 HTML」的权限，本页未做任何改动。GTM 容器号同样受此限制：容器可以远程加载任意脚本，换容器号等于往站点注入代码。',
+            'error'
+        );
+
         return $result;
     }
 
@@ -81,17 +104,6 @@ function springapex_sanitize_tracking_settings(mixed $input): array
 
     $submitted = is_array($input['slots'] ?? null) ? $input['slots'] : [];
     if ($submitted === []) {
-        return $result;
-    }
-
-    if (!current_user_can('unfiltered_html')) {
-        add_settings_error(
-            SPRINGAPEX_TRACKING_OPTION,
-            'springapex_tracking_cap',
-            '你的账号没有「发布未过滤 HTML」的权限，三个代码框未改动。请让管理员来改这部分。',
-            'error'
-        );
-
         return $result;
     }
 
@@ -115,7 +127,8 @@ function springapex_render_tracking_settings_page(): void
         ? (string) $settings['gtm_id']
         : SPRINGAPEX_TRACKING_DEFAULT_GTM_ID;
     $slots = is_array($settings['slots'] ?? null) ? $settings['slots'] : [];
-    $can_edit_code = current_user_can('unfiltered_html');
+    // 页面允许只读查看（排查配置时有用），写入才要求 unfiltered_html。
+    $can_edit = current_user_can('unfiltered_html');
     $environment = wp_get_environment_type();
     $index = 0;
     ?>
@@ -141,9 +154,10 @@ function springapex_render_tracking_settings_page(): void
         </div>
       <?php endif; ?>
 
-      <?php if (!$can_edit_code): ?>
+      <?php if (!$can_edit): ?>
         <div class="notice notice-warning inline">
-          <p>你的账号没有「发布未过滤 HTML」的权限，下面三个代码框是只读的。容器号仍可修改。</p>
+          <p><strong>本页所有字段都是只读的。</strong>保存跟踪代码需要「发布未过滤 HTML」（<code>unfiltered_html</code>）权限，你的账号没有。</p>
+          <p>容器号也在此列：GTM 容器可以远程加载任意脚本，换成别人的容器等同于往站点里注入代码，所以它和下面三个代码框是同一道门槛，不是单纯填个编号。多站点下该权限只有超级管理员具备；若站点定义了 <code>DISALLOW_UNFILTERED_HTML</code>，则所有人都没有。</p>
         </div>
       <?php endif; ?>
 
@@ -175,6 +189,7 @@ function springapex_render_tracking_settings_page(): void
                 placeholder="GTM-XXXXXXX"
                 spellcheck="false"
                 autocomplete="off"
+                <?php echo $can_edit ? '' : 'readonly'; ?>
               >
             </label>
             <p class="description">在 GTM 后台「管理 &rarr; 容器设置」里可以看到，形如 <code>GTM-XXXXXXX</code>。<strong>留空表示不加载 GTM。</strong></p>
@@ -203,7 +218,7 @@ function springapex_render_tracking_settings_page(): void
                 class="large-text code"
                 spellcheck="false"
                 autocomplete="off"
-                <?php echo $can_edit_code ? '' : 'readonly'; ?>
+                <?php echo $can_edit ? '' : 'readonly'; ?>
               ><?php echo esc_textarea($value); ?></textarea>
               <p class="description">原样粘贴第三方给的代码，包含 <code>&lt;script&gt;</code> 标签在内，不要删改。留空表示这一处不输出任何内容。</p>
             </div>
