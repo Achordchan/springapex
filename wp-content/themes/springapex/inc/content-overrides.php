@@ -86,6 +86,7 @@ function springapex_migrate_public_brand_options(): void
 add_action('init', 'springapex_migrate_public_brand_options', 1);
 
 const SPRINGAPEX_BRAND_CONTACT_SOURCE_VERSION = '1';
+const SPRINGAPEX_BRAND_CONTACT_SWAP_ATTEMPTS = 3;
 
 /**
  * 按类型清洗一份来自 customizer 的旧值，脏数据一律丢弃（返回空串）。
@@ -121,9 +122,10 @@ function springapex_content_clean_legacy_brand_value(string $value, string $type
  * 把残留的 theme_mod 值一次性搬进覆盖表（迁移前 theme_mod 胜出，所以照搬即可
  * 保持访客看到的内容不变），再清掉 theme_mod，让覆盖表成为唯一来源。
  *
- * 全程可重入，不需要加锁：写覆盖表在前、删 theme_mod 在后，任何一步中断都还
- * 留着源值，下次请求原样再跑一遍；写之前才读覆盖表，读到的已经包含并发请求
- * 刚搬完的值，比对一致就不写，所以两个请求同时跑也不会互相顶掉。
+ * 全程可重入：写覆盖表在前、删 theme_mod 在后，任何一步中断都还留着源值，下次
+ * 请求原样再跑一遍。覆盖表的读-改-写走 springapex_update_option_if_unchanged()
+ * 的 compare-and-swap —— 读到写之间要是另一个请求或运营的后台保存插了进来，
+ * 这次写入会失败，重读最新的值再合并一遍，不会拿旧快照把别人的改动顶掉。
  */
 function springapex_migrate_brand_contact_source(): void
 {
@@ -163,34 +165,50 @@ function springapex_migrate_brand_contact_source(): void
     if ($incoming !== []) {
         // 落库前会跑一次公开品牌名替换，所以拿替换后的值做对照。
         $expected = (array) springapex_replace_public_brand($incoming);
+        $persisted = false;
 
-        // 紧挨着写入才读覆盖表，不用函数开头的旧快照：并发的另一个请求可能刚
-        // 搬完，拿旧快照回写会把它的结果连同运营的编辑一起顶掉。
-        $overrides = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, []);
-        if (!is_array($overrides)) {
-            $overrides = [];
-        }
-        $brand = isset($overrides['brand']) && is_array($overrides['brand']) ? $overrides['brand'] : [];
+        for ($attempt = 0; $attempt < SPRINGAPEX_BRAND_CONTACT_SWAP_ATTEMPTS && !$persisted; $attempt++) {
+            // 每一轮都从库里重新读：上一轮 compare-and-swap 失败正说明有人刚写过，
+            // 缓存里那份已经不作数了。
+            wp_cache_delete(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, 'options');
+            wp_cache_delete('alloptions', 'options');
 
-        $needs_write = false;
-        foreach ($expected as $key => $value) {
-            if (($brand[$key] ?? null) !== $value) {
-                $needs_write = true;
+            $current = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, null);
+            $exists = is_array($current);
+            if (!$exists) {
+                $current = [];
+            }
+            $brand = isset($current['brand']) && is_array($current['brand']) ? $current['brand'] : [];
+
+            $missing = false;
+            foreach ($expected as $key => $value) {
+                if (($brand[$key] ?? null) !== $value) {
+                    $missing = true;
+                    break;
+                }
+            }
+            if (!$missing) {
+                // 别的请求已经搬完了，这里什么都不用写。
+                $persisted = true;
                 break;
             }
-        }
 
-        if ($needs_write) {
-            $overrides['brand'] = array_merge($brand, $incoming);
-            springapex_content_store_overrides($overrides);
-        }
+            $next = $current;
+            $next['brand'] = array_merge($brand, $incoming);
+            $next = (array) springapex_replace_public_brand($next);
 
-        $stored_overrides = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, []);
-        $stored_brand = is_array($stored_overrides) && isset($stored_overrides['brand']) && is_array($stored_overrides['brand'])
-            ? $stored_overrides['brand']
-            : [];
-        foreach ($expected as $key => $value) {
-            $persisted = ($stored_brand[$key] ?? null) === $value && $persisted;
+            if ($exists) {
+                $persisted = springapex_update_option_if_unchanged(
+                    SPRINGAPEX_CONTENT_OVERRIDES_OPTION,
+                    $current,
+                    $next
+                );
+                continue;
+            }
+
+            // 还没有这一行：add_option() 不会覆盖别人刚插进去的行，插不进去就重来。
+            $autoload = strlen(serialize($next)) <= SPRINGAPEX_CONTENT_AUTOLOAD_LIMIT;
+            $persisted = add_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, $next, '', $autoload);
         }
     }
 
