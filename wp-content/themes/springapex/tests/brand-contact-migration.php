@@ -180,8 +180,19 @@ function esc_url_raw(string $url, array $protocols = []): string
     return preg_match('#^https?://#i', $url) === 1 ? $url : '';
 }
 
+/** Only the brand path is exercised here; helpers.php reads it through springapex_get(). */
+function springapex_get(string $path, mixed $default_value = null): mixed
+{
+    if ($path !== 'brand') {
+        return $default_value;
+    }
+    $overrides = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, []);
+    return is_array($overrides) && isset($overrides['brand']) ? $overrides['brand'] : $default_value;
+}
+
 require __DIR__ . '/../inc/locks.php';
 require __DIR__ . '/../inc/content-overrides.php';
+require __DIR__ . '/../inc/helpers.php';
 
 function springapex_test_brand(string $key): mixed
 {
@@ -231,6 +242,13 @@ springapex_test_assert(get_theme_mod('springapex_phone', '') === '+86 000 0000 0
 springapex_test_assert(springapex_test_brand('x') === '', 'Overrides changed even though the write failed.');
 springapex_test_assert(get_option('springapex_brand_contact_source_version', null) === null, 'A failed migration was marked complete.');
 
+// While the migration keeps failing, the theme mods are still what visitors were
+// being served, so the front end has to keep falling back to them instead of
+// rendering an empty phone number and a footer with no links.
+$springapex_test_failing_brand = springapex_brand();
+springapex_test_assert(($springapex_test_failing_brand['x'] ?? null) === 'https://x.com/legacy_handle', 'The front end stopped falling back before the migration committed.');
+springapex_test_assert(($springapex_test_failing_brand['phone'] ?? null) === '+86 000 0000 0000', 'The front end stopped falling back before the migration committed.');
+
 // The same run, now able to write: theme mods win over the overrides table the way
 // they did before this migration existed, so visitors keep seeing the same values.
 springapex_migrate_brand_contact_source();
@@ -242,6 +260,13 @@ springapex_test_assert(get_theme_mod('springapex_x', '') === '', 'Migrated theme
 springapex_test_assert(get_theme_mod('springapex_facebook', '') === '', 'Migrated theme mod was left behind.');
 springapex_test_assert(get_theme_mod('springapex_inquiry_email', '') === 'sales@example.com', 'The form settings theme mod was touched.');
 springapex_test_assert(get_option('springapex_brand_contact_source_version', null) === SPRINGAPEX_BRAND_CONTACT_SOURCE_VERSION, 'A completed migration was not recorded.');
+
+// Once it has committed, the fallback is off for good: an operator clearing a
+// social link in wp-admin must not be overruled by a leftover theme mod again.
+set_theme_mod('springapex_tiktok', 'https://www.tiktok.com/@stale');
+$springapex_test_done_brand = springapex_brand();
+springapex_test_assert(($springapex_test_done_brand['tiktok'] ?? null) === null, 'A leftover theme mod still overrules the overrides table after the migration.');
+remove_theme_mod('springapex_tiktok');
 
 // Re-entrant: a request that died between writing and clearing leaves the version
 // unset. Running again must finish the job without rewriting identical values.
@@ -277,4 +302,24 @@ springapex_migrate_brand_contact_source();
 springapex_test_assert(springapex_test_brand('instagram') === null, 'A non-http URL was migrated.');
 springapex_test_assert(springapex_test_brand('email') === null, 'An invalid email was migrated.');
 
-echo "brand-contact-migration: failed write, completion, re-entry, concurrent save and junk values ok\n";
+// An admin save is a read-modify-write with a form round trip in the middle, so it
+// goes through the same compare-and-swap. A save that read the row before the
+// migration committed must not put its stale snapshot back on top afterwards.
+springapex_test_set_overrides(['facebook' => 'https://www.facebook.com/from-admin/', 'hours' => 'Mon – Fri']);
+delete_option('springapex_brand_contact_source_version');
+set_theme_mod('springapex_x', 'https://x.com/legacy_handle');
+$springapex_test_on_overrides_read = static function (): void {
+    springapex_migrate_brand_contact_source();   // the migration commits mid-save
+};
+$springapex_test_saved = springapex_content_update_overrides(
+    static function (array $overrides): array {
+        // What the operator submitted from the "公司信息" screen.
+        $overrides['brand'] = springapex_content_merge($overrides['brand'] ?? [], ['hours' => 'Mon – Sat']);
+        return $overrides;
+    }
+);
+springapex_test_assert($springapex_test_saved, 'The admin save gave up instead of retrying.');
+springapex_test_assert(springapex_test_brand('hours') === 'Mon – Sat', 'The admin save did not land.');
+springapex_test_assert(springapex_test_brand('x') === 'https://x.com/legacy_handle', 'A stale admin save wiped out the values the migration had just committed.');
+
+echo "brand-contact-migration: failed write, completion, re-entry, concurrent save, admin save and fallback ok\n";

@@ -240,10 +240,38 @@ function springapex_about_navigation_items(): array
  * 覆盖 —— 运营在后台清空的社交链接会被旧 theme_mod 顶回来，前台照样显示
  * 图标。那些控件已下线，残留值由 springapex_migrate_brand_contact_source()
  * 一次性搬进覆盖表。
+ *
+ * 搬完之前，正在生效的仍然是 theme_mod 里那份，所以这里继续按老规则回落：
+ * 迁移写库失败会留着源值等下次请求重试，这期间要是直接不认 theme_mod，前台
+ * 就会显示一段空的联系方式。版本号一写下（迁移确认落库并清空了源值），这段
+ * 回落就再也不会执行。
  */
 function springapex_brand(): array
 {
-    return springapex_get('brand', []);
+    $brand = springapex_get('brand', []);
+
+    if (
+        defined('SPRINGAPEX_PREVIEW')
+        || !function_exists('get_option')
+        || !function_exists('get_theme_mod')
+        || !function_exists('springapex_brand_legacy_theme_mods')
+        || !defined('SPRINGAPEX_BRAND_CONTACT_SOURCE_VERSION')
+    ) {
+        return $brand;
+    }
+
+    if ((string) get_option('springapex_brand_contact_source_version', '') === SPRINGAPEX_BRAND_CONTACT_SOURCE_VERSION) {
+        return $brand;
+    }
+
+    foreach (springapex_brand_legacy_theme_mods() as $key => [$setting, $_type]) {
+        $value = get_theme_mod($setting, '');
+        if (is_string($value) && $value !== '') {
+            $brand[$key] = $value;
+        }
+    }
+
+    return $brand;
 }
 
 function springapex_navigation_items(string $location = 'primary'): array

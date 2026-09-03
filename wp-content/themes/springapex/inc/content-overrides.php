@@ -89,6 +89,31 @@ const SPRINGAPEX_BRAND_CONTACT_SOURCE_VERSION = '1';
 const SPRINGAPEX_BRAND_CONTACT_SWAP_ATTEMPTS = 3;
 
 /**
+ * customizer 时代的联系方式/社交 theme_mod，键是 brand 底下的字段名，值是
+ * [theme_mod 名, 清洗类型]。迁移拿它搬值，springapex_brand() 拿它在迁移落库
+ * 之前兜底，两边必须是同一份名单。
+ *
+ * 询盘收件邮箱和邮件模板不在其中：它们归「表单设置」页管，仍然存 theme_mod。
+ *
+ * @return array<string, array{0: string, 1: string}>
+ */
+function springapex_brand_legacy_theme_mods(): array
+{
+    return [
+        'email'     => ['springapex_email', 'email'],
+        'phone'     => ['springapex_phone', 'text'],
+        'whatsapp'  => ['springapex_whatsapp', 'text'],
+        'address'   => ['springapex_address', 'textarea'],
+        'hours'     => ['springapex_hours', 'text'],
+        'linkedin'  => ['springapex_linkedin', 'url'],
+        'facebook'  => ['springapex_facebook', 'url'],
+        'x'         => ['springapex_x', 'url'],
+        'instagram' => ['springapex_instagram', 'url'],
+        'tiktok'    => ['springapex_tiktok', 'url'],
+    ];
+}
+
+/**
  * 按类型清洗一份来自 customizer 的旧值，脏数据一律丢弃（返回空串）。
  */
 function springapex_content_clean_legacy_brand_value(string $value, string $type): string
@@ -133,19 +158,7 @@ function springapex_migrate_brand_contact_source(): void
         return;
     }
 
-    // 询盘收件邮箱和邮件模板不在这里：它们归「表单设置」页管，仍然存 theme_mod。
-    $legacy = [
-        'email'     => ['springapex_email', 'email'],
-        'phone'     => ['springapex_phone', 'text'],
-        'whatsapp'  => ['springapex_whatsapp', 'text'],
-        'address'   => ['springapex_address', 'textarea'],
-        'hours'     => ['springapex_hours', 'text'],
-        'linkedin'  => ['springapex_linkedin', 'url'],
-        'facebook'  => ['springapex_facebook', 'url'],
-        'x'         => ['springapex_x', 'url'],
-        'instagram' => ['springapex_instagram', 'url'],
-        'tiktok'    => ['springapex_tiktok', 'url'],
-    ];
+    $legacy = springapex_brand_legacy_theme_mods();
 
     $incoming = [];
     foreach ($legacy as $key => [$setting, $type]) {
@@ -165,50 +178,25 @@ function springapex_migrate_brand_contact_source(): void
     if ($incoming !== []) {
         // 落库前会跑一次公开品牌名替换，所以拿替换后的值做对照。
         $expected = (array) springapex_replace_public_brand($incoming);
-        $persisted = false;
+        $persisted = springapex_content_update_overrides(
+            static function (array $overrides) use ($incoming): array {
+                $brand = isset($overrides['brand']) && is_array($overrides['brand']) ? $overrides['brand'] : [];
+                $overrides['brand'] = array_merge($brand, $incoming);
+                return $overrides;
+            },
+            SPRINGAPEX_BRAND_CONTACT_SWAP_ATTEMPTS
+        );
 
-        for ($attempt = 0; $attempt < SPRINGAPEX_BRAND_CONTACT_SWAP_ATTEMPTS && !$persisted; $attempt++) {
-            // 每一轮都从库里重新读：上一轮 compare-and-swap 失败正说明有人刚写过，
-            // 缓存里那份已经不作数了。
-            wp_cache_delete(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, 'options');
-            wp_cache_delete('alloptions', 'options');
-
-            $current = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, null);
-            $exists = is_array($current);
-            if (!$exists) {
-                $current = [];
-            }
-            $brand = isset($current['brand']) && is_array($current['brand']) ? $current['brand'] : [];
-
-            $missing = false;
+        // 写进去了还得确认值真是想要的那份：并发的另一个请求可能刚好把同一批键
+        // 写成了别的内容。
+        if ($persisted) {
+            $stored = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, []);
+            $stored_brand = is_array($stored) && isset($stored['brand']) && is_array($stored['brand'])
+                ? $stored['brand']
+                : [];
             foreach ($expected as $key => $value) {
-                if (($brand[$key] ?? null) !== $value) {
-                    $missing = true;
-                    break;
-                }
+                $persisted = ($stored_brand[$key] ?? null) === $value && $persisted;
             }
-            if (!$missing) {
-                // 别的请求已经搬完了，这里什么都不用写。
-                $persisted = true;
-                break;
-            }
-
-            $next = $current;
-            $next['brand'] = array_merge($brand, $incoming);
-            $next = (array) springapex_replace_public_brand($next);
-
-            if ($exists) {
-                $persisted = springapex_update_option_if_unchanged(
-                    SPRINGAPEX_CONTENT_OVERRIDES_OPTION,
-                    $current,
-                    $next
-                );
-                continue;
-            }
-
-            // 还没有这一行：add_option() 不会覆盖别人刚插进去的行，插不进去就重来。
-            $autoload = strlen(serialize($next)) <= SPRINGAPEX_CONTENT_AUTOLOAD_LIMIT;
-            $persisted = add_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, $next, '', $autoload);
         }
     }
 
@@ -303,6 +291,69 @@ function springapex_content_store_overrides(array $overrides): void
 
     $autoload = strlen(serialize($overrides)) <= SPRINGAPEX_CONTENT_AUTOLOAD_LIMIT;
     update_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, $overrides, $autoload);
+}
+
+/**
+ * 覆盖表的读-改-写统一入口。$mutate 拿到库里的当前值，返回改好的整份内容，
+ * 写回时走 compare-and-swap：读到写之间要是别人（另一个后台保存、一次性迁移）
+ * 抢先写过，这次写入会失败，重读最新的值再跑一遍 $mutate。
+ *
+ * 每个写入点各自 get_option() 再 update_option() 的话，一份旧快照就能把别人刚
+ * 存下的内容整份顶掉 —— 覆盖表是整站文案，顶掉的是运营的实际编辑。
+ *
+ * autoload 沿用行上已有的设置：只有新建这一行时才按大小决定，这样 CAS 只需要
+ * 比对 option_value 一列。
+ *
+ * @param callable(array<string, mixed>): array<string, mixed> $mutate
+ */
+function springapex_content_update_overrides(callable $mutate, int $attempts = 3): bool
+{
+    for ($attempt = 0; $attempt < $attempts; $attempt++) {
+        // 上一轮 CAS 失败正说明有人刚写过，缓存里那份已经不作数了。
+        wp_cache_delete(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, 'options');
+        wp_cache_delete('alloptions', 'options');
+
+        $current = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, null);
+        $exists = is_array($current);
+        if (!$exists) {
+            $current = [];
+        }
+
+        $next = $mutate($current);
+        if (!is_array($next)) {
+            return false;
+        }
+        $next = (array) springapex_replace_public_brand($next);
+
+        if ($next === $current) {
+            return true;
+        }
+
+        if (!$exists) {
+            if ($next === []) {
+                return true;
+            }
+            $autoload = strlen(serialize($next)) <= SPRINGAPEX_CONTENT_AUTOLOAD_LIMIT;
+            // add_option() 不会覆盖别人刚插进去的行，插不进去就重读重来。
+            if (add_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, $next, '', $autoload)) {
+                return true;
+            }
+            continue;
+        }
+
+        if ($next === []) {
+            if (springapex_delete_option_if_unchanged(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, $current)) {
+                return true;
+            }
+            continue;
+        }
+
+        if (springapex_update_option_if_unchanged(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, $current, $next)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 /**
