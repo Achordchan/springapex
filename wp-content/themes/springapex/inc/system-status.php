@@ -58,6 +58,35 @@ function springapex_system_status_s3_retry_count(): int
 }
 
 /**
+ * S3 删除重试队列里那些对象的总字节。删除 S3 对象失败时，询盘文章连同 meta 会被
+ * 删掉，但对象仍留在 S3、其元数据进了重试队列（springapex_s3_delete_retry_v1_*）
+ * 直到重试成功。这部分对象已不挂在任何询盘上、却仍在计费——单独报出来，别让它
+ * 从存储成本里凭空消失。队列正常为空，逐条求和成本可忽略；仍设上限兜底。
+ */
+function springapex_system_status_s3_retry_bytes(): int
+{
+    global $wpdb;
+    if (!isset($wpdb->options) || !is_string($wpdb->options)) {
+        return 0;
+    }
+    $prefix = 'springapex_s3_delete_retry_v1_';
+    $rows = $wpdb->get_results($wpdb->prepare(
+        "SELECT option_value FROM {$wpdb->options} WHERE option_name LIKE %s LIMIT 5000",
+        $wpdb->esc_like($prefix) . '%'
+    ));
+    $rows = is_array($rows) ? $rows : [];
+    $bytes = 0;
+    foreach ($rows as $row) {
+        $value = is_object($row) ? (string) ($row->option_value ?? '') : '';
+        $entry = is_serialized($value) ? unserialize($value, ['allowed_classes' => false]) : $value;
+        if (is_array($entry) && is_array($entry['metadata'] ?? null)) {
+            $bytes += max(0, (int) ($entry['metadata']['size'] ?? 0));
+        }
+    }
+    return $bytes;
+}
+
+/**
  * 一条附件元数据是否指向一个真实存储的文件，按其 storage 类型判定：
  * S3 文件看 key，本地文件看 relative_path。用来剔除空/半截记录，也让
  * 旧版单文件里 S3 形态的条目（有 key 而无 relative_path）不被漏算。
@@ -149,74 +178,77 @@ function springapex_system_status_attachment_footprint(): array
         return $result;
     }
 
-    // 第二步：只取这些询盘的两种 meta —— 同一询盘的新旧两行必定一起取到，不会被
-    // 截断劈开。
-    $ids = array_keys($status_by_id);
-    $placeholders = implode(',', array_fill(0, count($ids), '%d'));
-    $meta_rows = $wpdb->get_results($wpdb->prepare(
-        "SELECT post_id, meta_key, meta_value FROM {$wpdb->postmeta}
-         WHERE meta_key IN ('_springapex_private_files', '_springapex_private_file')
-           AND post_id IN ($placeholders)",
-        ...$ids
-    ));
-    $meta_rows = is_array($meta_rows) ? $meta_rows : [];
+    // 第二步：分批取这些询盘的两种 meta 并就地汇总——按 post_id 分批，同一询盘的
+    // 新旧两行必定落在同一批、一起取到，不会被劈开；每批处理完就丢弃反序列化后的
+    // 数组，内存只吃一批的量，避免上万封多附件询盘把管理页 PHP 内存/超时撑爆。
+    foreach (array_chunk(array_keys($status_by_id), 500) as $chunk) {
+        $placeholders = implode(',', array_fill(0, count($chunk), '%d'));
+        $meta_rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT post_id, meta_key, meta_value FROM {$wpdb->postmeta}
+             WHERE meta_key IN ('_springapex_private_files', '_springapex_private_file')
+               AND post_id IN ($placeholders)",
+            ...$chunk
+        ));
+        $meta_rows = is_array($meta_rows) ? $meta_rows : [];
 
-    // 同一询盘可能同时有新旧两个 meta：优先新版 _private_files、回退旧版单文件，
-    // 与 springapex_inquiry_private_files() 的取值一致，避免重复计数。
-    $by_post = [];
-    foreach ($meta_rows as $row) {
-        if (!is_object($row)) {
-            continue;
-        }
-        $id = (int) ($row->post_id ?? 0);
-        $key = (string) ($row->meta_key ?? '');
-        if ($id < 1 || $key === '') {
-            continue;
-        }
-        if (!isset($by_post[$id])) {
-            $by_post[$id] = ['files' => null, 'legacy' => null];
-        }
-        $value = (string) ($row->meta_value ?? '');
-        // 自有可信数据，但仍禁止实例化对象，纯取数组。
-        $data = is_serialized($value) ? unserialize($value, ['allowed_classes' => false]) : $value;
-        if ($key === '_springapex_private_files') {
-            $by_post[$id]['files'] = is_array($data) ? $data : [];
-        } else {
-            $by_post[$id]['legacy'] = is_array($data) ? $data : null;
-        }
-    }
-
-    foreach ($status_by_id as $id => $status) {
-        $entry = $by_post[$id] ?? ['files' => null, 'legacy' => null];
-        $files = is_array($entry['files']) ? array_values(array_filter($entry['files'], 'is_array')) : [];
-        if ($files === [] && is_array($entry['legacy'])) {
-            $files = [$entry['legacy']];
-        }
-        // 按 storage 类型剔除空/半截记录（S3 看 key、本地看 relative_path）。
-        $files = array_values(array_filter($files, 'springapex_system_status_is_stored_file'));
-        if ($files === []) {
-            continue;
-        }
-        $trashed = $status === 'trash';
-        $result['inquiries']++;
-        if ($trashed) {
-            $result['trashed_inquiries']++;
-        }
-        foreach ($files as $file) {
-            $bytes = max(0, (int) ($file['size'] ?? 0));
-            $is_s3 = ($file['storage'] ?? '') === 's3';
-            $result['files']++;
-            $result['bytes'] += $bytes;
-            if ($is_s3) {
-                $result['s3_files']++;
-                $result['s3_bytes'] += $bytes;
+        // 同一询盘可能同时有新旧两个 meta：优先新版 _private_files、回退旧版单文件，
+        // 与 springapex_inquiry_private_files() 的取值一致，避免重复计数。
+        $by_post = [];
+        foreach ($meta_rows as $row) {
+            if (!is_object($row)) {
+                continue;
             }
+            $id = (int) ($row->post_id ?? 0);
+            $key = (string) ($row->meta_key ?? '');
+            if ($id < 1 || $key === '') {
+                continue;
+            }
+            if (!isset($by_post[$id])) {
+                $by_post[$id] = ['files' => null, 'legacy' => null];
+            }
+            $value = (string) ($row->meta_value ?? '');
+            // 自有可信数据，但仍禁止实例化对象，纯取数组。
+            $data = is_serialized($value) ? unserialize($value, ['allowed_classes' => false]) : $value;
+            if ($key === '_springapex_private_files') {
+                $by_post[$id]['files'] = is_array($data) ? $data : [];
+            } else {
+                $by_post[$id]['legacy'] = is_array($data) ? $data : null;
+            }
+        }
+
+        foreach ($chunk as $id) {
+            $status = $status_by_id[$id] ?? '';
+            $entry = $by_post[$id] ?? ['files' => null, 'legacy' => null];
+            $files = is_array($entry['files']) ? array_values(array_filter($entry['files'], 'is_array')) : [];
+            if ($files === [] && is_array($entry['legacy'])) {
+                $files = [$entry['legacy']];
+            }
+            // 按 storage 类型剔除空/半截记录（S3 看 key、本地看 relative_path）。
+            $files = array_values(array_filter($files, 'springapex_system_status_is_stored_file'));
+            if ($files === []) {
+                continue;
+            }
+            $trashed = $status === 'trash';
+            $result['inquiries']++;
             if ($trashed) {
-                $result['trashed_files']++;
-                $result['trashed_bytes'] += $bytes;
+                $result['trashed_inquiries']++;
+            }
+            foreach ($files as $file) {
+                $bytes = max(0, (int) ($file['size'] ?? 0));
+                $is_s3 = ($file['storage'] ?? '') === 's3';
+                $result['files']++;
+                $result['bytes'] += $bytes;
                 if ($is_s3) {
-                    $result['trashed_s3_files']++;
-                    $result['trashed_s3_bytes'] += $bytes;
+                    $result['s3_files']++;
+                    $result['s3_bytes'] += $bytes;
+                }
+                if ($trashed) {
+                    $result['trashed_files']++;
+                    $result['trashed_bytes'] += $bytes;
+                    if ($is_s3) {
+                        $result['trashed_s3_files']++;
+                        $result['trashed_s3_bytes'] += $bytes;
+                    }
                 }
             }
         }
@@ -290,6 +322,7 @@ function springapex_system_status_snapshot(): array
             'prefix' => $s3_enabled ? springapex_s3_private_prefix() : '—',
             'credentials' => 'EC2 Instance Profile / IMDSv2',
             'retry_count' => springapex_system_status_s3_retry_count(),
+            'retry_bytes' => springapex_system_status_s3_retry_bytes(),
             'next_retry' => is_int($next_retry) ? $next_retry : 0,
         ],
         'cdn' => [
