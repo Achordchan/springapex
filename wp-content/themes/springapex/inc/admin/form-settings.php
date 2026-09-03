@@ -141,17 +141,9 @@ function springapex_render_form_settings_page(): void
                 if (!is_array($row)) {
                     continue;
                 }
-                // select 选项以 textarea 一行一项提交，转回关联数组。
-                if (($row['type'] ?? '') === 'select') {
-                    $options = [];
-                    foreach (preg_split('/\r\n|\r|\n/', (string) ($row['options'] ?? '')) ?: [] as $line) {
-                        $line = trim($line);
-                        if ($line !== '') {
-                            $options[$line] = $line;
-                        }
-                    }
-                    $row['options'] = $options;
-                }
+                // 选项的解析交给 springapex_normalize_form_field()：那里才知道
+                // 字段最终生效的类型。映射字段的「类型」下拉是 disabled 的，
+                // 不会随表单提交，在这里按 $row['type'] 判断会漏掉它们。
                 $field = springapex_normalize_form_field($row, $defaults_by_id, $types);
                 if ($field === null || isset($used_ids[$field['id']])) {
                     continue;

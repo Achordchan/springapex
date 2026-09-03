@@ -290,6 +290,22 @@ function springapex_normalize_form_field(array $field, array $defaults_by_id, ar
     $options = [];
     if ($type === 'select') {
         $raw = $field['options'] ?? [];
+
+        // 后台的选项框是 textarea，一行一项，提交上来就是字符串。这里按最终
+        // 生效的 $type 解析，不能看提交上来的 type：映射字段的「类型」下拉是
+        // disabled 的，压根不会随表单提交，之前在后台按提交的 type 判断，
+        // 映射字段（Material）的选项每保存一次就被清成空。
+        if (is_string($raw)) {
+            $lines = preg_split('/\r\n|\r|\n/', $raw) ?: [];
+            $raw = [];
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if ($line !== '') {
+                    $raw[$line] = $line;
+                }
+            }
+        }
+
         if (is_array($raw)) {
             foreach ($raw as $value => $option_label) {
                 $value = trim((string) $value);
@@ -297,6 +313,13 @@ function springapex_normalize_form_field(array $field, array $defaults_by_id, ar
                     $options[$value] = trim((string) $option_label) !== '' ? trim((string) $option_label) : $value;
                 }
             }
+        }
+
+        // 已经被上面那个 bug 清空的字段，回落到默认选项 —— 映射字段的类型固定
+        // 为 select，一个没有选项的下拉对访客没有任何意义，不会是运营的本意；
+        // 真要去掉这一项，删掉整个字段即可。
+        if ($options === [] && $is_system && is_array($default['options'] ?? null)) {
+            $options = $default['options'];
         }
     }
 
