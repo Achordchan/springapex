@@ -37,6 +37,18 @@ jobs:
       - name: Verify private S3 storage flow
         run: php wp-content/themes/springapex/tests/s3-storage.php
 
+      - name: Verify brand contact source migration
+        run: php wp-content/themes/springapex/tests/brand-contact-migration.php
+
+      - name: Verify form select options
+        run: php wp-content/themes/springapex/tests/form-select-options.php
+
+      - name: Verify mapped fields can be added to any form
+        run: php wp-content/themes/springapex/tests/form-mapped-fields.php
+
+      - name: Verify inquiry mail drawing notice
+        run: php wp-content/themes/springapex/tests/inquiry-mail-drawing-notice.php
+
       - name: Require a new version for changed CDN assets
         if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
         run: sh deploy/verify-asset-version-bump.sh "${{ github.event.before }}"

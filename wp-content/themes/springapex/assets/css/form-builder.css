@@ -98,6 +98,17 @@
   --add-accent: #2271b1;
 }
 
+.springapex-form-settings .form-builder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.springapex-form-settings .form-builder-add-mapped__select {
+  max-width: 100%;
+}
+
 .builder-field {
   position: relative;
   margin: 0;
