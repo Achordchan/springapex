@@ -65,12 +65,20 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         SPRINGAPEX_VERSION,
         true
     );
+    // 预览要和真正发出去的邮件一致：带图纸的邮件在渲染之后会补一段清单 + 取件
+    // 入口（见 springapex_inquiry_mail_with_drawing_notice()）。那段 HTML 由 PHP
+    // 生成后交给预览用，两边不各写一份，免得样式和文案各自漂移。
+    $preview_drawings = 'compression-spring-drawing.pdf (3.0 MB)';
+    $preview_inquiry_link = 'https://example.com/wp-admin/post.php?post=123&action=edit';
     wp_add_inline_script(
         'springapex-mail-template-editor',
         'window.springapexMailTemplateEditor = ' . wp_json_encode([
             'codeEditor' => $code_editor_settings,
             'defaultSubject' => springapex_inquiry_mail_default_subject(),
             'defaultBody' => springapex_inquiry_mail_default_body(),
+            'previewDrawings' => $preview_drawings,
+            'previewInquiryLink' => $preview_inquiry_link,
+            'drawingNotice' => springapex_inquiry_mail_with_drawing_notice('', $preview_drawings, $preview_inquiry_link),
         ]) . ';',
         'before'
     );
