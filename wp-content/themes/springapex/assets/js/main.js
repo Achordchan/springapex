@@ -1005,6 +1005,33 @@
         }
       };
 
+      // 提交/上传期间锁住整张表单：输入框、下拉、文件选择器与上传器的增删按钮
+      // 都不该在这几十秒里被改动，否则用户会以为还能编辑、甚至中途删掉正在上传
+      // 的文件。提交按钮的忙碌态由 setSubmitBusy 管，这里排除它。
+      // 注意两点：① 必须在 new FormData(form) 之后才锁——被 disabled 的控件不会
+      // 进入 FormData，先锁会把整份表单清空；② 只解锁「这次由提交锁上的」控件，
+      // 用标记区分，别顺手启用本就 disabled 的控件（如产品页那个固定禁用的模式页签）。
+      const setFormLocked = (locked) => {
+        form.classList.toggle('is-locked', locked);
+        if (locked) {
+          form.setAttribute('aria-busy', 'true');
+        } else {
+          form.removeAttribute('aria-busy');
+        }
+        form.querySelectorAll('input:not([type="hidden"]), select, textarea, button').forEach((el) => {
+          if (el === submit) return;
+          if (locked) {
+            if (!el.disabled) {
+              el.dataset.lockedBySubmit = 'true';
+              el.disabled = true;
+            }
+          } else if (el.dataset.lockedBySubmit === 'true') {
+            el.disabled = false;
+            delete el.dataset.lockedBySubmit;
+          }
+        });
+      };
+
       form.addEventListener('submit', async (event) => {
       event.preventDefault();
 
@@ -1067,6 +1094,8 @@
       const data = new FormData(form);
       data.append('action', 'springapex_contact');
       data.append('nonce', config.nonce || '');
+      // FormData 已固定，现在锁表单不会漏字段（见 setFormLocked 注释）。
+      setFormLocked(true);
 
       try {
         const { ok, body: payload } = await sendForm(data, (loaded, total) => {
@@ -1116,6 +1145,7 @@
       } finally {
         submitting = false;
         setSubmitBusy(false);
+        setFormLocked(false);
         hideUpload();
         // Turnstile tokens are single-use; refresh the widget so a follow-up
         // submission (after an error, or a second inquiry) gets a fresh token.
