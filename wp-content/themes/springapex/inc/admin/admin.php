@@ -22,6 +22,7 @@ require_once __DIR__ . '/sanitize.php';
 require_once __DIR__ . '/save.php';
 require_once __DIR__ . '/system-status.php';
 require_once __DIR__ . '/seo-settings.php';
+require_once __DIR__ . '/tracking-settings.php';
 
 add_action('admin_menu', 'springapex_admin_menu');
 function springapex_admin_menu(): void
