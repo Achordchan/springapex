@@ -223,6 +223,53 @@ function springapex_inquiry_mail_placeholders(): array
  * 占位符替换：未识别的 {token} 原样保留（运营者能立刻看出写错了）；
  * 不改写模板空白，避免破坏运营者在 HTML / pre 标签中的排版。
  */
+/**
+ * 保证带图纸的通知邮件在 HTML 正文里一定看得到图纸清单和取件入口。
+ *
+ * 图纸过去是无条件作为附件发出的，旧版编辑器的说明还写着「系统会附上客户上传的
+ * 图纸；无需写进模板」—— 所以存量的自定义模板完全可能既没有 {fields_table}
+ * 也没有 {drawings} 和 {inquiry_link}，那在当时是完全正确的写法。停发附件之后，
+ * 这类模板渲染出来的邮件既看不出客户传过图纸，也没有任何入口，图纸就静默丢了。
+ *
+ * 设置页那条提醒只有管理员碰巧打开那一页才看得到，救不了已经发出去的邮件；纯文本
+ * 版（AltBody）虽然一直带着图纸行，但绝大多数人看的是 HTML 部分。所以这里在渲染
+ * 完成之后补一段，不去改运营写的模板内容。
+ *
+ * @param string $html          模板渲染后的 HTML 正文
+ * @param string $drawings_list 「文件名 (大小)」清单，空字符串表示这封询盘没有图纸
+ * @param string $inquiry_link  后台询盘详情页地址
+ */
+function springapex_inquiry_mail_with_drawing_notice(string $html, string $drawings_list, string $inquiry_link): string
+{
+    $drawings_list = trim($drawings_list);
+    if ($drawings_list === '') {
+        return $html;
+    }
+
+    // 模板可能用 {drawings} 或 {fields_table} 呈现，两处都是转义后写进 HTML 的。
+    $has_list = str_contains($html, esc_html($drawings_list)) || str_contains($html, $drawings_list);
+    $has_link = $inquiry_link !== ''
+        && (str_contains($html, esc_url($inquiry_link)) || str_contains($html, $inquiry_link));
+
+    if ($has_list && $has_link) {
+        return $html;
+    }
+
+    $notice = '<div style="margin:16px 0 0;padding:16px 18px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;font-size:14px;line-height:1.7;color:#7c2d12;">'
+        . '<div style="font-weight:700;">客户上传了图纸</div>'
+        . '<div style="margin-top:6px;color:#9a3412;">' . esc_html($drawings_list) . '</div>';
+
+    if ($inquiry_link !== '') {
+        $notice .= '<div style="margin-top:10px;">'
+            . '<a href="' . esc_url($inquiry_link) . '" target="_blank" style="color:#c2410c;font-weight:700;text-decoration:underline;">'
+            . '到后台询盘详情页下载 →</a></div>';
+    }
+
+    $notice .= '</div>';
+
+    return $html . $notice;
+}
+
 function springapex_fill_mail_template(string $template, array $vars): string
 {
     return strtr($template, $vars);

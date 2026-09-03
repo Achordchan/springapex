@@ -454,6 +454,9 @@ function springapex_process_contact_submission(): array|WP_Error
         '{site_url}' => esc_url(home_url('/')),
     ];
     $html_body = springapex_fill_mail_template(springapex_inquiry_mail_body(), $body_vars);
+    // 自定义模板可能既没有图纸清单也没有后台入口（停发附件之前那样写完全合理），
+    // 缺了就补一段，别让图纸在邮件里无迹可寻。
+    $html_body = springapex_inquiry_mail_with_drawing_notice($html_body, $drawings_list, $inquiry_link);
     $document = springapex_inquiry_mail_document($html_body);
     $plain = springapex_inquiry_mail_plaintext($fields_rows, $message, $inquiry_link);
 
