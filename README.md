@@ -32,7 +32,6 @@ wp-content/themes/springapex/     主题目录（git 跟踪）
     post-types.php                产品、行业方案、询盘 CPT 与产品字段
     seed.php                      主题启用后的非破坏性初始化
     contact.php                   询盘保存、邮件、限流、文件上传
-    customizer.php                公司联系信息设置
     content.php                   默认内容与数据库内容适配
     helpers.php                   路由、图片、图标、导航辅助
   templates/                      六个核心页面的业务模板
@@ -81,7 +80,7 @@ wp option update siteurl http://127.0.0.1:9000 && wp option update home http://1
 2. 在 WordPress 后台启用 **NorenSpring** 主题。
 3. 主题首次启用会补充缺失的 Home、About、Contact、Resources 页面，产品、行业方案和主导航；已有同 slug 内容不会被覆盖。后续主题升级只迁移仍存在的对象，不会重建管理员已删除或改名的默认内容。
 4. 在“设置 → 固定链接”保存一次，使 `/products/{slug}/`、产品归档和行业方案归档规则生效。
-5. 在“外观 → 自定义 → NorenSpring Company Details”配置对外邮箱、询盘接收邮箱、电话、地址、营业时间和 LinkedIn。
+5. 在“网站内容 → 公司信息”配置对外邮箱、电话、地址和营业时间，在“网站内容 → 社交媒体”填社交主页链接（留空的平台不会在页脚显示图标）；询盘接收邮箱在“网站内容 → 表单设置”。
 6. 在服务器上配置可用的 WordPress 邮件发送方式，并实际验证询盘保存、通知邮件和文件上传。
 7. 按下方要求禁止 Web Server 和 CDN 对外访问 `springapex-private` 目录，用真实公网地址验证返回 403 或 404 后，再在 `wp-config.php` 启用私有上传门禁。
 
