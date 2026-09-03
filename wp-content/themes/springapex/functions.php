@@ -37,6 +37,7 @@ require_once SPRINGAPEX_DIR . '/inc/form-schema.php';
 require_once SPRINGAPEX_DIR . '/inc/s3-storage.php';
 require_once SPRINGAPEX_DIR . '/inc/system-status.php';
 require_once SPRINGAPEX_DIR . '/inc/seo.php';
+require_once SPRINGAPEX_DIR . '/inc/analytics.php';
 require_once SPRINGAPEX_DIR . '/inc/contact.php';
 require_once SPRINGAPEX_DIR . '/inc/mail-template.php';
 require_once SPRINGAPEX_DIR . '/inc/turnstile.php';

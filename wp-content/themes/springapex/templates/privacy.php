@@ -46,7 +46,9 @@ $email = (string) ($brand['email'] ?? 'victoria@springapex.cn');
 
       <section>
         <h2><?php esc_html_e('Cookies and website services', 'springapex'); ?></h2>
-        <p><?php esc_html_e('This public theme does not add advertising or marketing analytics cookies. WordPress, hosting and security services may use cookies or similar technical storage that are necessary to deliver and protect the website.', 'springapex'); ?></p>
+        <p><?php esc_html_e('We use Google Tag Manager to load measurement and marketing tags, such as Google Analytics. These services may set cookies or read similar storage to record how visitors reach and use the site, and the resulting data may be processed by Google outside your country.', 'springapex'); ?></p>
+        <p><?php esc_html_e('WordPress, hosting and security services may also use cookies or similar technical storage that are necessary to deliver and protect the website.', 'springapex'); ?></p>
+        <p><?php esc_html_e('You can refuse these measurement tags through your browser cookie settings, a tracking blocker, or the Google Analytics opt-out browser add-on. The inquiry forms keep working without them.', 'springapex'); ?></p>
       </section>
 
       <section id="choices">
