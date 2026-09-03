@@ -212,7 +212,7 @@ function springapex_inquiry_mail_placeholders(): array
         '{custom_fields}' => '自定义字段块（兼容旧模板，HTML 多行）',
         '{message}' => '留言正文',
         '{document}' => '随附文档标识',
-        '{drawings}' => '图纸文件名与大小列表（无则 None）；图纸本身在后台询盘详情页下载',
+        '{drawings}' => '图纸文件名与大小列表（无则 None）；图纸本身随邮件附上还是到后台取，取决于收件邮箱能否打开询盘',
         '{inquiry_link}' => '后台询盘记录链接',
         '{site_name}' => '站点名称',
         '{site_url}' => '站点地址',

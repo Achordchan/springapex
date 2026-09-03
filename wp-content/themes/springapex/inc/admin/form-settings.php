@@ -25,6 +25,35 @@ add_action('admin_menu', static function (): void {
     );
 });
 
+/**
+ * 这次请求结束后真正生效的询盘收件邮箱。
+ *
+ * 保存是在页面渲染时处理的，比 admin_enqueue_scripts 晚 —— 那时候 get_theme_mod()
+ * 读到的还是上一个收件人。刚把收件邮箱在外部邮箱和管理员账号之间切换过的话，
+ * 保存后的页面会一边显示新收件人的结论，一边用旧收件人的模式渲染预览，直到手动
+ * 刷新才对得上。所以这里优先看本次提交的值。
+ */
+function springapex_form_settings_effective_recipient(): string
+{
+    $stored = (string) get_theme_mod('springapex_inquiry_email', (string) get_option('admin_email'));
+
+    if (
+        !isset($_POST['springapex_inquiry_email'], $_POST['springapex_form_settings_nonce'])
+        || !current_user_can('manage_options')
+        || !wp_verify_nonce(
+            sanitize_text_field((string) wp_unslash($_POST['springapex_form_settings_nonce'])),
+            'springapex_save_form_settings'
+        )
+    ) {
+        return $stored;
+    }
+
+    // 无效邮箱会被保存流程拒掉，那时生效的仍然是原值。
+    $submitted = sanitize_email((string) wp_unslash($_POST['springapex_inquiry_email']));
+
+    return $submitted !== '' && is_email($submitted) ? $submitted : $stored;
+}
+
 add_action('admin_enqueue_scripts', static function (string $hook): void {
     if ($hook !== 'spring_inquiry_page_springapex-form-settings') {
         return;
@@ -82,7 +111,7 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
             // 收件人拿不到后台时图纸照旧作为附件发出，正文里不会补那段取件提示 ——
             // 预览必须跟着同一个条件，否则它展示的是一封不会存在的邮件。
             'recipientReadsBackend' => springapex_inquiry_recipient_reads_backend(
-                (string) get_theme_mod('springapex_inquiry_email', (string) get_option('admin_email'))
+                springapex_form_settings_effective_recipient()
             ),
         ]) . ';',
         'before'
