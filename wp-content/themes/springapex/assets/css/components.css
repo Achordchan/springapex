@@ -855,16 +855,6 @@ body.menu-open {
   box-shadow: 0 12px 28px rgba(0, 0, 0, .24);
 }
 
-.footer-social.is-pending {
-  opacity: .68;
-  cursor: default;
-}
-
-.footer-social.is-pending:hover {
-  transform: none;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, .18);
-}
-
 .footer-social .icon {
   width: 20px;
   height: 20px;
@@ -873,6 +863,10 @@ body.menu-open {
 
 .footer-social--youtube {
   background: #ff0033;
+}
+
+.footer-social--linkedin {
+  background: #0a66c2;
 }
 
 .footer-social--facebook {

@@ -16,11 +16,13 @@ $phone_href = preg_replace('/[^0-9+]/', '', $phone);
 $youtube_id = trim((string) springapex_get('home.hero.video_cta.youtube_id', ''));
 $footer_socials = [
     ['key' => 'youtube', 'label' => 'YouTube', 'url' => $youtube_id !== '' ? 'https://www.youtube.com/watch?v=' . rawurlencode($youtube_id) : ''],
+    ['key' => 'linkedin', 'label' => 'LinkedIn', 'url' => (string) ($brand['linkedin'] ?? '')],
     ['key' => 'facebook', 'label' => 'Facebook', 'url' => (string) ($brand['facebook'] ?? '')],
     ['key' => 'x', 'label' => 'X', 'url' => (string) ($brand['x'] ?? '')],
     ['key' => 'instagram', 'label' => 'Instagram', 'url' => (string) ($brand['instagram'] ?? '')],
     ['key' => 'tiktok', 'label' => 'TikTok', 'url' => (string) ($brand['tiktok'] ?? '')],
 ];
+$footer_socials = array_values(array_filter($footer_socials, static fn(array $item): bool => trim((string) ($item['url'] ?? '')) !== ''));
 ?>
 <footer class="site-footer footer-universal">
   <?php if ($show_footer_cta) : ?>
@@ -60,19 +62,15 @@ $footer_socials = [
           ]); ?>
         </a>
         <p><?php esc_html_e('Precision spring engineering and manufacturing, from early design support through dependable production.', 'springapex'); ?></p>
+        <?php if ($footer_socials) : ?>
         <nav class="footer-socials" aria-label="<?php esc_attr_e('Social media', 'springapex'); ?>">
           <?php foreach ($footer_socials as $social) : ?>
-            <?php if ($social['url'] !== '') : ?>
-              <a class="footer-social footer-social--<?php echo esc_attr($social['key']); ?>" href="<?php echo esc_url($social['url']); ?>" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr($social['label']); ?>">
-                <?php echo springapex_icon((string) $social['key'], 'icon'); ?>
-              </a>
-            <?php else : ?>
-              <span class="footer-social footer-social--<?php echo esc_attr($social['key']); ?> is-pending" aria-label="<?php echo esc_attr($social['label'] . ' profile link pending'); ?>" role="img">
-                <?php echo springapex_icon((string) $social['key'], 'icon'); ?>
-              </span>
-            <?php endif; ?>
+            <a class="footer-social footer-social--<?php echo esc_attr($social['key']); ?>" href="<?php echo esc_url(trim((string) $social['url'])); ?>" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr($social['label']); ?>">
+              <?php echo springapex_icon((string) $social['key'], 'icon'); ?>
+            </a>
           <?php endforeach; ?>
         </nav>
+        <?php endif; ?>
       </div>
 
       <nav class="footer-column" aria-label="<?php esc_attr_e('Product navigation', 'springapex'); ?>">

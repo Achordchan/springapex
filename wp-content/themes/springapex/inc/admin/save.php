@@ -137,9 +137,6 @@ function springapex_admin_redirect_after_save(string $screen, string $query_key)
 
 function springapex_admin_reset_screen(string $screen): void
 {
-    $overrides = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, []);
-    $overrides = is_array($overrides) ? $overrides : [];
-
     // Retired collection editors are now signposts to their CPT lists. Older
     // installations can still carry saved rows that provide seed fallbacks, so
     // a visible page reset must not silently delete data the operator can no
@@ -150,26 +147,41 @@ function springapex_admin_reset_screen(string $screen): void
         'solutions' => ['solutions' => ['items']],
         'contact' => ['contact' => ['hero']],
     ];
-    $preserved = [];
-    foreach ($retired_collections[$screen] ?? [] as $root => $keys) {
-        if (!isset($overrides[$root]) || !is_array($overrides[$root])) {
-            continue;
-        }
-        foreach ($keys as $key) {
-            if (array_key_exists($key, $overrides[$root])) {
-                $preserved[$root][$key] = $overrides[$root][$key];
+    $retired = $retired_collections[$screen] ?? [];
+    $roots = springapex_admin_screen_roots($screen);
+
+    // 读、改、写整份覆盖表，中间隔着表单往返，所以走 compare-and-swap：别人
+    // （另一个后台保存、一次性迁移）在这期间存下的内容不能被旧快照顶掉。
+    $reset_done = springapex_content_update_overrides(
+        static function (array $overrides) use ($retired, $roots): array {
+            $preserved = [];
+            foreach ($retired as $root => $keys) {
+                if (!isset($overrides[$root]) || !is_array($overrides[$root])) {
+                    continue;
+                }
+                foreach ($keys as $key) {
+                    if (array_key_exists($key, $overrides[$root])) {
+                        $preserved[$root][$key] = $overrides[$root][$key];
+                    }
+                }
             }
+
+            foreach ($roots as $root) {
+                unset($overrides[$root]);
+            }
+            foreach ($preserved as $root => $values) {
+                $overrides[$root] = $values;
+            }
+
+            return $overrides;
         }
+    );
+
+    if (!$reset_done) {
+        springapex_admin_store_feedback($screen, 'saved', ['同时有别的改动正在保存，这次恢复默认没有执行，请重试一次。']);
+        springapex_admin_redirect_after_save($screen, 'sa-saved');
     }
 
-    foreach (springapex_admin_screen_roots($screen) as $root) {
-        unset($overrides[$root]);
-    }
-    foreach ($preserved as $root => $values) {
-        $overrides[$root] = $values;
-    }
-
-    springapex_content_store_overrides($overrides);
     springapex_content_flush_caches($screen);
     springapex_admin_store_feedback($screen, 'reset');
     springapex_admin_redirect_after_save($screen, 'sa-reset');
@@ -205,19 +217,31 @@ function springapex_admin_handle_save(): void
         $warnings
     );
 
-    $overrides = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, []);
-    $overrides = is_array($overrides) ? $overrides : [];
     if ($result['accepted'] && is_array($result['value'])) {
-        foreach (springapex_admin_screen_roots($screen) as $root) {
-            if (!array_key_exists($root, $result['value'])) {
-                continue;
+        $roots = springapex_admin_screen_roots($screen);
+        $values = $result['value'];
+
+        // 表单一来一回中间隔着很久，读到写之间别人可能已经存过东西了，所以
+        // 走 compare-and-swap，冲突就重读最新内容再把本屏的字段合并进去。
+        $saved = springapex_content_update_overrides(
+            static function (array $overrides) use ($roots, $values): array {
+                foreach ($roots as $root) {
+                    if (!array_key_exists($root, $values)) {
+                        continue;
+                    }
+                    $overrides[$root] = array_key_exists($root, $overrides)
+                        ? springapex_content_merge($overrides[$root], $values[$root])
+                        : $values[$root];
+                }
+                return $overrides;
             }
-            $overrides[$root] = array_key_exists($root, $overrides)
-                ? springapex_content_merge($overrides[$root], $result['value'][$root])
-                : $result['value'][$root];
+        );
+
+        if ($saved) {
+            springapex_content_flush_caches($screen);
+        } else {
+            springapex_admin_add_warning($warnings, '同时有别的改动正在保存，这次没有写入，请重试一次。');
         }
-        springapex_content_store_overrides($overrides);
-        springapex_content_flush_caches($screen);
     } else {
         springapex_admin_add_warning($warnings, '没有识别到可保存的字段，原有内容未改变。');
     }

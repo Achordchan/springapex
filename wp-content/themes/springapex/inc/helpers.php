@@ -234,28 +234,34 @@ function springapex_about_navigation_items(): array
     ];
 }
 
+/**
+ * 联系方式和社交链接只有一个来源：后台「网站内容 → 公司信息 / 社交媒体」
+ * 写入的内容覆盖表。早期版本还会读一份 customizer 的 theme_mod，且非空即
+ * 覆盖 —— 运营在后台清空的社交链接会被旧 theme_mod 顶回来，前台照样显示
+ * 图标。那些控件已下线，残留值由 springapex_migrate_brand_contact_source()
+ * 一次性搬进覆盖表。
+ *
+ * 搬完之前，正在生效的仍然是 theme_mod 里那份，所以这里继续按老规则回落：
+ * 迁移写库失败会留着源值等下次请求重试，这期间要是直接不认 theme_mod，前台
+ * 就会显示一段空的联系方式。版本号一写下（迁移确认落库并清空了源值），这段
+ * 回落就再也不会执行。
+ */
 function springapex_brand(): array
 {
     $brand = springapex_get('brand', []);
-    if (!function_exists('get_theme_mod') || defined('SPRINGAPEX_PREVIEW')) {
+
+    if (
+        defined('SPRINGAPEX_PREVIEW')
+        || !function_exists('get_theme_mod')
+        || !function_exists('springapex_brand_legacy_theme_mods')
+        || !function_exists('springapex_brand_contact_source_migrated')
+        || springapex_brand_contact_source_migrated()
+    ) {
         return $brand;
     }
 
-    $theme_mods = [
-        'email'    => 'springapex_email',
-        'phone'    => 'springapex_phone',
-        'whatsapp' => 'springapex_whatsapp',
-        'address'  => 'springapex_address',
-        'hours'    => 'springapex_hours',
-        'linkedin' => 'springapex_linkedin',
-        'facebook' => 'springapex_facebook',
-        'x'         => 'springapex_x',
-        'instagram' => 'springapex_instagram',
-        'tiktok'    => 'springapex_tiktok',
-    ];
-
-    foreach ($theme_mods as $key => $setting) {
-        $value = get_theme_mod($setting, $brand[$key] ?? '');
+    foreach (springapex_brand_legacy_theme_mods() as $key => [$setting, $_type]) {
+        $value = get_theme_mod($setting, '');
         if (is_string($value) && $value !== '') {
             $brand[$key] = $value;
         }
