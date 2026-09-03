@@ -58,6 +58,25 @@ function springapex_release_option_lock(string $option_name, string $token): voi
 }
 
 /**
+ * 这一行在不在，只看行本身，不看值。get_option() 分不清「没有这一行」和「有这
+ * 一行、值恰好解不出数组」，后者会被当成缺行，于是每次都去 INSERT IGNORE，而
+ * 行明明在，插不进去 —— 重试耗尽，后台保存从此写不进任何东西。
+ */
+function springapex_option_row_exists(string $option_name): bool
+{
+    global $wpdb;
+
+    if (!is_object($wpdb) || !is_string($wpdb->options ?? null) || $wpdb->options === '') {
+        return false;
+    }
+
+    return (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name = %s",
+        $option_name
+    )) > 0;
+}
+
+/**
  * 只有这一行还不存在时才插入。add_option() 不顶用：它先 get_option() 看一眼再
  * INSERT ... ON DUPLICATE KEY UPDATE，中间的空档足够别人把行建起来，然后这条
  * 语句把人家的内容整份覆盖掉；notoptions 缓存里存着「没有这个 option」时它
@@ -103,24 +122,47 @@ function springapex_add_option_if_absent(string $option_name, mixed $value, bool
  *
  * 和取一把 TTL 锁相比，这里没有需要释放的状态：进程死在中间也不留痕迹。
  */
-function springapex_update_option_if_unchanged(string $option_name, mixed $expected_value, mixed $value): bool
-{
+function springapex_update_option_if_unchanged(
+    string $option_name,
+    mixed $expected_value,
+    mixed $value,
+    ?bool $autoload = null
+): bool {
     global $wpdb;
 
     if (!is_object($wpdb) || !is_string($wpdb->options ?? null) || $wpdb->options === '') {
         return false;
     }
 
+    $serialized = maybe_serialize($value);
+
     // option_value 的 collation 是大小写不敏感的（utf8mb4_*_ci），直接用 = 比较，
     // 一次只改了字母大小写的并发保存会被判成「没变过」，然后被这里覆盖掉。
     // 逐字节比较才是 compare-and-swap 要的语义。
-    $updated = $wpdb->query($wpdb->prepare(
-        "UPDATE {$wpdb->options} SET option_value = %s"
-        . " WHERE option_name = %s AND CAST(option_value AS BINARY) = CAST(%s AS BINARY)",
-        maybe_serialize($value),
-        $option_name,
-        maybe_serialize($expected_value)
-    ));
+    $predicate = " WHERE option_name = %s AND CAST(option_value AS BINARY) = CAST(%s AS BINARY)";
+
+    if ($autoload === null) {
+        $updated = $wpdb->query($wpdb->prepare(
+            "UPDATE {$wpdb->options} SET option_value = %s" . $predicate,
+            $serialized,
+            $option_name,
+            maybe_serialize($expected_value)
+        ));
+    } else {
+        // 内容涨过阈值就得把 autoload 关掉，否则每个请求都要把这一大坨读进来。
+        // 和值同一条语句改，免得中间被别人插一脚。
+        $autoload_value = function_exists('wp_determine_option_autoload_value')
+            ? wp_determine_option_autoload_value($option_name, $value, $serialized, $autoload)
+            : ($autoload ? 'yes' : 'no');
+
+        $updated = $wpdb->query($wpdb->prepare(
+            "UPDATE {$wpdb->options} SET option_value = %s, autoload = %s" . $predicate,
+            $serialized,
+            $autoload_value,
+            $option_name,
+            maybe_serialize($expected_value)
+        ));
+    }
 
     if ($updated !== 1) {
         return false;

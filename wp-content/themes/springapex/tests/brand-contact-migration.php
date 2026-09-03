@@ -12,8 +12,12 @@ define('ABSPATH', __DIR__ . '/');
 
 /** Raw option rows, option_name => serialized option_value. */
 $springapex_test_rows = [];
-/** Theme mods, name => value. */
-$springapex_test_theme_mods = [];
+/** autoload column per option row. */
+$springapex_test_autoload = [];
+/** Fired once, right after the theme mods row is read. */
+$springapex_test_on_theme_mods_read = null;
+
+const SPRINGAPEX_TEST_THEME_MODS_OPTION = 'theme_mods_springapex';
 /** Set to true to make every content-overrides write fail, as a dying request would. */
 $springapex_test_block_overrides_write = false;
 /** Fired once, right after the migration reads the overrides row. */
@@ -35,7 +39,11 @@ function maybe_unserialize(string $value): mixed
 
 function get_option(string $option, mixed $default_value = false): mixed
 {
-    global $springapex_test_rows, $springapex_test_on_overrides_read;
+    global $springapex_test_rows, $springapex_test_on_overrides_read, $springapex_test_on_theme_mods_read;
+
+    if ($option === 'stylesheet') {
+        return 'springapex';
+    }
 
     $value = array_key_exists($option, $springapex_test_rows)
         ? maybe_unserialize($springapex_test_rows[$option])
@@ -44,6 +52,12 @@ function get_option(string $option, mixed $default_value = false): mixed
     if ($option === 'springapex_content_overrides' && $springapex_test_on_overrides_read !== null) {
         $concurrent = $springapex_test_on_overrides_read;
         $springapex_test_on_overrides_read = null;   // once, or it recurses
+        $concurrent();
+    }
+
+    if ($option === SPRINGAPEX_TEST_THEME_MODS_OPTION && $springapex_test_on_theme_mods_read !== null) {
+        $concurrent = $springapex_test_on_theme_mods_read;
+        $springapex_test_on_theme_mods_read = null;
         $concurrent();
     }
 
@@ -108,14 +122,23 @@ final class Springapex_Test_WPDB
     }
 
     /** @param array{sql: string, args: array<int, mixed>} $prepared */
+    public function get_var(array $prepared): ?string
+    {
+        global $springapex_test_rows;
+
+        // Only the row-existence probe uses get_var().
+        return (string) (int) array_key_exists($prepared['args'][0], $springapex_test_rows);
+    }
+
+    /** @param array{sql: string, args: array<int, mixed>} $prepared */
     public function query(array $prepared): int|false
     {
-        global $springapex_test_rows, $springapex_test_block_overrides_write;
+        global $springapex_test_rows, $springapex_test_autoload, $springapex_test_block_overrides_write;
 
         $sql = $prepared['sql'];
 
         if (str_starts_with($sql, 'INSERT IGNORE')) {
-            [$option, $value] = [$prepared['args'][0], $prepared['args'][1]];
+            [$option, $value, $autoload] = $prepared['args'];
             if ($springapex_test_block_overrides_write && $option === 'springapex_content_overrides') {
                 return false;
             }
@@ -125,13 +148,20 @@ final class Springapex_Test_WPDB
                 return 0;
             }
             $springapex_test_rows[$option] = $value;
+            $springapex_test_autoload[$option] = $autoload;
             return 1;
         }
 
         $is_update = str_starts_with($sql, 'UPDATE');
-        [$option, $expected] = $is_update
-            ? [$prepared['args'][1], $prepared['args'][2]]
-            : [$prepared['args'][0], $prepared['args'][1]];
+        $sets_autoload = $is_update && str_contains($sql, 'autoload = %s');
+
+        if ($is_update) {
+            [$option, $expected] = $sets_autoload
+                ? [$prepared['args'][2], $prepared['args'][3]]
+                : [$prepared['args'][1], $prepared['args'][2]];
+        } else {
+            [$option, $expected] = [$prepared['args'][0], $prepared['args'][1]];
+        }
 
         if ($springapex_test_block_overrides_write && $option === 'springapex_content_overrides') {
             return false;
@@ -143,8 +173,11 @@ final class Springapex_Test_WPDB
 
         if ($is_update) {
             $springapex_test_rows[$option] = $prepared['args'][0];
+            if ($sets_autoload) {
+                $springapex_test_autoload[$option] = $prepared['args'][1];
+            }
         } else {
-            unset($springapex_test_rows[$option]);
+            unset($springapex_test_rows[$option], $springapex_test_autoload[$option]);
         }
         return 1;
     }
@@ -152,22 +185,38 @@ final class Springapex_Test_WPDB
 
 $wpdb = new Springapex_Test_WPDB();
 
+/**
+ * Theme mods live in one option row, which is exactly why clearing them one by
+ * one is a read-modify-write over everything the "表单设置" screen stores too.
+ */
+function springapex_test_theme_mods(): array
+{
+    $mods = get_option(SPRINGAPEX_TEST_THEME_MODS_OPTION, []);
+    return is_array($mods) ? $mods : [];
+}
+
 function get_theme_mod(string $name, mixed $default_value = false): mixed
 {
-    global $springapex_test_theme_mods;
-    return $springapex_test_theme_mods[$name] ?? $default_value;
+    return springapex_test_theme_mods()[$name] ?? $default_value;
 }
 
 function set_theme_mod(string $name, mixed $value): void
 {
-    global $springapex_test_theme_mods;
-    $springapex_test_theme_mods[$name] = $value;
+    $mods = springapex_test_theme_mods();
+    $mods[$name] = $value;
+    update_option(SPRINGAPEX_TEST_THEME_MODS_OPTION, $mods);
 }
 
 function remove_theme_mod(string $name): void
 {
-    global $springapex_test_theme_mods;
-    unset($springapex_test_theme_mods[$name]);
+    $mods = springapex_test_theme_mods();
+    unset($mods[$name]);
+    update_option(SPRINGAPEX_TEST_THEME_MODS_OPTION, $mods);
+}
+
+function wp_determine_option_autoload_value(string $option, mixed $value, string $serialized, ?bool $autoload): string
+{
+    return $autoload ? 'on' : 'off';
 }
 
 function add_action(string $hook, callable|string $callback, int $priority = 10, int $args = 1): bool
@@ -393,4 +442,56 @@ springapex_test_assert($springapex_test_created, 'Creating the overrides row gav
 springapex_test_assert(springapex_test_brand('hours') === 'Created by another request', 'The insert overwrote a row another request had just created.');
 springapex_test_assert(springapex_test_brand('phone') === '+86 100 0000 0000', 'The retry did not reapply this request own change.');
 
-echo "brand-contact-migration: failed write, completion, re-entry, concurrent save, admin save, stale retry, row creation and fallback ok\n";
+// Theme mods all live in one option row, and the "表单设置" screen keeps the
+// inquiry recipient there too. Clearing the legacy keys is therefore a
+// read-modify-write over that screen's settings as well: a save landing between
+// the read and the write must survive. (Driven directly rather than through the
+// whole migration, so the concurrent save lands in that exact window.)
+delete_option(SPRINGAPEX_TEST_THEME_MODS_OPTION);
+set_theme_mod('springapex_x', 'https://x.com/legacy_handle');
+set_theme_mod('springapex_facebook', 'https://www.facebook.com/legacy-page/');
+set_theme_mod('springapex_inquiry_email', 'old@example.com');
+$springapex_test_on_theme_mods_read = static function (): void {
+    // An operator saves the form settings screen right after the read.
+    set_theme_mod('springapex_inquiry_email', 'new@example.com');
+};
+$springapex_test_cleared = springapex_brand_contact_clear_theme_mods(['springapex_x', 'springapex_facebook']);
+springapex_test_assert($springapex_test_cleared, 'Clearing the legacy theme mods gave up instead of retrying.');
+springapex_test_assert($springapex_test_on_theme_mods_read === null, 'The concurrent form-settings save never ran; the interleaving was not exercised.');
+springapex_test_assert(get_theme_mod('springapex_inquiry_email', '') === 'new@example.com', 'Clearing the legacy theme mods rolled back a concurrent form-settings save.');
+springapex_test_assert(get_theme_mod('springapex_x', '') === '', 'The legacy theme mod was not cleared.');
+springapex_test_assert(get_theme_mod('springapex_facebook', '') === '', 'The legacy theme mod was not cleared.');
+
+// A row whose value is not an array (hand-edited, or left by something older)
+// must be repairable. Treating it as a missing row means every write tries to
+// INSERT, the row is already there, and admin saves silently stop working.
+$springapex_test_rows[SPRINGAPEX_CONTENT_OVERRIDES_OPTION] = 'not-an-array';
+$springapex_test_repaired = springapex_content_update_overrides(
+    static function (array $overrides): array {
+        $overrides['brand']['hours'] = 'Repaired';
+        return $overrides;
+    }
+);
+springapex_test_assert($springapex_test_repaired, 'A malformed overrides row could not be written over.');
+springapex_test_assert(springapex_test_brand('hours') === 'Repaired', 'A malformed overrides row was not replaced.');
+
+// autoload has to follow the row's size, the way the old storage helper did:
+// a row that grows past the limit must stop loading on every request.
+springapex_test_set_overrides(['hours' => 'Mon – Fri']);
+$springapex_test_autoload[SPRINGAPEX_CONTENT_OVERRIDES_OPTION] = 'on';
+springapex_content_update_overrides(
+    static function (array $overrides): array {
+        $overrides['bulk'] = str_repeat('x', SPRINGAPEX_CONTENT_AUTOLOAD_LIMIT + 1);
+        return $overrides;
+    }
+);
+springapex_test_assert(($springapex_test_autoload[SPRINGAPEX_CONTENT_OVERRIDES_OPTION] ?? null) === 'off', 'A row that grew past the autoload limit is still autoloaded.');
+springapex_content_update_overrides(
+    static function (array $overrides): array {
+        unset($overrides['bulk']);
+        return $overrides;
+    }
+);
+springapex_test_assert(($springapex_test_autoload[SPRINGAPEX_CONTENT_OVERRIDES_OPTION] ?? null) === 'on', 'A row that shrank below the limit is not autoloaded again.');
+
+echo "brand-contact-migration: failed write, completion, re-entry, concurrent save, admin save, stale retry, row creation, theme mods, malformed row, autoload and fallback ok\n";

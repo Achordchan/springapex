@@ -89,6 +89,53 @@ const SPRINGAPEX_BRAND_CONTACT_SOURCE_VERSION = '1';
 const SPRINGAPEX_BRAND_CONTACT_SWAP_ATTEMPTS = 3;
 
 /**
+ * 一次性清掉这一批 theme_mod，整份走 compare-and-swap。
+ *
+ * remove_theme_mod() 是对整份 theme_mods_<主题> option 的读-改-写，而「表单设置」
+ * 页的询盘收件邮箱和邮件模板存在同一份 option 里 —— 运营在读与写之间保存了那一页，
+ * 这边的旧数组回写就会把人家的改动抹掉。逐个删就是逐次开这样一个窗口。
+ *
+ * @param array<int, string> $settings
+ */
+function springapex_brand_contact_clear_theme_mods(array $settings, int $attempts = 3): bool
+{
+    if (!function_exists('get_option') || !function_exists('springapex_update_option_if_unchanged')) {
+        return false;
+    }
+
+    $option_name = 'theme_mods_' . (string) get_option('stylesheet');
+
+    for ($attempt = 0; $attempt < $attempts; $attempt++) {
+        if (function_exists('wp_cache_delete')) {
+            wp_cache_delete($option_name, 'options');
+            wp_cache_delete('alloptions', 'options');
+            wp_cache_delete('notoptions', 'options');
+        }
+
+        $mods = get_option($option_name, null);
+        if (!is_array($mods)) {
+            // 连 theme_mods 都没有，自然没有要清的。
+            return true;
+        }
+
+        $next = $mods;
+        foreach ($settings as $setting) {
+            unset($next[$setting]);
+        }
+
+        if ($next === $mods) {
+            return true;
+        }
+
+        if (springapex_update_option_if_unchanged($option_name, $mods, $next)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
  * 迁移是否已经确认完成（覆盖表落库 + 源值清空之后才会记上版本号）。
  *
  * $fresh 用于 compare-and-swap 冲突之后再确认一次：这一整个请求开头很可能已经
@@ -235,10 +282,11 @@ function springapex_migrate_brand_contact_source(): void
         return;
     }
 
-    $cleared = true;
-    foreach ($legacy as [$setting, $_type]) {
-        remove_theme_mod($setting);
-        $cleared = get_theme_mod($setting, '') === '' && $cleared;
+    $cleared = springapex_brand_contact_clear_theme_mods(array_column($legacy, 0));
+    if ($cleared) {
+        foreach ($legacy as [$setting, $_type]) {
+            $cleared = get_theme_mod($setting, '') === '' && $cleared;
+        }
     }
 
     // 没清干净就不写版本号，下次请求再试一遍。
@@ -330,8 +378,8 @@ function springapex_content_store_overrides(array $overrides): void
  * 每个写入点各自 get_option() 再 update_option() 的话，一份旧快照就能把别人刚
  * 存下的内容整份顶掉 —— 覆盖表是整站文案，顶掉的是运营的实际编辑。
  *
- * autoload 沿用行上已有的设置：只有新建这一行时才按大小决定，这样 CAS 只需要
- * 比对 option_value 一列。
+ * autoload 跟着内容大小走（超过 SPRINGAPEX_CONTENT_AUTOLOAD_LIMIT 就关掉），和
+ * 值写在同一条语句里，中间不会被别人插一脚。
  *
  * $mutate 返回非数组表示放弃这次写入（比如发现该做的事别人已经做完了），
  * 此时不写库，函数返回 false。
@@ -348,11 +396,11 @@ function springapex_content_update_overrides(callable $mutate, int $attempts = 3
         wp_cache_delete('alloptions', 'options');
         wp_cache_delete('notoptions', 'options');
 
-        $current = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, null);
-        $exists = is_array($current);
-        if (!$exists) {
-            $current = [];
-        }
+        // 行在不在，问库；值解不出数组时当空数组来改，但 CAS 仍拿原值做对照，
+        // 这样一行坏数据能被原子地换掉，而不是让每次写入都卡在插入失败上。
+        $stored = get_option(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, null);
+        $exists = $stored !== null || springapex_option_row_exists(SPRINGAPEX_CONTENT_OVERRIDES_OPTION);
+        $current = is_array($stored) ? $stored : [];
 
         $next = $mutate($current);
         if (!is_array($next)) {
@@ -360,7 +408,7 @@ function springapex_content_update_overrides(callable $mutate, int $attempts = 3
         }
         $next = (array) springapex_replace_public_brand($next);
 
-        if ($next === $current) {
+        if ($exists && $next === $stored) {
             return true;
         }
 
@@ -378,13 +426,15 @@ function springapex_content_update_overrides(callable $mutate, int $attempts = 3
         }
 
         if ($next === []) {
-            if (springapex_delete_option_if_unchanged(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, $current)) {
+            if (springapex_delete_option_if_unchanged(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, $stored)) {
                 return true;
             }
             continue;
         }
 
-        if (springapex_update_option_if_unchanged(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, $current, $next)) {
+        // autoload 跟着内容大小一起定，和值写在同一条语句里。
+        $autoload = strlen(serialize($next)) <= SPRINGAPEX_CONTENT_AUTOLOAD_LIMIT;
+        if (springapex_update_option_if_unchanged(SPRINGAPEX_CONTENT_OVERRIDES_OPTION, $stored, $next, $autoload)) {
             return true;
         }
     }
