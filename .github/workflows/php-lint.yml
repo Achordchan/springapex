@@ -37,6 +37,9 @@ jobs:
       - name: Verify form select options
         run: php wp-content/themes/springapex/tests/form-select-options.php
 
+      - name: Verify mapped fields can be added to any form
+        run: php wp-content/themes/springapex/tests/form-mapped-fields.php
+
       - name: Verify inquiry mail drawing notice
         run: php wp-content/themes/springapex/tests/inquiry-mail-drawing-notice.php
 

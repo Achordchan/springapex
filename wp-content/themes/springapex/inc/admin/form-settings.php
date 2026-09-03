@@ -229,6 +229,9 @@ function springapex_render_form_settings_page(): void
     $schema = springapex_form_schema();
     $types = springapex_form_field_types();
     $system_fields = springapex_form_system_fields();
+    // 运营者可加到任意表单的映射字段（姓名/公司/电话…）。产品表单默认没有
+    // 「姓名」，靠这个下拉补回，询盘才不会一律记为「匿名」。
+    $addable_mapped = springapex_form_addable_mapped_fields();
     $form_meta = [
         'quick' => '快速询盘（右下角浮动窗）',
         'contact' => '联系页主表单',
@@ -257,7 +260,7 @@ function springapex_render_form_settings_page(): void
         </nav>
 
         <section class="sa-fs-panel is-active" id="sa-fs-fields" data-fs-panel="fields" role="tabpanel" aria-label="表单字段">
-          <p class="description sa-fs-fields-hint">三个表单默认折叠，点标题展开你要编辑的那个。</p>
+          <p class="description sa-fs-fields-hint">三个表单默认折叠，点标题展开你要编辑的那个。「名称」只是访客看到的标题；一个字段收集到的信息由它的类型决定：<strong>映射字段</strong>（如姓名、数量）写入询盘的对应位置，改名称不会改变它的用途。想让询盘带上联系人姓名（否则记为「匿名」），用「+ 添加映射字段」把<strong>姓名</strong>加进来，而不是把别的字段改名叫 name。</p>
           <?php $form_num = 0; ?>
           <?php foreach ($form_meta as $form => $form_title) : ?>
             <?php
@@ -296,7 +299,31 @@ function springapex_render_form_settings_page(): void
                     <?php springapex_render_builder_field_row($form, (int) $index, $field, $types, $system_fields); ?>
                   <?php endforeach; ?>
                 </div>
-                <button type="button" class="button button-secondary" data-builder-add>+ 添加字段</button>
+                <?php
+                // 已在本表单里的字段 id：对应的映射字段在下拉里先禁用，避免重复添加。
+                $present_ids = array_map(static fn (array $f): string => (string) $f['id'], (array) $schema[$form]['fields']);
+                ?>
+                <div class="form-builder-actions">
+                  <button type="button" class="button button-secondary" data-builder-add>+ 添加自定义字段</button>
+                  <?php if ($addable_mapped !== []) : ?>
+                    <span class="form-builder-add-mapped">
+                      <label class="screen-reader-text" for="sa-add-mapped-<?php echo esc_attr($form); ?>">添加映射字段</label>
+                      <select id="sa-add-mapped-<?php echo esc_attr($form); ?>" class="form-builder-add-mapped__select" data-builder-add-mapped>
+                        <option value="">+ 添加映射字段（姓名、公司、电话…）</option>
+                        <?php foreach ($addable_mapped as $mapped_id => $mapped_field) : ?>
+                          <option value="<?php echo esc_attr($mapped_id); ?>"<?php echo in_array($mapped_id, $present_ids, true) ? ' disabled hidden' : ''; ?>><?php echo esc_html($system_fields[$mapped_id] ?? (string) $mapped_field['label']); ?></option>
+                        <?php endforeach; ?>
+                      </select>
+                    </span>
+                  <?php endif; ?>
+                </div>
+                <?php if ($addable_mapped !== []) : ?>
+                  <template data-mapped-templates="<?php echo esc_attr($form); ?>">
+                    <?php foreach ($addable_mapped as $mapped_id => $mapped_field) : ?>
+                      <div data-mapped-template="<?php echo esc_attr($mapped_id); ?>"><?php springapex_render_builder_field_row($form, 0, $mapped_field, $types, $system_fields); ?></div>
+                    <?php endforeach; ?>
+                  </template>
+                <?php endif; ?>
               </div>
             </details>
           <?php endforeach; ?>

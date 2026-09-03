@@ -71,6 +71,54 @@ function springapex_form_system_fields(): array
     ];
 }
 
+/**
+ * 每个系统字段的规范定义（跨表单唯一的样板）。
+ *
+ * 从三表单默认 schema 里收集第一次出现的定义，作为「给某个表单补一个它
+ * 默认没有的映射字段」时的类型/占位/选项底稿——例如产品表单默认没有
+ * 「姓名」，运营者想让产品询盘不再记为「匿名」，就靠它把 name 补回。
+ * 同一 id 在多个表单出现时定义一致，取首次即可，避免第二处硬编码。
+ *
+ * @return array<string, array<string, mixed>>
+ */
+function springapex_form_system_field_definitions(): array
+{
+    static $defs = null;
+    if ($defs !== null) {
+        return $defs;
+    }
+    $system = springapex_form_system_fields();
+    $defs = [];
+    foreach (springapex_form_schema_defaults() as $form_defaults) {
+        foreach ($form_defaults['fields'] as $field) {
+            $id = (string) ($field['id'] ?? '');
+            if ($id !== '' && !isset($defs[$id]) && array_key_exists($id, $system)) {
+                $defs[$id] = $field;
+            }
+        }
+    }
+    return $defs;
+}
+
+/**
+ * 运营者可主动添加到任意表单的映射字段：系统字段里去掉锁定字段
+ * （邮箱/留言恒在，不作为「可添加」项）。返回 id => 规范字段定义，
+ * 供「表单设置」的「添加映射字段」下拉与其样板行使用。
+ *
+ * @return array<string, array<string, mixed>>
+ */
+function springapex_form_addable_mapped_fields(): array
+{
+    $locked = springapex_form_locked_fields();
+    $addable = [];
+    foreach (springapex_form_system_field_definitions() as $id => $field) {
+        if (!in_array($id, $locked, true)) {
+            $addable[$id] = $field;
+        }
+    }
+    return $addable;
+}
+
 /** 三表单默认 schema：与历史表单一一对应，未配置时行为不变。 */
 function springapex_form_schema_defaults(): array
 {
@@ -261,10 +309,15 @@ function springapex_normalize_form_field(array $field, array $defaults_by_id, ar
     $is_system = array_key_exists($id, springapex_form_system_fields());
     $default = $defaults_by_id[$id] ?? null;
 
-    // 系统字段未出现在默认表（如 contact 表没有 message）则拒绝——
-    // 系统字段只能用于声明过它的表单。
+    // 系统字段不在本表单默认里时，用跨表单的规范定义补一个底稿：运营者可以
+    // 主动把映射字段加到没有它的表单（例如给产品表单补「姓名」，让询盘标题
+    // 与通知邮件不再记为「匿名」）。类型/占位/选项以规范定义为准，名称/必填/
+    // 宽度仍尊重本次提交。规范定义里也找不到（真正的未知 id）才拒绝。
     if ($is_system && $default === null) {
-        return null;
+        $default = springapex_form_system_field_definitions()[$id] ?? null;
+        if ($default === null) {
+            return null;
+        }
     }
 
     $type = (string) ($field['type'] ?? 'text');

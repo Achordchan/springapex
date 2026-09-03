@@ -110,6 +110,24 @@
     [...builder.querySelectorAll('[data-builder-field]')].forEach((row, index) => setRowNames(row, index));
   };
 
+  // 「添加映射字段」下拉：已经在列表里的映射字段禁用并隐藏，避免重复添加；
+  // 删除某个映射字段后它又能被选回来。模板行藏在 <template> 里，不参与
+  // querySelectorAll，所以这里数到的都是真实存在于表单里的字段。
+  const refreshMappedSelect = (builder) => {
+    const select = builder.querySelector('[data-builder-add-mapped]');
+    if (!select) return;
+    const presentIds = new Set(
+      [...builder.querySelectorAll('[data-field-id]')].map((input) => input.value).filter(Boolean)
+    );
+    [...select.options].forEach((option) => {
+      if (!option.value) return;
+      const used = presentIds.has(option.value);
+      option.disabled = used;
+      option.hidden = used;
+    });
+    select.value = '';
+  };
+
   const syncTypeUi = (row) => {
     const type = row.querySelector('[data-field-type]').value;
     const optionsInput = row.querySelector('[data-field-options]');
@@ -161,6 +179,7 @@
         remove.addEventListener('click', () => {
           row.remove();
           reindex(builder);
+          refreshMappedSelect(builder);
         });
       }
       syncTypeUi(row);
@@ -218,7 +237,32 @@
       clone.querySelector('[data-field-label]').focus();
     });
 
+    // 添加映射字段：从本表单的模板行里克隆对应字段（已带正确的 id/类型/选项，
+    // 类型下拉锁定），加到列表末尾。样板行渲染时就用了真实表单键，只需重排下标。
+    const addMappedSelect = builder.querySelector('[data-builder-add-mapped]');
+    const mappedTemplates = builder.querySelector('template[data-mapped-templates]');
+    if (addMappedSelect && mappedTemplates) {
+      addMappedSelect.addEventListener('change', () => {
+        const id = addMappedSelect.value;
+        if (!id) return;
+        const source = mappedTemplates.content.querySelector(
+          `[data-mapped-template="${id}"] [data-builder-field]`
+        );
+        if (!source) {
+          addMappedSelect.value = '';
+          return;
+        }
+        const row = source.cloneNode(true);
+        list.appendChild(row);
+        bindRow(row);
+        reindex(builder);
+        refreshMappedSelect(builder);
+        row.querySelector('[data-field-label]').focus();
+      });
+    }
+
     list.querySelectorAll('[data-builder-field]').forEach(bindRow);
     reindex(builder);
+    refreshMappedSelect(builder);
   });
 })();
