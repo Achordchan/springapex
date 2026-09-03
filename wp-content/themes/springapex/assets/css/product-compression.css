@@ -512,6 +512,14 @@
   background: #f7fcff;
 }
 
+/* 提交/上传期间锁住上传器：文件框与增删按钮已被 disabled，这里再挡掉拖拽
+   （拖放走 JS、不经 disabled 控件），并给出「已锁定」的观感。 */
+.sa-compression-form.is-locked .sa-compression-dropzone {
+  pointer-events: none;
+  opacity: .55;
+  cursor: progress;
+}
+
 .sa-compression-dropzone.has-file {
   border-color: #10b981;
   background: #f0fdf4;
