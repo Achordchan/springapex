@@ -206,7 +206,8 @@
 }
 
 .sa-route-search .sa-search-card:focus-visible {
-  outline: 2px solid var(--sa-accent);
+  /* accent-deep clears 3:1 against the white card (WCAG 1.4.11). */
+  outline: 2px solid var(--sa-accent-deep);
   outline-offset: 2px;
 }
 
@@ -340,7 +341,7 @@
 
 .sa-route-search .sa-search-empty__kicker {
   margin-bottom: 12px;
-  color: var(--sa-text-muted);
+  color: var(--sa-text-3); /* AA-readable label (text-muted was ~2.5:1) */
   font-size: 12px;
   font-weight: 700;
   letter-spacing: .12em;
