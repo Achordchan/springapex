@@ -8,7 +8,7 @@ $featured = is_array($video_page['featured'] ?? null) ? $video_page['featured'] 
 $categories = is_array($video_page['categories'] ?? null) ? $video_page['categories'] : [];
 $youtube_id = trim((string) ($featured['youtube_id'] ?? ''));
 $video_src = $youtube_id !== ''
-    ? 'https://www.youtube-nocookie.com/embed/' . rawurlencode($youtube_id) . '?autoplay=1&rel=0'
+    ? 'https://www.youtube.com/embed/' . rawurlencode($youtube_id) . '?autoplay=1&rel=0'
     : '';
 ?>
 

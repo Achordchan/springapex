@@ -50,7 +50,7 @@ $home_sections = is_array($home['sections'] ?? null) ? $home['sections'] : [];
   class="sa-video-dialog"
   id="hero-video-dialog"
   data-hero-video-dialog
-  data-video-src="<?php echo esc_url('https://www.youtube-nocookie.com/embed/' . ($hero['video_cta']['youtube_id'] ?? '') . '?autoplay=1&rel=0'); ?>"
+  data-video-src="<?php echo esc_url('https://www.youtube.com/embed/' . ($hero['video_cta']['youtube_id'] ?? '') . '?autoplay=1&rel=0'); ?>"
   aria-labelledby="hero-video-title"
 >
   <div class="sa-video-dialog__shell">
