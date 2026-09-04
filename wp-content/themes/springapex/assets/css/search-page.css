@@ -491,9 +491,20 @@
     padding: 11px 16px;
   }
 
-  /* Collapse the submit label to just the arrow to save width on phones. */
+  /* Collapse the submit label to just the arrow to save width on phones, but
+     keep it in the accessibility tree so the button still has an accessible
+     name (the arrow icon is decorative). */
   .sa-route-search .sa-search-hero__submit span {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
   }
 
   .sa-route-search .sa-search-hero__submit .icon {
