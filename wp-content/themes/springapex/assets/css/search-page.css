@@ -379,7 +379,7 @@
   gap: clamp(40px, 6vw, 88px);
 }
 
-.sa-route-search .sa-search-start__intro > p:first-child {
+.sa-route-search .sa-search-results__kicker {
   margin-bottom: 12px;
   color: var(--sa-accent-deep);
   font-size: 12px;
