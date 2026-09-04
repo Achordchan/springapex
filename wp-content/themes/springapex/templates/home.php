@@ -32,14 +32,15 @@ $home_sections = is_array($home['sections'] ?? null) ? $home['sections'] : [];
       </h1>
       <p class="lede lede-home"><?php echo esc_html($hero['subtitle'] ?? ''); ?></p>
       <div class="hero-actions">
-        <button class="btn btn-primary hero-video-trigger" type="button" data-hero-video-open aria-haspopup="dialog" aria-controls="hero-video-dialog">
-          <span class="hero-video-trigger__icon" aria-hidden="true"></span>
-          <?php echo esc_html($hero['video_cta']['label'] ?? 'Play a Video'); ?>
-        </button>
-        <a class="btn btn-text" href="<?php echo esc_url(springapex_url($hero['quote_cta']['href'] ?? '/contact/?intent=quote')); ?>">
+        <?php // 询价是主转化目标：做成实心主按钮并放在首位，视频降为描边次按钮。 ?>
+        <a class="btn btn-primary hero-quote-cta" href="<?php echo esc_url(springapex_url($hero['quote_cta']['href'] ?? '/contact/?intent=quote')); ?>">
           <?php echo esc_html($hero['quote_cta']['label'] ?? 'Request a Quote'); ?>
           <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
         </a>
+        <button class="btn btn-outline hero-video-trigger" type="button" data-hero-video-open aria-haspopup="dialog" aria-controls="hero-video-dialog">
+          <span class="hero-video-trigger__icon" aria-hidden="true"></span>
+          <?php echo esc_html($hero['video_cta']['label'] ?? 'Play a Video'); ?>
+        </button>
       </div>
     </div>
   </div>
