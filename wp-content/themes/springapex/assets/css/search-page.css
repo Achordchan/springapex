@@ -78,7 +78,9 @@
 }
 
 .sa-route-search .sa-search-hero__form:focus-within {
-  border-color: var(--sa-accent);
+  /* accent-deep clears 3:1 against the light surfaces (WCAG 1.4.11); the soft
+     ring is a decorative reinforcement on top of it. */
+  border-color: var(--sa-accent-deep);
   box-shadow: 0 0 0 4px var(--sa-accent-soft);
 }
 
@@ -108,7 +110,10 @@
 }
 
 .sa-route-search .sa-search-hero__input::placeholder {
-  color: var(--sa-text-muted);
+  /* text-3 (~4.6:1 on white) meets AA; the placeholder is the field's only
+     visible instruction, so it must be readable. */
+  color: var(--sa-text-3);
+  opacity: 1; /* Firefox lowers placeholder opacity by default */
 }
 
 /* Hide the native clear widget so the pill stays clean. */
