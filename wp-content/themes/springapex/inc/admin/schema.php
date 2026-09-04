@@ -524,6 +524,7 @@ function springapex_admin_screens(): array
                             'fields' => [
                                 ['path' => 'title', 'label' => '标题', 'type' => 'text', 'help' => ''],
                                 ['path' => 'text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
+                                ['path' => 'youtube_id', 'label' => 'YouTube 视频 ID', 'type' => 'youtube', 'help' => '只填 ID。填了封面上才会出现播放按钮、点击弹窗播放；留空则只是图片。'],
                                 ['path' => 'duration', 'label' => '时长', 'type' => 'text', 'help' => '格式 分:秒。'],
                                 ['path' => 'image', 'label' => '封面图', 'type' => 'image', 'help' => '横版 16:9。'],
                             ],

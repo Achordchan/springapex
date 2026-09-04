@@ -202,6 +202,35 @@
   filter: brightness(0);
 }
 
+/* Smaller play button for the category cards. */
+.sa-video-play--sm {
+  width: 54px;
+  height: 54px;
+  border-width: 1.5px;
+}
+
+.sa-video-play--sm .icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Subtle scrim on playable category thumbnails so the button reads clearly. */
+.sa-video-category--playable .sa-video-category__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(5, 11, 20, 0) 40%, rgba(5, 11, 20, .28) 100%);
+  opacity: 0;
+  transition: opacity .25s var(--sa-ease);
+  pointer-events: none;
+}
+
+.sa-video-category--playable:hover .sa-video-category__media::after,
+.sa-video-category--playable:focus-within .sa-video-category__media::after {
+  opacity: 1;
+}
+
 .sa-video-feature__duration {
   position: absolute;
   right: 16px;

@@ -1295,24 +1295,39 @@
   }
 
   function initHeroVideo() {
-    const trigger = document.querySelector('[data-hero-video-open]');
     const dialog = document.querySelector('[data-hero-video-dialog]');
-    if (!(trigger instanceof HTMLButtonElement) || !(dialog instanceof HTMLDialogElement)) return;
+    if (!(dialog instanceof HTMLDialogElement)) return;
 
     const closeButton = dialog.querySelector('[data-hero-video-close]');
     const frame = dialog.querySelector('[data-hero-video-frame]');
-    const videoSrc = dialog.dataset.videoSrc || '';
-    if (!(closeButton instanceof HTMLButtonElement) || !(frame instanceof HTMLIFrameElement) || !videoSrc) return;
+    if (!(closeButton instanceof HTMLButtonElement) || !(frame instanceof HTMLIFrameElement)) return;
+
+    // Multiple triggers can share one dialog: each carries its own
+    // data-video-src / data-video-title. A page with a single video (e.g. the
+    // home hero) may instead put data-video-src on the dialog itself.
+    const triggers = Array.from(document.querySelectorAll('[data-hero-video-open]'))
+      .filter((el) => el instanceof HTMLButtonElement);
+    if (!triggers.length) return;
+
+    const titleEl = dialog.querySelector('[data-hero-video-title]');
+    const defaultTitle = titleEl ? titleEl.textContent : '';
+    let activeTrigger = null;
 
     const closeVideo = () => {
       if (dialog.open) dialog.close();
     };
 
-    trigger.addEventListener('click', () => {
-      frame.src = videoSrc;
-      dialog.showModal();
-      document.body.classList.add('hero-video-open');
-      closeButton.focus({ preventScroll: true });
+    triggers.forEach((trigger) => {
+      trigger.addEventListener('click', () => {
+        const src = trigger.dataset.videoSrc || dialog.dataset.videoSrc || '';
+        if (!src) return;
+        frame.src = src;
+        if (titleEl) titleEl.textContent = trigger.dataset.videoTitle || defaultTitle;
+        activeTrigger = trigger;
+        dialog.showModal();
+        document.body.classList.add('hero-video-open');
+        closeButton.focus({ preventScroll: true });
+      });
     });
 
     closeButton.addEventListener('click', closeVideo);
@@ -1326,7 +1341,7 @@
     dialog.addEventListener('close', () => {
       frame.removeAttribute('src');
       document.body.classList.remove('hero-video-open');
-      trigger.focus({ preventScroll: true });
+      if (activeTrigger) activeTrigger.focus({ preventScroll: true });
     });
   }
 
