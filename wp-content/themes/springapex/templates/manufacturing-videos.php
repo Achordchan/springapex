@@ -6,10 +6,25 @@ if (!defined('ABSPATH')) {
 $video_page = springapex_get('manufacturing_videos', []);
 $featured = is_array($video_page['featured'] ?? null) ? $video_page['featured'] : [];
 $categories = is_array($video_page['categories'] ?? null) ? $video_page['categories'] : [];
-$youtube_id = trim((string) ($featured['youtube_id'] ?? ''));
-$video_src = $youtube_id !== ''
-    ? 'https://www.youtube.com/embed/' . rawurlencode($youtube_id) . '?autoplay=1&rel=0'
-    : '';
+
+$video_embed = static function (mixed $id): string {
+    $id = trim((string) $id);
+    return $id !== ''
+        ? 'https://www.youtube.com/embed/' . rawurlencode($id) . '?autoplay=1&rel=0'
+        : '';
+};
+
+$video_src = $video_embed($featured['youtube_id'] ?? '');
+// The shared dialog is only needed when at least one video (featured or a
+// category) can actually play.
+$has_any_video = $video_src !== '';
+foreach ($categories as $category) {
+    if ($video_embed($category['youtube_id'] ?? '') !== '') {
+        $has_any_video = true;
+        break;
+    }
+}
+$dialog_default_title = (string) ($featured['title'] ?? 'NorenSpring Manufacturing');
 ?>
 
 <div class="sa-manufacturing-videos">
@@ -52,7 +67,10 @@ $video_src = $youtube_id !== ''
           <h2><?php echo esc_html((string) ($featured['title'] ?? 'From Wire to Verified Performance')); ?></h2>
         </div>
         <?php if ($video_src !== '') : ?>
-          <button class="sa-video-play" type="button" data-hero-video-open aria-label="<?php echo esc_attr(sprintf(__('Play %s', 'springapex'), (string) ($featured['title'] ?? 'manufacturing video'))); ?>">
+          <button class="sa-video-play" type="button" data-hero-video-open
+                  data-video-src="<?php echo esc_url($video_src); ?>"
+                  data-video-title="<?php echo esc_attr((string) ($featured['title'] ?? 'NorenSpring manufacturing video')); ?>"
+                  aria-label="<?php echo esc_attr(sprintf(__('Play %s', 'springapex'), (string) ($featured['title'] ?? 'manufacturing video'))); ?>">
             <?php echo springapex_icon('youtube', 'icon'); ?>
           </button>
         <?php endif; ?>
@@ -63,15 +81,27 @@ $video_src = $youtube_id !== ''
 
       <div class="sa-video-categories" data-reveal-group>
         <?php foreach ($categories as $category) : ?>
-          <?php $category_id = sanitize_title((string) ($category['title'] ?? '')); ?>
-          <article class="sa-video-category"<?php echo $category_id !== '' ? ' id="' . esc_attr($category_id) . '"' : ''; ?>>
+          <?php
+          $category_id = sanitize_title((string) ($category['title'] ?? ''));
+          $category_src = $video_embed($category['youtube_id'] ?? '');
+          $category_title = (string) ($category['title'] ?? '');
+          ?>
+          <article class="sa-video-category<?php echo $category_src !== '' ? ' sa-video-category--playable' : ''; ?>"<?php echo $category_id !== '' ? ' id="' . esc_attr($category_id) . '"' : ''; ?>>
             <figure class="sa-video-category__media">
-              <?php echo springapex_image((string) ($category['image'] ?? ''), (string) ($category['title'] ?? ''), [
+              <?php echo springapex_image((string) ($category['image'] ?? ''), $category_title, [
                   'class' => 'sa-video-category__image',
                   'width' => 720,
                   'height' => 480,
                   'sizes' => '(max-width: 640px) 100vw, (max-width: 1020px) 50vw, 22vw',
               ]); ?>
+              <?php if ($category_src !== '') : ?>
+                <button class="sa-video-play sa-video-play--sm" type="button" data-hero-video-open
+                        data-video-src="<?php echo esc_url($category_src); ?>"
+                        data-video-title="<?php echo esc_attr($category_title !== '' ? $category_title : 'NorenSpring manufacturing video'); ?>"
+                        aria-label="<?php echo esc_attr(sprintf(__('Play %s', 'springapex'), $category_title !== '' ? $category_title : 'manufacturing video')); ?>">
+                  <?php echo springapex_icon('youtube', 'icon'); ?>
+                </button>
+              <?php endif; ?>
               <?php if (trim((string) ($category['duration'] ?? '')) !== '') : ?>
                 <span class="sa-video-category__duration"><?php echo esc_html((string) $category['duration']); ?></span>
               <?php endif; ?>
@@ -86,17 +116,16 @@ $video_src = $youtube_id !== ''
   </section>
 </div>
 
-<?php if ($video_src !== '') : ?>
+<?php if ($has_any_video) : ?>
   <dialog
     class="sa-video-dialog"
     id="manufacturing-video-dialog"
     data-hero-video-dialog
-    data-video-src="<?php echo esc_url($video_src); ?>"
     aria-labelledby="manufacturing-video-dialog-title"
   >
     <div class="sa-video-dialog__shell">
       <div class="sa-video-dialog__header">
-        <h2 id="manufacturing-video-dialog-title"><?php echo esc_html((string) ($featured['title'] ?? 'NorenSpring Manufacturing')); ?></h2>
+        <h2 id="manufacturing-video-dialog-title" data-hero-video-title><?php echo esc_html($dialog_default_title); ?></h2>
         <button class="sa-video-dialog__close" type="button" data-hero-video-close aria-label="<?php esc_attr_e('Close video', 'springapex'); ?>">
           <?php echo springapex_icon('close', 'icon'); ?>
         </button>
