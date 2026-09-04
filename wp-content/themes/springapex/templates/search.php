@@ -68,22 +68,40 @@ if ($needle !== '') {
         }
     }
 }
+
+// Raw (unescaped) term for the editable input value, so re-searching keeps the
+// exact text the visitor typed rather than an entity-encoded copy of it.
+$query_input = defined('SPRINGAPEX_PREVIEW')
+    ? $query
+    : (function_exists('get_search_query') ? get_search_query(false) : $query);
+$search_action = springapex_url('/search/');
 ?>
 
 <section class="sa-search-hero">
   <div class="container container-wide sa-search-hero__inner">
     <div class="sa-search-hero__intro">
-      <p class="sa-search-hero__kicker"><?php echo $query === '' ? 'SITE DIRECTORY' : 'SEARCH RESULTS'; ?></p>
+      <p class="sa-search-hero__kicker">
+        <?php if ($query === '') : ?>Site directory<?php elseif ($matches) : ?>Search results<?php else : ?>No matches<?php endif; ?>
+      </p>
       <?php if ($query === '') : ?>
         <h1 class="sa-search-hero__title">Explore NorenSpring.</h1>
-        <p class="sa-search-hero__subtitle">Use the search button in the header or browse the main product, industry and custom manufacturing routes below.</p>
+        <p class="sa-search-hero__subtitle">Search across products, industries, resources and company information — or browse the main routes below.</p>
       <?php elseif ($matches) : ?>
         <h1 class="sa-search-hero__title">Results for “<?php echo esc_html($query); ?>”</h1>
-        <p class="sa-search-hero__subtitle"><?php echo esc_html((string) count($matches)); ?> matching pages across products, industries, resources and company information.</p>
+        <p class="sa-search-hero__subtitle"><strong><?php echo esc_html((string) count($matches)); ?></strong> matching <?php echo count($matches) === 1 ? 'page' : 'pages'; ?> across products, industries, resources and company information.</p>
       <?php else : ?>
         <h1 class="sa-search-hero__title">No results for “<?php echo esc_html($query); ?>”</h1>
-        <p class="sa-search-hero__subtitle">Try a broader term from the header search or send the application requirements directly to our team.</p>
+        <p class="sa-search-hero__subtitle">Try a broader term, or send your application requirements directly to our engineers.</p>
       <?php endif; ?>
+
+      <form class="sa-search-hero__form" action="<?php echo esc_url($search_action); ?>" method="get" role="search">
+        <span class="sa-search-hero__form-icon" aria-hidden="true"><?php echo springapex_icon('search', 'icon'); ?></span>
+        <label class="sr-only" for="sa-search-refine"><?php esc_html_e('Search products, industries and resources', 'springapex'); ?></label>
+        <input id="sa-search-refine" class="sa-search-hero__input" type="search" name="s" value="<?php echo esc_attr($query_input); ?>" placeholder="<?php esc_attr_e('Search products, industries, resources…', 'springapex'); ?>" autocomplete="off" <?php echo $query === '' ? 'autofocus' : ''; ?>>
+        <button class="sa-search-hero__submit" type="submit">
+          <span><?php esc_html_e('Search', 'springapex'); ?></span><?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+        </button>
+      </form>
     </div>
   </div>
 </section>

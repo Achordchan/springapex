@@ -192,3 +192,19 @@
     gap: 26px;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Product detail: show content immediately, don't gate it behind scroll.
+   The site-wide scroll reveal (foundation.css: `.js [data-reveal]{opacity:0}`)
+   leaves the tall below-fold product sections blank until each one scrolls
+   into view, which reads as "nothing loaded down there". On a spec/detail page
+   the content should simply be present, so the hidden state is neutralised for
+   this route only — other pages keep their reveal animation. The `.js` prefix
+   matches the base rule's specificity so this wins regardless of load order;
+   reduced-motion users already saw everything.
+   -------------------------------------------------------------------------- */
+.js .sa-route-product [data-reveal],
+.js .sa-route-product [data-reveal-group] > * {
+  opacity: 1;
+  transform: none;
+}
