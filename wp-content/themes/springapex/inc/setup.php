@@ -198,6 +198,42 @@ add_action('template_redirect', static function (): void {
     exit;
 }, 9);
 
+// The header search form submits GET to /search/, producing /search/?s=term.
+// WordPress' native search only matches /search/<term>/ or /?s=term, so the
+// bare /search/ path (empty submit, or ?s= in the query string) falls through
+// every rewrite rule and 404s. Serve it from the theme with the same 404-catch
+// pattern as /success/ above: no seeded page, no rewrite flush, and an
+// operator's own /search/ page (if any) still wins because it resolves before
+// this handler ever sees a 404. Native /search/<term>/ and /?s=term keep
+// working untouched — they never reach here (is_404() is false).
+add_action('template_redirect', static function (): void {
+    if (is_admin() || !is_404()) {
+        return;
+    }
+    $request_path = trim((string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH), '/');
+    $search_path = trim((string) parse_url(home_url('/search/'), PHP_URL_PATH), '/');
+    if ($search_path === '' || $request_path !== $search_path) {
+        return;
+    }
+    $term = isset($_GET['s']) && is_scalar($_GET['s']) ? trim((string) wp_unslash($_GET['s'])) : '';
+
+    // Reset the 404 flags and mark the main query as a search so is_search()
+    // drives the route (search-page.css, SEO noindex) and get_search_query()
+    // returns the term for the template. An empty term renders the directory
+    // browse view, exactly like the SITE DIRECTORY landing state.
+    global $wp_query;
+    $wp_query->is_404 = false;
+    $wp_query->is_search = true;
+    $wp_query->set('s', $term);
+    $wp_query->query_vars['s'] = $term;
+
+    status_header(200);
+    get_header();
+    get_template_part('templates/search');
+    get_footer();
+    exit;
+}, 9);
+
 add_action('wp_head', static function (): void {
     if (is_admin()) {
         return;
