@@ -104,9 +104,16 @@ add_action('wp_enqueue_scripts', static function (): void {
     }
 
     wp_enqueue_script(
+        'springapex-inquiry-tracking',
+        SPRINGAPEX_URI . '/assets/js/inquiry-tracking.js',
+        [],
+        SPRINGAPEX_VERSION,
+        ['strategy' => 'defer', 'in_footer' => true]
+    );
+    wp_enqueue_script(
         'springapex-main',
         SPRINGAPEX_URI . '/assets/js/main.js',
-        [],
+        ['springapex-inquiry-tracking'],
         SPRINGAPEX_VERSION,
         ['strategy' => 'defer', 'in_footer' => true]
     );
@@ -160,7 +167,7 @@ add_action('wp_enqueue_scripts', static function (): void {
         'contactEmail' => $brand['email'] ?? '',
         // 第三方 CAPTCHA 不进入首屏关键路径；main.js 在用户接近表单时加载。
         'turnstileUrl' => 'https://challenges.cloudflare.com/turnstile/v0/api.js',
-        // 非弹窗表单提交成功后跳转的落地页，用于转化统计。
+        // 非弹窗表单的成功确认页；转化由提交成功响应触发，不能按页面访问统计。
         'successUrl' => home_url('/success/'),
     ]);
 });

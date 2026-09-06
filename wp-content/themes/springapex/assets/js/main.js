@@ -1113,6 +1113,10 @@
             : 'Unable to submit right now.';
           throw new Error(message);
         }
+        // 所有表单只在服务端确认保存成功后上报；不得监听按钮点击或成功页访问。
+        const trackingDone = typeof window.NorenSpringInquiryTracking === 'function'
+          ? window.NorenSpringInquiryTracking(payload.data?.inquiry)
+          : Promise.resolve();
         const successMode = form.dataset.success || 'redirect';
         if (successMode === 'inline') {
           // Quick inquiry widget: stay in the popup and swap the form for an
@@ -1134,9 +1138,9 @@
             syncDrawingUpload();
           }
         } else {
-          // Every other form redirects to the /success landing page so the
-          // conversion is trackable by URL. Do it before the form resets.
+          // 给 GTM 短暂的发送窗口；统计被拦截时也必须进入成功页。
           const successUrl = config.successUrl || (config.homeUrl ? `${config.homeUrl}success/` : '/success/');
+          await trackingDone;
           window.location.assign(successUrl);
           return;
         }
