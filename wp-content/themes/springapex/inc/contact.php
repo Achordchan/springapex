@@ -31,7 +31,7 @@ function springapex_handle_contact_ajax(): void
         );
     }
 
-    wp_send_json_success(['message' => $result['message']]);
+    wp_send_json_success(['message' => $result['message'], 'inquiry' => $result['inquiry']]);
 }
 
 function springapex_handle_contact_post(): void
@@ -61,7 +61,7 @@ function springapex_handle_contact_post(): void
         springapex_redirect_contact_status($status);
     }
 
-    // 提交成功统一落到 /success 落地页（含无 JS 回退），便于转化统计。
+    // 提交成功统一落到 /success 确认页（含无 JS 回退）。页面访问不作为转化凭据。
     // 邮件即便未即时发出（saved），询盘也已保存，对访客而言同样是成功。
     wp_safe_redirect(springapex_url('/success/'), 303);
     exit;
@@ -501,6 +501,12 @@ function springapex_process_contact_submission(): array|WP_Error
     $brand = springapex_brand();
     return [
         'sent' => $sent,
+        // 只在询盘及附件保存成功后返回凭据；不暴露后台自增 ID 或客户资料。
+        // 邮件发送失败不撤销已经保存的有效询盘。
+        'inquiry' => [
+            'conversion_id' => hash_hmac('sha256', 'inquiry:' . $inquiry_id, wp_salt('auth')),
+            'form_context' => $form_context,
+        ],
         'message' => $sent
             ? __('Thank you. Your request has been received.', 'springapex')
             : sprintf(__('Thank you. Your request is saved; you may also email %s.', 'springapex'), $brand['email'] ?? ''),
