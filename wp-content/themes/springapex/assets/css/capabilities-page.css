@@ -59,16 +59,6 @@
   box-shadow: none;
 }
 
-.sa-route-capabilities .sa-process-detail__grid li::before {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  height: 3px;
-  background: var(--sa-primary);
-  content: "";
-}
-
 .sa-route-capabilities .sa-process-detail__top {
   display: flex;
   align-items: center;
