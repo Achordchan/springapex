@@ -102,9 +102,23 @@ function springapex_rest_count_news_view(WP_REST_Request $request): WP_REST_Resp
         return new WP_Error('springapex_news_not_found', 'News item not found.', ['status' => 404]);
     }
 
-    $counted = (bool) $request['count']
-        && springapex_news_view_countable($post_id)
-        && springapex_news_view_increment($post_id);
+    $counted = false;
+    if ((bool) $request['count']) {
+        $claim = springapex_news_view_claim($post_id);
+        if ($claim['status'] === 'failed') {
+            return springapex_news_views_unavailable();
+        }
+        if ($claim['status'] === 'claimed') {
+            if (!springapex_news_view_increment($post_id)) {
+                // 名额占了却没算成：退回名额，访客下次打开还能算上。
+                if ($claim['key'] !== '') {
+                    delete_transient($claim['key']);
+                }
+                return springapex_news_views_unavailable();
+            }
+            $counted = true;
+        }
+    }
 
     // 只回合计，不回基准数和真实阅读各是多少。
     $response = new WP_REST_Response([
@@ -117,54 +131,70 @@ function springapex_rest_count_news_view(WP_REST_Request $request): WP_REST_Resp
 }
 
 /**
- * 在 MySQL 命名锁里执行 $callback；等不到锁（超时或出错）返回 false，调用方
- * 按「不计数」处理。锁在数据库服务器上，跨 PHP 进程有效，与对象缓存用什么
- * 后端无关。锁名是服务器级的，带上库名和表前缀，免得和同一台 MySQL 上的
- * 其他站点撞名（MySQL 限 64 字符）。
+ * 该算却没算成（等不到锁、写不进数据库）时的响应。与「按规则不算」区分开：
+ * 这里回错误，浏览器不记时间，下次打开会重试。
  */
-function springapex_news_views_locked(string $name, int $timeout, callable $callback): bool
+function springapex_news_views_unavailable(): WP_Error
+{
+    return new WP_Error('springapex_news_views_unavailable', 'View count is temporarily unavailable.', ['status' => 503]);
+}
+
+/**
+ * 在 MySQL 命名锁里执行 $callback 并返回它的结果；等不到锁（超时或出错）
+ * 返回 null。锁在数据库服务器上，跨 PHP 进程有效，与对象缓存用什么后端
+ * 无关。锁名是服务器级的，带上库名和表前缀，免得和同一台 MySQL 上的其他
+ * 站点撞名（MySQL 限 64 字符）。
+ */
+function springapex_news_views_locked(string $name, int $timeout, callable $callback): mixed
 {
     global $wpdb;
 
     $lock = 'sa_nv:' . md5(DB_NAME . '|' . $wpdb->prefix . '|' . $name);
     if ((string) $wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, %d)', $lock, $timeout)) !== '1') {
-        return false;
+        return null;
     }
     try {
-        return (bool) $callback();
+        return $callback();
     } finally {
         $wpdb->query($wpdb->prepare('SELECT RELEASE_LOCK(%s)', $lock));
     }
 }
 
-function springapex_news_view_countable(int $post_id): bool
+/**
+ * 为这次访问占计数名额。status：
+ * - skipped：按规则不算（登录、爬虫、同一 IP 10 分钟内已算过）；
+ * - failed：该算但没占成（等不到锁、写不进去），由调用方回错误让浏览器重试；
+ * - claimed：占到了；key 是名额的 transient 键（拿不到 IP 时为空），计数失败时凭它退回。
+ *
+ * @return array{status: 'claimed'|'skipped'|'failed', key: string}
+ */
+function springapex_news_view_claim(int $post_id): array
 {
     // 前台请求不带 REST nonce，登录用户在这里本来就是匿名的；这一条挡的是
     // 用应用密码调接口的工具。
-    if (is_user_logged_in()) {
-        return false;
-    }
-    if (springapex_news_view_is_crawler((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''))) {
-        return false;
+    if (is_user_logged_in() || springapex_news_view_is_crawler((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''))) {
+        return ['status' => 'skipped', 'key' => ''];
     }
 
     // REMOTE_ADDR 已由 Nginx 按 CloudFront 回源地址还原成真实访客 IP
     //（deploy/springapex-cloudfront-real-ip-update）。只存 IP 的散列，10 分钟后过期。
     $ip = filter_var((string) ($_SERVER['REMOTE_ADDR'] ?? ''), FILTER_VALIDATE_IP);
     if (!is_string($ip) || $ip === '') {
-        return true;
+        return ['status' => 'claimed', 'key' => ''];
     }
     $key = 'sa_nv_' . substr(hash_hmac('sha256', $ip . '|' . $post_id, wp_salt('auth')), 0, 40);
 
     // 查和占必须在同一把锁里：同一 IP 同时开几个标签页（或脚本并发）时，
     // 只有第一个能占到这 10 分钟的名额。
-    return springapex_news_views_locked('ip:' . $key, 3, static function () use ($key): bool {
+    $status = springapex_news_views_locked('ip:' . $key, 3, static function () use ($key): string {
         if (get_transient($key) !== false) {
-            return false;
+            return 'skipped';
         }
 
-        return set_transient($key, 1, SPRINGAPEX_NEWS_VIEWS_IP_WINDOW);
+        return set_transient($key, 1, SPRINGAPEX_NEWS_VIEWS_IP_WINDOW) ? 'claimed' : 'failed';
     });
+
+    return ['status' => is_string($status) ? $status : 'failed', 'key' => $key];
 }
 
 /** 空 User-Agent、常见爬虫、链接预览、监控和脚本客户端都不算阅读。 */
@@ -182,8 +212,8 @@ function springapex_news_view_is_crawler(string $user_agent): bool
 }
 
 /**
- * 真实阅读 +1。用一条 UPDATE 原子累加，不走「读出来加一再写回」，同时到达的
- * 两个请求不会互相覆盖。
+ * 真实阅读 +1；返回 false 表示没写进去（数据库出错或等不到建行的锁）。用一条
+ * UPDATE 原子累加，不走「读出来加一再写回」，同时到达的两个请求不会互相覆盖。
  */
 function springapex_news_view_increment(int $post_id): bool
 {
@@ -205,7 +235,7 @@ function springapex_news_view_increment(int $post_id): bool
 
             return (bool) add_post_meta($post_id, SPRINGAPEX_NEWS_VIEWS_META, 1, true);
         });
-        if (!$initialized) {
+        if ($initialized !== true) {
             return false;
         }
     }

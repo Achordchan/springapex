@@ -11,7 +11,9 @@
   'use strict';
 
   const WINDOW_MS = 24 * 60 * 60 * 1000;
-  const STORAGE_KEY = 'springapex-news-views';
+  // 每篇一个键：几个标签页同时读完不同文章，各写各的，不会互相覆盖。
+  // 键的个数以文章篇数为上限，过期的留着无害，不做清理。
+  const STORAGE_PREFIX = 'springapex-news-view:';
 
   const counter = document.querySelector('[data-news-views-url]');
   if (!counter || window.navigator.webdriver) return;
@@ -21,29 +23,18 @@
   if (!id || !url) return;
 
   const now = Date.now();
+  const storageKey = STORAGE_PREFIX + id;
 
   // 隐私模式等场景下 localStorage 不可用：照常计数，交给服务器的 IP 兜底。
-  const readSeen = () => {
-    try {
-      const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || '{}');
-      return stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
-    } catch (error) {
-      return {};
-    }
-  };
-
-  const last = Number(readSeen()[id]) || 0;
+  let last = 0;
+  try {
+    last = Number(window.localStorage.getItem(storageKey)) || 0;
+  } catch (error) { /* 读不了就当没记过 */ }
   const shouldCount = !(last > now - WINDOW_MS && last <= now);
 
   const remember = () => {
-    const seen = readSeen();
-    Object.keys(seen).forEach((key) => {
-      const time = Number(seen[key]);
-      if (!(time > now - WINDOW_MS && time <= now)) delete seen[key];
-    });
-    seen[id] = now;
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(seen));
+      window.localStorage.setItem(storageKey, String(now));
     } catch (error) { /* 同上：存不了就不存 */ }
   };
 
@@ -64,8 +55,9 @@
     .then((response) => (response.ok ? response.json() : null))
     .then((data) => {
       if (!data) return;
-      // 服务器按 IP 兜底没算这一次时也记下：这个浏览器本窗口内已经请求过。
-      // 只取合计的请求不记，免得每次打开都把 24 小时窗口往后顺延。
+      // 服务器按规则没算（如同一 IP 10 分钟内已算过）也记下：这个浏览器本窗口
+      // 内已经请求过。没算成（接口出错）走不到这里，下次打开会重试。只取合计的
+      // 请求不记，免得每次打开都把 24 小时窗口往后顺延。
       if (shouldCount) remember();
       const total = data.total;
       const label = counter.querySelector('[data-news-views-label]');
