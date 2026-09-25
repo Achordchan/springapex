@@ -32,6 +32,7 @@ require_once SPRINGAPEX_DIR . '/inc/admin/form-settings.php';
 require_once SPRINGAPEX_DIR . '/inc/admin/row-editor.php';
 require_once SPRINGAPEX_DIR . '/inc/solution-meta.php';
 require_once SPRINGAPEX_DIR . '/inc/news-meta.php';
+require_once SPRINGAPEX_DIR . '/inc/rest-meta.php';
 require_once SPRINGAPEX_DIR . '/inc/form-schema.php';
 require_once SPRINGAPEX_DIR . '/inc/s3-storage.php';
 require_once SPRINGAPEX_DIR . '/inc/system-status.php';
