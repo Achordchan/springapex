@@ -641,16 +641,57 @@ function springapex_product_from_post(object $post): array
     ]);
 }
 
-function springapex_product_for_view(int $post_id): ?array
+/**
+ * The post a single-{type} template should render: the main query's own post.
+ *
+ * Looking the post up again by slug with post_status=publish (as these
+ * templates used to) breaks previews — drafts usually have no post_name yet and
+ * are not published — and a fresh get_post() would return the saved row rather
+ * than the autosave WordPress swaps in for "Preview changes". WP_Query already
+ * only returns a non-public post on a preview request by a user who can edit
+ * it, and applies the autosave through `the_preview`; the read_post check here
+ * keeps the helper safe should that gate ever be loosened by a plugin.
+ */
+function springapex_singular_post_for_view(string $post_type): ?object
+{
+    if (
+        defined('SPRINGAPEX_PREVIEW') ||
+        !function_exists('is_singular') ||
+        !is_singular($post_type)
+    ) {
+        return null;
+    }
+
+    $post = get_queried_object();
+    if (!is_object($post) || !isset($post->ID) || (string) ($post->post_type ?? '') !== $post_type) {
+        return null;
+    }
+
+    if (
+        (string) $post->post_status !== 'publish' &&
+        !current_user_can('read_post', (int) $post->ID)
+    ) {
+        return null;
+    }
+
+    return $post;
+}
+
+/**
+ * @param int|object $post Post ID, or the queried post object so a preview
+ *                         keeps its autosaved title/content/excerpt.
+ */
+function springapex_product_for_view(int|object $post): ?array
 {
     if (!function_exists('get_post')) {
         return null;
     }
 
-    $post = get_post($post_id);
+    $post = is_object($post) ? $post : get_post($post);
     if (!$post || (string) $post->post_type !== 'spring_product') {
         return null;
     }
+    $post_id = (int) $post->ID;
 
     if (function_exists('post_password_required') && post_password_required($post)) {
         return null;
@@ -795,32 +836,51 @@ function springapex_solutions(): array
         'orderby' => ['menu_order' => 'ASC', 'title' => 'ASC'],
     ]);
 
-    return array_map(static function (object $post): array {
-        $seed_items = springapex_get('solutions.items', []);
-        $seed = [];
-        foreach ($seed_items as $item) {
-            if (($item['slug'] ?? '') === $post->post_name) {
-                $seed = $item;
-                break;
-            }
+    return array_map('springapex_solution_from_post', $posts ?: []);
+}
+
+function springapex_solution_from_post(object $post): array
+{
+    $seed_items = springapex_get('solutions.items', []);
+    $seed = [];
+    foreach ($seed_items as $item) {
+        if (($item['slug'] ?? '') === $post->post_name) {
+            $seed = $item;
+            break;
         }
+    }
 
-        $post_id = (int) $post->ID;
-        $seed_image = metadata_exists('post', $post_id, '_springapex_seed_image')
-            ? get_post_meta($post_id, '_springapex_seed_image', true)
-            : ($seed['image'] ?? '');
+    $post_id = (int) $post->ID;
+    $seed_image = metadata_exists('post', $post_id, '_springapex_seed_image')
+        ? get_post_meta($post_id, '_springapex_seed_image', true)
+        : ($seed['image'] ?? '');
 
-        return array_merge($seed, [
-            'id' => $post_id,
-            'slug' => (string) $post->post_name,
-            'title' => get_the_title($post),
-            'tagline' => (string) ($post->post_excerpt ?? ''),
-            'image' => [
-                'id' => (int) get_post_thumbnail_id($post),
-                'file' => (string) $seed_image,
-            ],
-        ]);
-    }, $posts ?: []);
+    return array_merge($seed, [
+        'id' => $post_id,
+        'slug' => (string) $post->post_name,
+        'title' => get_the_title($post),
+        'tagline' => (string) ($post->post_excerpt ?? ''),
+        'image' => [
+            'id' => (int) get_post_thumbnail_id($post),
+            'file' => (string) $seed_image,
+        ],
+    ]);
+}
+
+/**
+ * Listing fields plus the detail-page sections (seed defaults by slug, then
+ * whatever the operator saved on the post).
+ */
+function springapex_solution_detail_from_post(object $post): array
+{
+    $solution = springapex_solution_from_post($post);
+    $slug = (string) $solution['slug'];
+    $details = $slug !== '' ? springapex_get('solution_details.' . $slug, []) : [];
+    if (function_exists('springapex_solution_saved_details')) {
+        $details = springapex_solution_saved_details((int) $post->ID, is_array($details) ? $details : []);
+    }
+
+    return array_merge($solution, is_array($details) ? $details : []);
 }
 
 function springapex_case_seed(string $slug): ?array
