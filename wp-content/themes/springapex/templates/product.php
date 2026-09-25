@@ -5,14 +5,17 @@ if (!defined('ABSPATH')) {
 
 $slug = '';
 $product = null;
-if (!defined('SPRINGAPEX_PREVIEW') && function_exists('is_singular') && is_singular('spring_product')) {
-    $post_id = (int) get_queried_object_id();
-    $slug = (string) get_post_field('post_name', $post_id);
-    if (function_exists('post_password_required') && post_password_required($post_id)) {
-        echo '<section class="section"><div class="container">' . get_the_password_form($post_id) . '</div></section>';
+// The queried post object (not its ID) so a "Preview changes" request keeps
+// the autosaved title/content WordPress swapped in; drafts already reach here
+// only for users who can edit them.
+$product_post = springapex_singular_post_for_view('spring_product');
+if ($product_post) {
+    $slug = (string) $product_post->post_name;
+    if (function_exists('post_password_required') && post_password_required($product_post)) {
+        echo '<section class="section"><div class="container">' . get_the_password_form($product_post) . '</div></section>';
         return;
     }
-    $product = springapex_product_for_view($post_id);
+    $product = springapex_product_for_view($product_post);
 }
 if ($slug === '' && defined('SPRINGAPEX_PREVIEW') && function_exists('get_query_var')) {
     $slug = (string) get_query_var('product_slug');

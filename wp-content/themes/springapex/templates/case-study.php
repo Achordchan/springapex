@@ -5,10 +5,12 @@ if (!defined('ABSPATH')) {
 
 $slug = '';
 $case = null;
-if (!defined('SPRINGAPEX_PREVIEW') && function_exists('is_singular') && is_singular('spring_case')) {
-    $post_id = (int) get_queried_object_id();
-    $slug = (string) get_post_field('post_name', $post_id);
-    $case = springapex_case($slug);
+// The queried post itself, not a publish-only slug lookup, so a logged-in
+// editor's draft / "Preview changes" autosave renders here too.
+$case_post = springapex_singular_post_for_view('spring_case');
+if ($case_post) {
+    $slug = (string) $case_post->post_name;
+    $case = springapex_case_from_post($case_post);
 }
 if ($slug === '' && defined('SPRINGAPEX_PREVIEW')) {
     $slug = (string) get_query_var('case_slug', '');

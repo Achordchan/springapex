@@ -811,17 +811,18 @@ function springapex_solution(string $slug): ?array
         return springapex_solution_seed($slug);
     }
 
-    foreach (springapex_solutions() as $solution) {
-        if ((string) ($solution['slug'] ?? '') === $slug) {
-            $details = springapex_get('solution_details.' . $slug, []);
-            if (!empty($solution['id']) && function_exists('springapex_solution_saved_details')) {
-                $details = springapex_solution_saved_details((int) $solution['id'], $details);
-            }
-            return array_merge($solution, $details);
-        }
+    if (!function_exists('get_posts') || !post_type_exists('spring_solution')) {
+        return null;
     }
 
-    return null;
+    $posts = get_posts([
+        'name' => $slug,
+        'post_type' => 'spring_solution',
+        'post_status' => 'publish',
+        'posts_per_page' => 1,
+    ]);
+
+    return isset($posts[0]) ? springapex_solution_detail_from_post((object) $posts[0]) : null;
 }
 
 if (!function_exists('springapex_url')) {
