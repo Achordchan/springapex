@@ -117,6 +117,15 @@ add_action('wp_enqueue_scripts', static function (): void {
         SPRINGAPEX_VERSION,
         ['strategy' => 'defer', 'in_footer' => true]
     );
+    if ($route === 'news-single') {
+        wp_enqueue_script(
+            'springapex-news-views',
+            SPRINGAPEX_URI . '/assets/js/news-views.js',
+            [],
+            SPRINGAPEX_VERSION,
+            ['strategy' => 'defer', 'in_footer' => true]
+        );
+    }
     if (in_array($route, ['product', 'capabilities'], true)) {
         wp_enqueue_script(
             'springapex-product-compression',

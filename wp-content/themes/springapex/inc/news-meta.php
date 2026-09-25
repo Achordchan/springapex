@@ -6,7 +6,8 @@
  * array, keyed by slug: the date caption and the related products in the
  * sidebar. None of them could be changed, and a newly written
  * article got none of them at all. The sidebar author card joined them later;
- * the authors themselves are entries of their own (inc/news-author.php).
+ * the authors themselves are entries of their own (inc/news-author.php). The
+ * view-count base is edited here too; real views live in inc/news-views.php.
  *
  * The product control lives in inc/product-picker.php, shared with the industry
  * solution meta box.
@@ -124,6 +125,21 @@ function springapex_render_news_display_meta_box(WP_Post $post): void
                   <a href="<?php echo esc_url($authors_url); ?>" target="_blank" rel="noopener">新闻 → 新闻作者</a>
                   添加一位（填姓名、职位，上传头像），刷新本页后就能在这里选到。</p>
             <?php endif; ?>
+          </div>
+
+          <div class="sa-pp__field">
+            <label for="springapex-news-views-base"><?php esc_html_e('阅读数基准', 'springapex'); ?></label>
+            <?php
+            $views_base = springapex_news_views_base($post_id);
+            $views_real = springapex_news_views_real($post_id);
+            ?>
+            <input class="sa-pp__number" type="number" min="0" max="<?php echo esc_attr((string) SPRINGAPEX_NEWS_VIEWS_BASE_MAX); ?>" step="1"
+                id="springapex-news-views-base" name="springapex_news_views_base"
+                value="<?php echo esc_attr((string) $views_base); ?>">
+            <p class="description">前台卡片和详情页显示的阅读数 = 这里的基准数 + 真实阅读。目前真实阅读
+                <strong><?php echo esc_html(number_format_i18n($views_real)); ?></strong>，前台显示
+                <strong><?php echo esc_html(number_format_i18n($views_base + $views_real)); ?></strong>。</p>
+            <p class="description">真实阅读由访客浏览自动累计，这里不能改：同一浏览器同一篇 24 小时内只算一次，登录后台的人和爬虫不算。</p>
           </div>
         </section>
 
@@ -363,6 +379,12 @@ add_action('save_post_spring_news', static function (int $post_id): void {
     update_post_meta($post_id, SPRINGAPEX_NEWS_AUTHOR_META, springapex_sanitize_news_author_id(
         springapex_admin_request_scalar($_POST['springapex_news_author'] ?? '')
     ));
+    // 只写基准数；真实阅读只由 inc/news-views.php 的计数接口累加，保存文章不碰它。
+    if (isset($_POST['springapex_news_views_base'])) {
+        update_post_meta($post_id, SPRINGAPEX_NEWS_VIEWS_BASE_META, springapex_sanitize_news_views_base(
+            springapex_admin_request_scalar($_POST['springapex_news_views_base'])
+        ));
+    }
 
     // Guarded by the picker's own presence marker rather than the box's nonce:
     // with no products in the site the picker renders nothing, and an unguarded

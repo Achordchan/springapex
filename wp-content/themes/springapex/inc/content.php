@@ -1056,6 +1056,11 @@ function springapex_news_from_post(object $post): array
         'author' => function_exists('springapex_news_author_profile')
             ? springapex_news_author_profile(springapex_news_author_meta($post_id))
             : null,
+        // Shown view count = preset base + real views (inc/news-views.php).
+        // Absent in the database-free preview, where the templates skip it.
+        'views' => function_exists('springapex_news_views_total')
+            ? springapex_news_views_total($post_id)
+            : 0,
     ]);
 }
 

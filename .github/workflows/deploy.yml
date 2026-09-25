@@ -55,6 +55,9 @@ jobs:
       - name: Verify inquiry success tracking
         run: node --test wp-content/themes/springapex/tests/inquiry-tracking.mjs
 
+      - name: Verify news view counting
+        run: node --test wp-content/themes/springapex/tests/news-views.mjs
+
       - name: Require a new version for changed CDN assets
         if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
         run: sh deploy/verify-asset-version-bump.sh "${{ github.event.before }}"
@@ -73,6 +76,7 @@ jobs:
           node --check wp-content/themes/springapex/assets/js/main.js
           node --check wp-content/themes/springapex/assets/js/product-compression.js
           node --check wp-content/themes/springapex/assets/js/row-editor.js
+          node --check wp-content/themes/springapex/assets/js/news-views.js
 
   release:
     name: Mark verified commit for production

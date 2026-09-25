@@ -432,6 +432,13 @@
   margin: 0;
 }
 
+/* 新闻阅读数基准（inc/news-meta.php） */
+
+.sa-pp__field input.sa-pp__number {
+  width: 12em;
+  max-width: 100%;
+}
+
 .sa-pp__date-custom {
   margin-top: 10px;
 }

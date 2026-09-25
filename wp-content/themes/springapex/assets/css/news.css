@@ -178,6 +178,20 @@
   font-size: 13px;
 }
 
+.sa-news-card__views {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--sa-text-3);
+  font-size: 13px;
+}
+
+.sa-news-card__views-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
 .sa-news-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
