@@ -71,3 +71,17 @@ add_action('add_meta_boxes', static function (): void {
         remove_meta_box('postcustom', $post_type, 'normal');
     }
 }, 20);
+
+// 正文和摘要：这几个类型把正文编辑器挪进了自己的面板（post-types.php 里去掉了
+// editor 支持），而 REST 只在类型支持 editor / excerpt 时才输出并接受
+// content / excerpt。只在真正的 REST 请求里补上支持：rest_api_init 也可能在
+// 后台页面内被触发，那时补 editor 会让经典编辑页多出一个核心正文框，
+// 与面板里的 wp_editor('content') 冲突。
+add_action('rest_api_init', static function (): void {
+    if (!defined('REST_REQUEST') || !REST_REQUEST) {
+        return;
+    }
+    foreach (['spring_product', 'spring_solution', 'spring_case', 'spring_news'] as $post_type) {
+        add_post_type_support($post_type, ['editor', 'excerpt']);
+    }
+});
