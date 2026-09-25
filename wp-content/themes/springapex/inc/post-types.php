@@ -134,6 +134,41 @@ function springapex_register_post_types(): void
         'query_var' => false,
     ]);
 
+    // 新闻详情页右侧的署名作者（inc/news-author.php）。没有自己的页面、不进
+    // 站内搜索和站点地图，只在被某篇新闻选中时以卡片出现；挂在「新闻」菜单下。
+    // 姓名是标题，头像用原生特色图像。
+    register_post_type('spring_news_author', [
+        'labels' => [
+            'name' => '新闻作者',
+            'singular_name' => '新闻作者',
+            'menu_name' => '新闻作者',
+            'all_items' => '新闻作者',
+            'add_new' => '添加作者',
+            'add_new_item' => '添加新闻作者',
+            'edit_item' => '编辑新闻作者',
+            'new_item' => '新闻作者',
+            'search_items' => '搜索作者',
+            'not_found' => '还没有新闻作者。',
+            'not_found_in_trash' => '回收站里没有新闻作者。',
+            'featured_image' => '头像',
+            'set_featured_image' => '上传头像',
+            'remove_featured_image' => '移除头像',
+            'use_featured_image' => '用作头像',
+        ],
+        'public' => false,
+        'publicly_queryable' => false,
+        'exclude_from_search' => true,
+        'show_ui' => true,
+        'show_in_menu' => 'edit.php?post_type=spring_news',
+        'show_in_nav_menus' => false,
+        'show_in_admin_bar' => false,
+        // 外部发布工具要先读到作者 ID，才能给新闻的 _springapex_news_author 赋值。
+        'show_in_rest' => true,
+        'rewrite' => false,
+        'query_var' => false,
+        'supports' => ['title', 'thumbnail'],
+    ]);
+
     register_post_type('spring_inquiry', [
         'labels' => [
             'name' => '客户询盘',

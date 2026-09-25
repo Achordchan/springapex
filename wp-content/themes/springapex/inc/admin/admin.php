@@ -172,6 +172,7 @@ function springapex_admin_overview_page(): void
         ['label' => '行业方案条目', 'desc' => '行业卡片以及每个行业的详细内容和配图。', 'url' => 'edit.php?post_type=spring_solution'],
         ['label' => '案例条目', 'desc' => '客户案例的正文、图片和相关产品。', 'url' => 'edit.php?post_type=spring_case'],
         ['label' => '新闻文章', 'desc' => '每篇新闻的正文、图集和所属类型。', 'url' => 'edit.php?post_type=spring_news'],
+        ['label' => '新闻作者', 'desc' => '新闻详情页右侧的作者卡片：姓名、职位、简介和头像。', 'url' => 'edit.php?post_type=spring_news_author'],
         ['label' => '客户询盘', 'desc' => '客户从联系页提交的询盘和附件。', 'url' => 'edit.php?post_type=spring_inquiry'],
         ['label' => '媒体库', 'desc' => '所有上传过的图片和文件。', 'url' => 'upload.php'],
         ['label' => 'SEO / TDK', 'desc' => '首页、静态页和列表页的搜索标题、描述与关键词。', 'url' => 'admin.php?page=springapex-content-seo'],

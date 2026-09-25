@@ -5,7 +5,8 @@
  * Values the news templates read but that used to exist only in the seed
  * array, keyed by slug: the date caption and the related products in the
  * sidebar. None of them could be changed, and a newly written
- * article got none of them at all.
+ * article got none of them at all. The sidebar author card joined them later;
+ * the authors themselves are entries of their own (inc/news-author.php).
  *
  * The product control lives in inc/product-picker.php, shared with the industry
  * solution meta box.
@@ -19,6 +20,7 @@ if (!defined('ABSPATH')) {
 
 const SPRINGAPEX_NEWS_PRODUCTS_META = '_springapex_news_products';
 const SPRINGAPEX_NEWS_DATE_LABEL_META = '_springapex_news_date_label';
+const SPRINGAPEX_NEWS_AUTHOR_META = '_springapex_news_author';
 
 add_action('add_meta_boxes_spring_news', static function (): void {
     add_meta_box(
@@ -92,6 +94,37 @@ function springapex_render_news_display_meta_box(WP_Post $post): void
             <p class="description">留空就按发布日期显示。日期会显示成
                 <code>June 17, 2024</code>（跨天自动写成 <code>June 17–20, 2024</code>）。</p>
           </div>
+
+          <div class="sa-pp__field">
+            <label for="springapex-news-author"><?php esc_html_e('作者', 'springapex'); ?></label>
+            <?php
+            $author_id = springapex_news_author_meta($post_id);
+            $author_choices = springapex_news_author_choices();
+            $authors_url = admin_url('edit.php?post_type=spring_news_author');
+            // 选中的作者已移入回收站或改回草稿：照原样列出并标明，保存时原值不动，
+            // 不然编辑一次新闻就把选择悄悄清掉了。彻底删除的作者无从还原，不再列出。
+            $author_stale = $author_id > 0
+                && !isset($author_choices[$author_id])
+                && get_post_type($author_id) === 'spring_news_author';
+            ?>
+            <select class="widefat" id="springapex-news-author" name="springapex_news_author">
+              <option value="0"><?php esc_html_e('不显示作者', 'springapex'); ?></option>
+              <?php foreach ($author_choices as $choice_id => $choice_label) : ?>
+                <option value="<?php echo esc_attr((string) $choice_id); ?>"<?php selected($author_id, $choice_id); ?>><?php echo esc_html($choice_label); ?></option>
+              <?php endforeach; ?>
+              <?php if ($author_stale) : ?>
+                <option value="<?php echo esc_attr((string) $author_id); ?>" selected><?php echo esc_html(sprintf('%s（未发布或已在回收站，前台不显示）', (string) get_post_field('post_title', $author_id))); ?></option>
+              <?php endif; ?>
+            </select>
+            <?php if ($author_choices) : ?>
+              <p class="description">选中的作者会显示在详情页右侧最上方：头像、姓名、职位和简介，不显示联系方式。作者和头像在
+                  <a href="<?php echo esc_url($authors_url); ?>" target="_blank" rel="noopener">新闻 → 新闻作者</a> 里添加和修改。</p>
+            <?php else : ?>
+              <p class="description">还没有作者。先到
+                  <a href="<?php echo esc_url($authors_url); ?>" target="_blank" rel="noopener">新闻 → 新闻作者</a>
+                  添加一位（填姓名、职位，上传头像），刷新本页后就能在这里选到。</p>
+            <?php endif; ?>
+          </div>
         </section>
 
         <section class="sa-pp__panel" data-pp-panel="products" role="tabpanel" hidden>
@@ -140,6 +173,12 @@ function springapex_news_meta_or_seed(int $post_id, string $meta_key, string $se
 function springapex_news_date_label_meta(int $post_id): string
 {
     return springapex_news_meta_or_seed($post_id, SPRINGAPEX_NEWS_DATE_LABEL_META, 'date_label');
+}
+
+/** 选中的作者 ID；0 = 不显示作者卡片。 */
+function springapex_news_author_meta(int $post_id): int
+{
+    return absint(get_post_meta($post_id, SPRINGAPEX_NEWS_AUTHOR_META, true));
 }
 
 function springapex_news_products_meta(int $post_id): array
@@ -321,6 +360,9 @@ add_action('save_post_spring_news', static function (int $post_id): void {
     }
 
     update_post_meta($post_id, SPRINGAPEX_NEWS_DATE_LABEL_META, springapex_news_date_label_from_submission());
+    update_post_meta($post_id, SPRINGAPEX_NEWS_AUTHOR_META, springapex_sanitize_news_author_id(
+        springapex_admin_request_scalar($_POST['springapex_news_author'] ?? '')
+    ));
 
     // Guarded by the picker's own presence marker rather than the box's nonce:
     // with no products in the site the picker renders nothing, and an unguarded

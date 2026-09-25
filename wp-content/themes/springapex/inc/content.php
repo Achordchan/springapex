@@ -1051,6 +1051,11 @@ function springapex_news_from_post(object $post): array
         'products' => function_exists('springapex_news_products_meta')
             ? springapex_news_products_meta($post_id)
             : (array) ($seed['products'] ?? []),
+        // Sidebar author card; null when none is picked or the author is not
+        // published (inc/news-author.php).
+        'author' => function_exists('springapex_news_author_profile')
+            ? springapex_news_author_profile(springapex_news_author_meta($post_id))
+            : null,
     ]);
 }
 

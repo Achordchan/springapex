@@ -38,6 +38,7 @@ foreach ((array) ($news_item['products'] ?? []) as $product_slug) {
 }
 
 $related = springapex_related_news($slug, 3);
+$author = is_array($news_item['author'] ?? null) ? $news_item['author'] : null;
 ?>
 <section class="sa-news-single-hero">
   <div class="container container-wide">
@@ -131,41 +132,78 @@ $related = springapex_related_news($slug, 3);
   </div>
 
   <aside class="sa-news-single-aside">
-    <?php if ($products) : ?>
-      <section class="sa-news-aside-card" aria-label="<?php esc_attr_e('Related products', 'springapex'); ?>">
-        <h2 class="sa-news-aside-card__title"><?php esc_html_e('Related products', 'springapex'); ?></h2>
-        <ul class="sa-news-aside-list">
-          <?php foreach ($products as $product) : ?>
-            <li class="sa-news-aside-item">
-              <a class="sa-news-aside-item__media" href="<?php echo esc_url(springapex_product_url($product)); ?>">
-                <?php echo springapex_image($product['image'] ?? '', (string) ($product['title'] ?? ''), [
-                    'width' => 160,
-                    'height' => 160,
-                    'sizes' => '72px',
-                ]); ?>
-              </a>
-              <div class="sa-news-aside-item__body">
-                <a href="<?php echo esc_url(springapex_product_url($product)); ?>"><?php echo esc_html((string) ($product['title'] ?? '')); ?></a>
-                <a class="sa-news-aside-item__link" href="<?php echo esc_url(springapex_product_url($product)); ?>">
-                  <?php esc_html_e('View product', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
-                </a>
-              </div>
-            </li>
-          <?php endforeach; ?>
-        </ul>
+    <?php if ($author) :
+        $author_name = (string) ($author['name'] ?? '');
+        $author_role = (string) ($author['role'] ?? '');
+        $author_bio = (string) ($author['bio'] ?? '');
+        // The name sits right next to the picture, so the picture is decorative.
+        $author_avatar = springapex_image($author['avatar'] ?? '', '', [
+            'width' => 128,
+            'height' => 128,
+            'sizes' => '64px',
+        ]);
+    ?>
+      <section class="sa-news-aside-card sa-news-aside-card--author" aria-label="<?php esc_attr_e('Author', 'springapex'); ?>">
+        <h2 class="sa-news-aside-card__title"><?php esc_html_e('Written by', 'springapex'); ?></h2>
+        <div class="sa-news-author">
+          <span class="sa-news-author__avatar">
+            <?php if ($author_avatar !== '') : ?>
+              <?php echo $author_avatar; ?>
+            <?php else : ?>
+              <span class="sa-news-author__initials" aria-hidden="true"><?php echo esc_html((string) ($author['initials'] ?? '')); ?></span>
+            <?php endif; ?>
+          </span>
+          <div class="sa-news-author__body">
+            <p class="sa-news-author__name"><?php echo esc_html($author_name); ?></p>
+            <?php if ($author_role !== '') : ?>
+              <p class="sa-news-author__role"><?php echo esc_html($author_role); ?></p>
+            <?php endif; ?>
+          </div>
+        </div>
+        <?php if ($author_bio !== '') : ?>
+          <p class="sa-news-author__bio"><?php echo nl2br(esc_html($author_bio)); ?></p>
+        <?php endif; ?>
       </section>
     <?php endif; ?>
 
-    <section class="sa-news-aside-card sa-news-aside-card--contact" aria-label="<?php esc_attr_e('Contact', 'springapex'); ?>">
-      <div class="sa-news-aside-card__head">
-        <span class="sa-news-aside-card__icon"><?php echo springapex_icon('headset', 'icon'); ?></span>
-        <h2 class="sa-news-aside-card__title"><?php esc_html_e('Talk to engineering', 'springapex'); ?></h2>
-      </div>
-      <p><?php esc_html_e('Send your drawing or operating conditions.', 'springapex'); ?></p>
-      <a class="btn btn-primary" href="<?php echo esc_url(springapex_url('/contact/?intent=engineer')); ?>">
-        <?php esc_html_e('Contact Engineering', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
-      </a>
-    </section>
+    <?php // The author card scrolls away with the article; products and the contact card stay in view. ?>
+    <div class="sa-news-single-aside__sticky">
+      <?php if ($products) : ?>
+        <section class="sa-news-aside-card" aria-label="<?php esc_attr_e('Related products', 'springapex'); ?>">
+          <h2 class="sa-news-aside-card__title"><?php esc_html_e('Related products', 'springapex'); ?></h2>
+          <ul class="sa-news-aside-list">
+            <?php foreach ($products as $product) : ?>
+              <li class="sa-news-aside-item">
+                <a class="sa-news-aside-item__media" href="<?php echo esc_url(springapex_product_url($product)); ?>">
+                  <?php echo springapex_image($product['image'] ?? '', (string) ($product['title'] ?? ''), [
+                      'width' => 160,
+                      'height' => 160,
+                      'sizes' => '72px',
+                  ]); ?>
+                </a>
+                <div class="sa-news-aside-item__body">
+                  <a href="<?php echo esc_url(springapex_product_url($product)); ?>"><?php echo esc_html((string) ($product['title'] ?? '')); ?></a>
+                  <a class="sa-news-aside-item__link" href="<?php echo esc_url(springapex_product_url($product)); ?>">
+                    <?php esc_html_e('View product', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+                  </a>
+                </div>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </section>
+      <?php endif; ?>
+
+      <section class="sa-news-aside-card sa-news-aside-card--contact" aria-label="<?php esc_attr_e('Contact', 'springapex'); ?>">
+        <div class="sa-news-aside-card__head">
+          <span class="sa-news-aside-card__icon"><?php echo springapex_icon('headset', 'icon'); ?></span>
+          <h2 class="sa-news-aside-card__title"><?php esc_html_e('Talk to engineering', 'springapex'); ?></h2>
+        </div>
+        <p><?php esc_html_e('Send your drawing or operating conditions.', 'springapex'); ?></p>
+        <a class="btn btn-primary" href="<?php echo esc_url(springapex_url('/contact/?intent=engineer')); ?>">
+          <?php esc_html_e('Contact Engineering', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+        </a>
+      </section>
+    </div>
   </aside>
 </div>
 
