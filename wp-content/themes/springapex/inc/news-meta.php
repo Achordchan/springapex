@@ -2,9 +2,9 @@
 /**
  * 新闻条目的「前台显示设置」。
  *
- * Three values the news templates read but that used to exist only in the seed
- * array, keyed by slug: the date caption, the category label, and the related
- * products in the sidebar. None of them could be changed, and a newly written
+ * Values the news templates read but that used to exist only in the seed
+ * array, keyed by slug: the date caption and the related products in the
+ * sidebar. None of them could be changed, and a newly written
  * article got none of them at all.
  *
  * The product control lives in inc/product-picker.php, shared with the industry
@@ -19,7 +19,6 @@ if (!defined('ABSPATH')) {
 
 const SPRINGAPEX_NEWS_PRODUCTS_META = '_springapex_news_products';
 const SPRINGAPEX_NEWS_DATE_LABEL_META = '_springapex_news_date_label';
-const SPRINGAPEX_NEWS_CATEGORY_META = '_springapex_news_category';
 
 add_action('add_meta_boxes_spring_news', static function (): void {
     add_meta_box(
@@ -93,14 +92,6 @@ function springapex_render_news_display_meta_box(WP_Post $post): void
             <p class="description">留空就按发布日期显示。日期会显示成
                 <code>June 17, 2024</code>（跨天自动写成 <code>June 17–20, 2024</code>）。</p>
           </div>
-
-          <div class="sa-pp__field">
-            <label for="springapex-news-category"><?php esc_html_e('分类标签', 'springapex'); ?></label>
-            <input class="widefat" type="text" id="springapex-news-category"
-                name="springapex_news_category"
-                value="<?php echo esc_attr(springapex_news_category_meta($post_id)); ?>">
-            <p class="description">显示在新闻卡片和详情页顶部的小标签。留空就用右边「News type」里选的分类名。</p>
-          </div>
         </section>
 
         <section class="sa-pp__panel" data-pp-panel="products" role="tabpanel" hidden>
@@ -149,11 +140,6 @@ function springapex_news_meta_or_seed(int $post_id, string $meta_key, string $se
 function springapex_news_date_label_meta(int $post_id): string
 {
     return springapex_news_meta_or_seed($post_id, SPRINGAPEX_NEWS_DATE_LABEL_META, 'date_label');
-}
-
-function springapex_news_category_meta(int $post_id): string
-{
-    return springapex_news_meta_or_seed($post_id, SPRINGAPEX_NEWS_CATEGORY_META, 'category');
 }
 
 function springapex_news_products_meta(int $post_id): array
@@ -256,6 +242,73 @@ function springapex_news_date_label_from_submission(): string
     return gmdate('F j', $start_time) . ' – ' . gmdate('F j, Y', $end_time);
 }
 
+/**
+ * 「新闻分类」侧栏：单选下拉，替换 WordPress 给非层级分类默认的标签输入框。
+ *
+ * 标签框能随手敲出新分类、还能一篇挂多个，而前台只认第一个分类、筛选栏
+ * 只有固定的三项（templates/news.php），打错一个字这篇新闻就从筛选里消失。
+ * 这里只列已有分类，不能在编辑页新建；卡片和详情页上的小标签也直接用所选
+ * 分类的名称。必选一项：还没有分类的文章默认选中 Company News，与前台
+ * 对没有分类的新闻的归类（templates/news.php）一致。
+ */
+function springapex_render_news_type_meta_box(WP_Post $post): void
+{
+    $terms = get_terms([
+        'taxonomy' => 'spring_news_type',
+        'hide_empty' => false,
+        // Creation order = the front-end filter order (Industry News,
+        // Exhibitions, Company News); a later addition lands at the end.
+        'orderby' => 'term_id',
+    ]);
+    $terms = is_array($terms) ? $terms : [];
+
+    $assigned = wp_get_object_terms((int) $post->ID, 'spring_news_type', ['fields' => 'slugs']);
+    $current = is_array($assigned) && isset($assigned[0]) ? (string) $assigned[0] : '';
+    if ($current === '') {
+        $current = 'company-news';
+    }
+
+    wp_nonce_field('springapex_save_news_type', 'springapex_news_type_nonce');
+    ?>
+    <p>
+      <label class="screen-reader-text" for="springapex-news-type"><?php esc_html_e('新闻分类', 'springapex'); ?></label>
+      <select class="widefat" id="springapex-news-type" name="springapex_news_type">
+        <?php foreach ($terms as $term) : ?>
+          <option value="<?php echo esc_attr((string) $term->slug); ?>"<?php selected($current, (string) $term->slug); ?>><?php echo esc_html((string) $term->name); ?></option>
+        <?php endforeach; ?>
+      </select>
+    </p>
+    <p class="description">决定这篇新闻出现在新闻页哪个筛选里，分类名也会作为小标签显示在卡片和详情页顶部。</p>
+    <?php
+}
+
+add_action('save_post_spring_news', static function (int $post_id): void {
+    $nonce = sanitize_text_field(springapex_admin_request_scalar($_POST['springapex_news_type_nonce'] ?? ''));
+    if (
+        $nonce === '' ||
+        !wp_verify_nonce($nonce, 'springapex_save_news_type') ||
+        (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) ||
+        !current_user_can('edit_post', $post_id)
+    ) {
+        return;
+    }
+
+    $taxonomy = get_taxonomy('spring_news_type');
+    if (!$taxonomy || !current_user_can($taxonomy->cap->assign_terms)) {
+        return;
+    }
+
+    // Only an existing term may be assigned: an empty or unknown slug leaves the
+    // article as it was rather than letting wp_set_object_terms() create a term.
+    $slug = sanitize_title(springapex_admin_request_scalar($_POST['springapex_news_type'] ?? ''));
+    $term = $slug !== '' ? get_term_by('slug', $slug, 'spring_news_type') : false;
+    if (!$term) {
+        return;
+    }
+
+    wp_set_object_terms($post_id, [(int) $term->term_id], 'spring_news_type', false);
+});
+
 add_action('save_post_spring_news', static function (int $post_id): void {
     $nonce = sanitize_text_field(springapex_admin_request_scalar($_POST['springapex_news_display_nonce'] ?? ''));
     if (
@@ -268,9 +321,6 @@ add_action('save_post_spring_news', static function (int $post_id): void {
     }
 
     update_post_meta($post_id, SPRINGAPEX_NEWS_DATE_LABEL_META, springapex_news_date_label_from_submission());
-    update_post_meta($post_id, SPRINGAPEX_NEWS_CATEGORY_META, sanitize_text_field(
-        springapex_admin_request_scalar($_POST['springapex_news_category'] ?? '')
-    ));
 
     // Guarded by the picker's own presence marker rather than the box's nonce:
     // with no products in the site the picker renders nothing, and an unguarded

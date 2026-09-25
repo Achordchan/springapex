@@ -1014,12 +1014,9 @@ function springapex_news_from_post(object $post): array
             $news_type_label = (string) ($terms[0]->name ?? '');
         }
     }
-    $category = function_exists('springapex_news_category_meta')
-        ? springapex_news_category_meta($post_id)
-        : (string) ($seed['category'] ?? '');
-    if ($category === '') {
-        $category = $news_type_label;
-    }
+    // The card/header label is the chosen news type's name, so it can never
+    // disagree with the filter the article is listed under.
+    $category = $news_type_label !== '' ? $news_type_label : (string) ($seed['category'] ?? '');
     // Optional caption replacing the published date, for multi-day events. Read
     // through the meta resolver, not merged from the seed: the seed is matched by
     // slug and a new article would otherwise never be able to have one.

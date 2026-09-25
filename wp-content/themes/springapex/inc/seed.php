@@ -588,9 +588,6 @@ function springapex_seed_news(bool $allow_create = true): bool
         if (!springapex_seed_update_meta((int) $post_id, '_springapex_seed_image', (string) ($item['image'] ?? ''))) {
             $success = false;
         }
-        if (!springapex_seed_update_meta((int) $post_id, '_springapex_news_category', (string) ($item['category'] ?? ''))) {
-            $success = false;
-        }
         if (!springapex_seed_update_meta((int) $post_id, '_springapex_news_date_label', (string) ($item['date_label'] ?? ''))) {
             $success = false;
         }
