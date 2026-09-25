@@ -12,6 +12,12 @@
  *
  * 计数由浏览器在页面加载后发请求完成，而不是服务器渲染时累加：站点在
  * CloudFront 后面，一旦整页缓存，渲染时计数只会数到生成缓存的那一次。
+ * 24 小时内再打开同一篇，浏览器仍会请求一次，但只取最新合计、不计数，
+ * 免得缓存页面上的旧数字一直留着。
+ *
+ * 两处「先查再写」都放在 MySQL 命名锁里（springapex_news_views_locked()）：
+ * 同一 IP 抢 10 分钟名额、一篇新闻第一次计数时建计数行。不加锁时，本地 20 个
+ * 并发请求实测能让 16 个同时通过限流，首次计数插出 16 行、页面只显示 5。
  */
 
 declare(strict_types=1);
@@ -82,6 +88,8 @@ add_action('rest_api_init', static function (): void {
         'permission_callback' => '__return_true',
         'args' => [
             'id' => ['type' => 'integer', 'required' => true, 'minimum' => 1],
+            // false = 只取最新合计（同一浏览器 24 小时内再次打开时）。
+            'count' => ['type' => 'boolean', 'default' => true],
         ],
     ]);
 });
@@ -94,13 +102,39 @@ function springapex_rest_count_news_view(WP_REST_Request $request): WP_REST_Resp
         return new WP_Error('springapex_news_not_found', 'News item not found.', ['status' => 404]);
     }
 
-    $counted = springapex_news_view_countable($post_id) && springapex_news_view_increment($post_id);
+    $counted = (bool) $request['count']
+        && springapex_news_view_countable($post_id)
+        && springapex_news_view_increment($post_id);
 
     // 只回合计，不回基准数和真实阅读各是多少。
-    return new WP_REST_Response([
+    $response = new WP_REST_Response([
         'total' => springapex_news_views_total($post_id),
         'counted' => $counted,
     ], 200);
+    $response->header('Cache-Control', 'no-store');
+
+    return $response;
+}
+
+/**
+ * 在 MySQL 命名锁里执行 $callback；等不到锁（超时或出错）返回 false，调用方
+ * 按「不计数」处理。锁在数据库服务器上，跨 PHP 进程有效，与对象缓存用什么
+ * 后端无关。锁名是服务器级的，带上库名和表前缀，免得和同一台 MySQL 上的
+ * 其他站点撞名（MySQL 限 64 字符）。
+ */
+function springapex_news_views_locked(string $name, int $timeout, callable $callback): bool
+{
+    global $wpdb;
+
+    $lock = 'sa_nv:' . md5(DB_NAME . '|' . $wpdb->prefix . '|' . $name);
+    if ((string) $wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, %d)', $lock, $timeout)) !== '1') {
+        return false;
+    }
+    try {
+        return (bool) $callback();
+    } finally {
+        $wpdb->query($wpdb->prepare('SELECT RELEASE_LOCK(%s)', $lock));
+    }
 }
 
 function springapex_news_view_countable(int $post_id): bool
@@ -121,12 +155,16 @@ function springapex_news_view_countable(int $post_id): bool
         return true;
     }
     $key = 'sa_nv_' . substr(hash_hmac('sha256', $ip . '|' . $post_id, wp_salt('auth')), 0, 40);
-    if (get_transient($key) !== false) {
-        return false;
-    }
-    set_transient($key, 1, SPRINGAPEX_NEWS_VIEWS_IP_WINDOW);
 
-    return true;
+    // 查和占必须在同一把锁里：同一 IP 同时开几个标签页（或脚本并发）时，
+    // 只有第一个能占到这 10 分钟的名额。
+    return springapex_news_views_locked('ip:' . $key, 3, static function () use ($key): bool {
+        if (get_transient($key) !== false) {
+            return false;
+        }
+
+        return set_transient($key, 1, SPRINGAPEX_NEWS_VIEWS_IP_WINDOW);
+    });
 }
 
 /** 空 User-Agent、常见爬虫、链接预览、监控和脚本客户端都不算阅读。 */
@@ -157,8 +195,17 @@ function springapex_news_view_increment(int $post_id): bool
         SPRINGAPEX_NEWS_VIEWS_META
     );
     if ((int) $wpdb->query($increment) === 0) {
-        // 第一次计数还没有这一行。unique 插入失败说明另一个请求刚插上，改回累加。
-        if (!add_post_meta($post_id, SPRINGAPEX_NEWS_VIEWS_META, 1, true) && (int) $wpdb->query($increment) === 0) {
+        // 第一次计数还没有这一行。postmeta 没有唯一约束，add_post_meta 的
+        // 「唯一」只是先查再插，并发时会插出多行，所以建行放进锁里。
+        $initialized = springapex_news_views_locked('init:' . $post_id, 5, static function () use ($wpdb, $increment, $post_id): bool {
+            // 等锁期间别的请求可能已经建好了行，先再累加一次。
+            if ((int) $wpdb->query($increment) > 0) {
+                return true;
+            }
+
+            return (bool) add_post_meta($post_id, SPRINGAPEX_NEWS_VIEWS_META, 1, true);
+        });
+        if (!$initialized) {
             return false;
         }
     }

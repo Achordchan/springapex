@@ -2,9 +2,10 @@
  * 新闻详情页阅读计数：页面加载后向 springapex/v1/news/{id}/view 发一次请求，
  * 用返回的合计更新页面上的「N views」。
  *
- * 同一浏览器同一篇 24 小时内只发一次（localStorage 记下计数时间）；服务器另有
- * 同一 IP 10 分钟兜底和爬虫过滤（inc/news-views.php）。只有该计数的页面才带
- * data-news-views-url：登录后台的人和预览页没有这个属性，也就不会发请求。
+ * 同一浏览器同一篇 24 小时内只计一次（localStorage 记下计数时间）；窗口内再
+ * 打开仍会请求，但带 count: false，只取最新合计，不让缓存页面上的旧数字留着。
+ * 服务器另有同一 IP 10 分钟兜底和爬虫过滤（inc/news-views.php）。只有该计数的
+ * 页面才带 data-news-views-url：登录后台的人和预览页没有这个属性，不发请求。
  */
 (function () {
   'use strict';
@@ -32,7 +33,7 @@
   };
 
   const last = Number(readSeen()[id]) || 0;
-  if (last > now - WINDOW_MS && last <= now) return;
+  const shouldCount = !(last > now - WINDOW_MS && last <= now);
 
   const remember = () => {
     const seen = readSeen();
@@ -57,13 +58,15 @@
     method: 'POST',
     credentials: 'omit',
     keepalive: true,
-    headers: { Accept: 'application/json' },
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ count: shouldCount }),
   })
     .then((response) => (response.ok ? response.json() : null))
     .then((data) => {
       if (!data) return;
       // 服务器按 IP 兜底没算这一次时也记下：这个浏览器本窗口内已经请求过。
-      remember();
+      // 只取合计的请求不记，免得每次打开都把 24 小时窗口往后顺延。
+      if (shouldCount) remember();
       const total = data.total;
       const label = counter.querySelector('[data-news-views-label]');
       if (label && typeof total === 'number' && Number.isInteger(total) && total >= 0) label.textContent = format(total);

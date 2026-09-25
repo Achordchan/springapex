@@ -52,6 +52,7 @@ async function load({ now = 1_000_000_000_000, store = storage(), attrs = true, 
 }
 
 const seen = (store) => JSON.parse(store.data.get('springapex-news-views') || '{}');
+const body = (request) => JSON.parse(request.options.body);
 
 test('首次打开发一次 POST，用返回的合计更新文字并记下时间', async () => {
   const { requests, label, store } = await load();
@@ -59,23 +60,34 @@ test('首次打开发一次 POST，用返回的合计更新文字并记下时间
   assert.equal(requests[0].url, URL_);
   assert.equal(requests[0].options.method, 'POST');
   assert.equal(requests[0].options.credentials, 'omit');
+  assert.deepEqual(body(requests[0]), { count: true });
   assert.equal(label.textContent, '501 views');
   assert.equal(seen(store)['42'], 1_000_000_000_000);
 });
 
-test('24 小时内再打开同一篇不再计数，满 24 小时后重新计数', async () => {
+test('24 小时内再打开只取最新合计：不计数、刷新文字、不顺延窗口', async () => {
   const now = 1_000_000_000_000;
-  const store = storage({ initial: { 'springapex-news-views': JSON.stringify({ 42: now - DAY + 1000 }) } });
-  assert.equal((await load({ now, store })).requests.length, 0);
+  const first = now - DAY + 1000;
+  const store = storage({ initial: { 'springapex-news-views': JSON.stringify({ 42: first }) } });
+  const { requests, label } = await load({ now, store, response: { ok: true, total: 777 } });
+  assert.equal(requests.length, 1);
+  assert.deepEqual(body(requests[0]), { count: false });
+  assert.equal(label.textContent, '777 views');
+  assert.equal(seen(store)['42'], first);
+});
 
-  const later = storage({ initial: { 'springapex-news-views': JSON.stringify({ 42: now - DAY }) } });
-  assert.equal((await load({ now, store: later })).requests.length, 1);
+test('满 24 小时后重新计数', async () => {
+  const now = 1_000_000_000_000;
+  const store = storage({ initial: { 'springapex-news-views': JSON.stringify({ 42: now - DAY }) } });
+  const { requests } = await load({ now, store });
+  assert.deepEqual(body(requests[0]), { count: true });
+  assert.equal(seen(store)['42'], now);
 });
 
 test('记录时间在未来（改过系统时间）视为无效，照常计数', async () => {
   const now = 1_000_000_000_000;
   const store = storage({ initial: { 'springapex-news-views': JSON.stringify({ 42: now + DAY }) } });
-  assert.equal((await load({ now, store })).requests.length, 1);
+  assert.deepEqual(body((await load({ now, store })).requests[0]), { count: true });
 });
 
 test('写入时清掉过期记录，保留其他文章 24 小时内的记录', async () => {
