@@ -123,6 +123,10 @@ function springapex_register_post_types(): void
         'public' => false,
         'show_ui' => true,
         'show_admin_column' => true,
+        // 编辑页用单选下拉（inc/news-meta.php），不要标签输入框；快速编辑里
+        // 的同款自由输入框也一并关掉，免得从列表页敲出错别字分类。
+        'meta_box_cb' => 'springapex_render_news_type_meta_box',
+        'show_in_quick_edit' => false,
         'show_in_rest' => true,
         'show_in_nav_menus' => false,
         'hierarchical' => false,
