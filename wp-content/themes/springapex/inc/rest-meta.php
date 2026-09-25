@@ -44,10 +44,8 @@ add_action('init', static function (): void {
         'Date text shown instead of the publish date, e.g. "June 17–20, 2024". Empty uses the publish date.',
         'sanitize_text_field'
     ));
-    register_post_meta('spring_news', SPRINGAPEX_NEWS_CATEGORY_META, $string_meta(
-        'Category label on news cards and the article header. Empty uses the News type term name.',
-        'sanitize_text_field'
-    ));
+    // 分类不是 meta：卡片/详情页上的小标签就是所选「新闻分类」
+    // （spring_news_type）的名称，REST 里用核心的 spring_news_type 字段传分类 ID。
     register_post_meta('spring_news', SPRINGAPEX_NEWS_PRODUCTS_META, [
         'type' => 'array',
         'description' => 'Related product slugs shown in the article sidebar. Unpublished or unknown slugs are dropped.',
