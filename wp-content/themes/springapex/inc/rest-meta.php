@@ -60,12 +60,32 @@ add_action('init', static function (): void {
         'sanitize_callback' => static fn(mixed $value): array => springapex_sanitize_product_slugs($value),
         'auth_callback' => $can_edit,
     ]);
+    register_post_meta('spring_news', SPRINGAPEX_NEWS_AUTHOR_META, [
+        'type' => 'integer',
+        'description' => 'ID of the spring_news_author shown in the article sidebar; 0 shows no author. Only published authors appear on the site.',
+        'single' => true,
+        'default' => 0,
+        'show_in_rest' => true,
+        'sanitize_callback' => static fn(mixed $value): int => springapex_sanitize_news_author_id($value),
+        'auth_callback' => $can_edit,
+    ]);
+
+    // 新闻作者条目自身的字段（inc/news-author.php）：姓名是 title，头像是 featured_media。
+    add_post_type_support('spring_news_author', 'custom-fields');
+    register_post_meta('spring_news_author', SPRINGAPEX_NEWS_AUTHOR_ROLE_META, $string_meta(
+        'Job title shown under the author name.',
+        'sanitize_text_field'
+    ));
+    register_post_meta('spring_news_author', SPRINGAPEX_NEWS_AUTHOR_BIO_META, $string_meta(
+        'Optional one- or two-sentence bio shown on the author card.',
+        'sanitize_textarea_field'
+    ));
 });
 
 // custom-fields 支持只为 REST 开；这些类型的字段都有专用面板，
 // 不要在编辑页多出一块原生「自定义字段」框。page 保持核心默认。
 add_action('add_meta_boxes', static function (): void {
-    foreach (['spring_product', 'spring_solution', 'spring_case', 'spring_news'] as $post_type) {
+    foreach (['spring_product', 'spring_solution', 'spring_case', 'spring_news', 'spring_news_author'] as $post_type) {
         remove_meta_box('postcustom', $post_type, 'normal');
     }
 }, 20);

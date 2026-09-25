@@ -1,0 +1,18 @@
+/* 新闻作者列表（edit.php?post_type=spring_news_author，只在这一屏加载）：
+   头像列收窄到缩略图宽度，否则固定布局的表格会给它和姓名列一样宽。 */
+
+.post-type-spring_news_author .wp-list-table .column-springapex_avatar {
+  width: 56px;
+}
+
+.post-type-spring_news_author .wp-list-table .column-springapex_avatar img {
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.post-type-spring_news_author .wp-list-table .column-springapex_usage {
+  width: 7em;
+}
