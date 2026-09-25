@@ -70,6 +70,20 @@ add_action('init', static function (): void {
         'auth_callback' => $can_edit,
     ]);
 
+    // 阅读数基准（inc/news-views.php）。只在 edit 上下文输出：匿名 GET 看不出
+    // 前台数字里有多少是预设的。真实阅读不注册成 meta，REST 写不进去。
+    register_post_meta('spring_news', SPRINGAPEX_NEWS_VIEWS_BASE_META, [
+        'type' => 'integer',
+        'description' => 'Preset views added to real views; the site shows the sum. Real views are counted separately and cannot be written.',
+        'single' => true,
+        'default' => 0,
+        'show_in_rest' => [
+            'schema' => ['type' => 'integer', 'context' => ['edit']],
+        ],
+        'sanitize_callback' => static fn(mixed $value): int => springapex_sanitize_news_views_base($value),
+        'auth_callback' => $can_edit,
+    ]);
+
     // 新闻作者条目自身的字段（inc/news-author.php）：姓名是 title，头像是 featured_media。
     add_post_type_support('spring_news_author', 'custom-fields');
     register_post_meta('spring_news_author', SPRINGAPEX_NEWS_AUTHOR_ROLE_META, $string_meta(
@@ -80,6 +94,28 @@ add_action('init', static function (): void {
         'Optional one- or two-sentence bio shown on the author card.',
         'sanitize_textarea_field'
     ));
+});
+
+// 阅读数的只读拆分，给外部工具看统计用；同样只在 edit 上下文（需要编辑权限）输出。
+add_action('rest_api_init', static function (): void {
+    register_rest_field('spring_news', 'springapex_views', [
+        'get_callback' => static fn(array $post): array => [
+            'base' => springapex_news_views_base((int) $post['id']),
+            'real' => springapex_news_views_real((int) $post['id']),
+            'total' => springapex_news_views_total((int) $post['id']),
+        ],
+        'schema' => [
+            'description' => 'View count shown on the site (total) = preset base + real views.',
+            'type' => 'object',
+            'context' => ['edit'],
+            'readonly' => true,
+            'properties' => [
+                'base' => ['type' => 'integer'],
+                'real' => ['type' => 'integer'],
+                'total' => ['type' => 'integer'],
+            ],
+        ],
+    ]);
 });
 
 // custom-fields 支持只为 REST 开；这些类型的字段都有专用面板，

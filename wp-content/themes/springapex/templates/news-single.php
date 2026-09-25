@@ -55,6 +55,13 @@ $author = is_array($news_item['author'] ?? null) ? $news_item['author'] : null;
       <?php if ($news_date !== '') : ?>
         <time datetime="<?php echo esc_attr($news_date); ?>"><?php echo esc_html($news_date_label !== '' ? $news_date_label : date_i18n('F j, Y', strtotime($news_date))); ?></time>
       <?php endif; ?>
+      <?php if (isset($news_item['views'])) : ?>
+        <?php // The data attributes let assets/js/news-views.js count this visit (guests only). ?>
+        <?php echo springapex_news_views_html(
+            (int) $news_item['views'],
+            function_exists('springapex_news_view_beacon_attributes') ? springapex_news_view_beacon_attributes($news_post) : []
+        ); ?>
+      <?php endif; ?>
     </div>
     <h1><?php echo esc_html((string) ($news_item['title'] ?? '')); ?></h1>
     <p class="lede"><?php echo esc_html((string) ($news_item['summary'] ?? '')); ?></p>
@@ -232,6 +239,9 @@ $author = is_array($news_item['author'] ?? null) ? $news_item['author'] : null;
               <span class="sa-news-card__category"><?php echo esc_html((string) ($item['category'] ?? '')); ?></span>
               <?php if ($item_date !== '') : ?>
                 <time datetime="<?php echo esc_attr($item_date); ?>"><?php echo esc_html($item_date_label !== '' ? $item_date_label : date_i18n('M j, Y', strtotime($item_date))); ?></time>
+              <?php endif; ?>
+              <?php if (isset($item['views'])) : ?>
+                <?php echo springapex_news_views_html((int) $item['views']); ?>
               <?php endif; ?>
             </div>
             <h3><a href="<?php echo esc_url(springapex_news_url($item)); ?>"><?php echo esc_html((string) ($item['title'] ?? '')); ?></a></h3>

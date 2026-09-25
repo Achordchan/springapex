@@ -113,6 +113,9 @@ get_template_part('parts/inner-hero', null, [
           <?php if ($featured_date !== '') : ?>
             <time datetime="<?php echo esc_attr($featured_date); ?>"><?php echo esc_html($featured_date_label !== '' ? $featured_date_label : date_i18n('M j, Y', strtotime($featured_date))); ?></time>
           <?php endif; ?>
+          <?php if (isset($featured['views'])) : ?>
+            <?php echo springapex_news_views_html((int) $featured['views']); ?>
+          <?php endif; ?>
         </div>
         <h3><a href="<?php echo esc_url(springapex_news_url($featured)); ?>"><?php echo esc_html((string) ($featured['title'] ?? '')); ?></a></h3>
         <p class="sa-news-featured__summary"><?php echo esc_html((string) ($featured['summary'] ?? '')); ?></p>
@@ -141,6 +144,9 @@ get_template_part('parts/inner-hero', null, [
                 <span class="sa-news-card__category"><?php echo esc_html((string) ($item['category'] ?? '')); ?></span>
                 <?php if ($item_date !== '') : ?>
                   <time datetime="<?php echo esc_attr($item_date); ?>"><?php echo esc_html($item_date_label !== '' ? $item_date_label : date_i18n('M j, Y', strtotime($item_date))); ?></time>
+                <?php endif; ?>
+                <?php if (isset($item['views'])) : ?>
+                  <?php echo springapex_news_views_html((int) $item['views']); ?>
                 <?php endif; ?>
               </div>
               <h3><a href="<?php echo esc_url(springapex_news_url($item)); ?>"><?php echo esc_html((string) ($item['title'] ?? '')); ?></a></h3>

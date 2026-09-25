@@ -790,6 +790,34 @@ function springapex_news_url(array $news): string
     return springapex_url('/news/' . ($news['slug'] ?? '') . '/');
 }
 
+/**
+ * 新闻卡片和详情页信息行里的阅读数，如「1,234 views」：基准数 + 真实阅读
+ *（inc/news-views.php）。$attributes 给详情页挂计数脚本要用的 data-* 属性。
+ * 眼睛图标取自主题已用的 Iconoir（MIT），内联是为了跟随文字颜色。
+ *
+ * @param array<string, string> $attributes
+ */
+function springapex_news_views_html(int $total, array $attributes = []): string
+{
+    $total = max(0, $total);
+    $label = sprintf(
+        $total === 1 ? __('%s view', 'springapex') : __('%s views', 'springapex'),
+        number_format($total)
+    );
+    $attribute_html = '';
+    foreach ($attributes as $name => $value) {
+        $attribute_html .= sprintf(' %s="%s"', esc_attr((string) $name), esc_attr((string) $value));
+    }
+
+    return '<span class="sa-news-card__views"' . $attribute_html . '>'
+        . '<svg class="sa-news-card__views-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+        . '<path d="M3 13C6.6 5 17.4 5 21 13"/>'
+        . '<path d="M12 17C10.3431 17 9 15.6569 9 14C9 12.3431 10.3431 11 12 11C13.6569 11 15 12.3431 15 14C15 15.6569 13.6569 17 12 17Z"/>'
+        . '</svg>'
+        . '<span data-news-views-label>' . esc_html($label) . '</span>'
+        . '</span>';
+}
+
 function springapex_related_news(string $current_slug, int $limit = 3): array
 {
     $items = array_values(array_filter(
