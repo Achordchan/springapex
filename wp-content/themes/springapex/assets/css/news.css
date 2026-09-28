@@ -527,13 +527,13 @@
 }
 
 /* 正文链接要一眼能认出来：蓝色加下划线。 */
-.sa-news-single-body__inner a:not(.wp-block-button__link) {
+.sa-news-single-body__inner a:not(.btn, .wp-block-button__link) {
   color: var(--sa-accent-deep);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
-.sa-news-single-body__inner a:not(.wp-block-button__link):hover {
+.sa-news-single-body__inner a:not(.btn, .wp-block-button__link):hover {
   color: var(--sa-accent-deep-hover);
 }
 

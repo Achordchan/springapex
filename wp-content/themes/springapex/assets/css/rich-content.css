@@ -37,13 +37,13 @@
   margin-top: 0;
 }
 
-:is(.sa-case-study-detail__content, .sa-industry-body .entry-content) a {
+:is(.sa-case-study-detail__content, .sa-industry-body .entry-content) a:not(.btn, .wp-block-button__link) {
   color: var(--sa-accent-deep);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
-:is(.sa-case-study-detail__content, .sa-industry-body .entry-content) a:hover {
+:is(.sa-case-study-detail__content, .sa-industry-body .entry-content) a:not(.btn, .wp-block-button__link):hover {
   color: var(--sa-accent-deep-hover);
 }
 
