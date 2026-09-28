@@ -24,7 +24,7 @@ if (!$solution) {
 
 $industry_title = trim((string) ($solution['title'] ?? 'Industry'));
 $hero_title = trim((string) ($solution['hero_title'] ?? ''));
-$hero_title = $hero_title !== '' ? $hero_title : sprintf(__('%s spring programs built for repeat production.', 'springapex'), $industry_title);
+$hero_title = $hero_title !== '' ? $hero_title : springapex_solution_heading($industry_title);
 $hero_text = trim((string) ($solution['challenge_intro'] ?? $solution['tagline'] ?? ''));
 $hero_image = $solution['image'] ?? '';
 $contact_url = springapex_url('/contact/?intent=solution&industry=' . rawurlencode($slug));

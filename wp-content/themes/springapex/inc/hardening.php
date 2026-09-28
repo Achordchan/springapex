@@ -47,3 +47,44 @@ add_filter('wp_headers', static function (array $headers): array {
 
 remove_action('wp_head', 'rsd_link');
 remove_action('wp_head', 'wlwmanifest_link');
+
+/*
+ * 不暴露后台登录名。/?author=1 会被 WordPress 301 到 /author/achord/，作者
+ * 归档、用户站点地图、REST /wp/v2/users 和 oEmbed 的 author_url 也都带着这个
+ * slug——拿到它，爆破 wp-login.php 就只剩猜密码。本站新闻署名走独立的作者
+ * 条目（inc/news-author.php），不用 WordPress 用户，所以这些出口全部关掉：
+ *
+ * - 作者归档（含 ?author=N）在 redirect_canonical（优先级 10）之前 301 到
+ *   关于页，跳转目标里不再出现 slug；
+ * - 站点地图去掉 users；
+ * - 未登录时 REST 不提供用户列表和单个用户（后台编辑器已登录，不受影响）；
+ * - oEmbed 响应去掉作者名和作者链接。
+ */
+add_action('template_redirect', static function (): void {
+    if (is_admin() || !is_author()) {
+        return;
+    }
+    wp_safe_redirect(home_url('/about/'), 301);
+    exit;
+}, 1);
+
+add_filter('wp_sitemaps_add_provider', static function (mixed $provider, string $name): mixed {
+    return $name === 'users' ? false : $provider;
+}, 10, 2);
+
+add_filter('rest_endpoints', static function (array $endpoints): array {
+    if (is_user_logged_in()) {
+        return $endpoints;
+    }
+    foreach (array_keys($endpoints) as $route) {
+        if (str_starts_with((string) $route, '/wp/v2/users')) {
+            unset($endpoints[$route]);
+        }
+    }
+    return $endpoints;
+});
+
+add_filter('oembed_response_data', static function (array $data): array {
+    unset($data['author_name'], $data['author_url']);
+    return $data;
+});

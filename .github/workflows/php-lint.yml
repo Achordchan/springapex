@@ -46,6 +46,9 @@ jobs:
       - name: Verify inquiry mail drawing notice
         run: php wp-content/themes/springapex/tests/inquiry-mail-drawing-notice.php
 
+      - name: Verify structured data and navigation links
+        run: php wp-content/themes/springapex/tests/seo-schema.php
+
       - name: Verify inquiry success tracking
         run: node --test wp-content/themes/springapex/tests/inquiry-tracking.mjs
 
