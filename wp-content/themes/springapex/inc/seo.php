@@ -222,7 +222,8 @@ function springapex_seo_post_values(WP_Post $post): array
     $description = trim((string) get_post_meta($post->ID, '_springapex_seo_description', true));
     $keywords = trim((string) get_post_meta($post->ID, '_springapex_seo_keywords', true));
 
-    if ($description === '') {
+    // 受密码保护的内容不能从正文里截描述：<head> 和结构化数据对未解锁的访客也可见。
+    if ($description === '' && !post_password_required($post)) {
         $description = springapex_seo_clean_description(
             $post->post_excerpt !== '' ? $post->post_excerpt : $post->post_content
         );
@@ -288,7 +289,10 @@ function springapex_seo_is_success_request(): bool
 
 add_filter('wp_robots', static function (array $robots): array {
     $success = springapex_seo_is_success_request();
-    if (is_search() || is_404() || $success) {
+    // 博客分类、标签、日期归档：本站内容都在新闻/产品等自定义类型里，这些归档
+    // 只剩 WordPress 默认文章，没有收录价值。
+    $thin_archive = is_category() || is_tag() || is_date();
+    if (is_search() || is_404() || $success || $thin_archive) {
         unset($robots['index']);
         $robots['noindex'] = true;
         if ($success) {
@@ -300,4 +304,10 @@ add_filter('wp_robots', static function (array $robots): array {
         }
     }
     return $robots;
+});
+
+// 与上面的 noindex 保持一致：站点地图不再提交博客分类和标签归档。
+add_filter('wp_sitemaps_taxonomies', static function (array $taxonomies): array {
+    unset($taxonomies['category'], $taxonomies['post_tag']);
+    return $taxonomies;
 });

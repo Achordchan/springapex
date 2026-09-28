@@ -256,19 +256,7 @@ add_action('wp_head', static function (): void {
     }
 
     $route = springapex_current_route();
-    $images = [
-        'home' => springapex_get('home.hero.image', ''),
-        'products' => springapex_get('products.hero.image', ''),
-        'solutions' => springapex_get('solutions.hero.image', ''),
-        'case-studies' => springapex_get('case_studies.hero.image', ''),
-        'capabilities' => springapex_get('capabilities.hero.image', ''),
-        'manufacturing-videos' => springapex_get('manufacturing_videos.hero_image', ''),
-        'about' => springapex_get('about.hero.image', 'about-building-v3.png'),
-        'sustainability' => springapex_get('sustainability.hero.image', 'generated/apexspring-sustainability-wire-lifecycle-v1.png'),
-        'news' => springapex_get('news.hero.image', 'generated/springapex-news-hero-v3.webp'),
-        'contact' => springapex_get('contact_network.facility_image', 'facility-aerial-original.webp'),
-        'resources' => springapex_get('resources.hero.image', 'generated/springapex-resources-hero-v2.webp'),
-    ];
+    $images = springapex_route_hero_images();
     $mobile_images = [
         'home' => springapex_get('home.hero.mobile_image', ''),
         'products' => springapex_get('products.hero.mobile_image', ''),

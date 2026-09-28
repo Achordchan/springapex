@@ -84,6 +84,30 @@ function springapex_file_url(int|string $value, string $base): string
 }
 
 /**
+ * Desktop hero image of each theme-managed route, as stored by 网站内容 (attachment
+ * id/array or a bundled theme file). Shared by the LCP preload in inc/setup.php
+ * and the share image fallback in inc/schema.php.
+ *
+ * @return array<string, mixed>
+ */
+function springapex_route_hero_images(): array
+{
+    return [
+        'home' => springapex_get('home.hero.image', ''),
+        'products' => springapex_get('products.hero.image', ''),
+        'solutions' => springapex_get('solutions.hero.image', ''),
+        'case-studies' => springapex_get('case_studies.hero.image', ''),
+        'capabilities' => springapex_get('capabilities.hero.image', ''),
+        'manufacturing-videos' => springapex_get('manufacturing_videos.hero_image', ''),
+        'about' => springapex_get('about.hero.image', 'about-building-v3.png'),
+        'sustainability' => springapex_get('sustainability.hero.image', 'generated/apexspring-sustainability-wire-lifecycle-v1.png'),
+        'news' => springapex_get('news.hero.image', 'generated/springapex-news-hero-v3.webp'),
+        'contact' => springapex_get('contact_network.facility_image', 'facility-aerial-original.webp'),
+        'resources' => springapex_get('resources.hero.image', 'generated/springapex-resources-hero-v2.webp'),
+    ];
+}
+
+/**
  * Resolve a content-managed image document to its optimized delivery URL and
  * retained original. Media Library IDs and external URLs stay unchanged;
  * bundled JPG/PNG documents prefer a same-name WebP variant when present.
@@ -176,7 +200,9 @@ function springapex_current_route(): string
         }
     }
 
-    if (function_exists('is_front_page') && (is_front_page() || is_home())) {
+    // 只认真正的首页。阅读设置里另指定的「文章页」（/blog/ 之类）is_home() 也为
+    // true，但它不是首页，不能套首页的 TDK、横幅和导航高亮。
+    if (function_exists('is_front_page') && is_front_page()) {
         return 'home';
     }
 
@@ -406,11 +432,72 @@ function springapex_navigation_href(string $href): string
         return springapex_url('/');
     }
 
-    if (preg_match('#^(?:https?:|mailto:|tel:|sms:|ftp:|//|\#)#i', $href)) {
+    if (preg_match('#^(?:mailto:|tel:|sms:|ftp:|\#)#i', $href)) {
         return $href;
     }
 
-    return springapex_url($href);
+    if (preg_match('#^(?:https?:)?//#i', $href)) {
+        $host = strtolower((string) parse_url($href, PHP_URL_HOST));
+        $home_host = strtolower((string) parse_url(springapex_url('/'), PHP_URL_HOST));
+        return $host !== '' && $host === $home_host ? springapex_navigation_trailing_slash($href) : $href;
+    }
+
+    return springapex_url(springapex_navigation_trailing_slash($href));
+}
+
+/**
+ * 站内页面链接补上结尾斜杠。菜单是在 外观 → 菜单 里手填的自定义链接，写成
+ * /products 时每次点击都要先 301 到 /products/，全站每页 5 处、爬虫每页都多
+ * 跑一趟跳转。只在固定链接本身带结尾斜杠时生效。带扩展名的文件（/catalog.pdf）、只有域名的首页链接、已有斜杠的
+ * 不动；查询串和锚点原样保留在斜杠之后。
+ */
+function springapex_navigation_trailing_slash(string $href): string
+{
+    if (!preg_match('/^([^?#]*)(.*)$/s', $href, $parts)) {
+        return $href;
+    }
+    [, $before_query, $query_and_fragment] = $parts;
+    // 固定链接设成不带结尾斜杠（如 /%postname%）时，补了反而会被 301 回去。
+    if (function_exists('user_trailingslashit') && !str_ends_with(user_trailingslashit('probe'), '/')) {
+        return $href;
+    }
+    $path = (string) preg_replace('#^(?:https?:)?//[^/]*#i', '', $before_query);
+    if ($path === '' || str_ends_with($path, '/')) {
+        return $href;
+    }
+    $last_segment = substr($path, (int) strrpos('/' . $path, '/'));
+    if (str_contains($last_segment, '.')) {
+        return $href;
+    }
+
+    return $before_query . '/' . $query_and_fragment;
+}
+
+/** 种子写进老行业条目正文的一句占位话。详情页的正文区块认得它，不把它当正文显示。 */
+function springapex_solution_seed_content(string $industry_title): string
+{
+    return sprintf(
+        'NorenSpring engineers precision spring solutions for %s applications, from design review and prototyping through stable production.',
+        strtolower($industry_title)
+    );
+}
+
+/**
+ * 行业页 H1 的兜底写法（后台没填 Hero 标题时）。行业名本身多半已经叫
+ * "Defense Spring Solutions"，以前再拼一句 "spring programs built for repeat
+ * production." 就成了 "Defense Spring Solutions spring programs built…"。
+ * 现在名字里带 Spring 就原样用，不带（"Energy"）才补成 "Energy Spring
+ * Solutions"；顺手补上后台标题里漏掉的空格（"EngineeringSpring"、
+ * "SpringSolutions"）。
+ */
+function springapex_solution_heading(string $industry_title): string
+{
+    $title = trim((string) preg_replace('/(?<=[a-z])(?=Springs?\b)|(?<=Spring)(?=Solutions?\b)/', ' ', $industry_title));
+    if ($title === '') {
+        $title = 'Industry';
+    }
+
+    return preg_match('/\bsprings?\b/i', $title) ? $title : sprintf('%s Spring Solutions', $title);
 }
 
 function springapex_contact_status_message(string $status): array

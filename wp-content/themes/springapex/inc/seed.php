@@ -385,10 +385,7 @@ function springapex_seed_solutions(bool $allow_create = true): bool
         $existing = springapex_seed_find_post_by_slug($slug, 'spring_solution');
         if ($existing) {
             $post_id = (int) $existing->ID;
-            $seed_content = sprintf(
-                'NorenSpring engineers precision spring solutions for %s applications, from design review and prototyping through stable production.',
-                strtolower((string) ($solution['title'] ?? 'industrial'))
-            );
+            $seed_content = springapex_solution_seed_content((string) ($solution['title'] ?? 'industrial'));
             if (!springapex_seed_upgrade_brand_fields($existing, ['post_content' => $seed_content])) {
                 $success = false;
             }
@@ -423,10 +420,7 @@ function springapex_seed_solutions(bool $allow_create = true): bool
             'post_title' => (string) ($solution['title'] ?? ''),
             'post_name' => $slug,
             'post_excerpt' => (string) ($solution['tagline'] ?? ''),
-            'post_content' => sprintf(
-                'NorenSpring engineers precision spring solutions for %s applications, from design review and prototyping through stable production.',
-                strtolower((string) ($solution['title'] ?? 'industrial'))
-            ),
+            'post_content' => springapex_solution_seed_content((string) ($solution['title'] ?? 'industrial')),
             'menu_order' => $index,
         ], true);
 

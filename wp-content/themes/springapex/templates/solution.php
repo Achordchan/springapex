@@ -24,7 +24,7 @@ if (!$solution) {
 
 $industry_title = trim((string) ($solution['title'] ?? 'Industry'));
 $hero_title = trim((string) ($solution['hero_title'] ?? ''));
-$hero_title = $hero_title !== '' ? $hero_title : sprintf(__('%s spring programs built for repeat production.', 'springapex'), $industry_title);
+$hero_title = $hero_title !== '' ? $hero_title : springapex_solution_heading($industry_title);
 $hero_text = trim((string) ($solution['challenge_intro'] ?? $solution['tagline'] ?? ''));
 $hero_image = $solution['image'] ?? '';
 $contact_url = springapex_url('/contact/?intent=solution&industry=' . rawurlencode($slug));
@@ -163,7 +163,7 @@ $input_items = [
   <section class="sa-industry-hero">
     <div class="container container-wide sa-industry-hero__grid">
       <div class="sa-industry-hero__copy">
-        <p class="section-kicker"><?php echo esc_html(strtoupper($industry_title)); ?> <?php esc_html_e('SPRING SOLUTIONS', 'springapex'); ?></p>
+        <p class="section-kicker"><?php echo esc_html(strtoupper(html_entity_decode(springapex_solution_heading($industry_title), ENT_QUOTES | ENT_HTML5, 'UTF-8'))); ?></p>
         <h1><?php echo esc_html($hero_title); ?></h1>
         <?php if ($hero_text !== '') : ?><p class="sa-industry-hero__lede"><?php echo esc_html($hero_text); ?></p><?php endif; ?>
         <div class="sa-industry-hero__actions">
@@ -342,6 +342,36 @@ $input_items = [
               <?php endforeach; ?>
             </div>
           <?php endif; ?>
+        </div>
+      </div>
+    </section>
+  <?php endif; ?>
+
+  <?php
+  // 可选的长正文：写在编辑器正文（或 REST 的 content）里，空时整块不出现。
+  // 放在质量区块之后、询价之前，行业页的结构化区块不受影响。老条目正文里
+  // 只有种子写的一句占位话，那不算正文。
+  $solution_body = $solution_post ? trim((string) $solution_post->post_content) : '';
+  if (
+      $solution_body !== ''
+      && trim(wp_strip_all_tags($solution_body)) === springapex_solution_seed_content((string) $solution_post->post_title)
+  ) {
+      $solution_body = '';
+  }
+  ?>
+  <?php if ($solution_body !== '') : ?>
+    <section class="sa-industry-section sa-industry-body">
+      <div class="container container-narrow">
+        <div class="entry-content">
+          <?php
+          // 走核心的正文流程：密码保护（未解锁时输出密码表单）和分页符
+          // （<!--nextpage-->，只显示当前页并给出页码链接）都由它处理。
+          $GLOBALS['post'] = $solution_post;
+          setup_postdata($solution_post);
+          the_content();
+          wp_link_pages();
+          wp_reset_postdata();
+          ?>
         </div>
       </div>
     </section>
