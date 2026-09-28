@@ -197,7 +197,8 @@ function springapex_schema_page(): ?array
         $trail[] = ['name' => $archives[$name], 'url' => $archive_url];
         $type = 'CollectionPage';
     } elseif (is_front_page()) {
-        $url = $home;
+        // 首页设成「最新文章」时 is_front_page() 在 /page/2/ 上也为 true，各页保留自己的网址。
+        $url = is_home() ? springapex_schema_paged_url($home, (int) get_query_var('paged')) : $home;
     } elseif (is_home()) {
         // 阅读设置里单独指定的「文章页」（如 /blog/），不是首页。
         $posts_page = (int) get_option('page_for_posts');
