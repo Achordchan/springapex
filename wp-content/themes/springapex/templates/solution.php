@@ -151,12 +151,17 @@ $quality_image = trim((string) ($solution['quality_image'] ?? ''));
 $quality_image_id = (int) ($solution['quality_image_id'] ?? 0);
 $has_quality_image = $quality_image !== '' || $quality_image_id > 0;
 
-$input_items = [
-    ['icon' => 'pen', 'label' => __('Drawing or mechanism', 'springapex')],
-    ['icon' => 'target', 'label' => __('Load and movement', 'springapex')],
-    ['icon' => 'shield', 'label' => __('Environment and cycle life', 'springapex')],
-    ['icon' => 'check-shield', 'label' => __('Volume and required records', 'springapex')],
-];
+// 可选的长正文：写在编辑器正文（或 REST 的 content）里，空时整块不出现。
+// 放在 Hero 之后，读者一进来就能读到行业正文；结构化区块排在正文后面。
+// 老条目正文里只有种子写的一句占位话，那不算正文。
+$solution_body = $solution_post ? trim((string) $solution_post->post_content) : '';
+if (
+    $solution_body !== ''
+    && trim(wp_strip_all_tags($solution_body)) === springapex_solution_seed_content((string) $solution_post->post_title)
+) {
+    $solution_body = '';
+}
+$explore_anchor = $solution_body !== '' ? '#industry-overview' : '#industry-requirements';
 ?>
 
 <article class="sa-industry-solution">
@@ -171,7 +176,7 @@ $input_items = [
             <?php esc_html_e('Start an Engineering Review', 'springapex'); ?>
             <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
           </a>
-          <a class="text-link" href="#industry-requirements">
+          <a class="text-link" href="<?php echo esc_attr($explore_anchor); ?>">
             <?php esc_html_e('Explore the Program', 'springapex'); ?>
             <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
           </a>
@@ -191,16 +196,23 @@ $input_items = [
     </div>
   </section>
 
-  <section class="sa-industry-inputs" aria-label="<?php esc_attr_e('Engineering review inputs', 'springapex'); ?>">
-    <div class="container container-wide sa-industry-inputs__grid">
-      <?php foreach ($input_items as $item) : ?>
-        <div class="sa-industry-input">
-          <?php echo springapex_icon((string) $item['icon'], 'sa-industry-input__icon'); ?>
-          <span><?php echo esc_html((string) $item['label']); ?></span>
+  <?php if ($solution_body !== '') : ?>
+    <section class="sa-industry-section sa-industry-body" id="industry-overview">
+      <div class="container container-narrow">
+        <div class="entry-content">
+          <?php
+          // 走核心的正文流程：密码保护（未解锁时输出密码表单）和分页符
+          // （<!--nextpage-->，只显示当前页并给出页码链接）都由它处理。
+          $GLOBALS['post'] = $solution_post;
+          setup_postdata($solution_post);
+          the_content();
+          wp_link_pages();
+          wp_reset_postdata();
+          ?>
         </div>
-      <?php endforeach; ?>
-    </div>
-  </section>
+      </div>
+    </section>
+  <?php endif; ?>
 
   <?php if ($requirements) : ?>
     <section class="sa-industry-section sa-industry-requirements" id="industry-requirements">
@@ -287,34 +299,6 @@ $input_items = [
     </section>
   <?php endif; ?>
 
-  <?php if ($program_steps) : ?>
-    <section class="sa-industry-section sa-industry-program">
-      <div class="container container-wide">
-        <p class="section-kicker"><?php esc_html_e('FROM REQUIREMENT TO RELEASE', 'springapex'); ?></p>
-        <div class="sa-industry-program__list sa-industry-program__list--count-<?php echo esc_attr((string) count($program_steps)); ?>">
-          <?php foreach ($program_steps as $index => $step) : ?>
-            <article class="sa-industry-step">
-              <?php if ($step['image'] !== '' || $step['image_id'] > 0) : ?>
-                <figure class="sa-industry-step__media">
-                  <?php echo springapex_image(['id' => $step['image_id'], 'file' => $step['image']], (string) $step['title'], [
-                      'width' => 720,
-                      'height' => 420,
-                      'sizes' => '(max-width: 860px) 100vw, 25vw',
-                  ]); ?>
-                </figure>
-              <?php endif; ?>
-              <div class="sa-industry-step__copy">
-                <span class="sa-industry-step__number"><?php echo esc_html(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)); ?></span>
-                <h3><?php echo esc_html((string) $step['title']); ?></h3>
-                <?php if ($step['text'] !== '') : ?><p><?php echo esc_html((string) $step['text']); ?></p><?php endif; ?>
-              </div>
-            </article>
-          <?php endforeach; ?>
-        </div>
-      </div>
-    </section>
-  <?php endif; ?>
-
   <?php if ($quality_items || $has_quality_image) : ?>
     <section class="sa-industry-section sa-industry-quality">
       <div class="container container-wide">
@@ -347,31 +331,29 @@ $input_items = [
     </section>
   <?php endif; ?>
 
-  <?php
-  // 可选的长正文：写在编辑器正文（或 REST 的 content）里，空时整块不出现。
-  // 放在质量区块之后、询价之前，行业页的结构化区块不受影响。老条目正文里
-  // 只有种子写的一句占位话，那不算正文。
-  $solution_body = $solution_post ? trim((string) $solution_post->post_content) : '';
-  if (
-      $solution_body !== ''
-      && trim(wp_strip_all_tags($solution_body)) === springapex_solution_seed_content((string) $solution_post->post_title)
-  ) {
-      $solution_body = '';
-  }
-  ?>
-  <?php if ($solution_body !== '') : ?>
-    <section class="sa-industry-section sa-industry-body">
-      <div class="container container-narrow">
-        <div class="entry-content">
-          <?php
-          // 走核心的正文流程：密码保护（未解锁时输出密码表单）和分页符
-          // （<!--nextpage-->，只显示当前页并给出页码链接）都由它处理。
-          $GLOBALS['post'] = $solution_post;
-          setup_postdata($solution_post);
-          the_content();
-          wp_link_pages();
-          wp_reset_postdata();
-          ?>
+  <?php if ($program_steps) : ?>
+    <section class="sa-industry-section sa-industry-program">
+      <div class="container container-wide">
+        <p class="section-kicker"><?php esc_html_e('FROM REQUIREMENT TO RELEASE', 'springapex'); ?></p>
+        <div class="sa-industry-program__list sa-industry-program__list--count-<?php echo esc_attr((string) count($program_steps)); ?>">
+          <?php foreach ($program_steps as $index => $step) : ?>
+            <article class="sa-industry-step">
+              <?php if ($step['image'] !== '' || $step['image_id'] > 0) : ?>
+                <figure class="sa-industry-step__media">
+                  <?php echo springapex_image(['id' => $step['image_id'], 'file' => $step['image']], (string) $step['title'], [
+                      'width' => 720,
+                      'height' => 420,
+                      'sizes' => '(max-width: 860px) 100vw, 25vw',
+                  ]); ?>
+                </figure>
+              <?php endif; ?>
+              <div class="sa-industry-step__copy">
+                <span class="sa-industry-step__number"><?php echo esc_html(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)); ?></span>
+                <h3><?php echo esc_html((string) $step['title']); ?></h3>
+                <?php if ($step['text'] !== '') : ?><p><?php echo esc_html((string) $step['text']); ?></p><?php endif; ?>
+              </div>
+            </article>
+          <?php endforeach; ?>
         </div>
       </div>
     </section>
