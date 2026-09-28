@@ -102,6 +102,9 @@ add_action('wp_enqueue_scripts', static function (): void {
         $enqueue_style('springapex-solution-detail', 'solution-detail.css');
         $enqueue_style('springapex-solution-detail-responsive', 'solution-detail-responsive.css');
     }
+    if (in_array($route, ['case-study', 'solution'], true)) {
+        $enqueue_style('springapex-rich-content', 'rich-content.css');
+    }
 
     wp_enqueue_script(
         'springapex-inquiry-tracking',
