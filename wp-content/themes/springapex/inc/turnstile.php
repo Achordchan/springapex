@@ -228,7 +228,14 @@ add_action('login_head', static function (): void {
         return;
     }
 
-    echo '<style>.sa-login-turnstile{margin:16px 0 4px}</style>';
+    // Turnstile 标准挂件固定 300px 宽，而 WP 登录表单只有 320px（减去 24px×2 内边距
+    // 和边框后仅 270px），且 form 自带 overflow:hidden，右侧会被裁掉。把 #login
+    // 放宽到 360px，窄屏再收窄表单内边距，保证内容区始终 ≥ 300px。
+    echo '<style>'
+        . '#login{width:360px;max-width:100%}'
+        . '.sa-login-turnstile{margin:16px 0 4px;display:flex;justify-content:center}'
+        . '@media (max-width:359px){.login form{padding-left:8px;padding-right:8px}}'
+        . '</style>';
 });
 
 add_action('login_form', static function (): void {
