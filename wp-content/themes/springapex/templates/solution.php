@@ -363,7 +363,11 @@ $input_items = [
     <section class="sa-industry-section sa-industry-body">
       <div class="container container-narrow">
         <div class="entry-content">
-          <?php echo apply_filters('the_content', $solution_body); // phpcs:ignore WordPress.Security.EscapeOutput -- core content filter output ?>
+          <?php if (post_password_required($solution_post)) : ?>
+            <?php echo get_the_password_form($solution_post); // phpcs:ignore WordPress.Security.EscapeOutput -- core form markup ?>
+          <?php else : ?>
+            <?php echo apply_filters('the_content', $solution_body); // phpcs:ignore WordPress.Security.EscapeOutput -- core content filter output ?>
+          <?php endif; ?>
         </div>
       </div>
     </section>

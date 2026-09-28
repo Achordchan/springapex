@@ -218,15 +218,16 @@ function springapex_schema_page(): ?array
     $image = $own_image ?? $route_image;
     $image_source = $own_image !== null ? 'own' : ($route_image !== null ? 'route' : '');
 
-    // 分享卡片另选：同样的顺序里挑第一张社交平台认的格式，都不行就用 logo。
+    // 分享卡片另选：同样的顺序里挑第一张社交平台认的格式，再退到后台 logo，
+    // 最后是主题自带的 PNG 文字标（后台 logo 也可能是 WebP）。
     $share_image = null;
-    foreach ([$own_image, $route_image] as $candidate) {
+    $candidates = [$own_image, $route_image, springapex_schema_logo(), springapex_schema_image('logo-site-norenspring-v1.png')];
+    foreach ($candidates as $candidate) {
         if ($candidate !== null && springapex_schema_is_shareable_image($candidate['url'])) {
             $share_image = $candidate;
             break;
         }
     }
-    $share_image ??= springapex_schema_logo();
 
     $seo = springapex_seo_current_values();
 

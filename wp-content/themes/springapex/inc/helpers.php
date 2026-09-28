@@ -448,7 +448,7 @@ function springapex_navigation_href(string $href): string
 /**
  * 站内页面链接补上结尾斜杠。菜单是在 外观 → 菜单 里手填的自定义链接，写成
  * /products 时每次点击都要先 301 到 /products/，全站每页 5 处、爬虫每页都多
- * 跑一趟跳转。带扩展名的文件（/catalog.pdf）、只有域名的首页链接、已有斜杠的
+ * 跑一趟跳转。只在固定链接本身带结尾斜杠时生效。带扩展名的文件（/catalog.pdf）、只有域名的首页链接、已有斜杠的
  * 不动；查询串和锚点原样保留在斜杠之后。
  */
 function springapex_navigation_trailing_slash(string $href): string
@@ -457,6 +457,10 @@ function springapex_navigation_trailing_slash(string $href): string
         return $href;
     }
     [, $before_query, $query_and_fragment] = $parts;
+    // 固定链接设成不带结尾斜杠（如 /%postname%）时，补了反而会被 301 回去。
+    if (function_exists('user_trailingslashit') && !str_ends_with(user_trailingslashit('probe'), '/')) {
+        return $href;
+    }
     $path = (string) preg_replace('#^(?:https?:)?//[^/]*#i', '', $before_query);
     if ($path === '' || str_ends_with($path, '/')) {
         return $href;

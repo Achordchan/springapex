@@ -18,6 +18,14 @@ function add_action(string $hook, callable $callback, int $priority = 10, int $a
     return true;
 }
 
+$springapex_test_trailing_slashes = true;
+
+function user_trailingslashit(string $url): string
+{
+    global $springapex_test_trailing_slashes;
+    return $springapex_test_trailing_slashes ? rtrim($url, '/') . '/' : rtrim($url, '/');
+}
+
 require __DIR__ . '/../inc/helpers.php';
 require __DIR__ . '/../inc/schema.php';
 
@@ -47,6 +55,14 @@ foreach ($cases as $input => $expected) {
     $actual = springapex_navigation_href((string) $input);
     springapex_test_assert($actual === $expected, "navigation href {$input}: expected {$expected}, got {$actual}");
 }
+
+// 固定链接不带结尾斜杠时不补，免得被 301 回去。
+$springapex_test_trailing_slashes = false;
+springapex_test_assert(
+    springapex_navigation_href('/products') === 'https://www.norenspring.com/products',
+    'no trailing slash is added when permalinks have none'
+);
+$springapex_test_trailing_slashes = true;
 
 // 行业页 H1：名字里已有 Spring 不再拼口号，没有才补，漏掉的空格补上。
 $headings = [

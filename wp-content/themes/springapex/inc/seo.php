@@ -222,7 +222,8 @@ function springapex_seo_post_values(WP_Post $post): array
     $description = trim((string) get_post_meta($post->ID, '_springapex_seo_description', true));
     $keywords = trim((string) get_post_meta($post->ID, '_springapex_seo_keywords', true));
 
-    if ($description === '') {
+    // 受密码保护的内容不能从正文里截描述：<head> 和结构化数据对未解锁的访客也可见。
+    if ($description === '' && !post_password_required($post)) {
         $description = springapex_seo_clean_description(
             $post->post_excerpt !== '' ? $post->post_excerpt : $post->post_content
         );
