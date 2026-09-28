@@ -129,7 +129,10 @@ function springapex_schema_paged_url(string $url, int $paged): string
         return add_query_arg('paged', $paged, $url);
     }
 
-    return trailingslashit($url) . user_trailingslashit('page/' . $paged, 'paged');
+    global $wp_rewrite;
+    $base = $wp_rewrite instanceof WP_Rewrite && $wp_rewrite->pagination_base !== '' ? $wp_rewrite->pagination_base : 'page';
+
+    return trailingslashit($url) . user_trailingslashit($base . '/' . $paged, 'paged');
 }
 
 /**

@@ -363,11 +363,15 @@ $input_items = [
     <section class="sa-industry-section sa-industry-body">
       <div class="container container-narrow">
         <div class="entry-content">
-          <?php if (post_password_required($solution_post)) : ?>
-            <?php echo get_the_password_form($solution_post); // phpcs:ignore WordPress.Security.EscapeOutput -- core form markup ?>
-          <?php else : ?>
-            <?php echo apply_filters('the_content', $solution_body); // phpcs:ignore WordPress.Security.EscapeOutput -- core content filter output ?>
-          <?php endif; ?>
+          <?php
+          // 走核心的正文流程：密码保护（未解锁时输出密码表单）和分页符
+          // （<!--nextpage-->，只显示当前页并给出页码链接）都由它处理。
+          $GLOBALS['post'] = $solution_post;
+          setup_postdata($solution_post);
+          the_content();
+          wp_link_pages();
+          wp_reset_postdata();
+          ?>
         </div>
       </div>
     </section>
