@@ -200,7 +200,9 @@ function springapex_current_route(): string
         }
     }
 
-    if (function_exists('is_front_page') && (is_front_page() || is_home())) {
+    // 只认真正的首页。阅读设置里另指定的「文章页」（/blog/ 之类）is_home() 也为
+    // true，但它不是首页，不能套首页的 TDK、横幅和导航高亮。
+    if (function_exists('is_front_page') && is_front_page()) {
         return 'home';
     }
 

@@ -55,7 +55,7 @@ function springapex_schema_is_shareable_image(string $url): bool
  *
  * @return array{url: string, width: int, height: int}|null
  */
-function springapex_schema_image(mixed $image, bool $shareable_only = true): ?array
+function springapex_schema_image(mixed $image, bool $shareable_only = false): ?array
 {
     $attachment_id = 0;
     $file = '';
@@ -119,6 +119,19 @@ function springapex_schema_post_image_value(WP_Post $post): mixed
     return has_post_thumbnail($post) ? (int) get_post_thumbnail_id($post) : null;
 }
 
+/** 列表的第 N 页（N > 1）网址；固定链接关闭时用 ?paged=N。 */
+function springapex_schema_paged_url(string $url, int $paged): string
+{
+    if ($paged <= 1 || $url === '') {
+        return $url;
+    }
+    if ((string) get_option('permalink_structure') === '') {
+        return add_query_arg('paged', $paged, $url);
+    }
+
+    return trailingslashit($url) . user_trailingslashit('page/' . $paged, 'paged');
+}
+
 /**
  * 当前页面的共享描述；搜索页、404、作者/分类归档等不输出页面级标记的地方返回 null。
  *
@@ -130,6 +143,7 @@ function springapex_schema_post_image_value(WP_Post $post): mixed
  *     og_type: string,
  *     image: array{url: string, width: int, height: int}|null,
  *     image_source: string,
+ *     share_image: array{url: string, width: int, height: int}|null,
  *     trail: list<array{name: string, url: string}>,
  *     post: WP_Post|null
  * }|null
@@ -144,7 +158,7 @@ function springapex_schema_page(): ?array
     $archives = springapex_schema_archives();
     $route = springapex_current_route();
     $post = null;
-    $image = null;
+    $own_image = null;
     $type = 'WebPage';
     $trail = [['name' => 'Home', 'url' => $home]];
 
@@ -161,7 +175,7 @@ function springapex_schema_page(): ?array
             $trail[] = ['name' => $archives[$post->post_type], 'url' => (string) get_post_type_archive_link($post->post_type)];
         }
         $trail[] = ['name' => springapex_schema_text(get_the_title($post)), 'url' => $url];
-        $image = springapex_schema_image(springapex_schema_post_image_value($post));
+        $own_image = springapex_schema_image(springapex_schema_post_image_value($post), false);
         if ($route === 'about') {
             $type = 'AboutPage';
         } elseif ($route === 'contact') {
@@ -173,12 +187,23 @@ function springapex_schema_page(): ?array
         if (!isset($archives[$name])) {
             return null;
         }
-        // 翻页（/products/page/2/）和筛选参数（/news/?news_type=…）都指回列表首页。
-        $url = (string) get_post_type_archive_link($name);
-        $trail[] = ['name' => $archives[$name], 'url' => $url];
+        // 筛选参数（/news/?news_type=…）指回列表本身；翻页各自保留，第 2 页
+        // 的内容不是第 1 页的重复。
+        $archive_url = (string) get_post_type_archive_link($name);
+        $url = springapex_schema_paged_url($archive_url, (int) get_query_var('paged'));
+        $trail[] = ['name' => $archives[$name], 'url' => $archive_url];
         $type = 'CollectionPage';
-    } elseif (is_front_page() || is_home()) {
+    } elseif (is_front_page()) {
         $url = $home;
+    } elseif (is_home()) {
+        // 阅读设置里单独指定的「文章页」（如 /blog/），不是首页。
+        $posts_page = (int) get_option('page_for_posts');
+        $posts_url = $posts_page > 0 ? (string) get_permalink($posts_page) : '';
+        if ($posts_url === '') {
+            return null;
+        }
+        $url = springapex_schema_paged_url($posts_url, (int) get_query_var('paged'));
+        $trail[] = ['name' => springapex_schema_text(get_the_title($posts_page)), 'url' => $posts_url];
     } else {
         return null;
     }
@@ -186,20 +211,22 @@ function springapex_schema_page(): ?array
     if (is_front_page()) {
         $trail = [];
     }
-    // 配图来源：内容自己的图 > 页面横幅 > logo。产品、文章节点只认内容自己的图，
-    // 页面主图不认 logo；logo 只作分享卡片的兜底。
-    $image_source = $image !== null ? 'own' : '';
-    if ($image === null) {
-        $route_images = springapex_route_hero_images();
-        if (isset($route_images[$route])) {
-            $image = springapex_schema_image($route_images[$route]);
-            $image_source = $image !== null ? 'route' : '';
+    // 页面主图（结构化数据用，任何格式）：内容自己的图 > 页面横幅。产品、文章
+    // 节点只认内容自己的图。
+    $route_images = springapex_route_hero_images();
+    $route_image = isset($route_images[$route]) ? springapex_schema_image($route_images[$route], false) : null;
+    $image = $own_image ?? $route_image;
+    $image_source = $own_image !== null ? 'own' : ($route_image !== null ? 'route' : '');
+
+    // 分享卡片另选：同样的顺序里挑第一张社交平台认的格式，都不行就用 logo。
+    $share_image = null;
+    foreach ([$own_image, $route_image] as $candidate) {
+        if ($candidate !== null && springapex_schema_is_shareable_image($candidate['url'])) {
+            $share_image = $candidate;
+            break;
         }
     }
-    if ($image === null) {
-        $image = springapex_schema_logo();
-        $image_source = $image !== null ? 'logo' : '';
-    }
+    $share_image ??= springapex_schema_logo();
 
     $seo = springapex_seo_current_values();
 
@@ -211,6 +238,7 @@ function springapex_schema_page(): ?array
         'og_type' => $post instanceof WP_Post && $post->post_type === 'spring_news' ? 'article' : 'website',
         'image' => $image,
         'image_source' => $image_source,
+        'share_image' => $share_image,
         'trail' => $trail,
         'post' => $post,
     ];
@@ -411,7 +439,7 @@ function springapex_schema_graph(?array $page): array
     if (is_front_page() || $page['type'] === 'AboutPage') {
         $webpage['about'] = ['@id' => $organization_id];
     }
-    if ($page['image'] !== null && $page['image_source'] !== 'logo') {
+    if ($page['image'] !== null) {
         $graph[] = array_filter([
             '@type' => 'ImageObject',
             '@id' => $page['url'] . '#primaryimage',
@@ -477,11 +505,11 @@ add_action('wp_head', static function (): void {
             ['property', 'og:description', $page['description']],
             ['property', 'og:url', $page['url']],
         ];
-        if ($page['image'] !== null) {
-            $tags[] = ['property', 'og:image', $page['image']['url']];
-            if ($page['image']['width'] > 0 && $page['image']['height'] > 0) {
-                $tags[] = ['property', 'og:image:width', (string) $page['image']['width']];
-                $tags[] = ['property', 'og:image:height', (string) $page['image']['height']];
+        if ($page['share_image'] !== null) {
+            $tags[] = ['property', 'og:image', $page['share_image']['url']];
+            if ($page['share_image']['width'] > 0 && $page['share_image']['height'] > 0) {
+                $tags[] = ['property', 'og:image:width', (string) $page['share_image']['width']];
+                $tags[] = ['property', 'og:image:height', (string) $page['share_image']['height']];
             }
             $tags[] = ['property', 'og:image:alt', $page['title']];
         }
@@ -489,11 +517,11 @@ add_action('wp_head', static function (): void {
             $tags[] = ['property', 'article:published_time', (string) get_the_date('c', $page['post'])];
             $tags[] = ['property', 'article:modified_time', (string) get_the_modified_date('c', $page['post'])];
         }
-        $tags[] = ['name', 'twitter:card', $page['image'] !== null ? 'summary_large_image' : 'summary'];
+        $tags[] = ['name', 'twitter:card', $page['share_image'] !== null ? 'summary_large_image' : 'summary'];
         $tags[] = ['name', 'twitter:title', $page['title']];
         $tags[] = ['name', 'twitter:description', $page['description']];
-        if ($page['image'] !== null) {
-            $tags[] = ['name', 'twitter:image', $page['image']['url']];
+        if ($page['share_image'] !== null) {
+            $tags[] = ['name', 'twitter:image', $page['share_image']['url']];
         }
 
         foreach ($tags as [$attribute, $key, $value]) {
