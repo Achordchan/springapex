@@ -22,16 +22,20 @@ if (!$case) {
     return;
 }
 
-$case_image = $case['image'] ?? 'solutions-hero-v2.png';
+// Case images are labelled product collages; behind the hero copy they make
+// the title unreadable, so the hero reuses the Case Studies listing artwork
+// and light overlay like the other inner pages. The collage stays in the body.
+$hero = springapex_get('case_studies.hero', []);
 ?>
 <?php
 get_template_part('parts/inner-hero', null, [
-    'variant' => 'solution-detail',
+    'variant' => 'solutions',
     'title' => (string) ($case['title'] ?? ''),
     'subtitle' => (string) ($case['tagline'] ?? ''),
-    'image' => $case_image,
-    'image_width' => 1600,
-    'image_height' => 900,
+    'image' => $hero['image'] ?? 'solutions-hero-v2.png',
+    'mobile_image' => $hero['mobile_image'] ?? 'solutions-hero-mobile-v1.png',
+    'image_width' => 1890,
+    'image_height' => 830,
     'breadcrumb' => [
         ['label' => 'Home', 'href' => '/'],
         ['label' => 'Case Studies', 'href' => '/case-studies/'],
