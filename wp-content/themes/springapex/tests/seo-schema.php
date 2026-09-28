@@ -61,6 +61,12 @@ foreach ($headings as $input => $expected) {
     springapex_test_assert($actual === $expected, "solution heading {$input}: expected {$expected}, got {$actual}");
 }
 
+// 老行业条目的种子占位正文：详情页据此判断不是真正文。
+springapex_test_assert(
+    springapex_solution_seed_content('Rail Transit') === 'NorenSpring engineers precision spring solutions for rail transit applications, from design review and prototyping through stable production.',
+    'solution seed content matches the seeded sentence'
+);
+
 // 面包屑：跳过缺名字或网址的项，位置连续；不足两级不输出。
 $breadcrumb = springapex_schema_breadcrumb('https://www.norenspring.com/products/x/#breadcrumb', [
     ['name' => 'Home', 'url' => 'https://www.norenspring.com/'],

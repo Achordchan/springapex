@@ -467,6 +467,15 @@ function springapex_navigation_trailing_slash(string $href): string
     return $before_query . '/' . $query_and_fragment;
 }
 
+/** 种子写进老行业条目正文的一句占位话。详情页的正文区块认得它，不把它当正文显示。 */
+function springapex_solution_seed_content(string $industry_title): string
+{
+    return sprintf(
+        'NorenSpring engineers precision spring solutions for %s applications, from design review and prototyping through stable production.',
+        strtolower($industry_title)
+    );
+}
+
 /**
  * 行业页 H1 的兜底写法（后台没填 Hero 标题时）。行业名本身多半已经叫
  * "Defense Spring Solutions"，以前再拼一句 "spring programs built for repeat

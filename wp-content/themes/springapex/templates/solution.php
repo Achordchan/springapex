@@ -163,7 +163,7 @@ $input_items = [
   <section class="sa-industry-hero">
     <div class="container container-wide sa-industry-hero__grid">
       <div class="sa-industry-hero__copy">
-        <p class="section-kicker"><?php echo esc_html(strtoupper($industry_title)); ?> <?php esc_html_e('SPRING SOLUTIONS', 'springapex'); ?></p>
+        <p class="section-kicker"><?php echo esc_html(strtoupper(html_entity_decode(springapex_solution_heading($industry_title), ENT_QUOTES | ENT_HTML5, 'UTF-8'))); ?></p>
         <h1><?php echo esc_html($hero_title); ?></h1>
         <?php if ($hero_text !== '') : ?><p class="sa-industry-hero__lede"><?php echo esc_html($hero_text); ?></p><?php endif; ?>
         <div class="sa-industry-hero__actions">
@@ -342,6 +342,28 @@ $input_items = [
               <?php endforeach; ?>
             </div>
           <?php endif; ?>
+        </div>
+      </div>
+    </section>
+  <?php endif; ?>
+
+  <?php
+  // 可选的长正文：写在编辑器正文（或 REST 的 content）里，空时整块不出现。
+  // 放在质量区块之后、询价之前，行业页的结构化区块不受影响。老条目正文里
+  // 只有种子写的一句占位话，那不算正文。
+  $solution_body = $solution_post ? trim((string) $solution_post->post_content) : '';
+  if (
+      $solution_body !== ''
+      && trim(wp_strip_all_tags($solution_body)) === springapex_solution_seed_content((string) $solution_post->post_title)
+  ) {
+      $solution_body = '';
+  }
+  ?>
+  <?php if ($solution_body !== '') : ?>
+    <section class="sa-industry-section sa-industry-body">
+      <div class="container container-narrow">
+        <div class="entry-content">
+          <?php echo apply_filters('the_content', $solution_body); // phpcs:ignore WordPress.Security.EscapeOutput -- core content filter output ?>
         </div>
       </div>
     </section>

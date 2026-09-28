@@ -84,6 +84,71 @@ add_action('init', static function (): void {
         'auth_callback' => $can_edit,
     ]);
 
+    // 行业方案面板（inc/solution-meta.php）的字段，清洗规则与面板保存时一致。
+    // 文字字段不设默认值：详情页只在 meta 存在时才覆盖主题内置的种子文案
+    // （springapex_solution_saved_details()），注册默认值不改变这一点。
+    $solution_text = static fn(string $description): array => [
+        'type' => 'string',
+        'description' => $description,
+        'single' => true,
+        'show_in_rest' => true,
+        'sanitize_callback' => static fn(mixed $value): string => sanitize_textarea_field(is_scalar($value) ? (string) $value : ''),
+        'auth_callback' => $can_edit,
+    ];
+    $solution_texts = [
+        '_springapex_solution_hero_title' => 'Hero H1; empty uses the industry name.',
+        '_springapex_solution_challenge_intro' => 'Hero lede under the H1.',
+        '_springapex_solution_requirements_title' => 'Heading of the requirements section.',
+        '_springapex_solution_requirements_text' => 'Intro paragraph of the requirements section.',
+        '_springapex_solution_quality_image' => 'Quality section image as a theme file name or URL; the attachment id field wins when set.',
+    ];
+    foreach ($solution_texts as $meta_key => $description) {
+        register_post_meta('spring_solution', $meta_key, $solution_text($description));
+    }
+    register_post_meta('spring_solution', '_springapex_solution_quality_image_id', [
+        'type' => 'integer',
+        'description' => 'Quality section image attachment ID; 0 uses the file name field.',
+        'single' => true,
+        'show_in_rest' => true,
+        'sanitize_callback' => static fn(mixed $value): int => get_post_type(absint(is_scalar($value) ? $value : 0)) === 'attachment'
+            ? absint($value)
+            : 0,
+        'auth_callback' => $can_edit,
+    ]);
+    register_post_meta('spring_solution', '_springapex_solution_products', [
+        'type' => 'array',
+        'description' => 'Recommended product slugs. Unpublished or unknown slugs are dropped.',
+        'single' => true,
+        'show_in_rest' => [
+            'schema' => [
+                'type' => 'array',
+                'items' => ['type' => 'string'],
+            ],
+        ],
+        'sanitize_callback' => static fn(mixed $value): array => springapex_sanitize_product_slugs($value),
+        'auth_callback' => $can_edit,
+    ]);
+    // 四组可重复区块：列定义与后台行编辑器同源，REST schema 也由它生成。
+    foreach (springapex_solution_row_sets() as $field => $columns) {
+        $meta_key = springapex_solution_row_meta_keys()[$field] ?? '';
+        if ($meta_key === '') {
+            continue;
+        }
+        register_post_meta('spring_solution', $meta_key, [
+            'type' => 'array',
+            'description' => 'Rows of the ' . str_replace('springapex_solution_', '', $field) . ' section, in display order.',
+            'single' => true,
+            'show_in_rest' => [
+                'schema' => [
+                    'type' => 'array',
+                    'items' => springapex_solution_row_rest_schema($columns),
+                ],
+            ],
+            'sanitize_callback' => static fn(mixed $value): array => springapex_sanitize_row_editor($value, $columns),
+            'auth_callback' => $can_edit,
+        ]);
+    }
+
     // 新闻作者条目自身的字段（inc/news-author.php）：姓名是 title，头像是 featured_media。
     add_post_type_support('spring_news_author', 'custom-fields');
     register_post_meta('spring_news_author', SPRINGAPEX_NEWS_AUTHOR_ROLE_META, $string_meta(
@@ -95,6 +160,34 @@ add_action('init', static function (): void {
         'sanitize_textarea_field'
     ));
 });
+
+/**
+ * 行编辑器的一组列 ⇒ 一行的 REST schema。图片列另有 <key>_id（附件 ID），
+ * 相关产品是 slug 数组，其余都是字符串。
+ *
+ * @param array<int, array{key: string, type: string}> $columns
+ * @return array<string, mixed>
+ */
+function springapex_solution_row_rest_schema(array $columns): array
+{
+    $properties = [];
+    foreach ($columns as $column) {
+        $key = (string) $column['key'];
+        switch ((string) $column['type']) {
+            case 'image':
+                $properties[$key] = ['type' => 'string', 'description' => 'Theme file name or URL.'];
+                $properties[$key . '_id'] = ['type' => 'integer', 'description' => 'Attachment ID; wins over the file name.'];
+                break;
+            case 'products':
+                $properties[$key] = ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Product slugs.'];
+                break;
+            default:
+                $properties[$key] = ['type' => 'string'];
+        }
+    }
+
+    return ['type' => 'object', 'properties' => $properties];
+}
 
 // 阅读数的只读拆分，给外部工具看统计用；同样只在 edit 上下文（需要编辑权限）输出。
 add_action('rest_api_init', static function (): void {
