@@ -504,16 +504,37 @@
   line-height: 1.75;
 }
 
-.sa-news-single-body__inner > .wp-block-table table {
+.sa-news-single-body__inner > .wp-block-table table,
+.sa-news-single-body__inner > table {
   width: 100%;
   border-collapse: collapse;
   font-size: 15px;
 }
 
-.sa-news-single-body__inner > .wp-block-table :is(th, td) {
+/* 没有 wp-block-table 外壳的表格（REST 或粘贴写入）同样加边框，窄屏横向滚动。 */
+.sa-news-single-body__inner > table {
+  display: block;
+  max-width: 100%;
+  margin-top: 32px;
+  overflow-x: auto;
+}
+
+.sa-news-single-body__inner > .wp-block-table :is(th, td),
+.sa-news-single-body__inner > table :is(th, td) {
   padding: 10px 12px;
   border: 1px solid var(--sa-border);
   text-align: left;
+}
+
+/* 正文链接要一眼能认出来：蓝色加下划线。 */
+.sa-news-single-body__inner a:not(.btn, .wp-block-button__link) {
+  color: var(--sa-accent-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.sa-news-single-body__inner a:not(.btn, .wp-block-button__link):hover {
+  color: var(--sa-accent-deep-hover);
 }
 
 .sa-news-gallery {
