@@ -809,6 +809,82 @@
   background: var(--sa-bg-elevated);
 }
 
+/* 文章目录：宽屏在侧栏跟随，窄屏侧栏落到正文下方，改在正文开头放折叠框。
+   链接选择器带上 .sa-news-toc，压过正文链接的蓝色下划线样式。 */
+.sa-news-toc__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: sa-toc;
+}
+
+.sa-news-toc__list li {
+  counter-increment: sa-toc;
+}
+
+.sa-news-toc .sa-news-toc__list a {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  padding: 6px 8px 6px 10px;
+  border-left: 2px solid transparent;
+  border-radius: 0 var(--sa-radius) var(--sa-radius) 0;
+  color: var(--sa-text-2);
+  font-size: 14px;
+  line-height: 1.45;
+  text-decoration: none;
+}
+
+.sa-news-toc .sa-news-toc__list a::before {
+  content: counter(sa-toc, decimal-leading-zero);
+  color: var(--sa-text-3);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.7;
+}
+
+.sa-news-toc .sa-news-toc__list a:hover {
+  color: var(--sa-primary);
+  background: var(--sa-bg-inset);
+}
+
+.sa-news-toc .sa-news-toc__list a[aria-current="true"] {
+  border-left-color: var(--sa-accent);
+  color: var(--sa-primary);
+  font-weight: 600;
+  background: var(--sa-accent-soft);
+}
+
+/* 侧栏里目录和联系卡一起吸顶：目录过长时自己滚动，联系卡始终露出来 */
+.sa-news-toc--aside .sa-news-toc__list {
+  max-height: max(180px, calc(100vh - var(--sa-header-height) - 440px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.sa-news-toc--inline {
+  display: none;
+  margin: 0 0 24px;
+  border: 1px solid var(--sa-border);
+  border-radius: var(--sa-radius-lg);
+  background: var(--sa-surface);
+}
+
+.sa-news-toc--inline summary {
+  padding: 14px 16px;
+  color: var(--sa-primary);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sa-news-toc--inline .sa-news-toc__list {
+  padding: 0 8px 12px;
+}
+
 /* ---- Responsive ---- */
 
 @media (max-width: 1180px) {
@@ -824,6 +900,14 @@
 
   .sa-news-single-aside__sticky {
     position: static;
+  }
+
+  .sa-news-toc--aside {
+    display: none;
+  }
+
+  .sa-news-toc--inline {
+    display: block;
   }
 }
 
