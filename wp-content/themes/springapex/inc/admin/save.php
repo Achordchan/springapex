@@ -187,6 +187,55 @@ function springapex_admin_reset_screen(string $screen): void
     springapex_admin_redirect_after_save($screen, 'sa-reset');
 }
 
+/**
+ * 把一屏提交上来的内容按该屏 schema 清洗后写进覆盖表。后台表单保存和
+ * REST 接口（inc/rest-content.php）共用这一条路径，校验规则只有一份。
+ *
+ * 返回是否写入；没写入或部分字段被拒时原因记在 $warnings 里。
+ */
+function springapex_admin_save_screen_content(string $screen, mixed $raw, array &$warnings): bool
+{
+    $result = springapex_admin_sanitize_schema_node(
+        $raw,
+        springapex_admin_screen_schema_tree($screen),
+        springapex_content(),
+        '',
+        $warnings
+    );
+
+    if (!$result['accepted'] || !is_array($result['value'])) {
+        springapex_admin_add_warning($warnings, '没有识别到可保存的字段，原有内容未改变。');
+        return false;
+    }
+
+    $roots = springapex_admin_screen_roots($screen);
+    $values = $result['value'];
+
+    // 表单一来一回中间隔着很久，读到写之间别人可能已经存过东西了，所以
+    // 走 compare-and-swap，冲突就重读最新内容再把本屏的字段合并进去。
+    $saved = springapex_content_update_overrides(
+        static function (array $overrides) use ($roots, $values): array {
+            foreach ($roots as $root) {
+                if (!array_key_exists($root, $values)) {
+                    continue;
+                }
+                $overrides[$root] = array_key_exists($root, $overrides)
+                    ? springapex_content_merge($overrides[$root], $values[$root])
+                    : $values[$root];
+            }
+            return $overrides;
+        }
+    );
+
+    if (!$saved) {
+        springapex_admin_add_warning($warnings, '同时有别的改动正在保存，这次没有写入，请重试一次。');
+        return false;
+    }
+
+    springapex_content_flush_caches($screen);
+    return true;
+}
+
 function springapex_admin_handle_save(): void
 {
     if (!current_user_can(SPRINGAPEX_ADMIN_CAP)) {
@@ -209,42 +258,7 @@ function springapex_admin_handle_save(): void
 
     $raw = isset($_POST['springapex_content']) ? wp_unslash($_POST['springapex_content']) : [];
     $warnings = [];
-    $result = springapex_admin_sanitize_schema_node(
-        $raw,
-        springapex_admin_screen_schema_tree($screen),
-        springapex_content(),
-        '',
-        $warnings
-    );
-
-    if ($result['accepted'] && is_array($result['value'])) {
-        $roots = springapex_admin_screen_roots($screen);
-        $values = $result['value'];
-
-        // 表单一来一回中间隔着很久，读到写之间别人可能已经存过东西了，所以
-        // 走 compare-and-swap，冲突就重读最新内容再把本屏的字段合并进去。
-        $saved = springapex_content_update_overrides(
-            static function (array $overrides) use ($roots, $values): array {
-                foreach ($roots as $root) {
-                    if (!array_key_exists($root, $values)) {
-                        continue;
-                    }
-                    $overrides[$root] = array_key_exists($root, $overrides)
-                        ? springapex_content_merge($overrides[$root], $values[$root])
-                        : $values[$root];
-                }
-                return $overrides;
-            }
-        );
-
-        if ($saved) {
-            springapex_content_flush_caches($screen);
-        } else {
-            springapex_admin_add_warning($warnings, '同时有别的改动正在保存，这次没有写入，请重试一次。');
-        }
-    } else {
-        springapex_admin_add_warning($warnings, '没有识别到可保存的字段，原有内容未改变。');
-    }
+    springapex_admin_save_screen_content($screen, $raw, $warnings);
 
     springapex_admin_store_feedback($screen, 'saved', $warnings);
     springapex_admin_redirect_after_save($screen, 'sa-saved');
