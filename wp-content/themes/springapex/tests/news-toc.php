@@ -71,6 +71,16 @@ springapex_test_assert(array_column($raw_toc['items'], 'text') === ['A', 'B', 'C
 springapex_test_assert(str_contains($raw_toc['html'], '<script>const t = "<h2>Overview</h2>";</script><!-- <h2>Hidden</h2> -->'), 'script and comment untouched');
 springapex_test_assert(str_contains($raw_toc['html'], '<h2 id="a">A<!-- note --></h2>'), 'comment inside heading restored');
 springapex_test_assert(str_ends_with($raw_toc['html'], '<!-- unclosed <h2>D</h2>'), 'unclosed comment untouched');
-springapex_test_assert(!str_contains($raw_toc['html'], "\0"), 'no placeholder left');
+
+// 属性值里的 <h2> 不是标题；iframe 等整段跳过的元素上的 id 也算已占用。
+$attr = '<div data-content="<h2>Overview</h2>"></div><iframe id="specifications" src="x"></iframe>'
+    . '<h2>Specifications</h2><h2>B</h2><h2>C</h2>';
+$attr_toc = springapex_news_toc_prepare($attr);
+springapex_test_assert(array_column($attr_toc['items'], 'id') === ['specifications-2', 'b', 'c'], 'attr: ' . implode(',', array_column($attr_toc['items'], 'id')));
+springapex_test_assert(str_starts_with($attr_toc['html'], '<div data-content="<h2>Overview</h2>"></div>'), 'attribute value untouched');
+
+// 没有闭合的 h2、零散的 < 都原样保留。
+$broken = '<p>a < b</p><h2>One</h2><h2>Two</h2><h2>Three';
+springapex_test_assert(str_ends_with(springapex_news_toc_prepare($broken)['html'], '<p>a < b</p><h2 id="one">One</h2><h2 id="two">Two</h2><h2>Three'), 'broken html kept');
 
 echo "news-toc: ok\n";

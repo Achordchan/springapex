@@ -14,6 +14,9 @@ if (!defined('ABSPATH')) {
 
 const SPRINGAPEX_NEWS_TOC_MIN_HEADINGS = 3;
 
+/** 内容按原样文本处理、里面的 <h2> 不是标题的元素。 */
+const SPRINGAPEX_NEWS_TOC_RAW = 'script|style|textarea|template|title|noscript|iframe|xmp|noembed|noframes';
+
 /** 一串标签属性：引号里的 > 和空格不会把标签截断。 */
 const SPRINGAPEX_NEWS_TOC_ATTRS = '(?:\\s+[^\\s"\'>\\/=]+(?:\\s*=\\s*(?:"[^"]*"|\'[^\']*\'|[^\\s"\'=<>`]+))?)*';
 
@@ -28,81 +31,111 @@ function springapex_news_toc_prepare(string $html): array
         return ['html' => $html, 'items' => []];
     }
 
-    // 注释和 script、style 这类原样文本元素里的 “<h2>” 不是真标题：先换成占位符，
-    // 处理完再原样放回，里面的内容一个字都不改。
-    $original = $html;
-    $raw_blocks = [];
-    $html = preg_replace_callback(
-        '/<!--.*?(?:-->|$)|<(script|style|textarea|template|title|noscript|iframe|xmp|noembed|noframes)\\b' . SPRINGAPEX_NEWS_TOC_ATTRS . '\\s*>.*?(?:<\/\\1\\s*>|$)/is',
-        static function (array $match) use (&$raw_blocks): string {
-            $raw_blocks[] = $match[0];
-            return "\0" . (count($raw_blocks) - 1) . "\0";
-        },
-        $html
-    );
-    // 正则出错（例如超出回溯上限）时原文照出、不出目录，绝不能把正文弄丢。
-    if ($html === null) {
-        return ['html' => $original, 'items' => []];
+    $tokens = springapex_news_toc_tokens($html);
+    // 切分出错（例如超出回溯上限）或拼不回原文时原样照出、不出目录，绝不能把正文弄丢。
+    if ($tokens === null || implode('', $tokens) !== $html) {
+        return ['html' => $html, 'items' => []];
     }
 
-    // 先记下正文里已经占用的 id，新补的避开它们。
+    // 先记下所有开始标签（含 iframe、script 等整段跳过的元素）已占用的 id，新补的避开它们。
     $used = [];
-    if (preg_match_all('/<[a-z][a-z0-9-]*(' . SPRINGAPEX_NEWS_TOC_ATTRS . ')\\s*\\/?>/i', $html, $tags)) {
-        foreach ($tags[1] as $tag_attrs) {
-            $existing = springapex_news_toc_attr_id($tag_attrs);
-            if ($existing !== null) {
-                $used[strtolower($existing)] = true;
-            }
+    foreach ($tokens as $token) {
+        $existing = springapex_news_toc_attr_id(springapex_news_toc_tag_attrs($token) ?? '');
+        if ($existing !== null) {
+            $used[strtolower($existing)] = true;
         }
     }
 
     $items = [];
-    $html = preg_replace_callback(
-        '/<h2(' . SPRINGAPEX_NEWS_TOC_ATTRS . ')\\s*>(.*?)<\/h2>/is',
-        static function (array $match) use (&$used, &$items): string {
-            $attrs = (string) ($match[1] ?? '');
-            $inner = (string) $match[2];
-            $visible = (string) preg_replace('/\0\d+\0/', '', $inner);
-            $text = trim((string) preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($visible), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
-            if ($text === '') {
-                return $match[0];
-            }
+    $out = '';
+    $count = count($tokens);
+    for ($i = 0; $i < $count; $i++) {
+        $token = $tokens[$i];
+        if (!preg_match('/^<h2(' . SPRINGAPEX_NEWS_TOC_ATTRS . ')\s*>$/i', $token, $open)) {
+            $out .= $token;
+            continue;
+        }
 
-            $existing = springapex_news_toc_attr_id($attrs);
-            if ($existing !== null) {
+        $close = null;
+        for ($j = $i + 1; $j < $count; $j++) {
+            if (preg_match('/^<\/h2\s*>$/i', $tokens[$j])) {
+                $close = $j;
+                break;
+            }
+        }
+        if ($close === null) {
+            $out .= $token;
+            continue;
+        }
+
+        $inner_tokens = array_slice($tokens, $i + 1, $close - $i - 1);
+        $inner = implode('', $inner_tokens);
+        // 目录文字只取看得见的部分：注释和原样文本元素不算。
+        $visible = implode('', array_filter($inner_tokens, static fn (string $t): bool => !springapex_news_toc_is_raw($t)));
+        $text = trim((string) preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($visible), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        $attrs = (string) $open[1];
+        $i = $close;
+
+        $existing = springapex_news_toc_attr_id($attrs);
+        if ($text === '' || $existing !== null) {
+            if ($text !== '' && $existing !== null) {
                 $items[] = ['id' => $existing, 'text' => $text];
-                return $match[0];
             }
+            $out .= $token . $inner . $tokens[$close];
+            continue;
+        }
 
-            $base = springapex_news_toc_slug($text);
-            $id = $base;
-            for ($n = 2; isset($used[$id]); $n++) {
-                $id = $base . '-' . $n;
-            }
-            $used[$id] = true;
-            $items[] = ['id' => $id, 'text' => $text];
-
-            return '<h2 id="' . htmlspecialchars($id, ENT_QUOTES, 'UTF-8') . '"' . $attrs . '>' . $inner . '</h2>';
-        },
-        $html
-    );
-
-    if ($html !== null && $raw_blocks) {
-        $html = preg_replace_callback(
-            '/\0(\d+)\0/',
-            static fn (array $match): string => $raw_blocks[(int) $match[1]],
-            $html
-        );
-    }
-    if ($html === null) {
-        return ['html' => $original, 'items' => []];
+        $base = springapex_news_toc_slug($text);
+        $id = $base;
+        for ($n = 2; isset($used[$id]); $n++) {
+            $id = $base . '-' . $n;
+        }
+        $used[$id] = true;
+        $items[] = ['id' => $id, 'text' => $text];
+        $out .= '<h2 id="' . htmlspecialchars($id, ENT_QUOTES, 'UTF-8') . '"' . $attrs . '>' . $inner . $tokens[$close];
     }
 
     if (count($items) < SPRINGAPEX_NEWS_TOC_MIN_HEADINGS) {
         $items = [];
     }
 
-    return ['html' => $html, 'items' => $items];
+    return ['html' => $out, 'items' => $items];
+}
+
+/**
+ * 把 HTML 按顺序切成记号：注释、整段原样文本元素（script、style、iframe 等，连同
+ * 开始标签）、完整标签（属性值里的 < > 都在标签内部）、文本。拼起来等于原文。
+ *
+ * @return list<string>|null
+ */
+function springapex_news_toc_tokens(string $html): ?array
+{
+    $pattern = '/<!--.*?(?:-->|$)'
+        . '|<(' . SPRINGAPEX_NEWS_TOC_RAW . ')\b' . SPRINGAPEX_NEWS_TOC_ATTRS . '\s*>.*?(?:<\/\1\s*>|$)'
+        . '|<\/?[a-z][^\s\/>]*' . SPRINGAPEX_NEWS_TOC_ATTRS . '\s*\/?>'
+        . '|[^<]+|</is';
+    if (preg_match_all($pattern, $html, $matches) === false) {
+        return null;
+    }
+
+    return $matches[0];
+}
+
+/** 注释或整段原样文本元素。 */
+function springapex_news_toc_is_raw(string $token): bool
+{
+    return str_starts_with($token, '<!--')
+        || (bool) preg_match('/^<(' . SPRINGAPEX_NEWS_TOC_RAW . ')\b/i', $token);
+}
+
+/** 开始标签（包括原样文本元素的开始标签）的属性串；不是开始标签时返回 null。 */
+function springapex_news_toc_tag_attrs(string $token): ?string
+{
+    if (!preg_match('/^<[a-z][^\s\/>]*(' . SPRINGAPEX_NEWS_TOC_ATTRS . ')/i', $token, $m)) {
+        return null;
+    }
+
+    return $m[1];
 }
 
 /**
@@ -129,7 +162,8 @@ function springapex_news_toc_attr_id(string $attrs): ?string
 /** 标题文字转成锚点：小写英文、数字和连字符。 */
 function springapex_news_toc_slug(string $text): string
 {
-    $slug = strtolower($text);
+    // WordPress 的 remove_accents 把 ü 这类字母转成 u，锚点更好读。
+    $slug = strtolower(function_exists('remove_accents') ? remove_accents($text) : $text);
     $slug = (string) preg_replace('/[^a-z0-9]+/', '-', $slug);
     $slug = trim($slug, '-');
     if (strlen($slug) > 60) {
