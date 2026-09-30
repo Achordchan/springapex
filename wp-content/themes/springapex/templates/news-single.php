@@ -37,6 +37,17 @@ foreach ((array) ($news_item['products'] ?? []) as $product_slug) {
     }
 }
 
+// Render the body first: the table of contents in the aside needs its headings.
+$body_html = '';
+$toc_items = [];
+if (!$blocks && !defined('SPRINGAPEX_PREVIEW') && function_exists('the_content')) {
+    ob_start();
+    the_content();
+    $toc = springapex_news_toc_prepare((string) ob_get_clean());
+    $body_html = $toc['html'];
+    $toc_items = $toc['items'];
+}
+
 $related = springapex_related_news($slug, 3);
 $author = is_array($news_item['author'] ?? null) ? $news_item['author'] : null;
 ?>
@@ -101,8 +112,15 @@ $author = is_array($news_item['author'] ?? null) ? $news_item['author'] : null;
               <p><?php echo esc_html((string) ($block['text'] ?? '')); ?></p>
             <?php endif; ?>
           <?php endforeach; ?>
-        <?php elseif (!defined('SPRINGAPEX_PREVIEW') && function_exists('the_content')) : ?>
-          <?php the_content(); ?>
+        <?php else : ?>
+          <?php if ($toc_items) : ?>
+            <?php // Below 1180px the aside drops under the article, so the contents open here instead. ?>
+            <details class="sa-news-toc sa-news-toc--inline">
+              <summary><?php esc_html_e('In this article', 'springapex'); ?></summary>
+              <?php echo springapex_news_toc_list_html($toc_items); ?>
+            </details>
+          <?php endif; ?>
+          <?php echo $body_html; ?>
         <?php endif; ?>
       </div>
     </article>
@@ -173,31 +191,38 @@ $author = is_array($news_item['author'] ?? null) ? $news_item['author'] : null;
       </section>
     <?php endif; ?>
 
-    <?php // The author card scrolls away with the article; products and the contact card stay in view. ?>
-    <div class="sa-news-single-aside__sticky">
-      <?php if ($products) : ?>
-        <section class="sa-news-aside-card" aria-label="<?php esc_attr_e('Related products', 'springapex'); ?>">
-          <h2 class="sa-news-aside-card__title"><?php esc_html_e('Related products', 'springapex'); ?></h2>
-          <ul class="sa-news-aside-list">
-            <?php foreach ($products as $product) : ?>
-              <li class="sa-news-aside-item">
-                <a class="sa-news-aside-item__media" href="<?php echo esc_url(springapex_product_url($product)); ?>">
-                  <?php echo springapex_image($product['image'] ?? '', (string) ($product['title'] ?? ''), [
-                      'width' => 160,
-                      'height' => 160,
-                      'sizes' => '72px',
-                  ]); ?>
+    <?php if ($products) : ?>
+      <section class="sa-news-aside-card" aria-label="<?php esc_attr_e('Related products', 'springapex'); ?>">
+        <h2 class="sa-news-aside-card__title"><?php esc_html_e('Related products', 'springapex'); ?></h2>
+        <ul class="sa-news-aside-list">
+          <?php foreach ($products as $product) : ?>
+            <li class="sa-news-aside-item">
+              <a class="sa-news-aside-item__media" href="<?php echo esc_url(springapex_product_url($product)); ?>">
+                <?php echo springapex_image($product['image'] ?? '', (string) ($product['title'] ?? ''), [
+                    'width' => 160,
+                    'height' => 160,
+                    'sizes' => '72px',
+                ]); ?>
+              </a>
+              <div class="sa-news-aside-item__body">
+                <a href="<?php echo esc_url(springapex_product_url($product)); ?>"><?php echo esc_html((string) ($product['title'] ?? '')); ?></a>
+                <a class="sa-news-aside-item__link" href="<?php echo esc_url(springapex_product_url($product)); ?>">
+                  <?php esc_html_e('View product', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
                 </a>
-                <div class="sa-news-aside-item__body">
-                  <a href="<?php echo esc_url(springapex_product_url($product)); ?>"><?php echo esc_html((string) ($product['title'] ?? '')); ?></a>
-                  <a class="sa-news-aside-item__link" href="<?php echo esc_url(springapex_product_url($product)); ?>">
-                    <?php esc_html_e('View product', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
-                  </a>
-                </div>
-              </li>
-            <?php endforeach; ?>
-          </ul>
-        </section>
+              </div>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+      </section>
+    <?php endif; ?>
+
+    <?php // The author and product cards scroll away; the contents and the contact card follow the reader. ?>
+    <div class="sa-news-single-aside__sticky">
+      <?php if ($toc_items) : ?>
+        <nav class="sa-news-aside-card sa-news-toc sa-news-toc--aside" aria-label="<?php esc_attr_e('In this article', 'springapex'); ?>" data-news-toc>
+          <h2 class="sa-news-aside-card__title"><?php esc_html_e('In this article', 'springapex'); ?></h2>
+          <?php echo springapex_news_toc_list_html($toc_items); ?>
+        </nav>
       <?php endif; ?>
 
       <section class="sa-news-aside-card sa-news-aside-card--contact" aria-label="<?php esc_attr_e('Contact', 'springapex'); ?>">

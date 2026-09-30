@@ -128,6 +128,13 @@ add_action('wp_enqueue_scripts', static function (): void {
             SPRINGAPEX_VERSION,
             ['strategy' => 'defer', 'in_footer' => true]
         );
+        wp_enqueue_script(
+            'springapex-news-toc',
+            SPRINGAPEX_URI . '/assets/js/news-toc.js',
+            [],
+            SPRINGAPEX_VERSION,
+            ['strategy' => 'defer', 'in_footer' => true]
+        );
     }
     if (in_array($route, ['product', 'capabilities'], true)) {
         wp_enqueue_script(
