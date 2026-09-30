@@ -47,6 +47,7 @@ require_once SPRINGAPEX_DIR . '/inc/contact.php';
 require_once SPRINGAPEX_DIR . '/inc/mail-template.php';
 require_once SPRINGAPEX_DIR . '/inc/turnstile.php';
 require_once SPRINGAPEX_DIR . '/inc/hardening.php';
+require_once SPRINGAPEX_DIR . '/inc/favicon.php';
 require_once SPRINGAPEX_DIR . '/inc/seed.php';
 require_once SPRINGAPEX_DIR . '/inc/setup.php';
 
