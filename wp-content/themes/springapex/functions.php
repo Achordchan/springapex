@@ -35,6 +35,7 @@ require_once SPRINGAPEX_DIR . '/inc/news-author.php';
 require_once SPRINGAPEX_DIR . '/inc/news-views.php';
 require_once SPRINGAPEX_DIR . '/inc/news-meta.php';
 require_once SPRINGAPEX_DIR . '/inc/rest-meta.php';
+require_once SPRINGAPEX_DIR . '/inc/rest-content.php';
 require_once SPRINGAPEX_DIR . '/inc/form-schema.php';
 require_once SPRINGAPEX_DIR . '/inc/s3-storage.php';
 require_once SPRINGAPEX_DIR . '/inc/system-status.php';
