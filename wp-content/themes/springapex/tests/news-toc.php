@@ -55,4 +55,11 @@ $encoded_list = springapex_news_toc_list_html($encoded['items']);
 springapex_test_assert(str_contains($encoded_list, 'href="#r%26d"'), 'ampersand id url-encoded');
 springapex_test_assert(str_contains($encoded_list, 'href="#strain-0.2%25"'), 'percent id url-encoded');
 
+// 引号里的 > 不截断标签；title 里的 "id=" 不算 id。
+$quoted = springapex_news_toc_prepare('<h2 title="Stress > strain" id="saved-anchor">Overview</h2><h2 title="see id=fake">Two</h2><h2>Three</h2>');
+springapex_test_assert(array_column($quoted['items'], 'id') === ['saved-anchor', 'two', 'three'], 'quoted >: ' . implode(',', array_column($quoted['items'], 'id')));
+springapex_test_assert($quoted['items'][0]['text'] === 'Overview', 'quoted > text');
+springapex_test_assert(str_contains($quoted['html'], '<h2 title="Stress > strain" id="saved-anchor">Overview</h2>'), 'quoted > heading untouched');
+springapex_test_assert(str_contains($quoted['html'], '<h2 id="two" title="see id=fake">Two</h2>'), 'id inside value ignored');
+
 echo "news-toc: ok\n";

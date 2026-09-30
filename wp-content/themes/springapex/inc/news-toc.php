@@ -14,6 +14,9 @@ if (!defined('ABSPATH')) {
 
 const SPRINGAPEX_NEWS_TOC_MIN_HEADINGS = 3;
 
+/** 一串标签属性：引号里的 > 和空格不会把标签截断。 */
+const SPRINGAPEX_NEWS_TOC_ATTRS = '(?:\\s+[^\\s"\'>\\/=]+(?:\\s*=\\s*(?:"[^"]*"|\'[^\']*\'|[^\\s"\'=<>`]+))?)*';
+
 /**
  * 给正文 H2 补 id 并收集目录项。
  *
@@ -27,9 +30,9 @@ function springapex_news_toc_prepare(string $html): array
 
     // 先记下正文里已经占用的 id，新补的避开它们。
     $used = [];
-    if (preg_match_all('/<[a-z][^>]*>/i', $html, $tags)) {
-        foreach ($tags[0] as $tag) {
-            $existing = springapex_news_toc_attr_id($tag);
+    if (preg_match_all('/<[a-z][a-z0-9-]*(' . SPRINGAPEX_NEWS_TOC_ATTRS . ')\\s*\\/?>/i', $html, $tags)) {
+        foreach ($tags[1] as $tag_attrs) {
+            $existing = springapex_news_toc_attr_id($tag_attrs);
             if ($existing !== null) {
                 $used[strtolower($existing)] = true;
             }
@@ -38,7 +41,7 @@ function springapex_news_toc_prepare(string $html): array
 
     $items = [];
     $html = (string) preg_replace_callback(
-        '/<h2(\s[^>]*)?>(.*?)<\/h2>/is',
+        '/<h2(' . SPRINGAPEX_NEWS_TOC_ATTRS . ')\\s*>(.*?)<\/h2>/is',
         static function (array $match) use (&$used, &$items): string {
             $attrs = (string) ($match[1] ?? '');
             $inner = (string) $match[2];
@@ -79,13 +82,19 @@ function springapex_news_toc_prepare(string $html): array
  */
 function springapex_news_toc_attr_id(string $attrs): ?string
 {
-    if (!preg_match('/\sid\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s"\'=<>`]+))/i', ' ' . $attrs, $m)) {
-        return null;
-    }
-    $raw = ($m[1] ?? '') !== '' ? $m[1] : ((($m[2] ?? '') !== '') ? $m[2] : ($m[3] ?? ''));
-    $id = html_entity_decode($raw, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    // 逐个属性解析，引号里的 "id=" 不会被误认；同名属性浏览器取第一个。
+    preg_match_all('/([^\\s"\'>\\/=]+)(?:\\s*=\\s*(?:"([^"]*)"|\'([^\']*)\'|([^\\s"\'=<>`]+)))?/', $attrs, $found, PREG_SET_ORDER);
+    foreach ($found as $attr) {
+        if (strtolower($attr[1]) !== 'id') {
+            continue;
+        }
+        $raw = ($attr[2] ?? '') . ($attr[3] ?? '') . ($attr[4] ?? '');
+        $id = html_entity_decode($raw, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
-    return $id !== '' ? $id : null;
+        return $id !== '' ? $id : null;
+    }
+
+    return null;
 }
 
 /** 标题文字转成锚点：小写英文、数字和连字符。 */
