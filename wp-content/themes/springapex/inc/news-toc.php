@@ -27,9 +27,12 @@ function springapex_news_toc_prepare(string $html): array
 
     // 先记下正文里已经占用的 id，新补的避开它们。
     $used = [];
-    if (preg_match_all('/\sid\s*=\s*(["\'])(.*?)\1/i', $html, $ids)) {
-        foreach ($ids[2] as $existing) {
-            $used[strtolower($existing)] = true;
+    if (preg_match_all('/<[a-z][^>]*>/i', $html, $tags)) {
+        foreach ($tags[0] as $tag) {
+            $existing = springapex_news_toc_attr_id($tag);
+            if ($existing !== null) {
+                $used[strtolower($existing)] = true;
+            }
         }
     }
 
@@ -44,8 +47,9 @@ function springapex_news_toc_prepare(string $html): array
                 return $match[0];
             }
 
-            if (preg_match('/\sid\s*=\s*(["\'])(.*?)\1/i', $attrs, $id_match) && $id_match[2] !== '') {
-                $items[] = ['id' => $id_match[2], 'text' => $text];
+            $existing = springapex_news_toc_attr_id($attrs);
+            if ($existing !== null) {
+                $items[] = ['id' => $existing, 'text' => $text];
                 return $match[0];
             }
 
@@ -69,6 +73,21 @@ function springapex_news_toc_prepare(string $html): array
     return ['html' => $html, 'items' => $items];
 }
 
+/**
+ * 取标签属性里的 id（双引号、单引号、不带引号三种写法都认），返回解码后的值，
+ * 也就是浏览器里真正的 id；没有或为空时返回 null。
+ */
+function springapex_news_toc_attr_id(string $attrs): ?string
+{
+    if (!preg_match('/\sid\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s"\'=<>`]+))/i', ' ' . $attrs, $m)) {
+        return null;
+    }
+    $raw = ($m[1] ?? '') !== '' ? $m[1] : ((($m[2] ?? '') !== '') ? $m[2] : ($m[3] ?? ''));
+    $id = html_entity_decode($raw, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+    return $id !== '' ? $id : null;
+}
+
 /** 标题文字转成锚点：小写英文、数字和连字符。 */
 function springapex_news_toc_slug(string $text): string
 {
@@ -83,7 +102,8 @@ function springapex_news_toc_slug(string $text): string
 }
 
 /**
- * 目录列表。侧栏和窄屏折叠框共用。
+ * 目录列表。侧栏和窄屏折叠框共用。锚点先做 URL 编码，news-toc.js 用
+ * decodeURIComponent 还原后再找标题，id 里有 % 之类字符也不会出错。
  *
  * @param list<array{id: string, text: string}> $items
  */
@@ -91,7 +111,7 @@ function springapex_news_toc_list_html(array $items): string
 {
     $html = '<ol class="sa-news-toc__list">';
     foreach ($items as $item) {
-        $html .= '<li><a href="#' . htmlspecialchars($item['id'], ENT_QUOTES, 'UTF-8') . '">'
+        $html .= '<li><a href="#' . htmlspecialchars(rawurlencode($item['id']), ENT_QUOTES, 'UTF-8') . '">'
             . htmlspecialchars($item['text'], ENT_QUOTES, 'UTF-8') . '</a></li>';
     }
 

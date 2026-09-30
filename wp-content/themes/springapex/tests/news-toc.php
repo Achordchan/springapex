@@ -43,4 +43,16 @@ springapex_test_assert(str_contains($short['html'], '<h2 id="one">One</h2>'), 's
 springapex_test_assert(springapex_news_toc_prepare('<p>No headings</p>')['html'] === '<p>No headings</p>', 'no headings unchanged');
 springapex_test_assert(springapex_news_toc_slug('常见问题') === 'section', 'non-latin fallback');
 
+// 不带引号的 id 原样保留，不再补第二个 id；也算作已占用。
+$unquoted = springapex_news_toc_prepare('<h2 id=existing-anchor>Overview</h2><h2>Existing anchor</h2><h2>C</h2>');
+springapex_test_assert(str_contains($unquoted['html'], '<h2 id=existing-anchor>Overview</h2>'), 'unquoted id kept as is');
+springapex_test_assert(array_column($unquoted['items'], 'id') === ['existing-anchor', 'existing-anchor-2', 'c'], 'unquoted id: ' . implode(',', array_column($unquoted['items'], 'id')));
+
+// 已有 id 里的字符引用按浏览器的真实 id 解码；链接做 URL 编码。
+$encoded = springapex_news_toc_prepare('<h2 id="r&amp;d">Research</h2><h2 id=\'strain-0.2%\'>Strain</h2><h2>Z</h2>');
+springapex_test_assert($encoded['items'][0]['id'] === 'r&d', 'entity id decoded');
+$encoded_list = springapex_news_toc_list_html($encoded['items']);
+springapex_test_assert(str_contains($encoded_list, 'href="#r%26d"'), 'ampersand id url-encoded');
+springapex_test_assert(str_contains($encoded_list, 'href="#strain-0.2%25"'), 'percent id url-encoded');
+
 echo "news-toc: ok\n";
