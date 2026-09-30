@@ -160,7 +160,7 @@ function springapex_content_enhancements(): array
                             'company' => 'Xuzhou APEX Spring Manufacturing Co., Ltd.',
                             'phone' => '+86 187 9642 2510',
                             'email' => 'victoria@springapex.cn',
-                            'address' => 'No. 15, Zhongnan Gaoke, Luji Town, Tongshan District, Xuzhou City, Jiangsu Province, China 221112',
+                            'address' => 'No. 15, Zhongnan Gaoke, Liuji Town, Tongshan District, Xuzhou City, Jiangsu Province, China 221112',
                         ],
                     ],
                 ],
