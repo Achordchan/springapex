@@ -269,3 +269,12 @@ The migration source backup contains a logical database dump, the complete
 WordPress tree, runtime configuration and checksums. Keep the old VPS stopped
 but intact until the AWS deployment, GitHub workflow, inquiry upload/download,
 email delivery and scheduled backups have all passed production acceptance.
+
+## Favicon
+
+The site root has no physical `favicon.ico`. The vhost's exact
+`location = /favicon.ico` hands the request to WordPress, and the theme's
+`inc/favicon.php` returns the bundled multi-size `favicon.ico` (16/32/48 px)
+from the theme directory. Without that Nginx rule the static-file regex answers
+404. The browser/Apple/Windows icons in page `<head>` come from the WordPress
+Site Icon setting and do not depend on this route.
