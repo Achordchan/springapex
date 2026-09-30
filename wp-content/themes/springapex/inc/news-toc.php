@@ -28,6 +28,23 @@ function springapex_news_toc_prepare(string $html): array
         return ['html' => $html, 'items' => []];
     }
 
+    // 注释和 script、style 这类原样文本元素里的 “<h2>” 不是真标题：先换成占位符，
+    // 处理完再原样放回，里面的内容一个字都不改。
+    $original = $html;
+    $raw_blocks = [];
+    $html = preg_replace_callback(
+        '/<!--.*?(?:-->|$)|<(script|style|textarea|template|title|noscript|iframe|xmp|noembed|noframes)\\b' . SPRINGAPEX_NEWS_TOC_ATTRS . '\\s*>.*?(?:<\/\\1\\s*>|$)/is',
+        static function (array $match) use (&$raw_blocks): string {
+            $raw_blocks[] = $match[0];
+            return "\0" . (count($raw_blocks) - 1) . "\0";
+        },
+        $html
+    );
+    // 正则出错（例如超出回溯上限）时原文照出、不出目录，绝不能把正文弄丢。
+    if ($html === null) {
+        return ['html' => $original, 'items' => []];
+    }
+
     // 先记下正文里已经占用的 id，新补的避开它们。
     $used = [];
     if (preg_match_all('/<[a-z][a-z0-9-]*(' . SPRINGAPEX_NEWS_TOC_ATTRS . ')\\s*\\/?>/i', $html, $tags)) {
@@ -40,12 +57,13 @@ function springapex_news_toc_prepare(string $html): array
     }
 
     $items = [];
-    $html = (string) preg_replace_callback(
+    $html = preg_replace_callback(
         '/<h2(' . SPRINGAPEX_NEWS_TOC_ATTRS . ')\\s*>(.*?)<\/h2>/is',
         static function (array $match) use (&$used, &$items): string {
             $attrs = (string) ($match[1] ?? '');
             $inner = (string) $match[2];
-            $text = trim((string) preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($inner), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+            $visible = (string) preg_replace('/\0\d+\0/', '', $inner);
+            $text = trim((string) preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($visible), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
             if ($text === '') {
                 return $match[0];
             }
@@ -68,6 +86,17 @@ function springapex_news_toc_prepare(string $html): array
         },
         $html
     );
+
+    if ($html !== null && $raw_blocks) {
+        $html = preg_replace_callback(
+            '/\0(\d+)\0/',
+            static fn (array $match): string => $raw_blocks[(int) $match[1]],
+            $html
+        );
+    }
+    if ($html === null) {
+        return ['html' => $original, 'items' => []];
+    }
 
     if (count($items) < SPRINGAPEX_NEWS_TOC_MIN_HEADINGS) {
         $items = [];

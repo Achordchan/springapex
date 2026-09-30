@@ -62,4 +62,15 @@ springapex_test_assert($quoted['items'][0]['text'] === 'Overview', 'quoted > tex
 springapex_test_assert(str_contains($quoted['html'], '<h2 title="Stress > strain" id="saved-anchor">Overview</h2>'), 'quoted > heading untouched');
 springapex_test_assert(str_contains($quoted['html'], '<h2 id="two" title="see id=fake">Two</h2>'), 'id inside value ignored');
 
+// 注释、script 里的 <h2> 不是标题：不补 id、不进目录、原样保留。
+$raw = '<script>const t = "<h2>Overview</h2>";</script><!-- <h2>Hidden</h2> -->'
+    . '<style>h2::after{content:"<h2>x</h2>"}</style>'
+    . '<h2>A<!-- note --></h2><h2>B</h2><h2>C</h2><!-- unclosed <h2>D</h2>';
+$raw_toc = springapex_news_toc_prepare($raw);
+springapex_test_assert(array_column($raw_toc['items'], 'text') === ['A', 'B', 'C'], 'raw: ' . implode(',', array_column($raw_toc['items'], 'text')));
+springapex_test_assert(str_contains($raw_toc['html'], '<script>const t = "<h2>Overview</h2>";</script><!-- <h2>Hidden</h2> -->'), 'script and comment untouched');
+springapex_test_assert(str_contains($raw_toc['html'], '<h2 id="a">A<!-- note --></h2>'), 'comment inside heading restored');
+springapex_test_assert(str_ends_with($raw_toc['html'], '<!-- unclosed <h2>D</h2>'), 'unclosed comment untouched');
+springapex_test_assert(!str_contains($raw_toc['html'], "\0"), 'no placeholder left');
+
 echo "news-toc: ok\n";
