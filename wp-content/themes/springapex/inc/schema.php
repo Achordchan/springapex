@@ -347,24 +347,6 @@ function springapex_schema_organization(array $brand, string $home, ?array $logo
 }
 
 /** @return array<string, mixed> */
-function springapex_schema_product_node(WP_Post $post, array $page, string $organization_id): array
-{
-    $brand_name = trim((string) (springapex_brand()['name'] ?? '')) ?: 'NorenSpring';
-    return array_filter([
-        '@type' => 'Product',
-        '@id' => $page['url'] . '#product',
-        'name' => springapex_schema_text(get_the_title($post)),
-        'url' => $page['url'],
-        'description' => $page['description'],
-        'image' => $page['image_source'] === 'own' ? ['@id' => $page['url'] . '#primaryimage'] : null,
-        'category' => 'Springs',
-        'brand' => ['@type' => 'Brand', 'name' => $brand_name],
-        'manufacturer' => ['@id' => $organization_id],
-        'mainEntityOfPage' => ['@id' => $page['url'] . '#webpage'],
-    ]);
-}
-
-/** @return array<string, mixed> */
 function springapex_schema_article_node(WP_Post $post, array $page, string $organization_id, string $language): array
 {
     $news = function_exists('springapex_news_from_post') ? springapex_news_from_post($post) : [];
@@ -469,9 +451,10 @@ function springapex_schema_graph(?array $page): array
     }
 
     $post = $page['post'];
-    if ($post instanceof WP_Post && $post->post_type === 'spring_product') {
-        $graph[] = springapex_schema_product_node($post, $page, $organization_id);
-    } elseif ($post instanceof WP_Post && $post->post_type === 'spring_news') {
+    // 产品页不输出 Product：定制弹簧没有公开价格和评价，Google 要求 Product 至少带
+    // offers、review、aggregateRating 之一，缺了会在 GSC「产品摘要」里报错。
+    // 价格和评价不能编造，所以产品页只保留 WebPage、面包屑和主图。
+    if ($post instanceof WP_Post && $post->post_type === 'spring_news') {
         $graph[] = springapex_schema_article_node($post, $page, $organization_id, $language);
     }
 
