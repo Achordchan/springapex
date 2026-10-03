@@ -60,13 +60,13 @@ function verify(bool $condition, string $message): void
     }
 }
 
-foreach ([101, '101', 'norenspring-company-profile.pdf', 'https://cdn.example.test/manual.pdf?version=2'] as $value) {
+foreach ([101, '101', 'norenspring-company-profile.pdf', 'https://cdn.example.test/manual.pdf?version=2', 'https://example.test/download?file=catalog.pdf', 'https://example.test/media/123?token=abc'] as $value) {
     $warnings = [];
     $result = springapex_admin_sanitize_field(['type' => 'pdf'], $value, '', 'PDF', $warnings);
     verify($result['accepted'] && $warnings === [], 'Valid PDF rejected: ' . (string) $value);
     verify(springapex_download_document_url($result['value']) !== '', 'Saved PDF does not resolve');
 }
-foreach ([0, true, false, 101.0, 102, 103, 104, 105, 106, 999, ['id' => 101], '../private.pdf', '/private.pdf', 'missing.pdf', 'javascript:alert(1)', 'https://example.test/cover.png'] as $value) {
+foreach ([0, true, false, 101.0, 102, 103, 104, 105, 106, 999, ['id' => 101], '../private.pdf', '/private.pdf', 'missing.pdf', 'javascript:alert(1)', 'https://', 'https://invalid host.test/catalog.pdf', 'ftp://example.test/catalog.pdf'] as $value) {
     $warnings = [];
     $result = springapex_admin_sanitize_field(['type' => 'pdf'], $value, 101, 'PDF', $warnings);
     verify(!$result['accepted'] && $warnings !== [], 'Invalid PDF accepted');

@@ -28,10 +28,9 @@ function springapex_download_document_url(mixed $document): string
     }
 
     // Preserve previously configured public PDF URLs without making a remote request.
+    // Download endpoints can be extensionless; the URL suffix does not prove MIME.
     if (preg_match('#^https?://#i', $value)) {
-        $path = parse_url($value, PHP_URL_PATH);
-        return filter_var($value, FILTER_VALIDATE_URL) !== false && is_string($path)
-            && preg_match('/\.pdf$/i', $path) ? $value : '';
+        return filter_var($value, FILTER_VALIDATE_URL) !== false ? $value : '';
     }
 
     if (str_contains($value, '..') || str_contains($value, '\\') || str_starts_with($value, '/')
