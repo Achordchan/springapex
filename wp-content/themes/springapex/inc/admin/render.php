@@ -131,6 +131,10 @@ function springapex_admin_render_field(array $field, mixed $value, string $name_
                     );
                     break;
 
+                case 'pdf':
+                    springapex_admin_render_pdf_field($id, $name, $value);
+                    break;
+
                 case 'youtube':
                     springapex_admin_render_youtube_field($id, $name, (string) (is_scalar($value) ? $value : ''));
                     break;
@@ -191,6 +195,27 @@ function springapex_admin_render_image_field(
             <?php if ($stored !== '' && !ctype_digit($stored)) : ?>
                 <code class="sa-image__file"><?php echo esc_html($stored); ?></code>
             <?php endif; ?>
+        </div>
+    </div>
+    <?php
+}
+
+function springapex_admin_render_pdf_field(string $id, string $name, mixed $value): void
+{
+    $stored = is_int($value) || is_string($value) ? (string) $value : '';
+    $url = springapex_download_document_url($value);
+    $filename = $url !== '' ? basename(rawurldecode((string) parse_url($url, PHP_URL_PATH))) : '';
+    ?>
+    <div class="sa-pdf" data-sa-pdf>
+        <div class="sa-pdf__info" role="status" aria-live="polite">
+            <a class="sa-pdf__link" data-sa-pdf-link href="<?php echo esc_url($url); ?>" target="_blank" rel="noopener"<?php echo $url === '' ? ' hidden' : ''; ?>><?php echo esc_html($filename); ?></a>
+            <span data-sa-pdf-size><?php echo esc_html(springapex_download_document_size($value)); ?></span>
+            <span data-sa-pdf-status<?php echo $url !== '' ? ' hidden' : ''; ?>><?php echo $stored === '' ? '未选择 PDF' : '当前文件不可用，请重新选择 PDF：' . esc_html($stored); ?></span>
+        </div>
+        <div class="sa-pdf__actions">
+            <button type="button" class="button" id="<?php echo esc_attr($id); ?>" data-sa-pdf-select><?php echo $url === '' ? '上传／选择 PDF' : '更换 PDF'; ?></button>
+            <button type="button" class="button-link sa-pdf__remove" data-sa-pdf-remove<?php echo $stored === '' ? ' hidden' : ''; ?>>移除关联</button>
+            <input type="hidden" name="<?php echo esc_attr($name); ?>" value="<?php echo esc_attr($stored); ?>" data-sa-pdf-value />
         </div>
     </div>
     <?php

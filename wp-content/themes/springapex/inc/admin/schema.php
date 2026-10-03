@@ -1017,7 +1017,7 @@ function springapex_admin_screens(): array
                 ],
                 [
                     'title' => '下载资料库',
-                    'desc' => '实际显示在 Download Center 的资料卡片。PDF 文件名对应主题 assets/documents 目录。',
+                    'desc' => '上传或从媒体库选择 PDF，保存后在 Download Center 显示。封面图可选，未设置时使用默认封面。',
                     'fields' => [
                         ['path' => 'resources.library.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => ''],
                         ['path' => 'resources.library.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
@@ -1027,10 +1027,10 @@ function springapex_admin_screens(): array
                             ['path' => 'category', 'label' => '分类', 'type' => 'text', 'help' => ''],
                             ['path' => 'title', 'label' => '标题', 'type' => 'text', 'help' => ''],
                             ['path' => 'description', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
-                            ['path' => 'cover', 'label' => '封面图', 'type' => 'image', 'required' => true, 'help' => ''],
-                            ['path' => 'document', 'label' => 'PDF 文件名', 'type' => 'text', 'help' => '例如 norenspring-company-profile.pdf。'],
+                            ['path' => 'cover', 'label' => '封面图', 'type' => 'image', 'help' => '可选；留空时显示默认 PDF 封面。'],
+                            ['path' => 'document', 'label' => 'PDF 下载资料', 'type' => 'pdf', 'help' => '上传或选择 PDF 后，请点击保存。移除关联不会删除媒体库文件；未选择有效 PDF 的资料不在前台显示。'],
                             ['path' => 'pages', 'label' => '页数', 'type' => 'text', 'help' => ''],
-                            ['path' => 'size', 'label' => '文件大小', 'type' => 'text', 'help' => ''],
+                            ['path' => 'size', 'label' => '文件大小', 'type' => 'text', 'help' => '选择 PDF 时自动填写；媒体库文件在前台优先显示实际大小。'],
                         ]],
                     ],
                 ],

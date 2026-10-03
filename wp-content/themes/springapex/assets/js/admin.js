@@ -256,6 +256,29 @@
 
     /* Media picker -------------------------------------------------- */
 
+    var pdfSelect = event.target.closest('[data-sa-pdf-select]');
+    if (pdfSelect) {
+      openPdfMedia(pdfSelect.closest('[data-sa-pdf]'));
+      return;
+    }
+
+    var pdfRemove = event.target.closest('[data-sa-pdf-remove]');
+    if (pdfRemove) {
+      var pdfField = pdfRemove.closest('[data-sa-pdf]');
+      pdfField.querySelector('[data-sa-pdf-value]').value = '';
+      var pdfLink = pdfField.querySelector('[data-sa-pdf-link]');
+      pdfLink.hidden = true;
+      pdfLink.removeAttribute('href');
+      pdfLink.textContent = '';
+      pdfField.querySelector('[data-sa-pdf-size]').textContent = '';
+      var pdfStatus = pdfField.querySelector('[data-sa-pdf-status]');
+      pdfStatus.textContent = '未选择 PDF';
+      pdfStatus.hidden = false;
+      pdfField.querySelector('[data-sa-pdf-select]').textContent = '上传／选择 PDF';
+      pdfRemove.hidden = true;
+      return;
+    }
+
     var select = event.target.closest('[data-sa-image-select]');
     if (select) {
       openMedia(select.closest('[data-sa-image]'));
@@ -276,6 +299,43 @@
       }
     }
   });
+
+  function openPdfMedia(field) {
+    if (!window.wp || !window.wp.media) {
+      window.alert('媒体库还没加载好，请刷新页面再试。');
+      return;
+    }
+    var frame = wp.media({
+      title: '选择 PDF 下载资料',
+      button: { text: '使用这个 PDF' },
+      library: { type: 'application/pdf' },
+      multiple: false
+    });
+    frame.on('select', function () {
+      var selection = frame.state().get('selection').first();
+      var item = selection && selection.toJSON();
+      if (!item || item.mime !== 'application/pdf' || !item.id || !item.url) {
+        window.alert('请选择 PDF 文件。');
+        return;
+      }
+      field.querySelector('[data-sa-pdf-value]').value = String(item.id);
+      var link = field.querySelector('[data-sa-pdf-link]');
+      link.href = item.url;
+      link.textContent = item.filename || item.title || 'PDF';
+      link.hidden = false;
+      var size = item.filesizeHumanReadable || '';
+      field.querySelector('[data-sa-pdf-size]').textContent = size;
+      field.querySelector('[data-sa-pdf-status]').hidden = true;
+      field.querySelector('[data-sa-pdf-select]').textContent = '更换 PDF';
+      field.querySelector('[data-sa-pdf-remove]').hidden = false;
+      var row = field.closest('[data-sa-row]');
+      var sizeInput = row && row.querySelector('[data-sa-field-path$=".size"] input');
+      if (sizeInput) {
+        sizeInput.value = size;
+      }
+    });
+    frame.open();
+  }
 
   function openMedia(field) {
     if (!window.wp || !window.wp.media) {

@@ -1024,6 +1024,32 @@
   object-position: top center;
 }
 
+.sa-route-resources .sa-download-volume__placeholder {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(16px, 2vw, 28px);
+  border-top: 8px solid var(--sa-accent);
+  background: var(--sa-surface, #f5f6f8);
+  color: var(--sa-primary);
+  overflow-wrap: anywhere;
+}
+
+.sa-route-resources .sa-download-volume__placeholder strong { font-size: clamp(28px, 4vw, 48px); }
+.sa-route-resources .sa-download-volume__placeholder span { font-size: 14px; line-height: 1.5; }
+.sa-route-resources .sa-download-library__empty { color: var(--sa-text-3); }
+
+@media (max-width: 760px) {
+  .sa-route-resources .sa-download-volume__placeholder {
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .sa-route-resources .sa-download-volume__placeholder span { display: none; }
+}
+
 .sa-route-resources .sa-download-volume__content {
   min-width: 0;
   padding-bottom: 24px;
