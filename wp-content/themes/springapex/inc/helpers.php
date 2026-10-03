@@ -5,6 +5,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+require_once __DIR__ . '/downloads.php';
+
 function springapex_attr(string $value): string
 {
     return esc_attr($value);

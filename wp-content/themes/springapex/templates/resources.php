@@ -7,8 +7,7 @@ $resources = springapex_get('resources', []);
 $downloads = array_values(array_filter(
     is_array($resources['downloads'] ?? null) ? $resources['downloads'] : [],
     static fn(mixed $item): bool => is_array($item)
-        && springapex_image_value_available($item['cover'] ?? '')
-        && trim((string) ($item['document'] ?? '')) !== ''
+        && springapex_download_document_url($item['document'] ?? '') !== ''
 ));
 $library = is_array($resources['library'] ?? null) ? $resources['library'] : [];
 $industry_section = is_array($resources['industry'] ?? null) ? $resources['industry'] : [];
@@ -47,14 +46,24 @@ get_template_part('parts/inner-hero', null, [
 
     <div class="sa-download-library__shelf" data-reveal-group>
       <?php foreach ($downloads as $download) : ?>
-        <?php $document_url = springapex_file_url(is_int($download['document'] ?? null) ? $download['document'] : (string) ($download['document'] ?? ''), 'assets/documents'); ?>
+        <?php
+        $document_url = springapex_download_document_url($download['document']);
+        $document_size = springapex_download_document_size($download['document']);
+        if ($document_size === '' && !ctype_digit((string) $download['document'])) {
+            $document_size = (string) ($download['size'] ?? '');
+        }
+        ?>
         <article class="sa-download-volume" id="<?php echo esc_attr((string) $download['id']); ?>">
           <a class="sa-download-volume__cover" href="<?php echo esc_url($document_url); ?>" download aria-label="<?php echo esc_attr(sprintf(__('Download %s PDF', 'springapex'), (string) $download['title'])); ?>">
-            <?php echo springapex_image((string) $download['cover'], (string) $download['title'], [
+            <?php if (springapex_image_value_available($download['cover'] ?? '')) : ?>
+            <?php echo springapex_image($download['cover'], (string) $download['title'], [
                 'width' => 768,
                 'height' => 960,
                 'sizes' => '(max-width: 760px) 124px, 18vw',
             ]); ?>
+            <?php else : ?>
+              <span class="sa-download-volume__placeholder" aria-hidden="true"><strong>PDF</strong><span><?php echo esc_html((string) $download['title']); ?></span></span>
+            <?php endif; ?>
           </a>
           <div class="sa-download-volume__content">
             <p class="sa-download-volume__category"><?php echo esc_html((string) $download['category']); ?></p>
@@ -62,8 +71,8 @@ get_template_part('parts/inner-hero', null, [
             <p class="sa-download-volume__description"><?php echo esc_html((string) $download['description']); ?></p>
             <ul class="sa-download-volume__meta" aria-label="<?php esc_attr_e('Document details', 'springapex'); ?>">
               <li>PDF</li>
-              <li><?php echo esc_html((string) $download['pages']); ?></li>
-              <li><?php echo esc_html((string) $download['size']); ?></li>
+              <?php if (trim((string) ($download['pages'] ?? '')) !== '') : ?><li><?php echo esc_html((string) $download['pages']); ?></li><?php endif; ?>
+              <?php if ($document_size !== '') : ?><li><?php echo esc_html($document_size); ?></li><?php endif; ?>
               <li><?php esc_html_e('English', 'springapex'); ?></li>
             </ul>
             <a class="sa-download-volume__action" href="<?php echo esc_url($document_url); ?>" download>
@@ -74,6 +83,9 @@ get_template_part('parts/inner-hero', null, [
         </article>
       <?php endforeach; ?>
     </div>
+    <?php if ($downloads === []) : ?>
+      <p class="sa-download-library__empty"><?php esc_html_e('No brochures are currently available. Please contact us to request a document.', 'springapex'); ?></p>
+    <?php endif; ?>
 
     <section class="sa-download-industries" id="industry-downloads" aria-labelledby="sa-industry-downloads-title" data-reveal="up">
       <header>

@@ -215,6 +215,19 @@ function springapex_admin_sanitize_field(
     }
 
     switch ($type) {
+        case 'pdf':
+            if (!is_int($raw) && !is_string($raw)) {
+                return springapex_admin_reject($warnings, $label, '的数据格式不正确，已保留原内容。');
+            }
+            $document = trim($value);
+            if ($document === '') {
+                return ['accepted' => true, 'value' => ''];
+            }
+            if (springapex_download_document_url($document) === '') {
+                return springapex_admin_reject($warnings, $label, '不是有效的 PDF 文件，已保留原内容。请点击「上传／选择 PDF」重新选择。');
+            }
+            return ['accepted' => true, 'value' => ctype_digit($document) ? (int) $document : $document];
+
         case 'text':
             return ['accepted' => true, 'value' => sanitize_text_field($value)];
 

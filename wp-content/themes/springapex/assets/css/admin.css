@@ -420,6 +420,19 @@ textarea.sa-input {
   word-break: break-all;
 }
 
+/* PDF picker ------------------------------------------------------------- */
+
+.sa-pdf__info {
+  margin-bottom: 10px;
+  color: var(--sa-a-muted);
+  overflow-wrap: anywhere;
+}
+
+.sa-pdf__link { margin-right: 10px; }
+.sa-pdf__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.sa-pdf__remove { color: var(--sa-a-danger); }
+.sa-pdf [hidden] { display: none; }
+
 /* Icon picker ------------------------------------------------------------ */
 
 .sa-icon-field {

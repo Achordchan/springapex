@@ -28,6 +28,9 @@ jobs:
       - name: Verify admin content coverage
         run: php wp-content/themes/springapex/tests/admin-content-coverage.php
 
+      - name: Verify download center PDF associations and rendering
+        run: php wp-content/themes/springapex/tests/download-center.php
+
       - name: Verify private S3 storage flow
         run: php wp-content/themes/springapex/tests/s3-storage.php
 
