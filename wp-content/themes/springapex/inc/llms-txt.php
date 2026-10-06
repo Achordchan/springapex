@@ -68,7 +68,7 @@ function springapex_llms_txt_post_links(string $post_type, array $order): array
     $posts = get_posts(array_merge([
         'post_type' => $post_type,
         'post_status' => 'publish',
-        'posts_per_page' => 200,
+        'posts_per_page' => -1,
         'has_password' => false,
         'no_found_rows' => true,
         'suppress_filters' => false,

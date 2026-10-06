@@ -109,6 +109,7 @@ springapex_test_assert(str_contains($body, "- Email: victoria@springapex.cn\n- A
 springapex_test_assert(!str_contains($body, 'Phone:'), 'empty phone skipped');
 foreach ($GLOBALS['springapex_test_queries'] as $query) {
     springapex_test_assert($query['post_status'] === 'publish' && $query['has_password'] === false, 'only public posts');
+    springapex_test_assert($query['posts_per_page'] === -1, 'every post is listed, no page cap');
 }
 
 $GLOBALS['springapex_test_options'][SPRINGAPEX_LLMS_TXT_INTRO_OPTION] = "Custom intro.\n";
