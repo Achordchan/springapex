@@ -55,6 +55,9 @@ jobs:
       - name: Test news table of contents
         run: php wp-content/themes/springapex/tests/news-toc.php
 
+      - name: Test llms.txt
+        run: php wp-content/themes/springapex/tests/llms-txt.php
+
       - name: Verify inquiry success tracking
         run: node --test wp-content/themes/springapex/tests/inquiry-tracking.mjs
 
