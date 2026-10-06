@@ -59,7 +59,7 @@ get_template_part('parts/inner-hero', null, [
             <?php echo springapex_image($download['cover'], (string) $download['title'], [
                 'width' => 768,
                 'height' => 960,
-                'sizes' => '(max-width: 760px) 124px, 18vw',
+                'sizes' => '(max-width: 760px) 112px, (max-width: 1080px) 34vw, 18vw',
             ]); ?>
             <?php else : ?>
               <span class="sa-download-volume__placeholder" aria-hidden="true"><strong>PDF</strong><span><?php echo esc_html((string) $download['title']); ?></span></span>

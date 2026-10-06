@@ -970,73 +970,78 @@
 
 .sa-route-resources .sa-download-library__shelf {
   display: grid;
-  position: relative;
-  padding: 0 clamp(18px, 3vw, 48px) 22px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(46px, 6vw, 96px);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* Row gaps stay 0: subgrid rows inherit them, so cards space vertically through the action margin instead. */
+  gap: 0 clamp(20px, 2.2vw, 32px);
 }
 
-.sa-route-resources .sa-download-library__shelf::after {
-  content: "";
-  position: absolute;
-  right: 0;
-  bottom: 14px;
-  left: 0;
-  height: 8px;
-  background: color-mix(in srgb, var(--sa-primary) 12%, var(--sa-border));
-  box-shadow: 0 5px 9px rgba(15, 28, 52, .12);
-}
-
+/* Each card spans six shared rows so covers, titles, descriptions, meta lines and actions line up across a row. */
 .sa-route-resources .sa-download-volume {
   display: grid;
   min-width: 0;
-  grid-template-columns: clamp(200px, 17vw, 250px) minmax(0, 1fr);
-  align-items: end;
-  gap: clamp(26px, 3vw, 44px);
+  grid-row: span 6;
+  grid-template-rows: subgrid;
+  align-content: start;
+  row-gap: 0;
+}
+
+.sa-route-resources .sa-download-volume__content {
+  display: contents;
 }
 
 .sa-route-resources .sa-download-volume__cover {
-  display: block;
+  display: flex;
   position: relative;
-  z-index: 1;
+  margin-bottom: 26px;
+  padding: clamp(20px, 2.2vw, 30px) clamp(26px, 3vw, 42px);
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #f4f6fa 0%, #e8edf4 100%);
+  border-bottom: 4px solid color-mix(in srgb, var(--sa-primary) 16%, var(--sa-border));
+  border-radius: var(--sa-radius-sm) var(--sa-radius-sm) 0 0;
+}
+
+.sa-route-resources .sa-download-volume__cover picture {
+  display: block;
+  width: 100%;
+}
+
+.sa-route-resources .sa-download-volume__cover img,
+.sa-route-resources .sa-download-volume__placeholder {
+  display: block;
+  width: 100%;
+  height: auto;
   aspect-ratio: 4 / 5;
-  overflow: hidden;
-  background: var(--sa-primary);
-  box-shadow: 0 15px 28px rgba(12, 27, 51, .18);
+  box-shadow: 0 1px 2px rgba(12, 27, 51, .12), 0 14px 26px rgba(12, 27, 51, .18);
   transition: transform .25s var(--sa-ease), box-shadow .25s var(--sa-ease);
 }
 
-.sa-route-resources .sa-download-volume__cover:hover,
-.sa-route-resources .sa-download-volume__cover:focus-visible {
-  transform: translateY(-6px);
-  box-shadow: 0 22px 34px rgba(12, 27, 51, .22);
-}
-
-.sa-route-resources .sa-download-volume__cover picture,
 .sa-route-resources .sa-download-volume__cover img {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.sa-route-resources .sa-download-volume__cover img {
-  object-fit: contain;
+  object-fit: cover;
   object-position: top center;
+  background: var(--sa-surface, #fff);
+}
+
+.sa-route-resources .sa-download-volume__cover:hover img,
+.sa-route-resources .sa-download-volume__cover:focus-visible img,
+.sa-route-resources .sa-download-volume__cover:hover .sa-download-volume__placeholder,
+.sa-route-resources .sa-download-volume__cover:focus-visible .sa-download-volume__placeholder {
+  transform: translateY(-6px);
+  box-shadow: 0 2px 4px rgba(12, 27, 51, .12), 0 22px 34px rgba(12, 27, 51, .22);
 }
 
 .sa-route-resources .sa-download-volume__placeholder {
   display: flex;
-  height: 100%;
   flex-direction: column;
   justify-content: space-between;
-  padding: clamp(16px, 2vw, 28px);
+  padding: clamp(16px, 2vw, 24px);
   border-top: 8px solid var(--sa-accent);
-  background: var(--sa-surface, #f5f6f8);
+  background: var(--sa-surface, #fff);
   color: var(--sa-primary);
   overflow-wrap: anywhere;
 }
 
-.sa-route-resources .sa-download-volume__placeholder strong { font-size: clamp(28px, 4vw, 48px); }
+.sa-route-resources .sa-download-volume__placeholder strong { font-size: clamp(28px, 3vw, 40px); }
 .sa-route-resources .sa-download-volume__placeholder span { font-size: 14px; line-height: 1.5; }
 .sa-route-resources .sa-download-library__empty { color: var(--sa-text-3); }
 
@@ -1050,17 +1055,13 @@
   .sa-route-resources .sa-download-volume__placeholder span { display: none; }
 }
 
-.sa-route-resources .sa-download-volume__content {
-  min-width: 0;
-  padding-bottom: 24px;
-}
-
 .sa-route-resources .sa-download-volume__category {
-  margin: 0 0 14px;
+  margin: 0 0 10px;
   color: var(--sa-text-3);
   font-family: var(--sa-font-mono);
   font-size: 11px;
   font-weight: 600;
+  line-height: 1.4;
   letter-spacing: .12em;
   text-transform: uppercase;
 }
@@ -1068,35 +1069,38 @@
 .sa-route-resources .sa-download-volume h3 {
   margin: 0;
   color: var(--sa-primary);
-  font-size: clamp(25px, 2.2vw, 34px);
+  font-size: clamp(21px, 1.7vw, 25px);
   font-weight: 600;
-  line-height: 1.08;
-  letter-spacing: -.04em;
+  line-height: 1.15;
+  letter-spacing: -.03em;
+  text-wrap: balance;
 }
 
 .sa-route-resources .sa-download-volume__description {
-  margin: 18px 0 0;
+  margin: 12px 0 0;
   color: var(--sa-text-2);
-  font-size: 15px;
-  line-height: 1.65;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .sa-route-resources .sa-download-volume__meta {
   display: flex;
-  margin: 24px 0 0;
-  padding: 15px 0;
-  gap: 0;
+  margin: 20px 0 0;
+  padding: 12px 0;
+  align-self: end;
+  gap: 6px 0;
   border-block: 1px solid var(--sa-border);
   list-style: none;
   flex-wrap: wrap;
 }
 
 .sa-route-resources .sa-download-volume__meta li {
-  padding: 0 12px;
+  padding: 0 10px;
   color: var(--sa-text-2);
   border-left: 1px solid var(--sa-border);
   font-size: 12px;
   line-height: 1.3;
+  white-space: nowrap;
 }
 
 .sa-route-resources .sa-download-volume__meta li:first-child {
@@ -1116,8 +1120,9 @@
 }
 
 .sa-route-resources .sa-download-volume__action {
-  margin-top: 20px;
+  margin: 18px 0 clamp(40px, 4.5vw, 60px);
   padding-bottom: 6px;
+  align-self: start;
   border-bottom: 2px solid var(--sa-action);
 }
 
@@ -1128,7 +1133,7 @@
 
 .sa-route-resources .sa-download-industries {
   display: grid;
-  margin-top: clamp(40px, 5vw, 68px);
+  margin-top: clamp(12px, 1.5vw, 20px);
   padding-top: 28px;
   grid-template-columns: minmax(220px, .52fr) minmax(0, 1.25fr) auto;
   align-items: end;
@@ -1224,17 +1229,12 @@
   }
 
   .sa-route-resources .sa-download-library__shelf {
-    grid-template-columns: 1fr;
-    gap: 52px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 clamp(24px, 4vw, 40px);
   }
 
-  .sa-route-resources .sa-download-volume {
-    width: min(760px, 100%);
-    grid-template-columns: minmax(180px, .42fr) minmax(0, 1fr);
-  }
-
-  .sa-route-resources .sa-download-volume:nth-child(2) {
-    justify-self: end;
+  .sa-route-resources .sa-download-volume__cover {
+    padding-inline: clamp(48px, 9vw, 96px);
   }
 
   .sa-route-resources .sa-download-industries {
@@ -1338,46 +1338,53 @@
   }
 
   .sa-route-resources .sa-download-library__shelf {
-    padding-inline: 0;
-    gap: 38px;
+    grid-template-columns: 1fr;
+    gap: 0;
   }
 
-  .sa-route-resources .sa-download-library__shelf::after {
-    right: -8px;
-    left: -8px;
-    height: 6px;
+  .sa-route-resources .sa-download-volume {
+    grid-row: auto;
+    grid-template-columns: 112px minmax(0, 1fr);
+    grid-template-rows: none;
+    column-gap: 20px;
+    padding-block: 28px;
   }
 
-  .sa-route-resources .sa-download-volume,
-  .sa-route-resources .sa-download-volume:nth-child(2) {
-    width: 100%;
-    grid-template-columns: 124px minmax(0, 1fr);
-    align-items: start;
-    justify-self: stretch;
-    gap: 22px;
+  .sa-route-resources .sa-download-volume:first-child {
+    padding-top: 0;
   }
 
   .sa-route-resources .sa-download-volume + .sa-download-volume {
-    padding-top: 36px;
     border-top: 1px solid var(--sa-border);
   }
 
-  .sa-route-resources .sa-download-volume__content {
-    padding-bottom: 12px;
+  .sa-route-resources .sa-download-volume > *,
+  .sa-route-resources .sa-download-volume__content > * {
+    grid-column: 2;
+  }
+
+  .sa-route-resources .sa-download-volume__cover {
+    grid-column: 1;
+    grid-row: 1 / span 5;
+    margin: 0;
+    padding: 0;
+    align-self: start;
+    background: none;
+    border: 0;
+    border-radius: 0;
   }
 
   .sa-route-resources .sa-download-volume h3 {
-    font-size: 25px;
+    font-size: 21px;
   }
 
   .sa-route-resources .sa-download-volume__description {
-    margin-top: 12px;
-    font-size: 14px;
+    margin-top: 8px;
   }
 
   .sa-route-resources .sa-download-volume__meta {
-    margin-top: 16px;
-    padding-block: 11px;
+    margin-top: 14px;
+    padding-block: 10px;
   }
 
   .sa-route-resources .sa-download-volume__meta li {
@@ -1386,7 +1393,7 @@
   }
 
   .sa-route-resources .sa-download-volume__action {
-    margin-top: 16px;
+    margin: 14px 0 0;
   }
 
   .sa-route-resources .sa-download-industries {
@@ -1634,24 +1641,16 @@
     font-size: 13px;
   }
 
-  .sa-route-resources .sa-download-volume,
-  .sa-route-resources .sa-download-volume:nth-child(2) {
-    grid-template-columns: 108px minmax(0, 1fr);
-    gap: 17px;
+  .sa-route-resources .sa-download-volume {
+    grid-template-columns: 92px minmax(0, 1fr);
+    column-gap: 16px;
   }
 
   .sa-route-resources .sa-download-volume h3 {
-    font-size: 22px;
+    font-size: 19px;
   }
 
   .sa-route-resources .sa-download-volume__category {
-    margin-bottom: 10px;
-  }
-
-  .sa-route-resources .sa-download-volume__meta li:nth-child(4) {
-    width: 100%;
-    margin-top: 8px;
-    padding-left: 0;
-    border-left: 0;
+    margin-bottom: 8px;
   }
 }
