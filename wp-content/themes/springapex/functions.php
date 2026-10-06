@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SPRINGAPEX_VERSION', '2.9.126');
+define('SPRINGAPEX_VERSION', '2.9.127');
 define('SPRINGAPEX_DIR', get_template_directory());
 $springapex_uri = get_template_directory_uri();
 if (defined('SPRINGAPEX_CDN_URL') && is_string(SPRINGAPEX_CDN_URL) && SPRINGAPEX_CDN_URL !== '') {
@@ -48,6 +48,7 @@ require_once SPRINGAPEX_DIR . '/inc/mail-template.php';
 require_once SPRINGAPEX_DIR . '/inc/turnstile.php';
 require_once SPRINGAPEX_DIR . '/inc/hardening.php';
 require_once SPRINGAPEX_DIR . '/inc/favicon.php';
+require_once SPRINGAPEX_DIR . '/inc/llms-txt.php';
 require_once SPRINGAPEX_DIR . '/inc/seed.php';
 require_once SPRINGAPEX_DIR . '/inc/setup.php';
 
