@@ -58,6 +58,9 @@ jobs:
       - name: Test llms.txt
         run: php wp-content/themes/springapex/tests/llms-txt.php
 
+      - name: Test sitemap archive pages
+        run: php wp-content/themes/springapex/tests/sitemap-archives.php
+
       - name: Verify inquiry success tracking
         run: node --test wp-content/themes/springapex/tests/inquiry-tracking.mjs
 
