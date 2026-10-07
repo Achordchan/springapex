@@ -39,6 +39,18 @@ add_action('init', static function (): void {
         register_post_meta($post_type, '_springapex_seo_keywords', $string_meta('Meta keywords (optional).', 'sanitize_text_field'));
     }
 
+    // 产品面板「基础信息 → 标题下的一句话」：详情页 H1 下的导语，也是导航下拉里的小字。
+    // 清洗规则与 inc/post-types.php 保存面板时一致。不设默认值：meta 不存在时
+    // springapex_product_from_post() 才回退到主题内置的种子文案。
+    register_post_meta('spring_product', '_springapex_subtitle', [
+        'type' => 'string',
+        'description' => 'One-line lede under the product H1, also shown in the products menu.',
+        'single' => true,
+        'show_in_rest' => true,
+        'sanitize_callback' => static fn(mixed $value): string => sanitize_textarea_field(is_scalar($value) ? (string) $value : ''),
+        'auth_callback' => $can_edit,
+    ]);
+
     // 新闻面板（inc/news-meta.php）里的展示字段。
     register_post_meta('spring_news', SPRINGAPEX_NEWS_DATE_LABEL_META, $string_meta(
         'Date text shown instead of the publish date, e.g. "June 17–20, 2024". Empty uses the publish date.',
