@@ -137,9 +137,9 @@
 /* 产品详情里客户上传的长图多为 2560px 方图，铺满内容宽时一张约 1280px 高，
    电脑屏扣掉吸顶的导航和标签栏后一屏只能看到一半。电脑端把每张图限高到
    可视区域以内并居中，一屏看全；小字靠 product-compression.js 的点击放大补足。
-   画廊里的图保持网格排版，不参与限高。 */
+   画廊里的图保持网格排版、带链接的图点击要跳转（没有放大入口），都不参与限高。 */
 @media (min-width: 761px) {
-  .sa-product-editor-details__content img:not(.wp-block-gallery img, .blocks-gallery-grid img) {
+  .sa-product-editor-details__content img:not(.wp-block-gallery img, .blocks-gallery-grid img, a img) {
     display: block;
     width: auto;
     max-width: 100%;

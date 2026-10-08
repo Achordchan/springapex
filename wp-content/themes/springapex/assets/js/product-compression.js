@@ -316,6 +316,14 @@
       });
     });
 
+    // 放大层可用宽度随视口变化：图片已被限高时加宽窗口不会改变图片尺寸，
+    // ResizeObserver 不会触发，所以视口变化时也重新判断一遍。
+    let resizeFrame = 0;
+    window.addEventListener('resize', () => {
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(() => images.forEach(syncZoomable));
+    });
+
     // 放大层里图片按原图宽度封顶，避免把小原图拉糊。
     ensureDialog();
     zoomImage.addEventListener('load', () => {
