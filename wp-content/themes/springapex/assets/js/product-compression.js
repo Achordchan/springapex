@@ -272,7 +272,15 @@
       return img.clientWidth > 0 && zoomWidth > img.clientWidth * 1.1;
     };
 
+    // 编辑器内容里的图可能本来就带 tabindex / role / aria-label，
+    // 第一次接管前记下原值，关闭放大入口时还原，而不是一律删掉。
+    const ZOOM_ATTRIBUTES = ['tabindex', 'role', 'aria-label'];
+    const originalAttributes = new WeakMap();
+
     const syncZoomable = (img) => {
+      if (!originalAttributes.has(img)) {
+        originalAttributes.set(img, ZOOM_ATTRIBUTES.map((name) => [name, img.getAttribute(name)]));
+      }
       if (isShrunk(img)) {
         img.classList.add('sa-detail-zoomable');
         img.setAttribute('tabindex', '0');
@@ -280,9 +288,13 @@
         img.setAttribute('aria-label', img.alt ? 'Enlarge image: ' + img.alt : 'Enlarge image');
       } else {
         img.classList.remove('sa-detail-zoomable');
-        img.removeAttribute('tabindex');
-        img.removeAttribute('role');
-        img.removeAttribute('aria-label');
+        originalAttributes.get(img).forEach(([name, value]) => {
+          if (value === null) {
+            img.removeAttribute(name);
+          } else {
+            img.setAttribute(name, value);
+          }
+        });
       }
     };
 

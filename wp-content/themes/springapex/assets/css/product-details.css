@@ -146,6 +146,9 @@
     height: auto;
     max-height: calc(100svh - var(--sa-header-height, 72px) - var(--sa-product-tabs-height, 58px) - 48px);
     margin-inline: auto;
+    /* 编辑器里存过行内宽度（style="width:…"）的图，宽度不会被上面的 auto 覆盖；
+       高度被封顶时用 contain 让图在原宽度的框里等比缩放，不会被压扁。 */
+    object-fit: contain;
   }
 
   .sa-product-editor-details__content :where(p, figure) > img + img {
