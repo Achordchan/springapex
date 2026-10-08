@@ -209,10 +209,73 @@
     activate(initialMode, false);
   }
 
+  // 产品详情正文里的长图在电脑端被限高到一屏以内（product-details.css），
+  // 图里的小字随之变小；点击或回车可打开原图，按屏宽显示、纵向滚动阅读。
+  function initDetailZoom(root) {
+    const content = root.querySelector('.sa-product-editor-details__content');
+    if (!content) return;
+    const images = Array.from(content.querySelectorAll('img'))
+      .filter((img) => !img.closest('a, .wp-block-gallery, .blocks-gallery-grid'));
+    if (!images.length) return;
+
+    let dialog = null;
+    let zoomImage = null;
+    let opener = null;
+
+    const ensureDialog = () => {
+      if (dialog) return dialog;
+      dialog = document.createElement('dialog');
+      dialog.className = 'sa-detail-zoom';
+      dialog.setAttribute('aria-label', 'Enlarged image');
+      dialog.innerHTML = '<button type="button" class="sa-detail-zoom__close" aria-label="Close enlarged image">&times;</button><img class="sa-detail-zoom__image" alt="" decoding="async">';
+      zoomImage = dialog.querySelector('img');
+      dialog.querySelector('button').addEventListener('click', () => dialog.close());
+      // 点图片外的遮罩区域关闭；点图片本身不关，方便滚动阅读。
+      dialog.addEventListener('click', (event) => {
+        if (event.target === dialog) dialog.close();
+      });
+      dialog.addEventListener('close', () => {
+        zoomImage.removeAttribute('src');
+        document.documentElement.classList.remove('sa-detail-zoom-open');
+        opener?.focus({ preventScroll: true });
+      });
+      document.body.appendChild(dialog);
+      return dialog;
+    };
+
+    const open = (img) => {
+      // 只有缩小显示的图才需要放大；原尺寸显示的小图点了没有意义。
+      if (img.naturalWidth && img.naturalWidth <= img.clientWidth * 1.1) return;
+      const box = ensureDialog();
+      if (typeof box.showModal !== 'function') return;
+      opener = img;
+      zoomImage.src = img.getAttribute('src') || img.currentSrc;
+      zoomImage.alt = img.alt;
+      if (img.naturalWidth) zoomImage.style.maxWidth = img.naturalWidth + 'px';
+      document.documentElement.classList.add('sa-detail-zoom-open');
+      box.showModal();
+      box.scrollTop = 0;
+    };
+
+    images.forEach((img) => {
+      img.classList.add('sa-detail-zoomable');
+      img.setAttribute('tabindex', '0');
+      img.setAttribute('role', 'button');
+      img.setAttribute('aria-label', img.alt ? 'Enlarge image: ' + img.alt : 'Enlarge image');
+      img.addEventListener('click', () => open(img));
+      img.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        open(img);
+      });
+    });
+  }
+
   // The inquiry form also lives outside the compression product page
   // (capabilities), so initialize every instance instead of a single root.
   Array.from(document.querySelectorAll('.sa-compression-detail, .sa-evidence--custom')).forEach((root) => {
     initHeroGallery(root);
     initInquiryModes(root);
+    initDetailZoom(root);
   });
 })();

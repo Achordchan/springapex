@@ -134,6 +134,88 @@
   text-align: left;
 }
 
+/* 产品详情里客户上传的长图多为 2560px 方图，铺满内容宽时一张约 1280px 高，
+   电脑屏扣掉吸顶的导航和标签栏后一屏只能看到一半。电脑端把每张图限高到
+   可视区域以内并居中，一屏看全；小字靠 product-compression.js 的点击放大补足。
+   画廊里的图保持网格排版，不参与限高。 */
+@media (min-width: 761px) {
+  .sa-product-editor-details__content img:not(.wp-block-gallery img, .blocks-gallery-grid img) {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: calc(100svh - var(--sa-header-height, 72px) - var(--sa-product-tabs-height, 58px) - 48px);
+    margin-inline: auto;
+  }
+
+  .sa-product-editor-details__content :where(p, figure) > img + img {
+    margin-top: clamp(28px, 3vw, 44px);
+  }
+}
+
+.sa-product-editor-details__content .sa-detail-zoomable {
+  cursor: zoom-in;
+}
+
+.sa-product-editor-details__content .sa-detail-zoomable:focus-visible {
+  outline: 2px solid var(--sa-compression-blue, #0ea5e9);
+  outline-offset: 4px;
+}
+
+.sa-detail-zoom-open {
+  overflow: hidden;
+}
+
+.sa-detail-zoom {
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  max-height: none;
+  margin: 0;
+  padding: clamp(16px, 3vw, 40px);
+  border: 0;
+  overflow: auto;
+  background: rgba(15, 23, 42, .92);
+  overscroll-behavior: contain;
+}
+
+.sa-detail-zoom::backdrop {
+  background: rgba(15, 23, 42, .6);
+}
+
+.sa-detail-zoom__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-inline: auto;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.sa-detail-zoom__close {
+  position: fixed;
+  z-index: 1;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: #0f172a;
+  background: #fff;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, .25);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sa-detail-zoom__close:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
 .sa-product-specifications {
   padding-block: clamp(48px, 5vw, 72px);
   background: var(--sa-bg-soft, #f7f8fa);
