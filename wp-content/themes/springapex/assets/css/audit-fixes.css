@@ -75,6 +75,8 @@
 .product-tabs-section {
   min-height: var(--sa-product-tabs-height);
   isolation: isolate;
+  /* 吸顶时正文从下面滚过，半透明底（components.css 的 .97）会让文字透出来。 */
+  background: #fff;
 }
 
 .product-tabs-section::after {
