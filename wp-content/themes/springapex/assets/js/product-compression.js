@@ -246,8 +246,14 @@
     };
 
     // WordPress 的 src 可能只是缩略图，srcset 里才有原图；取宽度描述符最大的候选。
+    // src 本身也可能就是原图（srcset 只列了更小的响应式尺寸），所以先按 src 的
+    // 宽度起算：width 属性，或者浏览器正好加载的就是 src 时的 naturalWidth。
     const largestCandidate = (img) => {
-      let best = { url: img.getAttribute('src') || img.currentSrc, width: 0 };
+      let fallbackWidth = parseInt(img.getAttribute('width') || '0', 10) || 0;
+      if (img.src && img.currentSrc === img.src && img.naturalWidth > fallbackWidth) {
+        fallbackWidth = img.naturalWidth;
+      }
+      let best = { url: img.getAttribute('src') || img.currentSrc, width: fallbackWidth };
       (img.getAttribute('srcset') || '').split(',').forEach((candidate) => {
         const [url, descriptor] = candidate.trim().split(/\s+/);
         const width = parseInt(descriptor, 10);
