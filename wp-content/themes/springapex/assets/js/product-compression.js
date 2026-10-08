@@ -218,6 +218,8 @@
       .filter((img) => !img.closest('a, .wp-block-gallery, .blocks-gallery-grid'));
     if (!images.length) return;
 
+    // 与 .sa-detail-zoom 的左右内边距上限一致。
+    const ZOOM_GUTTER = 40;
     let dialog = null;
     let zoomImage = null;
     let opener = null;
@@ -243,31 +245,81 @@
       return dialog;
     };
 
+    // WordPress 的 src 可能只是缩略图，srcset 里才有原图；取宽度描述符最大的候选。
+    const largestCandidate = (img) => {
+      let best = { url: img.getAttribute('src') || img.currentSrc, width: 0 };
+      (img.getAttribute('srcset') || '').split(',').forEach((candidate) => {
+        const [url, descriptor] = candidate.trim().split(/\s+/);
+        const width = parseInt(descriptor, 10);
+        if (url && /w$/.test(descriptor || '') && width > best.width) {
+          best = { url, width };
+        }
+      });
+      return best;
+    };
+
+    // 只有放大后明显比页面上大的图才给放大入口；原尺寸显示的小图、以及手机上
+    // 本来就占满屏宽的图都不给，免得键盘和读屏用户碰到一个按了没反应的“按钮”。
+    // naturalWidth 对 srcset 图是按 sizes 折算后的宽度，不能代表原图，
+    // 所以取 srcset 最大宽度、width 属性和 naturalWidth 中最大的那个。
+    const isShrunk = (img) => {
+      const intrinsic = Math.max(
+        largestCandidate(img).width,
+        parseInt(img.getAttribute('width') || '0', 10) || 0,
+        img.naturalWidth
+      );
+      const zoomWidth = Math.min(intrinsic, document.documentElement.clientWidth - 2 * ZOOM_GUTTER);
+      return img.clientWidth > 0 && zoomWidth > img.clientWidth * 1.1;
+    };
+
+    const syncZoomable = (img) => {
+      if (isShrunk(img)) {
+        img.classList.add('sa-detail-zoomable');
+        img.setAttribute('tabindex', '0');
+        img.setAttribute('role', 'button');
+        img.setAttribute('aria-label', img.alt ? 'Enlarge image: ' + img.alt : 'Enlarge image');
+      } else {
+        img.classList.remove('sa-detail-zoomable');
+        img.removeAttribute('tabindex');
+        img.removeAttribute('role');
+        img.removeAttribute('aria-label');
+      }
+    };
+
     const open = (img) => {
-      // 只有缩小显示的图才需要放大；原尺寸显示的小图点了没有意义。
-      if (img.naturalWidth && img.naturalWidth <= img.clientWidth * 1.1) return;
+      if (!img.classList.contains('sa-detail-zoomable')) return;
       const box = ensureDialog();
       if (typeof box.showModal !== 'function') return;
       opener = img;
-      zoomImage.src = img.getAttribute('src') || img.currentSrc;
+      zoomImage.src = largestCandidate(img).url;
       zoomImage.alt = img.alt;
-      if (img.naturalWidth) zoomImage.style.maxWidth = img.naturalWidth + 'px';
+      zoomImage.style.maxWidth = '';
       document.documentElement.classList.add('sa-detail-zoom-open');
       box.showModal();
       box.scrollTop = 0;
     };
 
+    const resizeObserver = typeof ResizeObserver === 'function'
+      ? new ResizeObserver((entries) => entries.forEach((entry) => syncZoomable(entry.target)))
+      : null;
+
     images.forEach((img) => {
-      img.classList.add('sa-detail-zoomable');
-      img.setAttribute('tabindex', '0');
-      img.setAttribute('role', 'button');
-      img.setAttribute('aria-label', img.alt ? 'Enlarge image: ' + img.alt : 'Enlarge image');
+      syncZoomable(img);
+      if (!img.complete) img.addEventListener('load', () => syncZoomable(img), { once: true });
+      resizeObserver?.observe(img);
       img.addEventListener('click', () => open(img));
       img.addEventListener('keydown', (event) => {
         if (event.key !== 'Enter' && event.key !== ' ') return;
+        if (!img.classList.contains('sa-detail-zoomable')) return;
         event.preventDefault();
         open(img);
       });
+    });
+
+    // 放大层里图片按原图宽度封顶，避免把小原图拉糊。
+    ensureDialog();
+    zoomImage.addEventListener('load', () => {
+      if (zoomImage.naturalWidth) zoomImage.style.maxWidth = zoomImage.naturalWidth + 'px';
     });
   }
 
