@@ -262,6 +262,15 @@
     // 本来就占满屏宽的图都不给，免得键盘和读屏用户碰到一个按了没反应的“按钮”。
     // naturalWidth 对 srcset 图是按 sizes 折算后的宽度，不能代表原图，
     // 所以取 srcset 最大宽度、width 属性和 naturalWidth 中最大的那个。
+    // 限高规则带 object-fit: contain：存过行内宽度的图，元素框宽度不变，
+    // 实际画面按比例缩在框里，所以按图片宽高比算出真正显示的宽度。
+    const renderedWidth = (img) => {
+      const ratioWidth = img.naturalWidth || parseInt(img.getAttribute('width') || '0', 10);
+      const ratioHeight = img.naturalHeight || parseInt(img.getAttribute('height') || '0', 10);
+      if (!ratioWidth || !ratioHeight || !img.clientHeight) return img.clientWidth;
+      return Math.min(img.clientWidth, img.clientHeight * (ratioWidth / ratioHeight));
+    };
+
     const isShrunk = (img) => {
       const intrinsic = Math.max(
         largestCandidate(img).width,
@@ -269,7 +278,7 @@
         img.naturalWidth
       );
       const zoomWidth = Math.min(intrinsic, document.documentElement.clientWidth - 2 * ZOOM_GUTTER);
-      return img.clientWidth > 0 && zoomWidth > img.clientWidth * 1.1;
+      return renderedWidth(img) > 0 && zoomWidth > renderedWidth(img) * 1.1;
     };
 
     // 编辑器内容里的图可能本来就带 tabindex / role / aria-label，
