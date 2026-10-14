@@ -2,7 +2,7 @@
 /**
  * 站点地图补充列表页。
  *
- * WP 核心站点地图只列文章本身，不含自定义文章类型的列表页（/products/、/solutions/、/case-studies/），
+ * WP 核心站点地图只列文章本身，不含自定义文章类型的列表页（/products/、/solutions/、/case-studies/、/news/），
  * Google 因此迟迟发现不了这几个列表页。这里注册一个 archives 提供者，
  * 输出 /wp-sitemap-archives-1.xml，lastmod 取该类型最近一次修改时间。
  */
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 /** @return list<string> */
 function springapex_sitemap_archive_post_types(): array
 {
-    return ['spring_product', 'spring_solution', 'spring_case'];
+    return ['spring_product', 'spring_solution', 'spring_case', 'spring_news'];
 }
 
 /** @return list<array{loc:string,lastmod?:string}> */
