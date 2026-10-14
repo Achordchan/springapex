@@ -101,11 +101,55 @@ function springapex_rest_seo_update(WP_REST_Request $request): WP_REST_Response|
         }
     }
 
-    // 以已存的自定义值为底，叠加本次提交，再走后台表单同一个清洗函数。
-    // 已存值为空表示「用默认」，这里填回默认值，清洗时会再归一化为空。
-    $settings = springapex_seo_saved_settings();
+    // 读-合并-写走 compare-and-swap（inc/locks.php）：两个请求同时改不同路由时，
+    // 后写的那个若基于旧快照，会因库里值已变而写不进去，重读后重算再写，
+    // 不会把对方刚存的改动整份覆盖掉。写入失败（非并发）重试耗尽后报错，
+    // 不再回 saved: true。
+    $saved = false;
+    for ($attempt = 0; $attempt < 5 && !$saved; $attempt++) {
+        wp_cache_delete('springapex_seo_settings', 'options');
+        wp_cache_delete('alloptions', 'options');
+        wp_cache_delete('notoptions', 'options');
+
+        $exists = springapex_option_row_exists('springapex_seo_settings');
+        $stored = $exists ? get_option('springapex_seo_settings', []) : [];
+        $clean = springapex_rest_seo_merge(is_array($stored) ? $stored : [], $submitted);
+
+        if ($exists && $clean === $stored) {
+            $saved = true;
+        } elseif (!$exists) {
+            $saved = springapex_add_option_if_absent('springapex_seo_settings', $clean, true);
+        } else {
+            $saved = springapex_update_option_if_unchanged('springapex_seo_settings', $stored, $clean);
+        }
+    }
+    if (!$saved) {
+        return new WP_Error(
+            'springapex_seo_not_saved',
+            'SEO settings were not saved; they kept changing or the database write failed. Retry the request.',
+            ['status' => 409]
+        );
+    }
+
+    $snapshot = springapex_rest_seo_snapshot();
+    return new WP_REST_Response([
+        'saved' => true,
+        'routes' => array_intersect_key($snapshot, $submitted),
+    ]);
+}
+
+/**
+ * 以已存的自定义值为底叠加本次提交，再走后台表单同一个清洗函数。
+ * 已存值为空表示「用默认」，这里填回默认值，清洗时会再归一化为空。
+ *
+ * @param array<string, mixed> $settings
+ * @param array<string, mixed> $submitted
+ * @return array<string, mixed>
+ */
+function springapex_rest_seo_merge(array $settings, array $submitted): array
+{
     $input = ['routes' => []];
-    foreach ($definitions as $route => $definition) {
+    foreach (springapex_seo_route_definitions() as $route => $definition) {
         $saved = is_array($settings['routes'][$route] ?? null) ? $settings['routes'][$route] : [];
         $row = [
             'title' => trim((string) ($saved['title'] ?? '')) ?: (string) $definition['title'],
@@ -118,15 +162,5 @@ function springapex_rest_seo_update(WP_REST_Request $request): WP_REST_Response|
         }
         $input['routes'][$route] = $row;
     }
-
-    $clean = springapex_sanitize_seo_settings($input);
-    if ($clean !== $settings) {
-        update_option('springapex_seo_settings', $clean);
-    }
-
-    $snapshot = springapex_rest_seo_snapshot();
-    return new WP_REST_Response([
-        'saved' => true,
-        'routes' => array_intersect_key($snapshot, $submitted),
-    ]);
+    return springapex_sanitize_seo_settings($input);
 }

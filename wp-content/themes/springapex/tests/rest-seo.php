@@ -35,8 +35,43 @@ function get_option(string $name, mixed $default = false): mixed
 {
     return $GLOBALS['springapex_test_options'][$name] ?? $default;
 }
-function update_option(string $name, mixed $value): bool
+function wp_cache_delete(string $key, string $group = ''): bool
 {
+    return true;
+}
+// inc/locks.php 的 compare-and-swap，用内存里的 option 模拟。
+// springapex_test_before_write 可在写入前插入一次「别人的并发保存」；
+// springapex_test_db_fail 让每次写入都失败。
+$GLOBALS['springapex_test_before_write'] = null;
+$GLOBALS['springapex_test_db_fail'] = false;
+function springapex_option_row_exists(string $name): bool
+{
+    return array_key_exists($name, $GLOBALS['springapex_test_options']);
+}
+function springapex_test_concurrent_write(): void
+{
+    $hook = $GLOBALS['springapex_test_before_write'];
+    $GLOBALS['springapex_test_before_write'] = null;
+    if (is_callable($hook)) {
+        $hook();
+    }
+}
+function springapex_add_option_if_absent(string $name, mixed $value, bool $autoload): bool
+{
+    springapex_test_concurrent_write();
+    if ($GLOBALS['springapex_test_db_fail'] || springapex_option_row_exists($name)) {
+        return false;
+    }
+    $GLOBALS['springapex_test_options'][$name] = $value;
+    $GLOBALS['springapex_test_updates']++;
+    return true;
+}
+function springapex_update_option_if_unchanged(string $name, mixed $expected, mixed $value, ?bool $autoload = null): bool
+{
+    springapex_test_concurrent_write();
+    if ($GLOBALS['springapex_test_db_fail'] || ($GLOBALS['springapex_test_options'][$name] ?? null) !== $expected) {
+        return false;
+    }
     $GLOBALS['springapex_test_options'][$name] = $value;
     $GLOBALS['springapex_test_updates']++;
     return true;
@@ -126,6 +161,31 @@ springapex_rest_seo_update(new WP_REST_Request(['routes' => ['terms' => ['descri
 check($GLOBALS['springapex_test_options']['springapex_seo_settings']['routes']['terms']['description'] === '', 'empty string resets to default');
 springapex_rest_seo_update(new WP_REST_Request(['routes' => ['home' => ['title' => $defaults['home']['title']]]]));
 check($GLOBALS['springapex_test_options']['springapex_seo_settings']['routes']['home']['title'] === '', 'value equal to default stores empty');
+
+// 并发：读完快照后、写入前，别人改了 privacy 的描述；本次改 terms 标题。
+// 第一次 CAS 失败，重读后两边的改动都要留下。
+$GLOBALS['springapex_test_before_write'] = static function (): void {
+    $GLOBALS['springapex_test_options']['springapex_seo_settings']['routes']['privacy']['description'] = 'Concurrent privacy description.';
+};
+$res = springapex_rest_seo_update(new WP_REST_Request(['routes' => ['terms' => ['title' => 'Terms of Use | NorenSpring Springs']]]));
+check($res instanceof WP_REST_Response, 'concurrent update eventually saves');
+$stored = $GLOBALS['springapex_test_options']['springapex_seo_settings']['routes'];
+check($stored['privacy']['description'] === 'Concurrent privacy description.', 'concurrent change is not overwritten');
+check($stored['terms']['title'] === 'Terms of Use | NorenSpring Springs', 'own change saved after retry');
+
+// 数据库写入一直失败：不能回 saved: true。
+$GLOBALS['springapex_test_db_fail'] = true;
+$err = springapex_rest_seo_update(new WP_REST_Request(['routes' => ['terms' => ['keywords' => 'springs']]]));
+check($err instanceof WP_Error && ($err->data['status'] ?? 0) === 409, 'failed write reports an error');
+// 值没变时不需要写，写入失败也不影响。
+$res = springapex_rest_seo_update(new WP_REST_Request(['routes' => ['terms' => ['title' => 'Terms of Use | NorenSpring Springs']]]));
+check($res instanceof WP_REST_Response, 'unchanged value succeeds without a write');
+$GLOBALS['springapex_test_db_fail'] = false;
+
+// option 行还不存在时用 INSERT IGNORE 建行。
+unset($GLOBALS['springapex_test_options']['springapex_seo_settings']);
+$res = springapex_rest_seo_update(new WP_REST_Request(['routes' => ['terms' => ['description' => $new]]]));
+check($res instanceof WP_REST_Response && $GLOBALS['springapex_test_options']['springapex_seo_settings']['routes']['terms']['description'] === $new, 'creates the option when missing');
 
 foreach ([
     ['routes' => []],
