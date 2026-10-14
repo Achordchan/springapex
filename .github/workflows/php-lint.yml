@@ -67,6 +67,9 @@ jobs:
       - name: Test theme image fallback uses WebP
         run: php wp-content/themes/springapex/tests/static-image-fallback.php
 
+      - name: Test SEO / TDK REST route
+        run: php wp-content/themes/springapex/tests/rest-seo.php
+
       - name: Verify inquiry success tracking
         run: node --test wp-content/themes/springapex/tests/inquiry-tracking.mjs
 
