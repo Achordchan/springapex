@@ -162,6 +162,12 @@ check($GLOBALS['springapex_test_options']['springapex_seo_settings']['routes']['
 springapex_rest_seo_update(new WP_REST_Request(['routes' => ['home' => ['title' => $defaults['home']['title']]]]));
 check($GLOBALS['springapex_test_options']['springapex_seo_settings']['routes']['home']['title'] === '', 'value equal to default stores empty');
 
+// 已存的 '0' 不能在改别的路由时被换成默认值。
+$GLOBALS['springapex_test_options']['springapex_seo_settings']['routes']['sitemap'] = ['title' => '0', 'description' => '0', 'keywords' => ''];
+springapex_rest_seo_update(new WP_REST_Request(['routes' => ['terms' => ['keywords' => 'terms']]]));
+$sitemap = $GLOBALS['springapex_test_options']['springapex_seo_settings']['routes']['sitemap'];
+check($sitemap['title'] === '0' && $sitemap['description'] === '0', 'zero-valued fields survive: ' . json_encode($sitemap));
+
 // 并发：读完快照后、写入前，别人改了 privacy 的描述；本次改 terms 标题。
 // 第一次 CAS 失败，重读后两边的改动都要留下。
 $GLOBALS['springapex_test_before_write'] = static function (): void {

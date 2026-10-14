@@ -151,9 +151,12 @@ function springapex_rest_seo_merge(array $settings, array $submitted): array
     $input = ['routes' => []];
     foreach (springapex_seo_route_definitions() as $route => $definition) {
         $saved = is_array($settings['routes'][$route] ?? null) ? $settings['routes'][$route] : [];
+        // 显式和空串比较：'0' 这类值用 ?: 会被当成空，误换成默认值。
+        $saved_title = trim((string) ($saved['title'] ?? ''));
+        $saved_description = trim((string) ($saved['description'] ?? ''));
         $row = [
-            'title' => trim((string) ($saved['title'] ?? '')) ?: (string) $definition['title'],
-            'description' => trim((string) ($saved['description'] ?? '')) ?: (string) $definition['description'],
+            'title' => $saved_title !== '' ? $saved_title : (string) $definition['title'],
+            'description' => $saved_description !== '' ? $saved_description : (string) $definition['description'],
             'keywords' => (string) ($saved['keywords'] ?? ''),
         ];
         foreach ((array) ($submitted[$route] ?? []) as $field => $value) {
