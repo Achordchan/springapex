@@ -687,6 +687,26 @@ function springapex_logo(): int|string|array
     return '';
 }
 
+/**
+ * <img src> for a bundled theme image. Browsers that support <picture> take the
+ * AVIF/WebP <source>, but crawlers and audit tools read src, and the PNG/JPG
+ * masters are 1–2.5 MB each. When a WebP copy exists, src points to the 1200px
+ * WebP (or the full WebP) instead of the master.
+ */
+function springapex_static_image_fallback_src(string $file): string
+{
+    $file = ltrim($file, '/');
+    $base = preg_replace('/\.[^.\/]+$/', '', $file) ?: $file;
+    if ($base !== $file && !str_contains($file, '..')) {
+        foreach ([$base . '-1200.webp', $base . '.webp'] as $candidate) {
+            if ($candidate !== $file && is_file(springapex_asset_path('assets/images/' . $candidate))) {
+                return springapex_asset('assets/images/' . $candidate);
+            }
+        }
+    }
+    return springapex_asset('assets/images/' . $file);
+}
+
 function springapex_image(int|string|array $image, string $alt, array $args = []): string
 {
     $defaults = [
@@ -792,7 +812,7 @@ function springapex_image(int|string|array $image, string $alt, array $args = []
     $variants = $is_url ? [] : springapex_static_image_variants($fallback);
     $src = $is_url
         ? $fallback
-        : springapex_asset('assets/images/' . ltrim($fallback, '/'));
+        : springapex_static_image_fallback_src($fallback);
     $attrs  = [
         'src="' . esc_url($src) . '"',
         'alt="' . esc_attr($alt) . '"',

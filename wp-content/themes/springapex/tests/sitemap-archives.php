@@ -1,6 +1,6 @@
 <?php
 /**
- * 站点地图列表页：注册 archives 提供者，只输出三个列表页，lastmod 取最近修改的文章。
+ * 站点地图列表页：注册 archives 提供者，只输出四个列表页，lastmod 取最近修改的文章。
  */
 
 declare(strict_types=1);
@@ -13,6 +13,7 @@ $GLOBALS['springapex_test_latest'] = [
     'spring_product' => [15],
     'spring_solution' => [],
     'spring_case' => [301],
+    'spring_news' => [1395],
 ];
 
 abstract class WP_Sitemaps_Provider
@@ -38,6 +39,7 @@ function get_post_type_archive_link(string $post_type): string|false
         'spring_product' => 'https://www.norenspring.com/products/',
         'spring_solution' => 'https://www.norenspring.com/solutions/',
         'spring_case' => 'https://www.norenspring.com/case-studies/',
+        'spring_news' => 'https://www.norenspring.com/news/',
     ][$post_type] ?? false;
 }
 function get_posts(array $args): array
@@ -49,7 +51,11 @@ function get_posts(array $args): array
 }
 function get_post_modified_time(string $format, bool $gmt, int $post_id): string
 {
-    return $post_id === 15 ? '2026-10-01T08:00:00+00:00' : '2026-09-20T08:00:00+00:00';
+    return match ($post_id) {
+        15 => '2026-10-01T08:00:00+00:00',
+        1395 => '2026-10-13T02:00:00+00:00',
+        default => '2026-09-20T08:00:00+00:00',
+    };
 }
 
 require dirname(__DIR__) . '/inc/sitemap-archives.php';
@@ -76,6 +82,7 @@ check($entries === [
     ['loc' => 'https://www.norenspring.com/products/', 'lastmod' => '2026-10-01T08:00:00+00:00'],
     ['loc' => 'https://www.norenspring.com/solutions/'],
     ['loc' => 'https://www.norenspring.com/case-studies/', 'lastmod' => '2026-09-20T08:00:00+00:00'],
+    ['loc' => 'https://www.norenspring.com/news/', 'lastmod' => '2026-10-13T02:00:00+00:00'],
 ], 'archive entries with lastmod: ' . json_encode($entries));
 
 echo "sitemap-archives: OK\n";

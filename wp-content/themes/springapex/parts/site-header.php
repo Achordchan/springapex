@@ -110,10 +110,10 @@ $product_menu_feature_image = $product_menu['feature_image'] ?? 'product-compres
           </form>
           <div class="site-search-overlay__hints">
             <span class="site-search-overlay__hints-label"><?php esc_html_e('Popular:', 'springapex'); ?></span>
-            <a href="<?php echo esc_url(springapex_url('/search/?s=compression')); ?>" class="site-search-overlay__tag">Compression</a>
-            <a href="<?php echo esc_url(springapex_url('/search/?s=automotive')); ?>" class="site-search-overlay__tag">Automotive</a>
-            <a href="<?php echo esc_url(springapex_url('/search/?s=material')); ?>" class="site-search-overlay__tag">Material</a>
-            <a href="<?php echo esc_url(springapex_url('/search/?s=quality')); ?>" class="site-search-overlay__tag">Quality</a>
+            <a href="<?php echo esc_url(springapex_url('/products/compression-springs/')); ?>" class="site-search-overlay__tag">Compression</a>
+            <a href="<?php echo esc_url(springapex_url('/solutions/automotive/')); ?>" class="site-search-overlay__tag">Automotive</a>
+            <a href="<?php echo esc_url(springapex_url('/news/spring-wire-material-guide/')); ?>" class="site-search-overlay__tag">Material</a>
+            <a href="<?php echo esc_url(springapex_url('/capabilities/')); ?>" class="site-search-overlay__tag">Quality</a>
           </div>
         </div>
       </div>
