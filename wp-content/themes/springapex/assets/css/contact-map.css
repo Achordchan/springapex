@@ -21,6 +21,11 @@
   background: var(--sa-bg-soft);
 }
 
+/* Grey out the colour OSM tiles so the base map stays a quiet backdrop. */
+.sa-contact-map .leaflet-tile-pane {
+  filter: grayscale(1) brightness(1.06) contrast(0.88);
+}
+
 /* Pins ----------------------------------------------------------------- */
 .sa-map-pin {
   display: grid;
