@@ -51,7 +51,8 @@
   line-height: 1.26;
 }
 
-.sa-product-editor-details__content > h3:not(:first-child) {
+/* 不限直接子元素：正文若包在分组区块（Group 等）里，里面的 h3 同样要留上间距。 */
+.sa-product-editor-details__content h3:not(:first-child) {
   margin-top: clamp(36px, 3.6vw, 48px);
 }
 

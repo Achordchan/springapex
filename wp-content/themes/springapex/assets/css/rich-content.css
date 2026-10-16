@@ -117,7 +117,9 @@
   text-align: center;
 }
 
-/* 表格：宽屏撑满正文宽度；窄屏（见下方媒体查询）改成块级，整张表横向滚动，不撑宽页面。 */
+/* 表格：宽屏撑满正文宽度；单元格允许在任意位置断行（overflow-wrap: anywhere 会压低
+   最小内容宽度），长型号、长数值也不会把表格撑出正文。窄屏（见下方媒体查询）改成块级，
+   整张表横向滚动，不撑宽页面。 */
 :is(.sa-case-study-detail__content, .sa-industry-body .entry-content) table {
   width: 100%;
   max-width: 100%;
@@ -133,6 +135,12 @@
   border: 1px solid var(--sa-border);
   text-align: left;
   vertical-align: top;
+}
+
+@media (min-width: 681px) {
+  :is(.sa-case-study-detail__content, .sa-industry-body .entry-content) :is(th, td) {
+    overflow-wrap: anywhere;
+  }
 }
 
 :is(.sa-case-study-detail__content, .sa-industry-body .entry-content) th {
