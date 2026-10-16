@@ -94,7 +94,7 @@ $product_menu_feature_image = $product_menu['feature_image'] ?? 'product-compres
           <div class="site-search-overlay__head">
             <div>
               <p class="site-search-overlay__kicker"><?php esc_html_e('SITE SEARCH', 'springapex'); ?></p>
-              <h2 id="site-search-title"><?php esc_html_e('Find the right starting point.', 'springapex'); ?></h2>
+              <p class="site-search-overlay__title" id="site-search-title"><?php esc_html_e('Find the right starting point.', 'springapex'); ?></p>
             </div>
             <button class="site-search-overlay__close" type="button" data-search-close aria-label="<?php esc_attr_e('Close search', 'springapex'); ?>">
               <?php echo springapex_icon('close', 'icon'); ?>
@@ -136,7 +136,7 @@ $product_menu_feature_image = $product_menu['feature_image'] ?? 'product-compres
       <div class="products-mega-menu__intro">
         <div class="products-mega-menu__intro-copy">
           <p class="products-mega-menu__kicker"><?php esc_html_e('PRODUCTS', 'springapex'); ?></p>
-          <h2><?php esc_html_e('Engineered for the way your part carries load.', 'springapex'); ?></h2>
+          <p class="products-mega-menu__title"><?php esc_html_e('Engineered for the way your part carries load.', 'springapex'); ?></p>
           <p><?php esc_html_e('Explore our core spring families and engineered solutions.', 'springapex'); ?></p>
           <a class="products-mega-menu__all" href="<?php echo esc_url(springapex_url('/products/')); ?>">
             <span><?php esc_html_e('View complete range', 'springapex'); ?></span>

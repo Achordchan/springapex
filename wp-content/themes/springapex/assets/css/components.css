@@ -1608,7 +1608,7 @@ body.search-overlay-open {
   letter-spacing: .14em;
 }
 
-.site-search-overlay__head h2 {
+.site-search-overlay__head .site-search-overlay__title {
   color: var(--sa-primary);
   font-size: clamp(27px, 3vw, 36px);
   font-weight: 600;
@@ -1801,7 +1801,7 @@ body.search-overlay-open {
     font-size: 10px;
   }
 
-  .site-search-overlay__head h2 {
+  .site-search-overlay__head .site-search-overlay__title {
     font-size: 24px;
     line-height: 1.15;
     letter-spacing: -.025em;

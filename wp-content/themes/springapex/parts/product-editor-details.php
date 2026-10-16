@@ -21,7 +21,7 @@ $preview_image = $product['category_image'] ?? ($product['image'] ?? '');
   <div class="container container-wide">
     <div class="sa-product-editor-details__content entry-content" data-reveal="up">
       <?php if (!$is_preview) : ?>
-        <?php echo apply_filters('the_content', $details_source); ?>
+        <?php echo springapex_lazy_content_images(apply_filters('the_content', $details_source)); ?>
       <?php elseif ($slug === 'compression-springs') : ?>
         <h2><?php esc_html_e('Custom compression springs engineered to application requirements.', 'springapex'); ?></h2>
         <p><?php esc_html_e('NorenSpring manufactures custom compression springs for automotive, industrial equipment, medical devices and precision assemblies. Wire diameter, outside diameter, free length, spring rate, solid height and operating environment are reviewed before material, end configuration and surface treatment are confirmed.', 'springapex'); ?></p>
