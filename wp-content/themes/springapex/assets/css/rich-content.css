@@ -117,13 +117,20 @@
   text-align: center;
 }
 
-/* 表格：宽屏撑满正文宽度；单元格允许在任意位置断行（overflow-wrap: anywhere 会压低
-   最小内容宽度），长型号、长数值也不会把表格撑出正文。窄屏（见下方媒体查询）改成块级，
-   整张表横向滚动，不撑宽页面。 */
-:is(.sa-case-study-detail__content, .sa-industry-body .entry-content) table {
-  width: 100%;
+/* 表格：渲染时包一层 .sa-table-scroll（springapex_wrap_content_tables()）。外层限宽、
+   横向滚动，里面的表格保持原生表格布局并撑满正文宽度；列多或单元格定宽时在外层滚动，
+   不会撑出或被裁掉。 */
+:is(.sa-case-study-detail__content, .sa-industry-body .entry-content) > .sa-table-scroll {
   max-width: 100%;
   overflow-x: auto;
+}
+
+:is(.sa-case-study-detail__content, .sa-industry-body .entry-content) > .sa-table-scroll:not(:first-child) {
+  margin-top: 28px;
+}
+
+:is(.sa-case-study-detail__content, .sa-industry-body .entry-content) table {
+  width: 100%;
   margin-top: 28px;
   border-collapse: collapse;
   font-size: 15px;
@@ -137,10 +144,8 @@
   vertical-align: top;
 }
 
-@media (min-width: 681px) {
-  :is(.sa-case-study-detail__content, .sa-industry-body .entry-content) :is(th, td) {
-    overflow-wrap: anywhere;
-  }
+.sa-table-scroll > table {
+  margin-top: 0 !important;
 }
 
 :is(.sa-case-study-detail__content, .sa-industry-body .entry-content) th {
@@ -155,7 +160,6 @@
   }
 
   :is(.sa-case-study-detail__content, .sa-industry-body .entry-content) table {
-    display: block;
     font-size: 14px;
   }
 }

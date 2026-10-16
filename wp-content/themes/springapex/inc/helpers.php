@@ -7,6 +7,54 @@ if (!defined('ABSPATH')) {
 
 require_once __DIR__ . '/downloads.php';
 
+/**
+ * 给正文里的每张表格包一层 <div class="sa-table-scroll">，由外层负责横向滚动，
+ * 表格本身保持原生布局、撑满正文宽度（样式见 assets/css/rich-content.css）。
+ * 嵌套表格只包最外层；已经包过的不再重复包。
+ */
+function springapex_wrap_content_tables(string $html): string
+{
+    if (stripos($html, '<table') === false) {
+        return $html;
+    }
+
+    $parts = preg_split('/(<\/?table\b[^>]*>)/i', $html, -1, PREG_SPLIT_DELIM_CAPTURE);
+    if (!is_array($parts)) {
+        return $html;
+    }
+
+    $out = '';
+    $depth = 0;
+    $wrapped = false;
+    foreach ($parts as $part) {
+        if (preg_match('/^<table\\b/i', $part)) {
+            if ($depth === 0) {
+                $wrapped = !preg_match('/<div class="sa-table-scroll">\\s*$/', $out);
+                if ($wrapped) {
+                    $out .= '<div class="sa-table-scroll">';
+                }
+            }
+            $depth++;
+            $out .= $part;
+            continue;
+        }
+        if ($depth > 0 && preg_match('/^<\\/table>/i', $part)) {
+            $depth--;
+            $out .= $part;
+            if ($depth === 0 && $wrapped) {
+                $out .= '</div>';
+            }
+            continue;
+        }
+        $out .= $part;
+    }
+    if ($depth > 0 && $wrapped) {
+        $out .= '</div>';
+    }
+
+    return $out;
+}
+
 function springapex_attr(string $value): string
 {
     return esc_attr($value);

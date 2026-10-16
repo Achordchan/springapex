@@ -49,7 +49,7 @@ get_template_part('parts/solutions-subnav', null, ['active' => 'case-studies']);
 <section class="section sa-case-study-detail">
   <div class="container container-narrow">
     <article class="sa-case-study-detail__content">
-      <?php echo wp_kses_post((string) ($case['content'] ?? '')); ?>
+      <?php echo springapex_wrap_content_tables(wp_kses_post((string) ($case['content'] ?? ''))); ?>
     </article>
   </div>
 </section>
