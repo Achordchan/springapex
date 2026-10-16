@@ -161,54 +161,8 @@ function springapex_render_form_settings_page(): void
         }
 
         // 三表单 schema：把提交的字段卡片数组规范化后整体入库。
-        $types = springapex_form_field_types();
-        $defaults = springapex_form_schema_defaults();
-        $system_field_ids = springapex_form_system_fields();
         $submitted = isset($_POST['schema']) && is_array($_POST['schema']) ? wp_unslash($_POST['schema']) : [];
-        $schema = [];
-        foreach ($defaults as $form => $form_defaults) {
-            $entry = ['fields' => []];
-            if (isset($form_defaults['enabled'])) {
-                $entry['enabled'] = !empty($submitted[$form]['enabled']);
-            }
-            $entry['turnstile'] = !empty($submitted[$form]['turnstile']);
-
-            $defaults_by_id = [];
-            foreach ($form_defaults['fields'] as $field) {
-                $defaults_by_id[$field['id']] = $field;
-            }
-
-            $rows = isset($submitted[$form]['fields']) && is_array($submitted[$form]['fields'])
-                ? array_values($submitted[$form]['fields'])
-                : [];
-            $used_ids = [];
-            foreach ($rows as $row) {
-                if (!is_array($row)) {
-                    continue;
-                }
-                // 选项的解析交给 springapex_normalize_form_field()：那里才知道
-                // 字段最终生效的类型。映射字段的「类型」下拉是 disabled 的，
-                // 不会随表单提交，在这里按 $row['type'] 判断会漏掉它们。
-                $field = springapex_normalize_form_field($row, $defaults_by_id, $types);
-                if ($field === null || isset($used_ids[$field['id']])) {
-                    continue;
-                }
-                $used_ids[$field['id']] = true;
-                $entry['fields'][] = $field;
-            }
-
-            // 仅锁定字段（姓名/邮箱/留言）缺失时补回——询盘成立的基础，
-            // 不可删除；其余默认字段（含技术参数等系统映射字段）允许
-            // 运营者删除，不回填（与前台渲染同一规则）。
-            $locked_field_ids = springapex_form_locked_fields();
-            foreach ($form_defaults['fields'] as $field) {
-                if (!isset($used_ids[$field['id']]) && in_array($field['id'], $locked_field_ids, true)) {
-                    $entry['fields'][] = $field;
-                }
-            }
-
-            $schema[$form] = $entry;
-        }
+        $schema = springapex_form_schema_from_input($submitted);
         update_option('springapex_form_schema', $schema, false);
         // 本次保存即当前结构版本：防止「首次保存删除默认字段 → 加载迁移
         // 视为版本落后而复活」的窗口（与加载侧的全新安装盖章双保险）。
