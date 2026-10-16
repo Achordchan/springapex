@@ -133,7 +133,12 @@ $documents = [
           <span aria-hidden="true">›</span>
           <span aria-current="page"><?php echo esc_html((string) ($product['title'] ?? 'Compression Springs')); ?></span>
         </nav>
-        <h1 id="compression-title"><?php echo esc_html((string) ($product['title'] ?? 'Compression Springs')); ?></h1>
+        <?php
+        // 详情页 H1 可单独设置（产品面板「详情页 H1」）；留空用产品名。面包屑、菜单、卡片始终用产品名。
+        $product_h1 = trim((string) ($product['hero_title'] ?? ''));
+        $product_h1 = $product_h1 !== '' ? $product_h1 : (string) ($product['title'] ?? 'Compression Springs');
+        ?>
+        <h1 id="compression-title"><?php echo esc_html($product_h1); ?></h1>
         <?php if ($hero_lede !== '') : ?>
           <p class="sa-compression-hero__lede"><?php echo esc_html($hero_lede); ?></p>
         <?php endif; ?>

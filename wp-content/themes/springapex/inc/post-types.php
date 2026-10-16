@@ -348,6 +348,12 @@ add_action('save_post_spring_product', static function (int $post_id): void {
     $subtitle = sanitize_textarea_field(springapex_admin_request_scalar($_POST['springapex_subtitle'] ?? ''));
 
     update_post_meta($post_id, '_springapex_subtitle', $subtitle);
+    $hero_title = sanitize_text_field(springapex_admin_request_scalar($_POST['springapex_hero_title'] ?? ''));
+    if ($hero_title !== '') {
+        update_post_meta($post_id, '_springapex_hero_title', $hero_title);
+    } else {
+        delete_post_meta($post_id, '_springapex_hero_title');
+    }
     foreach (springapex_product_row_sets() as $field => $columns) {
         $meta_key = springapex_product_row_meta_keys()[$field] ?? '';
         if ($meta_key === '') {

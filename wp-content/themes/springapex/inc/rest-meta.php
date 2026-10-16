@@ -51,6 +51,17 @@ add_action('init', static function (): void {
         'auth_callback' => $can_edit,
     ]);
 
+    // 产品面板「基础信息 → 详情页 H1」：只替换详情页大标题，菜单、卡片、面包屑仍用产品名。
+    // 留空（或 meta 不存在）时详情页 H1 回退到产品名。
+    register_post_meta('spring_product', '_springapex_hero_title', [
+        'type' => 'string',
+        'description' => 'H1 on the product page only. Empty uses the product title; menus, cards and breadcrumbs always use the product title.',
+        'single' => true,
+        'show_in_rest' => true,
+        'sanitize_callback' => static fn(mixed $value): string => sanitize_text_field(is_scalar($value) ? (string) $value : ''),
+        'auth_callback' => $can_edit,
+    ]);
+
     // 新闻面板（inc/news-meta.php）里的展示字段。
     register_post_meta('spring_news', SPRINGAPEX_NEWS_DATE_LABEL_META, $string_meta(
         'Date text shown instead of the publish date, e.g. "June 17–20, 2024". Empty uses the publish date.',

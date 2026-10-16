@@ -26,20 +26,33 @@
   letter-spacing: -.035em;
 }
 
+/* 正文从后台编辑器来，是一串平铺的 h2/h3/p/ul/table/img。层级要靠间距和分隔线
+   区分：每个 h2 是一节，上方留大间距并画分隔线；h3 是节内小标题，只留中等间距、
+   不画线（以前线画在 h3 上，h2 反而贴着上一段列表，层级看起来是反的）。 */
 .sa-product-editor-details__content h2 {
-  margin: 0 0 22px;
+  margin: 0 0 20px;
   font-size: clamp(28px, 2.6vw, 36px);
   letter-spacing: -.028em;
   line-height: 1.2;
 }
 
-.sa-product-editor-details__content h3 {
-  margin: 60px 0 16px;
-  padding-top: 28px;
+.sa-product-editor-details__content > h2:not(:first-child) {
+  margin-top: clamp(56px, 6vw, 80px);
+  padding-top: clamp(40px, 4vw, 56px);
   border-top: 1px solid var(--sa-border, #e5e7eb);
-  font-size: clamp(21px, 1.9vw, 26px);
+}
+
+.sa-product-editor-details__content h3 {
+  margin: 0 0 14px;
+  padding-top: 0;
+  border-top: 0;
+  font-size: clamp(21px, 1.9vw, 25px);
   letter-spacing: -.022em;
   line-height: 1.26;
+}
+
+.sa-product-editor-details__content > h3:not(:first-child) {
+  margin-top: clamp(36px, 3.6vw, 48px);
 }
 
 .sa-product-editor-details__content h4 {
@@ -54,12 +67,26 @@
   line-height: 1.85;
 }
 
-.sa-product-editor-details__content :where(p, ul, ol, blockquote) + :where(p, ul, ol, blockquote) {
+/* 段落、列表、表格之间统一 20px；不用 :where()，否则会被全局 .entry-content 和
+   重置样式里同级或更高权重的 margin 规则吃掉，段落和列表就贴在一起了。 */
+.sa-product-editor-details__content > :is(p, ul, ol, blockquote, table, .wp-block-table) + :is(p, ul, ol, blockquote, table, .wp-block-table) {
   margin-top: 20px;
 }
 
+.sa-product-editor-details__content > :is(h2, h3, h4) + * {
+  margin-top: 0;
+}
+
+.sa-product-editor-details__content ul {
+  list-style: disc;
+}
+
+.sa-product-editor-details__content ol {
+  list-style: decimal;
+}
+
 .sa-product-editor-details__content :where(ul, ol) {
-  padding-left: 1.15em;
+  padding-left: 1.25em;
 }
 
 .sa-product-editor-details__content :where(ul, ol) li + li {
@@ -68,6 +95,16 @@
 
 .sa-product-editor-details__content :where(ul, ol) li::marker {
   color: var(--sa-compression-blue, #0786ce);
+}
+
+.sa-product-editor-details__content a:not(.btn, .wp-block-button__link) {
+  color: var(--sa-accent-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.sa-product-editor-details__content a:not(.btn, .wp-block-button__link):hover {
+  color: var(--sa-accent-deep-hover);
 }
 
 .sa-product-editor-details__content :where(ul, ol) strong {
@@ -255,8 +292,7 @@
   }
 
   .sa-product-editor-details__content h3 {
-    margin-top: 38px;
-    font-size: 25px;
+    font-size: 21px;
   }
 
   .sa-product-editor-details__content :where(p, ul, ol, blockquote) {

@@ -73,6 +73,7 @@ function springapex_render_product_panel(object $post): void
     };
 
     $subtitle = (string) $value('_springapex_subtitle', $seed['subtitle'] ?? '');
+    $hero_title = (string) get_post_meta($post_id, '_springapex_hero_title', true);
     $featured = (bool) $value('_springapex_featured', !empty($seed['featured']));
     $mega_menu = (bool) $value('_springapex_mega_menu', true);
     $menu_order = (int) $post->menu_order;
@@ -132,6 +133,12 @@ function springapex_render_product_panel(object $post): void
         <section class="sa-pp__panel is-active" data-pp-panel="basic" role="tabpanel">
           <h2 class="sa-pp__title"><?php esc_html_e('基础信息', 'springapex'); ?></h2>
           <p class="sa-pp__desc"><?php esc_html_e('产品名用页面上方的标题填写；下面两项显示在英文前台，请用英文填写。', 'springapex'); ?></p>
+
+          <div class="sa-pp__field">
+            <label for="springapex-hero-title"><?php esc_html_e('详情页 H1', 'springapex'); ?></label>
+            <input type="text" class="widefat" id="springapex-hero-title" name="springapex_hero_title" value="<?php echo esc_attr($hero_title); ?>">
+            <p class="description"><?php esc_html_e('只改产品详情页的大标题（用于搜索优化）。留空就用产品名；菜单、卡片和面包屑始终显示产品名。', 'springapex'); ?></p>
+          </div>
 
           <div class="sa-pp__field">
             <label for="springapex-subtitle"><?php esc_html_e('标题下的一句话', 'springapex'); ?></label>

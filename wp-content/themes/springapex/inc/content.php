@@ -575,6 +575,7 @@ function springapex_product_from_post(object $post): array
     $materials = $meta_or_seed('_springapex_materials', $seed['materials'] ?? []);
     $applications = $meta_or_seed('_springapex_applications', $seed['applications'] ?? []);
     $subtitle = $meta_or_seed('_springapex_subtitle', $seed['subtitle'] ?? '');
+    $hero_title = trim((string) get_post_meta($post_id, '_springapex_hero_title', true));
     $catalog_url = $meta_or_seed('_springapex_catalog_url', $seed['catalog_url'] ?? '');
     $seed_image = $meta_or_seed('_springapex_seed_image', $seed['image'] ?? '');
     $featured = $meta_or_seed('_springapex_featured', !empty($seed['featured']) ? '1' : '0');
@@ -627,6 +628,7 @@ function springapex_product_from_post(object $post): array
         'title' => get_the_title($post),
         'desc' => $card_description,
         'subtitle' => (string) $subtitle,
+        'hero_title' => $hero_title,
         'overview' => (string) ($post->post_content ?? ''),
         'image' => $database_image,
         'gallery' => $gallery,
