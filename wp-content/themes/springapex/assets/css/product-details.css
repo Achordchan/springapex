@@ -70,7 +70,7 @@
 
 /* 段落、列表、表格之间统一 20px；不用 :where()，否则会被全局 .entry-content 和
    重置样式里同级或更高权重的 margin 规则吃掉，段落和列表就贴在一起了。 */
-.sa-product-editor-details__content > :is(p, ul, ol, blockquote, table, .wp-block-table) + :is(p, ul, ol, blockquote, table, .wp-block-table) {
+.sa-product-editor-details__content :is(p, ul, ol, blockquote, table, .wp-block-table) + :is(p, ul, ol, blockquote, table, .wp-block-table) {
   margin-top: 20px;
 }
 
