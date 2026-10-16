@@ -57,4 +57,13 @@ assert_same(
     'Closing tags with whitespace before ">" still close the wrapper.'
 );
 
+$script = '<p>A</p><script>const markup = "<table><tr><td>Value</td></tr></table>";</script><!-- <table> --><p data-x="<table>">B</p><textarea><table></table></textarea>';
+assert_same($script, springapex_wrap_content_tables($script), 'Tables inside scripts, comments, attribute values and textareas are left alone.');
+
+assert_same(
+    '<script>var t = "<table>";</script><div class="sa-table-scroll"><table><tr><td>1</td></tr></table></div>',
+    springapex_wrap_content_tables('<script>var t = "<table>";</script><table><tr><td>1</td></tr></table>'),
+    'A real table after a script is still wrapped.'
+);
+
 echo "content table wrap: ok\n";

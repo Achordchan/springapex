@@ -11,6 +11,10 @@ require_once __DIR__ . '/downloads.php';
  * 给正文里的每张表格包一层 <div class="sa-table-scroll">，由外层负责横向滚动，
  * 表格本身保持原生布局、撑满正文宽度（样式见 assets/css/rich-content.css）。
  * 嵌套表格只包最外层；已经包过的不再重复包。
+ *
+ * 按 HTML 分词：注释、<script>/<style>/<textarea>/<template> 的内容和整段标签（含属性值）
+ * 各算一个片段原样跳过，只有真正的 <table>/</table> 标签才参与包裹，
+ * 脚本字符串或属性值里出现的 "<table>" 不会被改动。
  */
 function springapex_wrap_content_tables(string $html): string
 {
@@ -18,35 +22,35 @@ function springapex_wrap_content_tables(string $html): string
         return $html;
     }
 
-    $parts = preg_split('/(<\/?table\b[^>]*>)/i', $html, -1, PREG_SPLIT_DELIM_CAPTURE);
-    if (!is_array($parts)) {
-        return $html;
-    }
-
-    $out = '';
+    $token = '/(<!--.*?-->'
+        . '|<(script|style|textarea|template)\b(?:[^>"\']|"[^"]*"|\'[^\']*\')*>.*?<\/\2\s*>'
+        . '|<\/?[a-zA-Z][^\s\/>]*(?:[^>"\']|"[^"]*"|\'[^\']*\')*>)/is';
     $depth = 0;
     $wrapped = false;
-    foreach ($parts as $part) {
-        if (preg_match('/^<table\\b/i', $part)) {
+    $after_wrapper = false;
+    $out = preg_replace_callback($token, static function (array $m) use (&$depth, &$wrapped, &$after_wrapper): string {
+        $tag = $m[0];
+        $follows_wrapper = $after_wrapper;
+        $after_wrapper = $depth === 0 && preg_match('/^<div\s+class=(["\'])sa-table-scroll\1\s*>$/i', $tag) === 1;
+
+        if (preg_match('/^<table\b/i', $tag)) {
+            $prefix = '';
             if ($depth === 0) {
-                $wrapped = !preg_match('/<div class="sa-table-scroll">\\s*$/', $out);
-                if ($wrapped) {
-                    $out .= '<div class="sa-table-scroll">';
-                }
+                $wrapped = !$follows_wrapper;
+                $prefix = $wrapped ? '<div class="sa-table-scroll">' : '';
             }
             $depth++;
-            $out .= $part;
-            continue;
+            return $prefix . $tag;
         }
-        if ($depth > 0 && preg_match('/^<\\/table\\b/i', $part)) {
+        if ($depth > 0 && preg_match('/^<\/table\b/i', $tag)) {
             $depth--;
-            $out .= $part;
-            if ($depth === 0 && $wrapped) {
-                $out .= '</div>';
-            }
-            continue;
+            return $tag . ($depth === 0 && $wrapped ? '</div>' : '');
         }
-        $out .= $part;
+
+        return $tag;
+    }, $html);
+    if (!is_string($out)) {
+        return $html;
     }
     if ($depth > 0 && $wrapped) {
         $out .= '</div>';
