@@ -51,4 +51,10 @@ assert_same(
     'Tags that only start with "table" are ignored.'
 );
 
+assert_same(
+    "<div class=\"sa-table-scroll\"><table><tr><td>1</td></tr></table ></div><h2>Next</h2><div class=\"sa-table-scroll\"><table><tr><td>2</td></tr></TABLE\n></div>",
+    springapex_wrap_content_tables("<table><tr><td>1</td></tr></table ><h2>Next</h2><table><tr><td>2</td></tr></TABLE\n>"),
+    'Closing tags with whitespace before ">" still close the wrapper.'
+);
+
 echo "content table wrap: ok\n";

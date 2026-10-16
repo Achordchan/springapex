@@ -38,7 +38,7 @@ function springapex_wrap_content_tables(string $html): string
             $out .= $part;
             continue;
         }
-        if ($depth > 0 && preg_match('/^<\\/table>/i', $part)) {
+        if ($depth > 0 && preg_match('/^<\\/table\\b/i', $part)) {
             $depth--;
             $out .= $part;
             if ($depth === 0 && $wrapped) {
