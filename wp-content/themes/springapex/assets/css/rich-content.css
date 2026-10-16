@@ -120,7 +120,8 @@
 /* 表格：渲染时包一层 .sa-table-scroll（springapex_wrap_content_tables()）。外层限宽、
    横向滚动，里面的表格保持原生表格布局并撑满正文宽度；列多或单元格定宽时在外层滚动，
    不会撑出或被裁掉。 */
-:is(.sa-case-study-detail__content, .sa-industry-body .entry-content) > .sa-table-scroll {
+/* 不限直接子元素：表格在分组、引用等容器里时，包层也在容器里，同样要限宽滚动。 */
+:is(.sa-case-study-detail__content, .sa-industry-body .entry-content) .sa-table-scroll {
   max-width: 100%;
   overflow-x: auto;
 }
