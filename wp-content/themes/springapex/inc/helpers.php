@@ -59,6 +59,30 @@ function springapex_wrap_content_tables(string $html): string
     return $out;
 }
 
+/**
+ * 给正文里没写 loading 的图片补 loading="lazy" 和 decoding="async"。
+ * 产品详情正文是在主循环外用 apply_filters('the_content') 输出的，WordPress 只在主循环里
+ * 自动加懒加载，这里的图会和首屏图抢带宽。已写了 loading（含 eager）的图不动。
+ */
+function springapex_lazy_content_images(string $html): string
+{
+    if (stripos($html, '<img') === false || !class_exists('WP_HTML_Tag_Processor')) {
+        return $html;
+    }
+
+    $tags = new WP_HTML_Tag_Processor($html);
+    while ($tags->next_tag('img')) {
+        if ($tags->get_attribute('loading') === null) {
+            $tags->set_attribute('loading', 'lazy');
+        }
+        if ($tags->get_attribute('decoding') === null) {
+            $tags->set_attribute('decoding', 'async');
+        }
+    }
+
+    return $tags->get_updated_html();
+}
+
 function springapex_attr(string $value): string
 {
     return esc_attr($value);

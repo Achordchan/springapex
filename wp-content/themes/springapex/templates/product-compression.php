@@ -178,7 +178,12 @@ $documents = [
               $thumb_full = $thumb_id > 0
                   ? (string) wp_get_attachment_image_url($thumb_id, 'full')
                   : springapex_asset('assets/images/' . ltrim($thumb_file, '/'));
-              $thumb_alt = sprintf('%s %d', (string) ($product['title'] ?? 'Product view'), $index + 1);
+              // 缩略图 alt 优先用媒体库里填写的替代文字；没填时写成「产品名 view N」，
+              // 避免 "Compression Springs 1" 这种对搜索和读屏都没意义的编号。
+              $thumb_alt = $thumb_id > 0 ? trim((string) get_post_meta($thumb_id, '_wp_attachment_image_alt', true)) : '';
+              if ($thumb_alt === '') {
+                  $thumb_alt = sprintf(__('%1$s, view %2$d', 'springapex'), (string) ($product['title'] ?? 'Product'), $index + 1);
+              }
               ?>
               <button class="sa-compression-thumb<?php echo $index === 0 ? ' is-active' : ''; ?>" type="button" data-compression-hero-thumb data-image="<?php echo esc_url($thumb_full); ?>" data-alt="<?php echo esc_attr($thumb_alt); ?>" aria-label="<?php echo esc_attr(sprintf(__('Show product image %d', 'springapex'), $index + 1)); ?>" aria-pressed="<?php echo $index === 0 ? 'true' : 'false'; ?>">
                 <?php echo springapex_image($item, $thumb_alt, ['width' => 180, 'height' => 180, 'sizes' => '88px']); ?>

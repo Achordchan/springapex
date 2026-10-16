@@ -293,6 +293,64 @@ function springapex_form_schema(): array
 }
 
 /**
+ * 把提交上来的三表单配置整理成入库结构。后台「表单设置」保存和
+ * REST /springapex/v1/form-schema 共用这一份：未提交的开关视为关闭，
+ * 字段按提交顺序规范化、去重，锁定字段（姓名/邮箱/留言）缺失时补回。
+ *
+ * @param array<string, mixed> $submitted
+ * @return array<string, array<string, mixed>>
+ */
+function springapex_form_schema_from_input(array $submitted): array
+{
+    $types = springapex_form_field_types();
+    $schema = [];
+    foreach (springapex_form_schema_defaults() as $form => $form_defaults) {
+        $entry = ['fields' => []];
+        if (isset($form_defaults['enabled'])) {
+            $entry['enabled'] = !empty($submitted[$form]['enabled']);
+        }
+        $entry['turnstile'] = !empty($submitted[$form]['turnstile']);
+
+        $defaults_by_id = [];
+        foreach ($form_defaults['fields'] as $field) {
+            $defaults_by_id[$field['id']] = $field;
+        }
+
+        $rows = isset($submitted[$form]['fields']) && is_array($submitted[$form]['fields'])
+            ? array_values($submitted[$form]['fields'])
+            : [];
+        $used_ids = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            // 选项的解析交给 springapex_normalize_form_field()：那里才知道
+            // 字段最终生效的类型。映射字段的「类型」下拉是 disabled 的，
+            // 不会随表单提交，在这里按 $row['type'] 判断会漏掉它们。
+            $field = springapex_normalize_form_field($row, $defaults_by_id, $types);
+            if ($field === null || isset($used_ids[$field['id']])) {
+                continue;
+            }
+            $used_ids[$field['id']] = true;
+            $entry['fields'][] = $field;
+        }
+
+        // 仅锁定字段（姓名/邮箱/留言）缺失时补回——询盘成立的基础，
+        // 不可删除；其余默认字段（含技术参数等系统映射字段）允许
+        // 运营者删除，不回填（与前台渲染同一规则）。
+        $locked_field_ids = springapex_form_locked_fields();
+        foreach ($form_defaults['fields'] as $field) {
+            if (!isset($used_ids[$field['id']]) && in_array($field['id'], $locked_field_ids, true)) {
+                $entry['fields'][] = $field;
+            }
+        }
+
+        $schema[$form] = $entry;
+    }
+    return $schema;
+}
+
+/**
  * 规范化单个字段：系统字段锁类型，自定义字段校验 id/类型唯一性。
  *
  * @param array<string, mixed> $field

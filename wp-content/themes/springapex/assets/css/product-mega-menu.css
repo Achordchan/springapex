@@ -43,7 +43,8 @@
   letter-spacing: .16em;
 }
 
-.products-mega-menu__intro h2 {
+/* 下拉菜单和搜索浮层每页都在 DOM 里，标题用 <p> 而不是 <h2>，免得排在页面 H1 之前打乱标题层级。 */
+.products-mega-menu__intro .products-mega-menu__title {
   max-width: 260px;
   color: #fff;
   font-size: 29px;
@@ -52,7 +53,7 @@
   letter-spacing: -.035em;
 }
 
-.products-mega-menu__intro-copy > p:not(.products-mega-menu__kicker) {
+.products-mega-menu__intro-copy > p:not(.products-mega-menu__kicker, .products-mega-menu__title) {
   max-width: 244px;
   margin-top: 16px;
   color: rgba(255, 255, 255, .7);
@@ -345,7 +346,7 @@
     padding: 32px 28px;
   }
 
-  .products-mega-menu__intro h2 {
+  .products-mega-menu__intro .products-mega-menu__title {
     font-size: 25px;
   }
 
@@ -387,11 +388,11 @@
     margin-bottom: 14px;
   }
 
-  .products-mega-menu__intro h2 {
+  .products-mega-menu__intro .products-mega-menu__title {
     font-size: 22px;
   }
 
-  .products-mega-menu__intro-copy > p:not(.products-mega-menu__kicker) {
+  .products-mega-menu__intro-copy > p:not(.products-mega-menu__kicker, .products-mega-menu__title) {
     font-size: 12px;
   }
 
