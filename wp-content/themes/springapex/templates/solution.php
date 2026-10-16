@@ -205,7 +205,9 @@ $explore_anchor = $solution_body !== '' ? '#industry-overview' : '#industry-requ
           // （<!--nextpage-->，只显示当前页并给出页码链接）都由它处理。
           $GLOBALS['post'] = $solution_post;
           setup_postdata($solution_post);
+          add_filter('the_content', 'springapex_wrap_content_tables', 30);
           the_content();
+          remove_filter('the_content', 'springapex_wrap_content_tables', 30);
           wp_link_pages();
           wp_reset_postdata();
           ?>
