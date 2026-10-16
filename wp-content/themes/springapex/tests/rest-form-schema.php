@@ -194,13 +194,13 @@ $res = post(['quick' => ['enabled' => false]]);
 $stored = $GLOBALS['springapex_test_options']['springapex_form_schema'];
 check($res instanceof WP_REST_Response && $stored['quick']['enabled'] === false && count($stored['quick']['fields']) === 3, 'flag-only update');
 
-// 选项可用列表形式；锁定字段缺失时补回。
+// 数字值的选项（JSON 里 {"0": "No", "1": "Yes"} 解码成顺序数组）原样保留；锁定字段缺失时补回。
 $res = post(['product' => ['fields' => [
-    ['id' => 'material', 'label' => 'Material', 'options' => ['Music Wire', 'Inconel']],
+    ['id' => 'urgent', 'label' => 'Urgent?', 'type' => 'select', 'options' => json_decode('{"0":"No","1":"Yes"}', true)],
 ]]]);
 $stored = $GLOBALS['springapex_test_options']['springapex_form_schema'];
-check(field_by_id($stored['product']['fields'], 'material')['options'] === ['Music Wire' => 'Music Wire', 'Inconel' => 'Inconel'], 'list options expand to value => label');
-check(array_column($stored['product']['fields'], 'id') === ['material', 'email', 'message'], 'locked fields restored: ' . json_encode(array_column($stored['product']['fields'], 'id')));
+check(field_by_id($stored['product']['fields'], 'urgent')['options'] === ['0' => 'No', '1' => 'Yes'], 'numeric option values kept: ' . json_encode(field_by_id($stored['product']['fields'], 'urgent')['options']));
+check(array_column($stored['product']['fields'], 'id') === ['urgent', 'email', 'message'], 'locked fields restored: ' . json_encode(array_column($stored['product']['fields'], 'id')));
 
 // 并发：读完快照后、写入前，后台改了联系表单；本次改产品表单。两边都要留下。
 $GLOBALS['springapex_test_before_write'] = static function (): void {

@@ -9,7 +9,8 @@
  *   POST /wp-json/springapex/v1/form-schema   {"forms": {"product": {"fields": [...]}}}
  *                                             只改传入的表单和键
  *
- * 每个表单可传 enabled、turnstile（布尔）和 fields（字段数组）。fields 整份替换：
+ * 每个表单可传 enabled、turnstile（布尔）和 fields（字段数组）。下拉的 options 是
+ * {"值": "显示文字"} 对象，与 GET 返回的形状一致。fields 整份替换：
  * 改一个选项也要先 GET，再把该表单的整份字段列表发回。锁定字段（姓名/邮箱/留言）
  * 缺失时照后台规则补回。
  */
@@ -147,7 +148,8 @@ function springapex_rest_form_schema_validate(mixed $forms): array|WP_Error
         }
 
         if (array_key_exists('fields', $entry)) {
-            if (!is_array($entry['fields']) || !array_is_list($entry['fields'])) {
+            // 不用 array_is_list()：它要 PHP 8.1，主题仍声明支持 PHP 8.0。
+            if (!is_array($entry['fields']) || array_values($entry['fields']) !== $entry['fields']) {
                 return new WP_Error('springapex_form_schema_invalid_fields', sprintf('Form %s: fields must be an array.', $form), ['status' => 400]);
             }
             $defaults_by_id = [];
@@ -158,15 +160,6 @@ function springapex_rest_form_schema_validate(mixed $forms): array|WP_Error
             foreach ($entry['fields'] as $index => $row) {
                 if (!is_array($row)) {
                     return new WP_Error('springapex_form_schema_invalid_field', sprintf('Form %s: field %d must be an object.', $form, $index), ['status' => 400]);
-                }
-                // 选项既可以是 {"值": "显示文字"}，也可以是 ["值", ...]；列表形式按值=文字展开，
-                // 否则数字下标会被当成选项值存下去。
-                if (isset($row['options']) && is_array($row['options']) && array_is_list($row['options'])) {
-                    $options = [];
-                    foreach ($row['options'] as $option) {
-                        $options[(string) $option] = (string) $option;
-                    }
-                    $row['options'] = $options;
                 }
                 $normalized = springapex_normalize_form_field($row, $defaults_by_id, $types);
                 if ($normalized === null) {
