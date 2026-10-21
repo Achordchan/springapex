@@ -181,6 +181,14 @@ function springapex_content(): array
                 'title' => 'Spring families for every load and motion.',
                 'text' => 'Compare force direction, space, material and operating conditions.',
             ],
+            'video' => [
+                'eyebrow' => 'PRODUCT VIDEO',
+                'title' => 'A few of the springs we make.',
+                'text' => 'Compression, extension, torsion, conical, die, disc and wave springs, wire forms and clips, made to customer drawings.',
+                'youtube_id' => '',
+                'duration' => '',
+                'image' => '',
+            ],
             'categories' => [
                 ['slug' => 'compression-springs', 'title' => 'Compression Springs', 'image' => 'product-compression-detail-v4.png', 'category_image' => 'product-compression-detail-v4.png', 'featured_image' => 'product-compression-card-v3.png', 'desc' => 'Designed for dependable axial load and return force.'],
                 ['slug' => 'extension-springs', 'title' => 'Extension Springs', 'image' => 'product-extension-v2.png', 'category_image' => 'product-extension-category-v3.png', 'desc' => 'Built to deliver reliable tension and controlled extension.'],
