@@ -6,6 +6,10 @@ $products_data = springapex_get('products', []);
 $hero = $products_data['hero'] ?? [];
 $entry = is_array($products_data['entry'] ?? null) ? $products_data['entry'] : [];
 $range = is_array($products_data['range'] ?? null) ? $products_data['range'] : [];
+$video = is_array($products_data['video'] ?? null) ? $products_data['video'] : [];
+$video_id = trim((string) ($video['youtube_id'] ?? ''));
+$video_src = $video_id !== '' ? 'https://www.youtube.com/embed/' . rawurlencode($video_id) . '?autoplay=1&rel=0' : '';
+$video_title = trim((string) ($video['title'] ?? '')) !== '' ? (string) $video['title'] : 'NorenSpring product video';
 $products = springapex_products();
 ?>
 <?php
@@ -75,6 +79,59 @@ get_template_part('parts/inner-hero', null, [
     </div>
   </div>
 </section>
+
+<?php if ($video_src !== '') : ?>
+  <section class="section sa-products-video" aria-labelledby="products-video-title">
+    <div class="container container-wide sa-products-video__layout">
+      <div class="sa-products-video__copy" data-reveal="up">
+        <p class="section-kicker"><?php echo esc_html((string) ($video['eyebrow'] ?? '')); ?></p>
+        <h2 id="products-video-title"><?php echo esc_html($video_title); ?></h2>
+        <p><?php echo esc_html((string) ($video['text'] ?? '')); ?></p>
+      </div>
+      <figure class="sa-products-video__media" data-reveal="up">
+        <?php if (trim((string) ($video['image'] ?? '')) !== '') : ?>
+          <?php echo springapex_image((string) $video['image'], $video_title, [
+              'class' => 'sa-products-video__image',
+              'width' => 1280,
+              'height' => 720,
+              'sizes' => '(max-width: 900px) 100vw, 58vw',
+          ]); ?>
+        <?php else : ?>
+          <img class="sa-products-video__image" src="<?php echo esc_url('https://i.ytimg.com/vi/' . rawurlencode($video_id) . '/hqdefault.jpg'); ?>" alt="<?php echo esc_attr($video_title); ?>" width="480" height="360" loading="lazy" decoding="async">
+        <?php endif; ?>
+        <button class="sa-products-video__play" type="button" data-hero-video-open
+                data-video-src="<?php echo esc_url($video_src); ?>"
+                data-video-title="<?php echo esc_attr($video_title); ?>"
+                aria-label="<?php echo esc_attr(sprintf(__('Play %s', 'springapex'), $video_title)); ?>">
+          <?php echo springapex_icon('youtube', 'icon'); ?>
+        </button>
+        <?php if (trim((string) ($video['duration'] ?? '')) !== '') : ?>
+          <span class="sa-products-video__duration"><?php echo esc_html((string) $video['duration']); ?></span>
+        <?php endif; ?>
+      </figure>
+    </div>
+  </section>
+
+  <dialog class="sa-video-dialog" id="products-video-dialog" data-hero-video-dialog aria-labelledby="products-video-dialog-title">
+    <div class="sa-video-dialog__shell">
+      <div class="sa-video-dialog__header">
+        <h2 id="products-video-dialog-title" data-hero-video-title><?php echo esc_html($video_title); ?></h2>
+        <button class="sa-video-dialog__close" type="button" data-hero-video-close aria-label="<?php esc_attr_e('Close video', 'springapex'); ?>">
+          <?php echo springapex_icon('close', 'icon'); ?>
+        </button>
+      </div>
+      <div class="sa-video-dialog__media">
+        <iframe
+          data-hero-video-frame
+          title="<?php echo esc_attr($video_title); ?>"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
+  </dialog>
+<?php endif; ?>
 
 <?php $selection = springapex_get('product_selection', []); ?>
 <section class="section sa-selection-guide">

@@ -256,6 +256,18 @@ function springapex_admin_screens(): array
                     'fields' => [],
                 ],
                 [
+                    'title' => '产品列表页 · 视频',
+                    'desc' => '产品分类卡片下方的视频板块。填了 YouTube 视频 ID 才显示整个板块，留空则不显示。',
+                    'fields' => [
+                        ['path' => 'products.video.eyebrow', 'label' => '小标签', 'type' => 'text', 'help' => ''],
+                        ['path' => 'products.video.title', 'label' => '标题', 'type' => 'text', 'help' => ''],
+                        ['path' => 'products.video.text', 'label' => '说明', 'type' => 'textarea', 'help' => ''],
+                        ['path' => 'products.video.youtube_id', 'label' => 'YouTube 视频 ID', 'type' => 'youtube', 'help' => '只填 ID，横版视频。点击封面后弹窗播放。'],
+                        ['path' => 'products.video.duration', 'label' => '时长', 'type' => 'text', 'help' => '格式 分:秒。'],
+                        ['path' => 'products.video.image', 'label' => '封面图', 'type' => 'image', 'help' => '横版 16:9，宽度不小于 1280px。留空则用 YouTube 自带封面。'],
+                    ],
+                ],
+                [
                     'title' => '产品大菜单',
                     'desc' => '页头 Products 展开后左侧的品牌展示图，与单个产品的主图独立。',
                     'fields' => [
