@@ -177,8 +177,10 @@
   gap: 12px;
 }
 
-/* Single-language site: a static "EN" indicator, not a switcher. */
+/* English is the only language for now: the badge opens a small panel that
+   lists it and says more languages are on the way. */
 .language-switcher {
+  position: relative;
   display: inline-flex;
 }
 
@@ -195,13 +197,128 @@
   color: var(--sa-primary);
   background: var(--sa-surface);
   box-shadow: var(--sa-shadow-sm);
+  font: inherit;
   font-size: 12px;
   font-weight: 700;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+
+.language-switcher__badge:hover,
+.language-switcher__badge[aria-expanded="true"] {
+  border-color: var(--sa-primary);
+}
+
+.language-switcher__badge:focus-visible {
+  outline: 2px solid var(--sa-accent);
+  outline-offset: 2px;
 }
 
 .language-switcher__badge .icon {
   width: 16px;
   height: 16px;
+}
+
+.language-switcher__caret {
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform .15s ease;
+}
+
+.language-switcher__badge[aria-expanded="true"] .language-switcher__caret {
+  margin-top: 3px;
+  transform: rotate(-135deg);
+}
+
+.language-switcher__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 90;
+  width: 220px;
+  max-width: calc(100vw - 32px);
+  padding: 6px;
+  border: 1px solid var(--sa-border);
+  border-radius: 10px;
+  background: var(--sa-surface, #fff);
+  box-shadow: 0 18px 44px rgba(15, 23, 42, .12);
+}
+
+.language-switcher__panel[hidden] {
+  display: none;
+}
+
+.language-switcher__title {
+  margin: 0;
+  padding: 8px 12px 6px;
+  color: var(--sa-text-3);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.language-switcher__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.language-switcher__option {
+  display: flex;
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 12px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--sa-primary);
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+.language-switcher__option:hover,
+.language-switcher__option:focus-visible,
+.language-switcher__option.is-current {
+  background: var(--sa-bg-soft, #f7f8fa);
+}
+
+.language-switcher__option:focus-visible {
+  outline: 2px solid var(--sa-accent);
+  outline-offset: -2px;
+}
+
+.language-switcher__check {
+  width: 6px;
+  height: 11px;
+  margin-right: 3px;
+  margin-top: -3px;
+  border-right: 2px solid var(--sa-accent-deep);
+  border-bottom: 2px solid var(--sa-accent-deep);
+  transform: rotate(45deg);
+}
+
+.language-switcher__note {
+  margin: 4px 0 0;
+  padding: 10px 12px 8px;
+  border-top: 1px solid var(--sa-border);
+  color: var(--sa-text-3);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
 }
 
 .icon-btn {

@@ -55,6 +55,7 @@ function springapex_content(): array
             'x' => '',
             'instagram' => 'https://www.instagram.com/apexspring/',
             'tiktok' => '',
+            'language_note' => 'More languages coming soon',
         ],
         'nav' => [
             ['label' => 'Home', 'slug' => 'home', 'href' => '/'],
