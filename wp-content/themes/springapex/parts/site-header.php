@@ -117,13 +117,39 @@ $product_menu_feature_image = $product_menu['feature_image'] ?? 'product-compres
           </div>
         </div>
       </div>
-      <?php // 站点仅提供英文：这是一个静态「本站英文」标识，不再是可切换的语言下拉。 ?>
-      <span class="language-switcher">
-        <span class="language-switcher__badge">
+      <?php
+      // 站点目前只有英文：下拉里列出当前语言，再加一行后台可改的「更多语言即将推出」提示。
+      $language_note = trim((string) ($brand['language_note'] ?? ''));
+      ?>
+      <div class="language-switcher" data-language-switcher>
+        <button
+          class="language-switcher__badge"
+          type="button"
+          data-language-toggle
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-controls="language-switcher-panel"
+          aria-label="<?php esc_attr_e('Language: English', 'springapex'); ?>"
+        >
           <?php echo springapex_icon('globe', 'icon icon-sm'); ?>
           <span>EN</span>
-        </span>
-      </span>
+          <span class="language-switcher__caret" aria-hidden="true"></span>
+        </button>
+        <div class="language-switcher__panel" id="language-switcher-panel" data-language-panel hidden>
+          <p class="language-switcher__title"><?php esc_html_e('Language', 'springapex'); ?></p>
+          <ul class="language-switcher__list">
+            <li>
+              <button class="language-switcher__option is-current" type="button" lang="en" aria-current="true" data-language-close>
+                <span><?php esc_html_e('English', 'springapex'); ?></span>
+                <span class="language-switcher__check" aria-hidden="true"></span>
+              </button>
+            </li>
+          </ul>
+          <?php if ($language_note !== '') : ?>
+            <p class="language-switcher__note"><?php echo esc_html($language_note); ?></p>
+          <?php endif; ?>
+        </div>
+      </div>
       <button class="icon-btn menu-toggle" type="button" data-menu-toggle aria-label="<?php esc_attr_e('Open menu', 'springapex'); ?>" aria-expanded="false" aria-controls="mobile-navigation">
         <?php echo springapex_icon('menu', 'icon menu-icon-open'); ?>
         <?php echo springapex_icon('close', 'icon menu-icon-close'); ?>

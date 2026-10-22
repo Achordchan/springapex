@@ -396,6 +396,50 @@
     desktopQuery.addEventListener('change', () => closeAll());
   }
 
+  function initLanguageSwitcher() {
+    const switcher = document.querySelector('[data-language-switcher]');
+    if (!switcher) return;
+
+    const toggle = switcher.querySelector('[data-language-toggle]');
+    const panel = switcher.querySelector('[data-language-panel]');
+    if (!toggle || !panel) return;
+
+    const setOpen = (open, restoreFocus = false) => {
+      panel.hidden = !open;
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (!open && restoreFocus) toggle.focus({ preventScroll: true });
+    };
+
+    toggle.addEventListener('click', () => setOpen(panel.hidden));
+
+    toggle.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        setOpen(true);
+        panel.querySelector('button')?.focus({ preventScroll: true });
+      }
+    });
+
+    panel.querySelectorAll('[data-language-close]').forEach((option) => {
+      option.addEventListener('click', () => setOpen(false, true));
+    });
+
+    switcher.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !panel.hidden) {
+        event.preventDefault();
+        setOpen(false, true);
+      }
+    });
+
+    document.addEventListener('pointerdown', (event) => {
+      if (!panel.hidden && !switcher.contains(event.target)) setOpen(false);
+    });
+
+    document.addEventListener('focusin', (event) => {
+      if (!panel.hidden && !switcher.contains(event.target)) setOpen(false);
+    });
+  }
+
   function initMobileSubmenus() {
     const toggles = Array.from(document.querySelectorAll('[data-mobile-submenu-toggle]'));
     if (!toggles.length) return;
@@ -1707,6 +1751,7 @@
     initHeader();
     initProductMenus();
     initNavDropdowns();
+    initLanguageSwitcher();
     initMobileSubmenus();
     initReveal();
     initCounters();

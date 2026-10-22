@@ -66,6 +66,13 @@ function springapex_admin_screens(): array
                         ['path' => 'brand.tiktok', 'label' => 'TikTok', 'type' => 'url', 'help' => '公司主页链接。'],
                     ],
                 ],
+                [
+                    'title' => '页头语言菜单',
+                    'desc' => '点页头右上角的地球 EN 按钮会展开语言菜单，目前只有 English。',
+                    'fields' => [
+                        ['path' => 'brand.language_note', 'label' => '菜单底部提示', 'type' => 'text', 'help' => '显示在 English 下方的一行小字，例如 More languages coming soon；留空则不显示。'],
+                    ],
+                ],
             ],
         ],
 
