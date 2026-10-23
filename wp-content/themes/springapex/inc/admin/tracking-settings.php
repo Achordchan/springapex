@@ -102,6 +102,12 @@ function springapex_sanitize_tracking_settings(mixed $input): array
         }
     }
 
+    // 复选框不勾选时浏览器不提交该字段，表单里另有同名 hidden 0 兜底；
+    // 只有字段确实出现在提交里才改，绕过表单的局部提交不会顺手把它关掉。
+    if (array_key_exists('gtm_delay', $input)) {
+        $result['gtm_delay'] = (string) $input['gtm_delay'] === '1';
+    }
+
     $submitted = is_array($input['slots'] ?? null) ? $input['slots'] : [];
     if ($submitted === []) {
         return $result;
@@ -127,6 +133,7 @@ function springapex_render_tracking_settings_page(): void
         ? (string) $settings['gtm_id']
         : SPRINGAPEX_TRACKING_DEFAULT_GTM_ID;
     $slots = is_array($settings['slots'] ?? null) ? $settings['slots'] : [];
+    $gtm_delay = springapex_gtm_delay_enabled();
     // 页面允许只读查看（排查配置时有用），写入才要求 unfiltered_html。
     $can_edit = current_user_can('unfiltered_html');
     $environment = wp_get_environment_type();
@@ -193,6 +200,18 @@ function springapex_render_tracking_settings_page(): void
               >
             </label>
             <p class="description">在 GTM 后台「管理 &rarr; 容器设置」里可以看到，形如 <code>GTM-XXXXXXX</code>。<strong>留空表示不加载 GTM。</strong></p>
+            <input type="hidden" name="<?php echo esc_attr(SPRINGAPEX_TRACKING_OPTION); ?>[gtm_delay]" value="0">
+            <label>
+              <input
+                type="checkbox"
+                name="<?php echo esc_attr(SPRINGAPEX_TRACKING_OPTION); ?>[gtm_delay]"
+                value="1"
+                <?php checked($gtm_delay); ?>
+                <?php echo $can_edit ? '' : 'disabled'; ?>
+              >
+              <strong>延迟加载 GTM（默认关闭）</strong>
+            </label>
+            <p class="description">访客第一次滑动、点击或按键时才加载 GTM，没有操作就在页面加载完 <?php echo (int) round(SPRINGAPEX_GTM_DELAY_MS / 1000); ?> 秒后加载。容器里的 GA4、Ads 等代码一个不少，只是不再和首屏抢手机的主线程。代价：停留不到这几秒、也没有任何操作就离开的访客，GA4 不记这次浏览；落地后第一下就点 WhatsApp/邮箱的点击可能漏记。开启前请先和负责广告的同事确认；不勾选就是官方的立即加载。</p>
           </div>
         </details>
 

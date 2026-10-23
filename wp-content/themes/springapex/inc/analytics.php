@@ -43,6 +43,17 @@ const SPRINGAPEX_TRACKING_OPTION = 'springapex_tracking_settings';
 const SPRINGAPEX_TRACKING_DEFAULT_GTM_ID = 'GTM-W3B3NW5N';
 
 /**
+ * 延迟模式下，访客一直没有操作时，页面 load 之后多久兜底加载 GTM（毫秒）。
+ *
+ * 不能等到「永远不加载」：只看不动就离开的访客也要计入 GA4，Ads 的 gclid
+ * 也要在访客还停留在落地页上时写进第一方 Cookie，否则后续页面的转化归不回广告。
+ * 取 8 秒而不是更短：2026-10-23 本地 Lighthouse 对比，3 秒兜底时测速仍把 GTM
+ * 的长任务算进 TBT（约 630 ms，几乎没改善），8 秒时 TBT 为 0、手机分 80→98。
+ * 真实访客几乎都会先滑动，滑动即加载，兜底计时只影响原地不动的访客。
+ */
+const SPRINGAPEX_GTM_DELAY_MS = 8000;
+
+/**
  * 三个自定义代码位：挂哪个钩子，以及后台怎么向运营解释它。
  *
  * @return array<string, array{hook:string,label:string,help:string}>
@@ -107,6 +118,21 @@ function springapex_gtm_container_id(): string
     return preg_match('/^GTM-[A-Z0-9]+$/', $container_id) === 1 ? $container_id : '';
 }
 
+/**
+ * GTM 是否延迟到首次交互（或 load 后兜底计时）才加载。
+ *
+ * GTM 带出的 GA4 与 Ads 两个 Google 代码在手机上占主线程 400–800 ms，是本站
+ * TBT/INP 的几乎全部来源；延迟加载能消掉它，但会少记没有操作就离开的访客。
+ * 默认关闭（2026-10-23 广告专员担心丢数据，不同意默认开），只有在后台「跟踪代码」
+ * 页明确勾选后才延迟。
+ */
+function springapex_gtm_delay_enabled(): bool
+{
+    $settings = springapex_tracking_settings();
+
+    return ($settings['gtm_delay'] ?? false) === true;
+}
+
 /** 某个代码位当前应当输出的内容；空串表示没有配置或本环境不输出。 */
 function springapex_tracking_custom_code(string $slot): string
 {
@@ -124,6 +150,24 @@ function springapex_tracking_custom_code(string $slot): string
 add_action('wp_head', static function (): void {
     $container_id = springapex_gtm_container_id();
     if ($container_id === '') {
+        return;
+    }
+
+    if (springapex_gtm_delay_enabled()) {
+        // gtm.js 事件照官方代码立即入队，dataLayer 的事件顺序与立即加载时一致；
+        // 只有 gtm.js 文件本身推迟注入。GTM 加载后会按顺序补处理队列里的事件，
+        // 询盘成功等 dataLayer.push 不会因为延迟而丢。
+        echo "<!-- Google Tag Manager (delayed until first interaction) -->\n"
+            . "<script>(function(w,d,s,l,i,t){w[l]=w[l]||[];w[l].push({'gtm.start':\n"
+            . "new Date().getTime(),event:'gtm.js'});var e=['pointerdown','keydown','touchstart','scroll','wheel'],\n"
+            . "o={passive:true,capture:true},n=0;function g(){if(n)return;n=1;e.forEach(function(x){w.removeEventListener(x,g,o)});\n"
+            . "var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;\n"
+            . "j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f)}\n"
+            . "e.forEach(function(x){w.addEventListener(x,g,o)});function a(){setTimeout(g,t)}\n"
+            . "if(d.readyState==='complete'){a()}else{w.addEventListener('load',a)}\n"
+            . "})(window,document,'script','dataLayer','" . esc_js($container_id) . "'," . SPRINGAPEX_GTM_DELAY_MS . ");</script>\n"
+            . "<!-- End Google Tag Manager -->\n";
+
         return;
     }
 

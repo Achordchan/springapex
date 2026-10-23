@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SPRINGAPEX_VERSION', '2.9.137');
+define('SPRINGAPEX_VERSION', '2.9.138');
 define('SPRINGAPEX_DIR', get_template_directory());
 $springapex_uri = get_template_directory_uri();
 if (defined('SPRINGAPEX_CDN_URL') && is_string(SPRINGAPEX_CDN_URL) && SPRINGAPEX_CDN_URL !== '') {
@@ -21,6 +21,7 @@ unset($springapex_uri);
 require_once SPRINGAPEX_DIR . '/inc/content.php';
 require_once SPRINGAPEX_DIR . '/inc/content-overrides.php';
 require_once SPRINGAPEX_DIR . '/inc/helpers.php';
+require_once SPRINGAPEX_DIR . '/inc/style-manifest.php';
 require_once SPRINGAPEX_DIR . '/inc/locks.php';
 require_once SPRINGAPEX_DIR . '/inc/post-types.php';
 require_once SPRINGAPEX_DIR . '/inc/product-picker.php';
@@ -46,6 +47,7 @@ require_once SPRINGAPEX_DIR . '/inc/rest-seo.php';
 require_once SPRINGAPEX_DIR . '/inc/sitemap-archives.php';
 require_once SPRINGAPEX_DIR . '/inc/schema.php';
 require_once SPRINGAPEX_DIR . '/inc/analytics.php';
+require_once SPRINGAPEX_DIR . '/inc/edge-cache.php';
 require_once SPRINGAPEX_DIR . '/inc/contact.php';
 require_once SPRINGAPEX_DIR . '/inc/mail-template.php';
 require_once SPRINGAPEX_DIR . '/inc/turnstile.php';

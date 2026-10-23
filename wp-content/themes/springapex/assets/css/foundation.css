@@ -230,19 +230,14 @@ figure {
 }
 
 .section-kicker {
-  color: var(--sa-text-muted);
+  /* 眉题位于白色或浅灰表面；muted 色只有约 2.4–2.5:1，用三级正文色达到 AA 对比度。 */
+  color: var(--sa-text-3);
   font-size: 12px;
   font-weight: 600;
   line-height: 1;
   letter-spacing: .1em;
   text-transform: uppercase;
   margin-bottom: 12px;
-}
-
-/* 首页眉题均位于白色或浅灰表面；默认 muted 色只有约 2.4–2.5:1。
-   使用现有三级正文色后达到普通文本 AA 对比度，同时不改变其他路由。 */
-.sa-route-home .section-kicker {
-  color: var(--sa-text-3);
 }
 
 .muted {

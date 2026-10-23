@@ -152,7 +152,7 @@ get_template_part('parts/inner-hero', null, [
               <h3><a href="<?php echo esc_url(springapex_news_url($item)); ?>"><?php echo esc_html((string) ($item['title'] ?? '')); ?></a></h3>
               <p><?php echo esc_html((string) ($item['summary'] ?? '')); ?></p>
               <a class="sa-news-card__link" href="<?php echo esc_url(springapex_news_url($item)); ?>">
-                <?php esc_html_e('Read more', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+                <?php esc_html_e('Read more', 'springapex'); ?><span class="sr-only">: <?php echo esc_html((string) ($item['title'] ?? '')); ?></span> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
               </a>
             </div>
           </article>

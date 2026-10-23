@@ -31,79 +31,23 @@ add_action('after_setup_theme', static function (): void {
 
 add_action('wp_enqueue_scripts', static function (): void {
     $route = springapex_current_route();
-    $last_style = '';
-    // 保持历史 CSS 的精确级联顺序，但只输出当前路由真正需要的文件。
-    // 每个已加载文件依赖上一个已加载文件，避免条件分支改变覆盖顺序。
-    $enqueue_style = static function (string $handle, string $file) use (&$last_style): void {
-        wp_enqueue_style(
-            $handle,
-            SPRINGAPEX_URI . '/assets/css/' . $file,
-            $last_style !== '' ? [$last_style] : [],
-            SPRINGAPEX_VERSION
-        );
-        $last_style = $handle;
-    };
-
-    $enqueue_style('springapex-foundation', 'foundation.css');
-    $enqueue_style('springapex-components', 'components.css');
-    $enqueue_style('springapex-product-mega-menu', 'product-mega-menu.css');
-    $enqueue_style('springapex-pages', 'pages.css');
-
-    if (in_array($route, ['home', 'about', 'about-story'], true)) {
-        $enqueue_style('springapex-company-introduction', 'company-introduction.css');
-    }
-
-    $enqueue_style('springapex-responsive', 'responsive.css');
-    $enqueue_style('springapex-enhancements', 'enhancements.css');
-    $enqueue_style('springapex-audit-fixes', 'audit-fixes.css');
-
-    if (in_array($route, ['home', 'products', 'product', 'capabilities', 'about', 'about-story'], true)) {
-        $enqueue_style('springapex-content-dedup', 'content-dedup.css');
-    }
-    if (in_array($route, ['news', 'news-single'], true)) {
-        $enqueue_style('springapex-news', 'news.css');
-    }
-    if ($route === 'capabilities') {
-        $enqueue_style('springapex-capabilities-page', 'capabilities-page.css');
-    }
-    if (in_array($route, ['about', 'about-story'], true)) {
-        $enqueue_style('springapex-about-page', 'about-page.css');
-        $enqueue_style('springapex-about-team', 'about-team.css');
-    }
-    if (in_array($route, ['about', 'about-story', 'sustainability', 'resources'], true)) {
-        $enqueue_style('springapex-about-sections', 'about-sections.css');
-    }
-    if ($route === 'search') {
-        $enqueue_style('springapex-search-page', 'search-page.css');
-    }
-    if ($route === 'products') {
-        $enqueue_style('springapex-products-page', 'products-page.css');
-    }
-
-    // 跨页面移动端覆盖必须晚于上面的基础和第一组页面样式。
-    $enqueue_style('springapex-mobile-polish', 'mobile-polish.css');
-
-    if ($route === 'contact') {
-        $enqueue_style('springapex-contact-network', 'contact-network.css');
-    }
-    if (in_array($route, ['solutions', 'case-studies', 'case-study'], true)) {
-        $enqueue_style('springapex-case-studies', 'case-studies.css');
-    }
-    if (in_array($route, ['capabilities', 'manufacturing-videos'], true)) {
-        $enqueue_style('springapex-manufacturing-videos', 'manufacturing-videos.css');
-    }
-    if ($route === 'product') {
-        $enqueue_style('springapex-product-details', 'product-details.css');
-    }
-    if (in_array($route, ['product', 'capabilities'], true)) {
-        $enqueue_style('springapex-product-compression', 'product-compression.css');
-    }
-    if ($route === 'solution') {
-        $enqueue_style('springapex-solution-detail', 'solution-detail.css');
-        $enqueue_style('springapex-solution-detail-responsive', 'solution-detail-responsive.css');
-    }
-    if (in_array($route, ['case-study', 'solution'], true)) {
-        $enqueue_style('springapex-rich-content', 'rich-content.css');
+    $style_files = springapex_route_style_files($route);
+    // 默认加载预先合并好的单个文件（见 inc/style-manifest.php）；合并文件缺失时，
+    // 或 wp-config.php 定义 SPRINGAPEX_CSS_BUNDLES 为 false 排查样式时，退回逐个加载。
+    $bundle = springapex_style_bundle_name($style_files);
+    $use_bundle = (!defined('SPRINGAPEX_CSS_BUNDLES') || SPRINGAPEX_CSS_BUNDLES)
+        && is_file(SPRINGAPEX_DIR . '/assets/css/bundles/' . $bundle);
+    if ($use_bundle) {
+        wp_enqueue_style('springapex-bundle', SPRINGAPEX_URI . '/assets/css/bundles/' . $bundle, [], SPRINGAPEX_VERSION);
+        $last_style = 'springapex-bundle';
+    } else {
+        // 每个文件依赖上一个文件，保持清单里的级联顺序。
+        $last_style = '';
+        foreach ($style_files as $file) {
+            $handle = 'springapex-' . basename($file, '.css');
+            wp_enqueue_style($handle, SPRINGAPEX_URI . '/assets/css/' . $file, $last_style !== '' ? [$last_style] : [], SPRINGAPEX_VERSION);
+            $last_style = $handle;
+        }
     }
 
     wp_enqueue_script(
@@ -157,7 +101,8 @@ add_action('wp_enqueue_scripts', static function (): void {
         wp_enqueue_style(
             'springapex-contact-map',
             SPRINGAPEX_URI . '/assets/css/contact-map.css',
-            ['springapex-leaflet', 'springapex-contact-network'],
+            // 排在本页最后一个主题样式之后（合并文件或 contact-network），保持原覆盖顺序。
+            ['springapex-leaflet', $last_style],
             SPRINGAPEX_VERSION
         );
         wp_enqueue_script(

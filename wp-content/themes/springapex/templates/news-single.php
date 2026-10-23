@@ -271,7 +271,7 @@ $author = is_array($news_item['author'] ?? null) ? $news_item['author'] : null;
             </div>
             <h3><a href="<?php echo esc_url(springapex_news_url($item)); ?>"><?php echo esc_html((string) ($item['title'] ?? '')); ?></a></h3>
             <a class="sa-news-card__link" href="<?php echo esc_url(springapex_news_url($item)); ?>">
-              <?php esc_html_e('Read more', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+              <?php esc_html_e('Read more', 'springapex'); ?><span class="sr-only">: <?php echo esc_html((string) ($item['title'] ?? '')); ?></span> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
             </a>
           </div>
         </article>

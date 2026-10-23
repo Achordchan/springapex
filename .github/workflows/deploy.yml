@@ -34,6 +34,12 @@ jobs:
       - name: Verify admin content coverage
         run: php wp-content/themes/springapex/tests/admin-content-coverage.php
 
+      - name: Verify merged front-end stylesheets are up to date
+        run: php wp-content/themes/springapex/tests/css-bundles.php
+
+      - name: Test edge cache headers and delayed GTM
+        run: php wp-content/themes/springapex/tests/page-speed-headers.php
+
       - name: Verify download center PDF associations and rendering
         run: php wp-content/themes/springapex/tests/download-center.php
 
