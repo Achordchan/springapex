@@ -1257,7 +1257,11 @@
       document.body.classList.toggle('support-panel-open', open);
       toggles.forEach((toggle) => {
         toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-        toggle.setAttribute('aria-label', open ? 'Close quick inquiry form' : 'Open quick inquiry form');
+        // 只有纯图标的悬浮按钮靠 aria-label 命名；带可见文字的「Get a Quote」用文字本身，
+        // 加 aria-label 会让读屏名称和可见文字对不上。展开状态由 aria-expanded 表达。
+        if (toggle.hasAttribute('aria-label')) {
+          toggle.setAttribute('aria-label', open ? 'Close quick inquiry form' : 'Open quick inquiry form');
+        }
       });
       if (open) {
         if (panel.querySelector('.cf-turnstile')) {

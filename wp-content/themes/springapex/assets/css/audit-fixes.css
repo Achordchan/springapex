@@ -344,3 +344,11 @@ html:has(.sa-compression-detail) {
     transform: none;
   }
 }
+
+/* 产品卡片标题链接只有一行字高（约 16px），手机上点击区域不足 24px。
+   上下各扩 4px 的点击区，再用负外边距抵消，卡片排版不变。 */
+.product-card h3 a {
+  display: inline-block;
+  padding-block: 4px;
+  margin-block: -4px;
+}

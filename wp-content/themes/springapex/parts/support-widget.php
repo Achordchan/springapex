@@ -124,9 +124,10 @@ if (!springapex_form_enabled('quick')) {
   </button>
 
   <div class="support-bottom-actions">
-    <button class="support-bottom-link support-bottom-link--quote" type="button" data-support-toggle aria-label="<?php esc_attr_e('Open quick inquiry form', 'springapex'); ?>" aria-expanded="false" aria-controls="springapex-support-panel">
+    <button class="support-bottom-link support-bottom-link--quote" type="button" data-support-toggle aria-expanded="false" aria-controls="springapex-support-panel">
       <?php echo springapex_icon('arrow-right', 'icon'); ?>
       <span><?php esc_html_e('Get a Quote', 'springapex'); ?></span>
+      <span class="sr-only"><?php esc_html_e('(opens the quick inquiry form)', 'springapex'); ?></span>
     </button>
     <?php if ($email !== '' && $email_href !== '') : ?>
       <a class="support-bottom-link support-bottom-link--email" href="<?php echo esc_url($email_href); ?>">
