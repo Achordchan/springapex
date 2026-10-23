@@ -209,9 +209,9 @@ function springapex_render_tracking_settings_page(): void
                 <?php checked($gtm_delay); ?>
                 <?php echo $can_edit ? '' : 'disabled'; ?>
               >
-              <strong>延迟加载 GTM（推荐）</strong>
+              <strong>延迟加载 GTM（默认关闭）</strong>
             </label>
-            <p class="description">访客第一次滑动、点击或按键时才加载 GTM，没有操作就在页面加载完 <?php echo (int) round(SPRINGAPEX_GTM_DELAY_MS / 1000); ?> 秒后加载。容器里的 GA4、Ads 等代码一个不少，只是不再和首屏抢手机的主线程。代价：停留不到这几秒、也没有任何操作就离开的访客，GA4 不记这次浏览；落地后第一下就点 WhatsApp/邮箱的点击可能漏记。取消勾选即恢复官方的立即加载。</p>
+            <p class="description">访客第一次滑动、点击或按键时才加载 GTM，没有操作就在页面加载完 <?php echo (int) round(SPRINGAPEX_GTM_DELAY_MS / 1000); ?> 秒后加载。容器里的 GA4、Ads 等代码一个不少，只是不再和首屏抢手机的主线程。代价：停留不到这几秒、也没有任何操作就离开的访客，GA4 不记这次浏览；落地后第一下就点 WhatsApp/邮箱的点击可能漏记。开启前请先和负责广告的同事确认；不勾选就是官方的立即加载。</p>
           </div>
         </details>
 

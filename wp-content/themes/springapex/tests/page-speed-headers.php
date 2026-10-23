@@ -1,7 +1,7 @@
 <?php
 /**
- * 测速相关的两处输出：CloudFront 缓存头只给安全的回应加；GTM 默认延迟加载，
- * 后台关掉后恢复官方立即加载的代码。
+ * 测速相关的两处输出：CloudFront 缓存头只给安全的回应加；GTM 默认官方立即加载，
+ * 后台勾选后才延迟到首次交互。
  */
 
 declare(strict_types=1);
@@ -76,6 +76,10 @@ $render_head = static function (): string {
     return (string) ob_get_clean();
 };
 
+$immediate = $render_head();
+$check(str_contains($immediate, 'j.async=true;j.src=') && !str_contains($immediate, 'pointerdown'), 'GTM loads immediately by default');
+
+$GLOBALS['springapex_test_options'][SPRINGAPEX_TRACKING_OPTION] = ['gtm_delay' => true];
 $delayed = $render_head();
 $check(str_contains($delayed, "event:'gtm.js'"), 'delayed snippet still queues gtm.js immediately');
 $check(str_contains($delayed, "'GTM-W3B3NW5N'," . SPRINGAPEX_GTM_DELAY_MS), 'delayed snippet uses the seed container and fallback delay');
@@ -84,8 +88,7 @@ $check(str_contains($delayed, "addEventListener('load',a)"), 'fallback timer sta
 $check(substr_count($delayed, 'googletagmanager.com/gtm.js') === 1, 'exactly one GTM loader');
 
 $GLOBALS['springapex_test_options'][SPRINGAPEX_TRACKING_OPTION] = ['gtm_delay' => false];
-$immediate = $render_head();
-$check(str_contains($immediate, 'j.async=true;j.src=') && !str_contains($immediate, 'pointerdown'), 'disabling delay restores the official snippet');
+$check($render_head() === $immediate, 'unticking the delay restores the official snippet');
 
 $GLOBALS['springapex_test_options'][SPRINGAPEX_TRACKING_OPTION] = ['gtm_id' => ''];
 $check($render_head() === '', 'empty container id outputs nothing');

@@ -121,14 +121,16 @@ function springapex_gtm_container_id(): string
 /**
  * GTM 是否延迟到首次交互（或 load 后兜底计时）才加载。
  *
- * 默认开启：GTM 带出的 GA4 与 Ads 两个 Google 代码在手机上占主线程 400–800 ms，
- * 是本站 TBT/INP 的几乎全部来源。后台「跟踪代码」页可以关掉，恢复官方立即加载。
+ * GTM 带出的 GA4 与 Ads 两个 Google 代码在手机上占主线程 400–800 ms，是本站
+ * TBT/INP 的几乎全部来源；延迟加载能消掉它，但会少记没有操作就离开的访客。
+ * 默认关闭（2026-10-23 广告专员担心丢数据，不同意默认开），只有在后台「跟踪代码」
+ * 页明确勾选后才延迟。
  */
 function springapex_gtm_delay_enabled(): bool
 {
     $settings = springapex_tracking_settings();
 
-    return !array_key_exists('gtm_delay', $settings) || $settings['gtm_delay'] === true;
+    return ($settings['gtm_delay'] ?? false) === true;
 }
 
 /** 某个代码位当前应当输出的内容；空串表示没有配置或本环境不输出。 */
