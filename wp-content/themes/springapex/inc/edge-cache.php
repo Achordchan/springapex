@@ -9,8 +9,13 @@
  *     Cache-Control: public, max-age=0, s-maxage=600
  *
  * max-age=0 让浏览器每次仍向 CloudFront 要最新版，s-maxage 只对 CloudFront 生效。
- * CloudFront 那边要换成「遵从源站缓存头」的自定义缓存策略后，这个头才起作用；
- * 在那之前它对线上没有任何影响（CachingDisabled 会忽略它）。
+ *
+ * 默认不发，要在 wp-config.php 定义 SPRINGAPEX_EDGE_CACHE 为 true 才启用。原因
+ * （2026-10-23 上线后实测）：宝塔默认 nginx 的 gzip_proxied 只压缩带 no-cache/private
+ * 等头的代理请求，CloudFront 回源都带 Via，于是带 public 的网页回应不再 gzip，
+ * PSI 测到首页 HTML 从 18 KB 变成 124 KB、LCP 明显变慢。启用前必须先做两件事：
+ * 1. nginx 改成 gzip_proxied any（或在 CloudFront 缓存策略里开启 Gzip/Brotli 压缩）；
+ * 2. 整站分配换成遵从源站缓存头、查询串排除 gclid/utm 的自定义缓存策略。
  *
  * 只给明确安全的回应加：GET/HEAD、200、未登录、没有密码文章/评论者 Cookie、
  * 回应本身没有 Set-Cookie、也没有别的代码先声明过 Cache-Control（下载私有附件、
@@ -26,6 +31,12 @@ if (!defined('ABSPATH')) {
 
 /** CloudFront 缓存网页的秒数。发布或修改内容后，最多这么久所有访客都能看到。 */
 const SPRINGAPEX_EDGE_CACHE_TTL = 600;
+
+/** 是否发送边缘缓存头；默认关闭，前提条件见文件头。 */
+function springapex_edge_cache_enabled(): bool
+{
+    return defined('SPRINGAPEX_EDGE_CACHE') && SPRINGAPEX_EDGE_CACHE === true;
+}
 
 /**
  * 请求层面能否缓存：在模板输出之前判断。
@@ -72,7 +83,7 @@ function springapex_edge_cache_header(int $status, array $headers): string
 
 // 尽量晚：让主题和插件自己的 template_redirect（跳转、下载、nocache_headers）先跑完。
 add_action('template_redirect', static function (): void {
-    if (is_admin() || wp_doing_ajax() || is_robots() || is_trackback()) {
+    if (!springapex_edge_cache_enabled() || is_admin() || wp_doing_ajax() || is_robots() || is_trackback()) {
         return;
     }
     $allowed = springapex_edge_cache_request_allowed([
