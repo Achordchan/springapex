@@ -46,6 +46,9 @@ $check = static function (bool $ok, string $message) use (&$failures): void {
     }
 };
 
+// ---- 缓存头：默认关闭 ----
+$check(!springapex_edge_cache_enabled(), 'edge cache headers must stay off unless SPRINGAPEX_EDGE_CACHE is true');
+
 // ---- 缓存头：请求层面 ----
 $base = ['method' => 'GET', 'logged_in' => false, 'preview' => false, 'password_required' => false, 'cookies' => []];
 $check(springapex_edge_cache_request_allowed($base), 'anonymous GET should be cacheable');
