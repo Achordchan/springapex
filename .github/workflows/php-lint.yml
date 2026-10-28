@@ -73,6 +73,9 @@ jobs:
       - name: Test product hero title REST field
         run: php wp-content/themes/springapex/tests/rest-meta-product-hero-title.php
 
+      - name: Test product gallery and specs REST fields
+        run: php wp-content/themes/springapex/tests/rest-meta-product-gallery.php
+
       - name: Test content table scroll wrapper
         run: php wp-content/themes/springapex/tests/content-table-wrap.php
 
