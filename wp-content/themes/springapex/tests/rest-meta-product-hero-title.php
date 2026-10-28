@@ -50,6 +50,14 @@ function springapex_solution_row_meta_keys(): array
 {
     return [];
 }
+function springapex_product_row_sets(): array
+{
+    return [];
+}
+function springapex_product_row_meta_keys(): array
+{
+    return [];
+}
 
 function assert_same(mixed $expected, mixed $actual, string $message): void
 {
