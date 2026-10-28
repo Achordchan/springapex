@@ -172,6 +172,28 @@ add_action('init', static function (): void {
         ]);
     }
 
+    // 产品页的图集和参数表：与后台产品面板同一套列定义和清洗，REST 写入后
+    // 前台读到的数据和在后台保存完全一致。图集第一张同步为特色图见下方钩子。
+    foreach (springapex_product_row_sets() as $field => $columns) {
+        $meta_key = springapex_product_row_meta_keys()[$field] ?? '';
+        if ($meta_key === '') {
+            continue;
+        }
+        register_post_meta('spring_product', $meta_key, [
+            'type' => 'array',
+            'description' => 'Rows of the product ' . str_replace('springapex_', '', $field) . ' section, in display order.',
+            'single' => true,
+            'show_in_rest' => [
+                'schema' => [
+                    'type' => 'array',
+                    'items' => springapex_solution_row_rest_schema($columns),
+                ],
+            ],
+            'sanitize_callback' => static fn(mixed $value): array => springapex_sanitize_row_editor($value, $columns),
+            'auth_callback' => $can_edit,
+        ]);
+    }
+
     // 新闻作者条目自身的字段（inc/news-author.php）：姓名是 title，头像是 featured_media。
     add_post_type_support('spring_news_author', 'custom-fields');
     register_post_meta('spring_news_author', SPRINGAPEX_NEWS_AUTHOR_ROLE_META, $string_meta(
@@ -255,3 +277,19 @@ add_action('rest_api_init', static function (): void {
         add_post_type_support($post_type, ['editor', 'excerpt']);
     }
 });
+
+// REST 改了产品图集时，和后台保存一样把第一张同步为特色图，
+// 产品卡片和分享缩略图才会跟着变。
+add_action('rest_after_insert_spring_product', static function (WP_Post $post, WP_REST_Request $request): void {
+    $meta = $request->get_param('meta');
+    if (!is_array($meta) || !array_key_exists('_springapex_gallery', $meta)) {
+        return;
+    }
+    $gallery = get_post_meta($post->ID, '_springapex_gallery', true);
+    $primary_id = is_array($gallery) && isset($gallery[0]['image_id']) ? (int) $gallery[0]['image_id'] : 0;
+    if ($primary_id > 0 && get_post_type($primary_id) === 'attachment') {
+        set_post_thumbnail($post->ID, $primary_id);
+    } else {
+        delete_post_thumbnail($post->ID);
+    }
+}, 10, 2);
