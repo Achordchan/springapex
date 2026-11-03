@@ -2381,3 +2381,8 @@ body.certificate-viewer-open {
 .sa-capability-certifications .sa-certificate-gallery {
   margin-top: 0;
 }
+
+/* 整屏快速询盘打开时被隐藏的页面其余内容（main.js enterPage）。 */
+.support-page-hidden {
+  display: none !important;
+}

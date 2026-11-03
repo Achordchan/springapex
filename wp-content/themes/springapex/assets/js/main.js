@@ -1268,9 +1268,42 @@
     const isEditingField = (element) => element instanceof HTMLElement
       && Boolean(element.closest('input, textarea, select, [contenteditable="true"]'));
 
+    // 整屏模式在手机上不再是盖在页面上的固定层：打开时把页面其余内容（含底栏）都隐藏，面板回到正常文档流里，
+    // 由页面自己滚动。iOS 就把它当普通表单页处理键盘，没有固定层可以被推走或截断。关闭时恢复页面和原来的滚动位置。
+    let page = null;
+    const enterPage = () => {
+      if (page) return;
+      const y = window.scrollY; // 先读位置：内容隐藏后页面变短，会自己滚回顶部
+      const hidden = [];
+      for (let node = panel; node.parentElement && node !== document.body; node = node.parentElement) {
+        Array.from(node.parentElement.children).forEach((sibling) => {
+          if (sibling === node || ['SCRIPT', 'STYLE', 'LINK', 'TEMPLATE'].includes(sibling.tagName)) return;
+          if (sibling.classList.contains('support-page-hidden')) return;
+          sibling.classList.add('support-page-hidden');
+          hidden.push(sibling);
+        });
+      }
+      page = { y, hidden };
+      document.documentElement.classList.add('support-page-open');
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    };
+    const leavePage = () => {
+      if (!page) return;
+      const { y, hidden } = page;
+      page = null;
+      hidden.forEach((element) => element.classList.remove('support-page-hidden'));
+      document.documentElement.classList.remove('support-page-open');
+      const restore = () => window.scrollTo({ top: y, left: 0, behavior: 'instant' });
+      restore();
+      window.requestAnimationFrame(restore); // 页面完整排好后再定一次
+    };
+
     const setOpen = (open, restoreFocus = true) => {
+      const asPage = open && fullscreen && mobileQuery.matches;
+      if (asPage) enterPage();
       panel.hidden = !open;
       document.body.classList.toggle('support-panel-open', open);
+      if (!asPage) leavePage();
       toggles.forEach((toggle) => {
         toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
         // 只有纯图标的悬浮按钮靠 aria-label 命名；带可见文字的「Get a Quote」用文字本身，
@@ -1322,13 +1355,13 @@
     // 可见区域算，表单在面板里面滚动，聚焦的输入框在面板内滚到可见处。
     let viewportFrame = 0;
     const clearViewport = () => {
-      ['top', 'bottom', 'height', 'max-height'].forEach((property) => panel.style.removeProperty(property));
+      ['top', 'bottom', 'max-height'].forEach((property) => panel.style.removeProperty(property));
     };
     const syncViewport = () => {
       window.cancelAnimationFrame(viewportFrame);
       viewportFrame = window.requestAnimationFrame(() => {
         const viewport = window.visualViewport;
-        if (!viewport || panel.hidden || !mobileQuery.matches) {
+        if (!viewport || panel.hidden || !mobileQuery.matches || page) {
           clearViewport();
           return;
         }
@@ -1336,14 +1369,6 @@
         // 没有键盘（遮住的部分很小）时用样式表里的位置，面板照常停在底栏上方。
         if (covered < 80 && viewport.offsetTop < 1) {
           clearViewport();
-          return;
-        }
-        if (fullscreen) {
-          // 整屏模式：面板正好等于可见区域。
-          panel.style.top = `${Math.round(viewport.offsetTop)}px`;
-          panel.style.bottom = 'auto';
-          panel.style.height = `${Math.round(viewport.height)}px`;
-          panel.style.maxHeight = 'none';
           return;
         }
         panel.style.top = `${Math.round(viewport.offsetTop + 8)}px`;
