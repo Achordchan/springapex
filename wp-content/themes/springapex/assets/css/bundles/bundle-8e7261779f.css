@@ -2889,6 +2889,11 @@ body.certificate-viewer-open {
   margin-top: 0;
 }
 
+/* 整屏快速询盘打开时被隐藏的页面其余内容（main.js enterPage）。 */
+.support-page-hidden {
+  display: none !important;
+}
+
 /* product-mega-menu.css */
 .products-mega-menu {
   position: absolute;
@@ -6404,12 +6409,36 @@ html.js .solutions-grid__more {
     box-shadow: 0 22px 64px rgba(0, 0, 0, .24);
   }
 
-  /* 整屏快速询盘（support-widget--fullscreen，见 main.js 试用开关）：面板铺满整屏、盖住底栏，
-     标题栏和关闭按钮留在顶部，表单在下面滚动；键盘弹出时 main.js 把面板设成可见区域大小。 */
-  .support-widget--fullscreen .support-panel {
-    inset: 0;
-    z-index: 5;
+  /* 整屏快速询盘（support-widget--fullscreen，见 main.js 试用开关）：手机上打开时页面其余内容都隐藏，
+     面板是正常文档流里的一页，由页面自己滚动，没有固定层，iOS 键盘不会把它推走或截断。 */
+  html.support-page-open,
+  html.support-page-open body {
+    background: #fff;
+  }
+
+  html.support-page-open body.support-panel-open {
+    overflow: visible;
+  }
+
+  html.support-page-open body.support-panel-open::before {
+    content: none;
+  }
+
+  html.support-page-open .support-widget--fullscreen {
+    position: static;
+    display: block;
+    padding: 0;
+    background: #fff;
+    box-shadow: none;
+  }
+
+  html.support-page-open .support-widget--fullscreen .support-panel {
+    position: relative;
+    inset: auto;
+    display: flex;
+    min-height: 100dvh;
     max-height: none;
+    overflow: visible;
     border: 0;
     border-radius: 0;
     box-shadow: none;
@@ -6417,12 +6446,17 @@ html.js .solutions-grid__more {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  /* 打开时整个浮层要盖过页头（z-index 80）。 */
-  body.support-panel-open .support-widget--fullscreen {
-    z-index: 120;
+  html.support-page-open .support-widget--fullscreen .support-panel-main {
+    overflow: visible;
   }
 
-  .support-widget--fullscreen .support-panel :is(input, textarea, select) {
+  html.support-page-open .support-widget--fullscreen .support-panel-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  html.support-page-open .support-widget--fullscreen .support-panel :is(input, textarea, select) {
     scroll-margin-block: 16px;
   }
 
