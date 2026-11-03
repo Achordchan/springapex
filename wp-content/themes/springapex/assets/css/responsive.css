@@ -1109,7 +1109,7 @@
     bottom: calc(68px + env(safe-area-inset-bottom, 0px));
     left: 12px;
     z-index: 2;
-    display: block;
+    display: flex;
     width: auto;
     max-height: calc(100dvh - var(--sa-header-height) - 92px);
     margin-right: 0;
