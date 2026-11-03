@@ -1248,10 +1248,9 @@
     if (!panel || toggles.length === 0 || !close) return;
 
     const mobileQuery = window.matchMedia('(max-width: 860px)');
-    // 手机上快速询盘改成整屏表单（之前从底部弹起的卡片总和 iOS 键盘打架）。先试用：网址带 ?fs=1 在这个浏览器打开，
-    // ?fs=0 关掉；普通访客照旧是卡片，确认后把 SUPPORT_FULLSCREEN_FOR_EVERYONE 改成 true 对所有人开放。
-    // 表单、字段、提交和统计代码都不变。
-    const SUPPORT_FULLSCREEN_FOR_EVERYONE = false;
+    // 手机上快速询盘改成整屏表单（之前从底部弹起的卡片总和 iOS 键盘打架）。2026-11-03 起对所有手机访客开放；
+    // 改回 false 即恢复卡片，届时 ?fs=1 仍可在单个浏览器试用。表单、字段、提交和统计代码都不变。
+    const SUPPORT_FULLSCREEN_FOR_EVERYONE = true;
     const fullscreen = (() => {
       if (SUPPORT_FULLSCREEN_FOR_EVERYONE) return true;
       const flag = new URLSearchParams(window.location.search).get('fs');
