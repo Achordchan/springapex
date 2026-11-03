@@ -1248,6 +1248,22 @@
     if (!panel || toggles.length === 0 || !close) return;
 
     const mobileQuery = window.matchMedia('(max-width: 860px)');
+    // 手机上快速询盘改成整屏表单（之前从底部弹起的卡片总和 iOS 键盘打架）。先试用：网址带 ?fs=1 在这个浏览器打开，
+    // ?fs=0 关掉；普通访客照旧是卡片，确认后把 SUPPORT_FULLSCREEN_FOR_EVERYONE 改成 true 对所有人开放。
+    // 表单、字段、提交和统计代码都不变。
+    const SUPPORT_FULLSCREEN_FOR_EVERYONE = false;
+    const fullscreen = (() => {
+      if (SUPPORT_FULLSCREEN_FOR_EVERYONE) return true;
+      const flag = new URLSearchParams(window.location.search).get('fs');
+      try {
+        if (flag === '1') window.localStorage.setItem('boblift_inquiry_fs', '1');
+        if (flag === '0') window.localStorage.removeItem('boblift_inquiry_fs');
+        return window.localStorage.getItem('boblift_inquiry_fs') === '1';
+      } catch (error) {
+        return flag === '1';
+      }
+    })();
+    widget.classList.toggle('support-widget--fullscreen', fullscreen);
     let activeToggle = toggles[0];
     const isEditingField = (element) => element instanceof HTMLElement
       && Boolean(element.closest('input, textarea, select, [contenteditable="true"]'));
@@ -1306,7 +1322,7 @@
     // 可见区域算，表单在面板里面滚动，聚焦的输入框在面板内滚到可见处。
     let viewportFrame = 0;
     const clearViewport = () => {
-      ['top', 'bottom', 'max-height'].forEach((property) => panel.style.removeProperty(property));
+      ['top', 'bottom', 'height', 'max-height'].forEach((property) => panel.style.removeProperty(property));
     };
     const syncViewport = () => {
       window.cancelAnimationFrame(viewportFrame);
@@ -1320,6 +1336,14 @@
         // 没有键盘（遮住的部分很小）时用样式表里的位置，面板照常停在底栏上方。
         if (covered < 80 && viewport.offsetTop < 1) {
           clearViewport();
+          return;
+        }
+        if (fullscreen) {
+          // 整屏模式：面板正好等于可见区域。
+          panel.style.top = `${Math.round(viewport.offsetTop)}px`;
+          panel.style.bottom = 'auto';
+          panel.style.height = `${Math.round(viewport.height)}px`;
+          panel.style.maxHeight = 'none';
           return;
         }
         panel.style.top = `${Math.round(viewport.offsetTop + 8)}px`;

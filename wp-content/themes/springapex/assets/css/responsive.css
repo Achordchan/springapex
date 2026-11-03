@@ -1118,6 +1118,28 @@
     box-shadow: 0 22px 64px rgba(0, 0, 0, .24);
   }
 
+  /* 整屏快速询盘（support-widget--fullscreen，见 main.js 试用开关）：面板铺满整屏、盖住底栏，
+     标题栏和关闭按钮留在顶部，表单在下面滚动；键盘弹出时 main.js 把面板设成可见区域大小。 */
+  .support-widget--fullscreen .support-panel {
+    inset: 0;
+    z-index: 5;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* 打开时整个浮层要盖过页头（z-index 80）。 */
+  body.support-panel-open .support-widget--fullscreen {
+    z-index: 120;
+  }
+
+  .support-widget--fullscreen .support-panel :is(input, textarea, select) {
+    scroll-margin-block: 16px;
+  }
+
   .support-panel-header {
     min-height: 78px;
     padding: 16px 16px 14px 18px;
