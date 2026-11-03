@@ -1163,7 +1163,9 @@ body.menu-open {
 }
 
 .support-panel {
-  display: block;
+  /* A column, so the body (.support-panel-main) gets the height left under max-height and scrolls inside it. */
+  display: flex;
+  flex-direction: column;
   width: min(390px, calc(100vw - 32px));
   max-height: min(720px, calc(100dvh - var(--sa-header-height) - 104px));
   margin-right: -22px;
@@ -1177,6 +1179,8 @@ body.menu-open {
 }
 
 .support-panel-main {
+  flex: 1 1 auto;
+  min-height: 0;
   min-width: 0;
   overflow-x: hidden;
   overflow-y: auto;

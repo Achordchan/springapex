@@ -1301,6 +1301,49 @@
       if (event.key === 'Escape' && !panel.hidden) setOpen(false);
     });
 
+    // 手机上 iOS 弹出键盘不会缩小固定定位的面板，而是平移可见区域：面板被键盘和底栏挤得只剩一个输入框，
+    // 逐个点输入框时还会上下跳。面板打开期间让它贴住可见区域（visualViewport）：键盘弹出时上沿、下沿都按
+    // 可见区域算，表单在面板里面滚动，聚焦的输入框在面板内滚到可见处。
+    let viewportFrame = 0;
+    const clearViewport = () => {
+      ['top', 'bottom', 'max-height'].forEach((property) => panel.style.removeProperty(property));
+    };
+    const syncViewport = () => {
+      window.cancelAnimationFrame(viewportFrame);
+      viewportFrame = window.requestAnimationFrame(() => {
+        const viewport = window.visualViewport;
+        if (!viewport || panel.hidden || !mobileQuery.matches) {
+          clearViewport();
+          return;
+        }
+        const covered = window.innerHeight - viewport.offsetTop - viewport.height;
+        // 没有键盘（遮住的部分很小）时用样式表里的位置，面板照常停在底栏上方。
+        if (covered < 80 && viewport.offsetTop < 1) {
+          clearViewport();
+          return;
+        }
+        panel.style.top = `${Math.round(viewport.offsetTop + 8)}px`;
+        panel.style.bottom = `${Math.round(Math.max(covered, 0) + 8)}px`;
+        panel.style.maxHeight = 'none';
+      });
+    };
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', syncViewport);
+      window.visualViewport.addEventListener('scroll', syncViewport);
+    }
+    panel.addEventListener('focusin', (event) => {
+      const field = event.target;
+      if (!(field instanceof HTMLElement) || !field.matches('input, textarea, select')) return;
+      // 等键盘弹出、面板跟上之后，再把输入框滚进面板的可见范围。
+      window.setTimeout(() => {
+        syncViewport();
+        window.requestAnimationFrame(() => {
+          if (document.activeElement === field) field.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        });
+      }, 320);
+    });
+    new MutationObserver(syncViewport).observe(panel, { attributes: true, attributeFilter: ['hidden'] });
+
     document.addEventListener('focusin', syncSuppressedState);
     document.addEventListener('focusout', () => window.setTimeout(syncSuppressedState, 0));
     mobileQuery.addEventListener('change', syncSuppressedState);
