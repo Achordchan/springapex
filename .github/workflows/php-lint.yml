@@ -61,6 +61,9 @@ jobs:
       - name: Test news table of contents
         run: php wp-content/themes/springapex/tests/news-toc.php
 
+      - name: Test news list pagination
+        run: php wp-content/themes/springapex/tests/news-archive.php
+
       - name: Test llms.txt
         run: php wp-content/themes/springapex/tests/llms-txt.php
 

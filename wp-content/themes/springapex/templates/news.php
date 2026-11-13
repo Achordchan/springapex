@@ -3,58 +3,25 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-$all_items = springapex_news_list();
-if (!$all_items) {
+// 当前页、当前分类的新闻（每页 1 篇大图 + 卡片，见 inc/news-archive.php）。
+$news_view = springapex_news_archive_view();
+if ($news_view['total'] === 0 && $news_view['type'] === 'all') {
     status_header(404);
     echo '<section class="section"><div class="container"><h1>' . esc_html__('No news yet', 'springapex') . '</h1></div></section>';
     return;
 }
 
-$news_types = [
-    'all' => [
-        'label' => __('All News', 'springapex'),
-        'kicker' => __('LATEST FROM NORENSPRING', 'springapex'),
-        'title' => __('News and engineering insights.', 'springapex'),
-    ],
-    'industry-news' => [
-        'label' => __('Industry News', 'springapex'),
-        'kicker' => __('INDUSTRY NEWS', 'springapex'),
-        'title' => __('Engineering and manufacturing developments.', 'springapex'),
-    ],
-    'exhibitions' => [
-        'label' => __('Exhibitions', 'springapex'),
-        'kicker' => __('EXHIBITIONS', 'springapex'),
-        'title' => __('Meet NorenSpring at industry events.', 'springapex'),
-    ],
-    'company-news' => [
-        'label' => __('Company News', 'springapex'),
-        'kicker' => __('COMPANY NEWS', 'springapex'),
-        'title' => __('Updates from NorenSpring.', 'springapex'),
-    ],
-];
-$requested_news_type = is_scalar($_GET['news_type'] ?? null)
-    ? sanitize_key((string) wp_unslash($_GET['news_type']))
-    : 'all';
-$active_news_type = array_key_exists($requested_news_type, $news_types) ? $requested_news_type : 'all';
-$category_fallbacks = [
-    'industry news' => 'industry-news',
-    'exhibition' => 'exhibitions',
-    'exhibitions' => 'exhibitions',
-    'company news' => 'company-news',
-];
-$resolve_news_type = static function (array $item) use ($category_fallbacks): string {
-    $news_type = sanitize_key((string) ($item['news_type'] ?? ''));
-    if ($news_type !== '') {
-        return $news_type;
-    }
-    return $category_fallbacks[strtolower(trim((string) ($item['category'] ?? '')))] ?? 'company-news';
-};
-$items = $active_news_type === 'all'
-    ? array_values($all_items)
-    : array_values(array_filter(
-        $all_items,
-        static fn(array $item): bool => $resolve_news_type($item) === $active_news_type
-    ));
+$news_types = springapex_news_types();
+$active_news_type = $news_view['type'];
+$items = $news_view['items'];
+$news_page = $news_view['page'];
+$news_total_pages = $news_view['total_pages'];
+$news_archive_url = function_exists('get_post_type_archive_link')
+    ? (string) get_post_type_archive_link('spring_news')
+    : springapex_url('/news/');
+if ($news_archive_url === '') {
+    $news_archive_url = springapex_url('/news/');
+}
 $featured = $items ? array_shift($items) : null;
 $featured_date = is_array($featured) ? (string) ($featured['date'] ?? '') : '';
 $featured_date_label = is_array($featured) ? (string) ($featured['date_label'] ?? '') : '';
@@ -158,6 +125,33 @@ get_template_part('parts/inner-hero', null, [
           </article>
         <?php endforeach; ?>
       </div>
+    <?php endif; ?>
+
+    <?php $news_page_numbers = springapex_news_page_numbers($news_page, $news_total_pages); ?>
+    <?php if ($news_page_numbers) : ?>
+      <nav class="sa-news-pagination" aria-label="<?php esc_attr_e('News pages', 'springapex'); ?>">
+        <?php if ($news_page > 1) : ?>
+          <a class="sa-news-pagination__step" href="<?php echo esc_url(springapex_news_page_url($news_archive_url, $news_page - 1, $active_news_type) . '#news-index'); ?>" rel="prev">
+            <?php echo springapex_icon('arrow-right', 'icon icon-sm sa-news-pagination__back'); ?> <?php esc_html_e('Previous', 'springapex'); ?>
+          </a>
+        <?php endif; ?>
+        <ol class="sa-news-pagination__pages">
+          <?php foreach ($news_page_numbers as $news_page_number) : ?>
+            <?php if ($news_page_number === null) : ?>
+              <li class="sa-news-pagination__gap" aria-hidden="true">&hellip;</li>
+            <?php elseif ($news_page_number === $news_page) : ?>
+              <li><span class="sa-news-pagination__page is-current" aria-current="page"><span class="sr-only"><?php esc_html_e('Page', 'springapex'); ?> </span><?php echo (int) $news_page_number; ?></span></li>
+            <?php else : ?>
+              <li><a class="sa-news-pagination__page" href="<?php echo esc_url(springapex_news_page_url($news_archive_url, $news_page_number, $active_news_type) . '#news-index'); ?>"><span class="sr-only"><?php esc_html_e('Page', 'springapex'); ?> </span><?php echo (int) $news_page_number; ?></a></li>
+            <?php endif; ?>
+          <?php endforeach; ?>
+        </ol>
+        <?php if ($news_page < $news_total_pages) : ?>
+          <a class="sa-news-pagination__step" href="<?php echo esc_url(springapex_news_page_url($news_archive_url, $news_page + 1, $active_news_type) . '#news-index'); ?>" rel="next">
+            <?php esc_html_e('Next', 'springapex'); ?> <?php echo springapex_icon('arrow-right', 'icon icon-sm'); ?>
+          </a>
+        <?php endif; ?>
+      </nav>
     <?php endif; ?>
     <?php else : ?>
       <div class="sa-news-empty">

@@ -235,6 +235,33 @@ function springapex_seo_post_values(WP_Post $post): array
     return compact('title', 'description', 'keywords');
 }
 
+/**
+ * 列表第 2 页起，标题和描述加上页码，免得各页标题、描述完全相同。
+ * 标题插在最后一个「 | 品牌」之前：News & Updates - Page 2 | NorenSpring。
+ *
+ * @param array{title:string,description:string,keywords:string} $values
+ * @return array{title:string,description:string,keywords:string}
+ */
+function springapex_seo_paged_values(array $values, int $paged): array
+{
+    if ($paged < 2) {
+        return $values;
+    }
+    $label = sprintf(__('Page %d', 'springapex'), $paged);
+    $title = (string) $values['title'];
+    if ($title !== '') {
+        $brand_at = strrpos($title, ' | ');
+        $values['title'] = $brand_at === false
+            ? $title . ' - ' . $label
+            : substr($title, 0, $brand_at) . ' - ' . $label . substr($title, $brand_at);
+    }
+    $description = rtrim((string) $values['description']);
+    if ($description !== '') {
+        $values['description'] = $description . ' ' . $label . '.';
+    }
+    return $values;
+}
+
 /** @return array{title:string,description:string,keywords:string} */
 function springapex_seo_current_values(): array
 {
@@ -251,7 +278,7 @@ function springapex_seo_current_values(): array
 
     $route = springapex_current_route();
     if (isset(springapex_seo_route_definitions()[$route])) {
-        return springapex_seo_route_values($route);
+        return springapex_seo_paged_values(springapex_seo_route_values($route), (int) get_query_var('paged'));
     }
 
     if (is_page()) {
