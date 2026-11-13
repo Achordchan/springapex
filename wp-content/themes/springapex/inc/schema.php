@@ -294,8 +294,16 @@ function springapex_schema_organization(array $brand, string $home, ?array $logo
         'foundingDate' => '2001',
     ];
 
+    // 法定名称用营业执照上的中文全称，英文全称并入 alternateName，
+    // 让采购商和 AI 搜索能用任一写法对上同一家注册公司。
     $company = trim((string) ($brand['company'] ?? ''));
-    if ($company !== '') {
+    $company_local = trim((string) ($brand['company_local'] ?? ''));
+    if ($company_local !== '') {
+        $organization['legalName'] = $company_local;
+        if ($company !== '') {
+            $organization['alternateName'][] = $company;
+        }
+    } elseif ($company !== '') {
         $organization['legalName'] = $company;
     }
     if ($logo !== null) {

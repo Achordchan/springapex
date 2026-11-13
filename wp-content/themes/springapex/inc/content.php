@@ -45,6 +45,7 @@ function springapex_content(): array
             'name' => 'NorenSpring',
             'tagline' => 'SPRING MANUFACTURING EXPERT',
             'company' => 'Xuzhou APEX Spring Manufacturing Co., Ltd.',
+            'company_local' => '徐州超拓弹簧制造有限公司',
             'email' => 'victoria@springapex.cn',
             'phone' => '+86 187 9642 2510',
             'whatsapp' => '+86 187 9642 2510',
