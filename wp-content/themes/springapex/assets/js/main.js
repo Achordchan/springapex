@@ -489,64 +489,6 @@
     items.forEach((item) => observer.observe(item));
   }
 
-  function initCounters() {
-    const counters = Array.from(document.querySelectorAll('[data-count-target]'));
-    if (!counters.length) return;
-
-    const showFinalValue = (counter) => {
-      counter.textContent = counter.dataset.countDisplay || counter.textContent || '0';
-    };
-
-    if (reduceMotion || !('IntersectionObserver' in window)) {
-      counters.forEach(showFinalValue);
-      return;
-    }
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        observer.unobserve(entry.target);
-
-        const counter = entry.target;
-        const target = Number(counter.dataset.countTarget || 0);
-        const display = counter.dataset.countDisplay || String(target);
-        const numericToken = display.match(/[0-9,.]+/)?.[0] || String(target);
-        const tokenIndex = display.indexOf(numericToken);
-        const prefix = tokenIndex > 0 ? display.slice(0, tokenIndex) : '';
-        const suffix = display.slice(tokenIndex + numericToken.length);
-        const formatter = new Intl.NumberFormat('en-US', { useGrouping: numericToken.includes(',') });
-        const duration = 780;
-        const startTime = performance.now();
-
-        counter.textContent = prefix + formatter.format(0) + suffix;
-
-        const tick = (now) => {
-          if (document.hidden) {
-            showFinalValue(counter);
-            return;
-          }
-
-          const progress = Math.min((now - startTime) / duration, 1);
-          const eased = 1 - Math.pow(1 - progress, 3);
-          counter.textContent = prefix + formatter.format(Math.round(target * eased)) + suffix;
-
-          if (progress < 1) {
-            window.requestAnimationFrame(tick);
-          } else {
-            showFinalValue(counter);
-          }
-        };
-
-        window.requestAnimationFrame(tick);
-      });
-    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.35 });
-
-    counters.forEach((counter) => {
-      counter.textContent = (counter.dataset.countDisplay || '0').replace(/[0-9,.]+/, '0');
-      observer.observe(counter);
-    });
-  }
-
   // Apple 风格滚动驱动横滑：竖向滚到此处时文案+卡片条+进度点整体钉住
   // （垂直居中），竖滚进度写入视口的原生 scrollLeft，滑到头恢复竖滚。
   // 用原生滚动而非 transform：手动左右滑动始终可用，且行程与卡片实际
@@ -1849,7 +1791,6 @@
     initLanguageSwitcher();
     initMobileSubmenus();
     initReveal();
-    initCounters();
     initHorizontalScrollSections();
     initProductTabs();
     initContactForms();

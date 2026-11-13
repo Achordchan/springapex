@@ -39,16 +39,10 @@ $company_facts = $is_about ? array_slice((array) springapex_get('company.facts',
         <?php if ($company_facts) : ?>
           <dl class="sa-about-facts" data-reveal-group>
             <?php foreach ($company_facts as $stat) : ?>
-              <?php
-              $stat_value = (string) ($stat['value'] ?? '0');
-              $stat_target = (int) (preg_replace('/[^0-9]/', '', $stat_value) ?: '0');
-              ?>
+              <?php $stat_value = (string) ($stat['value'] ?? ''); ?>
               <div>
                 <dt><?php echo esc_html((string) ($stat['label'] ?? '')); ?></dt>
-                <dd>
-                  <span class="stat-value-visual" aria-hidden="true" data-count-target="<?php echo esc_attr((string) $stat_target); ?>" data-count-display="<?php echo esc_attr($stat_value); ?>"><?php echo esc_html($stat_value); ?></span>
-                  <span class="sr-only"><?php echo esc_html($stat_value); ?></span>
-                </dd>
+                <dd><span class="stat-value-visual"><?php echo esc_html($stat_value); ?></span></dd>
               </div>
             <?php endforeach; ?>
           </dl>
@@ -63,16 +57,12 @@ $company_facts = $is_about ? array_slice((array) springapex_get('company.facts',
           <?php foreach ((array) ($profile['highlights'] ?? []) as $highlight) : ?>
             <?php
             $highlight_value = (string) ($highlight['value'] ?? '');
-            $highlight_target = (int) (preg_replace('/[^0-9]/', '', $highlight_value) ?: '0');
-            $highlight_counts = preg_match('/[0-9]/', $highlight_value) === 1;
+            $highlight_numeric = preg_match('/[0-9]/', $highlight_value) === 1;
             ?>
             <div>
               <dt><?php echo esc_html((string) ($highlight['label'] ?? '')); ?></dt>
-              <?php if ($highlight_counts) : ?>
-                <dd>
-                  <span class="stat-value-visual" aria-hidden="true" data-count-target="<?php echo esc_attr((string) $highlight_target); ?>" data-count-display="<?php echo esc_attr($highlight_value); ?>"><?php echo esc_html($highlight_value); ?></span>
-                  <span class="sr-only"><?php echo esc_html($highlight_value); ?></span>
-                </dd>
+              <?php if ($highlight_numeric) : ?>
+                <dd><span class="stat-value-visual"><?php echo esc_html($highlight_value); ?></span></dd>
               <?php else : ?>
                 <dd><?php echo esc_html($highlight_value); ?></dd>
               <?php endif; ?>
