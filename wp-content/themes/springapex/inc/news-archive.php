@@ -123,6 +123,25 @@ function springapex_news_type_of_post(WP_Post $post): string
     return (string) ($seed['news_type'] ?? 'company-news');
 }
 
+/**
+ * 已组装的新闻条目所属分类：先看 news_type，没有时按 category 文字推断
+ * （预览数据里的老条目只有 category），都没有算 Company News。
+ */
+function springapex_news_item_type(array $item): string
+{
+    $news_type = sanitize_key((string) ($item['news_type'] ?? ''));
+    if ($news_type !== '') {
+        return $news_type;
+    }
+    $fallbacks = [
+        'industry news' => 'industry-news',
+        'exhibition' => 'exhibitions',
+        'exhibitions' => 'exhibitions',
+        'company news' => 'company-news',
+    ];
+    return $fallbacks[strtolower(trim((string) ($item['category'] ?? '')))] ?? 'company-news';
+}
+
 /** 当前请求的页码（主查询的 paged，最小为 1）。 */
 function springapex_news_current_page(): int
 {
@@ -148,7 +167,7 @@ function springapex_news_archive_view(): array
     if (defined('SPRINGAPEX_PREVIEW')) {
         $all = array_values(array_filter(
             springapex_news_list(),
-            static fn(array $item): bool => $type === 'all' || (string) ($item['news_type'] ?? 'company-news') === $type
+            static fn(array $item): bool => $type === 'all' || springapex_news_item_type($item) === $type
         ));
         $total = count($all);
         $slice = array_slice($all, ($page - 1) * $per_page, $per_page);

@@ -22,6 +22,11 @@ function __(string $text, string $domain = 'default'): string
     return $text;
 }
 
+function sanitize_key(string $key): string
+{
+    return preg_replace('/[^a-z0-9_\-]/', '', strtolower($key));
+}
+
 function springapex_schema_paged_url(string $url, int $paged): string
 {
     return $paged <= 1 ? $url : rtrim($url, '/') . '/page/' . $paged . '/';
@@ -87,5 +92,19 @@ springapex_test_assert(
 springapex_test_assert($paged['description'] === 'Read NorenSpring company news. Page 2.', 'page 2 description: ' . $paged['description']);
 $bare = springapex_seo_paged_values(['title' => 'News', 'description' => '', 'keywords' => ''], 3);
 springapex_test_assert($bare['title'] === 'News - Page 3' && $bare['description'] === '', 'title without brand separator');
+
+// 分类：news_type 优先，缺省时按 category 文字推断，都没有算 Company News。
+$types = [
+    [['news_type' => 'exhibitions', 'category' => 'Industry News'], 'exhibitions'],
+    [['category' => 'Industry News'], 'industry-news'],
+    [['category' => ' Exhibition '], 'exhibitions'],
+    [['category' => 'Company News'], 'company-news'],
+    [['news_type' => '', 'category' => 'Unknown'], 'company-news'],
+    [[], 'company-news'],
+];
+foreach ($types as [$item, $expected]) {
+    $actual = springapex_news_item_type($item);
+    springapex_test_assert($actual === $expected, 'item type ' . json_encode($item) . ": expected {$expected}, got {$actual}");
+}
 
 echo "news-archive: all checks passed\n";
