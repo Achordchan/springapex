@@ -21,10 +21,10 @@ const SPRINGAPEX_LLMS_TXT_INTRO_OPTION = 'springapex_llms_txt_intro';
 function springapex_llms_txt_default_intro(): string
 {
     return <<<'MD'
-NorenSpring is the brand of Xuzhou APEX Spring Manufacturing Co., Ltd. (registered Chinese name: 徐州超拓弹簧制造有限公司), a custom spring manufacturer in Xuzhou, Jiangsu, China. The company works from the Liuji Town plant of its group company Jiangsu Chaofan Spring Manufacturing Co., Ltd. (江苏超凡弹簧制造有限公司), where spring production began in 2001. It designs and makes compression, extension, torsion, die, disc, wave, conical and vibrator springs and wire forms to customer drawings, for OEMs and aftermarket buyers.
+NorenSpring is the brand of Xuzhou APEX Spring Manufacturing Co., Ltd. (registered Chinese name: 徐州超拓弹簧制造有限公司), a custom spring manufacturer in Xuzhou, Jiangsu, China. Its spring business dates back to 2001 through its predecessor, Jiangsu Chaoxing Spring Technology Co., Ltd. (江苏超星弹簧科技有限公司). It designs and makes compression, extension, torsion, die, disc, wave, conical and vibrator springs and wire forms to customer drawings, for OEMs and aftermarket buyers.
 
 Key facts:
-- Spring production since 2001 (group company Jiangsu Chaofan Spring Manufacturing Co., Ltd.); headquarters and factories in Liuji Town, Tongshan District, Xuzhou, Jiangsu, China
+- Spring manufacturing since 2001 (through predecessor Jiangsu Chaoxing Spring Technology Co., Ltd.); headquarters and factory in Liuji Town, Tongshan District, Xuzhou, Jiangsu, China
 - More than 120 employees; 12,000 square meters of production area
 - Wire diameters from 0.1 mm to 80 mm
 - Certified to IATF 16949, ISO 9001, ISO 13485, ISO 14001 and ISO 45001
