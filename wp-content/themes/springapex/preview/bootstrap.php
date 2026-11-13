@@ -454,7 +454,17 @@ function get_query_var(string $var, mixed $default = ''): mixed
     if ($var === 'sa_page') {
         return springapex_preview_route();
     }
+    if ($var === 'paged') {
+        return max(0, (int) springapex_preview_query_value('paged'));
+    }
     return $default;
+}
+// 预览没有钩子系统：inc/news-archive.php 等文件注册的钩子一律忽略。
+function add_action(string $hook, callable $callback, int $priority = 10, int $accepted_args = 1): bool { return true; }
+// 新闻列表翻页（inc/news-archive.php）在预览里用 &paged=N。
+function springapex_schema_paged_url(string $url, int $paged): string
+{
+    return $paged <= 1 ? $url : $url . (str_contains($url, '?') ? '&' : '?') . 'paged=' . $paged;
 }
 // No queried object in the no-WP preview; templates use this only to stamp a
 // source-page id on the inquiry form, which is irrelevant here.

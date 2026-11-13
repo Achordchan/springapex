@@ -8962,6 +8962,104 @@ html:has(.sa-compression-detail) {
   color: var(--sa-accent-hover);
 }
 
+/* ---- News index pagination ---- */
+
+.sa-news-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px 20px;
+  margin-top: 48px;
+}
+
+.sa-news-pagination__pages {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sa-news-pagination__page,
+.sa-news-pagination__gap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: var(--sa-radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.sa-news-pagination__page {
+  border: 1px solid var(--sa-border);
+  background: var(--sa-surface);
+  color: var(--sa-primary);
+  text-decoration: none;
+  transition: border-color .2s var(--sa-ease), color .2s var(--sa-ease), background-color .2s var(--sa-ease);
+}
+
+a.sa-news-pagination__page:hover {
+  border-color: var(--sa-accent);
+  color: var(--sa-accent-hover);
+}
+
+.sa-news-pagination__page.is-current {
+  border-color: var(--sa-primary);
+  background: var(--sa-primary);
+  color: #fff;
+}
+
+.sa-news-pagination__gap {
+  min-width: 24px;
+  padding: 0;
+  color: var(--sa-text-3);
+}
+
+.sa-news-pagination__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sa-accent);
+  text-decoration: none;
+}
+
+.sa-news-pagination__step:hover {
+  color: var(--sa-accent-hover);
+}
+
+.sa-news-pagination__back {
+  transform: scaleX(-1);
+}
+
+@media (max-width: 560px) {
+  .sa-news-pagination {
+    margin-top: 36px;
+  }
+
+  .sa-news-pagination__pages {
+    order: -1;
+    width: 100%;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .sa-news-pagination__page {
+    min-width: 40px;
+    height: 40px;
+    padding: 0 10px;
+  }
+}
+
 .sa-news-cta__inner {
   display: flex;
   align-items: center;

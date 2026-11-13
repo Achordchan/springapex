@@ -190,10 +190,11 @@ function springapex_schema_page(): ?array
         if (!isset($archives[$name])) {
             return null;
         }
-        // 筛选参数（/news/?news_type=…）指回列表本身；翻页各自保留，第 2 页
-        // 的内容不是第 1 页的重复。
+        // 翻页各自保留，第 2 页的内容不是第 1 页的重复。新闻的分类筛选
+        // （/news/?news_type=…，含其翻页）指回列表本身（inc/news-archive.php）。
         $archive_url = (string) get_post_type_archive_link($name);
-        $url = springapex_schema_paged_url($archive_url, (int) get_query_var('paged'));
+        $filtered = $name === 'spring_news' && function_exists('springapex_news_active_type') && springapex_news_active_type() !== 'all';
+        $url = $filtered ? $archive_url : springapex_schema_paged_url($archive_url, (int) get_query_var('paged'));
         $trail[] = ['name' => $archives[$name], 'url' => $archive_url];
         $type = 'CollectionPage';
     } elseif (is_front_page()) {
