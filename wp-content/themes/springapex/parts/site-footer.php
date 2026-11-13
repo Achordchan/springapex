@@ -107,7 +107,7 @@ $footer_socials = array_values(array_filter($footer_socials, static fn(array $it
     </div>
 
     <div class="container container-wide footer-bottom">
-      <p>© <?php echo esc_html(date('Y')); ?> <?php echo esc_html($company_name); ?><?php if ($company_local !== '') : ?> (<span lang="zh-Hans"><?php echo esc_html($company_local); ?></span>)<?php endif; ?>. <?php esc_html_e('All rights reserved.', 'springapex'); ?></p>
+      <p>© <?php echo esc_html(date('Y')); ?> <?php if ($company_local !== '') : ?><?php echo esc_html(trim((string) ($brand['company'] ?? $company_name))); ?> (<span lang="zh-Hans"><?php echo esc_html($company_local); ?></span>)<?php else : ?><?php echo esc_html($company_name); ?><?php endif; ?>. <?php esc_html_e('All rights reserved.', 'springapex'); ?></p>
       <nav class="footer-legal" aria-label="<?php esc_attr_e('Legal navigation', 'springapex'); ?>">
         <a href="<?php echo esc_url($privacy_url); ?>"><?php esc_html_e('Privacy Policy', 'springapex'); ?></a>
         <a href="<?php echo esc_url($terms_url); ?>"><?php esc_html_e('Terms of Use', 'springapex'); ?></a>
