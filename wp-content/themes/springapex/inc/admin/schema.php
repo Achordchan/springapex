@@ -42,6 +42,7 @@ function springapex_admin_screens(): array
                         ['path' => 'brand.name', 'label' => '品牌名', 'type' => 'text', 'help' => '显示在页头 Logo 旁，例如 NorenSpring。'],
                         ['path' => 'brand.tagline', 'label' => '品牌标语', 'type' => 'text', 'help' => '品牌名下方的一行小字，全大写效果由前台自动处理。'],
                         ['path' => 'brand.company', 'label' => '公司全称', 'type' => 'text', 'help' => '用于页脚版权行和询盘邮件签名，请填写营业执照上的英文全称。'],
+                        ['path' => 'brand.company_local', 'label' => '公司中文全称', 'type' => 'text', 'help' => '营业执照上的中文名称，例如 徐州超拓弹簧制造有限公司。会跟在英文全称后面显示在页脚版权行，并作为结构化数据里的法定名称，方便采购商和 AI 搜索核对工商信息；留空则不显示。'],
                     ],
                 ],
                 [

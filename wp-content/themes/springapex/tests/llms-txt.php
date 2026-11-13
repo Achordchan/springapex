@@ -100,7 +100,8 @@ function springapex_test_assert(bool $condition, string $message): void
 }
 
 $body = springapex_llms_txt_body();
-springapex_test_assert(str_starts_with($body, "# NorenSpring\n\n> home description\n\nNorenSpring (Xuzhou APEX"), 'title, summary, default intro: ' . substr($body, 0, 120));
+springapex_test_assert(str_starts_with($body, "# NorenSpring\n\n> home description\n\nNorenSpring is the brand of Xuzhou APEX"), 'title, summary, default intro: ' . substr($body, 0, 120));
+springapex_test_assert(str_contains($body, '徐州超拓弹簧制造有限公司'), 'default intro names the registered Chinese company');
 springapex_test_assert(str_contains($body, "## Products\n\n- [Torsion Springs](https://www.norenspring.com/spring_product/torsion-springs/): Repeatable (rotational) force."), 'product link, brackets escaped');
 springapex_test_assert(str_contains($body, '- [Spring Tines & Balers](https://www.norenspring.com/spring_news/spring-tines-guide/)' . "\n"), 'entity decoded, empty description has no colon');
 springapex_test_assert(!str_contains($body, '## Industries'), 'empty section omitted');

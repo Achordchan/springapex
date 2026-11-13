@@ -11,6 +11,7 @@ $privacy_url = springapex_url('/privacy/');
 $terms_url = springapex_url('/terms/');
 $sitemap_url = springapex_url('/sitemap/');
 $company_name = rtrim((string) ($brand['company'] ?? 'NorenSpring'), ". \t\n\r\0\x0B");
+$company_local = trim((string) ($brand['company_local'] ?? ''));
 $phone = trim((string) ($brand['phone'] ?? ''));
 $phone_href = preg_replace('/[^0-9+]/', '', $phone);
 $youtube_id = trim((string) springapex_get('home.hero.video_cta.youtube_id', ''));
@@ -106,7 +107,7 @@ $footer_socials = array_values(array_filter($footer_socials, static fn(array $it
     </div>
 
     <div class="container container-wide footer-bottom">
-      <p>© <?php echo esc_html(date('Y')); ?> <?php echo esc_html($company_name); ?>. <?php esc_html_e('All rights reserved.', 'springapex'); ?></p>
+      <p>© <?php echo esc_html(date('Y')); ?> <?php echo esc_html($company_name); ?><?php if ($company_local !== '') : ?> (<span lang="zh-Hans"><?php echo esc_html($company_local); ?></span>)<?php endif; ?>. <?php esc_html_e('All rights reserved.', 'springapex'); ?></p>
       <nav class="footer-legal" aria-label="<?php esc_attr_e('Legal navigation', 'springapex'); ?>">
         <a href="<?php echo esc_url($privacy_url); ?>"><?php esc_html_e('Privacy Policy', 'springapex'); ?></a>
         <a href="<?php echo esc_url($terms_url); ?>"><?php esc_html_e('Terms of Use', 'springapex'); ?></a>
