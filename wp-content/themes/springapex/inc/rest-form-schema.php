@@ -8,6 +8,12 @@
  *   GET  /wp-json/springapex/v1/form-schema   三个表单当前生效的配置
  *   POST /wp-json/springapex/v1/form-schema   {"forms": {"product": {"fields": [...]}}}
  *                                             只改传入的表单和键
+ *   POST /wp-json/springapex/v1/form-schema   {"recipient": "info@example.com"}
+ *                                             改询盘收件邮箱（三个表单共用）
+ *
+ * recipient 就是后台「表单设置」顶部的「询盘收件邮箱」（theme mod
+ * springapex_inquiry_email），GET 一并返回。forms 和 recipient 可以单独传，
+ * 也可以一起传；一起传时先存表单，表单存失败（409）就不改收件人。
  *
  * 每个表单可传 enabled、turnstile（布尔）和 fields（字段数组）。下拉的 options 是
  * {"值": "显示文字"} 对象，与 GET 返回的形状一致。fields 整份替换：
@@ -39,9 +45,14 @@ function springapex_rest_form_schema_routes(): void
             'callback' => 'springapex_rest_form_schema_update',
             'permission_callback' => $permission,
             'args' => [
+                // forms 和 recipient 至少传一个，在回调里检查。
                 'forms' => [
-                    'required' => true,
+                    'required' => false,
                     'type' => 'object',
+                ],
+                'recipient' => [
+                    'required' => false,
+                    'type' => 'string',
                 ],
             ],
         ],
@@ -54,16 +65,76 @@ function springapex_rest_form_schema_get(): WP_REST_Response
         'forms' => springapex_form_schema(),
         'field_types' => array_keys(springapex_form_field_types()),
         'locked_fields' => springapex_form_locked_fields(),
+        'recipient' => springapex_rest_form_schema_recipient(),
     ]);
+}
+
+/** 后台「表单设置」页显示的同一个值：没设过时是站点管理员邮箱。 */
+function springapex_rest_form_schema_recipient(): string
+{
+    return (string) get_theme_mod('springapex_inquiry_email', (string) get_option('admin_email'));
 }
 
 function springapex_rest_form_schema_update(WP_REST_Request $request): WP_REST_Response|WP_Error
 {
-    $submitted = springapex_rest_form_schema_validate($request->get_param('forms'));
-    if ($submitted instanceof WP_Error) {
-        return $submitted;
+    $forms = $request->get_param('forms');
+    $recipient = $request->get_param('recipient');
+
+    // 先把两样都校验完再写，任何一样不合法都不落库。
+    if ($recipient !== null) {
+        $recipient = springapex_rest_form_schema_validate_recipient($recipient);
+        if ($recipient instanceof WP_Error) {
+            return $recipient;
+        }
+    }
+    $submitted = null;
+    if ($forms !== null || $recipient === null) {
+        $submitted = springapex_rest_form_schema_validate($forms);
+        if ($submitted instanceof WP_Error) {
+            return $submitted;
+        }
     }
 
+    $response = ['saved' => true];
+    if ($submitted !== null) {
+        if (!springapex_rest_form_schema_save($submitted)) {
+            return new WP_Error(
+                'springapex_form_schema_not_saved',
+                'Form settings were not saved; they kept changing or the database write failed. Retry the request.',
+                ['status' => 409]
+            );
+        }
+        $response['forms'] = array_intersect_key(springapex_form_schema(), $submitted);
+    }
+    if ($recipient !== null) {
+        set_theme_mod('springapex_inquiry_email', $recipient);
+        $response['recipient'] = springapex_rest_form_schema_recipient();
+    }
+
+    return new WP_REST_Response($response);
+}
+
+/**
+ * 收件邮箱必须是一个干净的地址：sanitize_email 会悄悄删字符，删过的说明原值有问题，
+ * 直接报 400，免得把通知发到一个和调用方想的不一样的地址。
+ */
+function springapex_rest_form_schema_validate_recipient(mixed $value): string|WP_Error
+{
+    $value = is_string($value) ? trim($value) : '';
+    $clean = sanitize_email($value);
+    if ($clean === '' || $clean !== $value || !is_email($clean)) {
+        return new WP_Error('springapex_form_schema_invalid_recipient', 'recipient must be a valid email address.', ['status' => 400]);
+    }
+    return $clean;
+}
+
+/**
+ * 把校验过的表单合并进 springapex_form_schema 并写回。
+ *
+ * @param array<string, array<string, mixed>> $submitted
+ */
+function springapex_rest_form_schema_save(array $submitted): bool
+{
     // 先读一次生效配置：结构版本落后时 springapex_form_schema() 会就地迁移并写回，
     // 放在循环外做完，循环里读到的就是迁移后的值，CAS 基准与合并底稿一致。
     springapex_form_schema();
@@ -91,22 +162,14 @@ function springapex_rest_form_schema_update(WP_REST_Request $request): WP_REST_R
         }
     }
     if (!$saved) {
-        return new WP_Error(
-            'springapex_form_schema_not_saved',
-            'Form settings were not saved; they kept changing or the database write failed. Retry the request.',
-            ['status' => 409]
-        );
+        return false;
     }
 
     // 与后台保存一致：本次保存即当前结构版本，上一代配置退役。
     update_option('springapex_form_schema_version', SPRINGAPEX_FORM_SCHEMA_VERSION, false);
     delete_option('springapex_form_config');
     delete_option('springapex_form_fields');
-
-    return new WP_REST_Response([
-        'saved' => true,
-        'forms' => array_intersect_key(springapex_form_schema(), $submitted),
-    ]);
+    return true;
 }
 
 /**
