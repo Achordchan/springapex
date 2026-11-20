@@ -107,8 +107,17 @@ function springapex_rest_form_schema_update(WP_REST_Request $request): WP_REST_R
         $response['forms'] = array_intersect_key(springapex_form_schema(), $submitted);
     }
     if ($recipient !== null) {
+        // set_theme_mod() 在值没变或写库失败时都回 false，分不出来；直接读回来对一下。
         set_theme_mod('springapex_inquiry_email', $recipient);
-        $response['recipient'] = springapex_rest_form_schema_recipient();
+        $stored = springapex_rest_form_schema_recipient();
+        if ($stored !== $recipient) {
+            return new WP_Error(
+                'springapex_form_schema_recipient_not_saved',
+                'The inquiry recipient was not saved; notifications still go to the previous address. Retry the request.',
+                ['status' => 500, 'recipient' => $stored]
+            );
+        }
+        $response['recipient'] = $stored;
     }
 
     return new WP_REST_Response($response);

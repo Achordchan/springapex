@@ -87,6 +87,9 @@ function get_theme_mod(string $name, mixed $default = false): mixed
 }
 function set_theme_mod(string $name, mixed $value): bool
 {
+    if ($GLOBALS['springapex_test_db_fail']) {
+        return false;
+    }
     $GLOBALS['springapex_test_theme_mods'][$name] = $value;
     return true;
 }
@@ -290,6 +293,14 @@ check($err instanceof WP_Error && ($err->data['status'] ?? 0) === 409 && $GLOBAL
 $GLOBALS['springapex_test_db_fail'] = false;
 $res = springapex_rest_form_schema_update(new WP_REST_Request(['forms' => ['contact' => ['turnstile' => true]], 'recipient' => 'sales@example.com']));
 check($res instanceof WP_REST_Response && array_keys($res->data) === ['saved', 'forms', 'recipient'] && $res->data['recipient'] === 'sales@example.com', 'forms and recipient together');
+// 收件人写库失败：不能回 saved: true，要报出现在实际生效的旧地址。
+$GLOBALS['springapex_test_db_fail'] = true;
+$err = springapex_rest_form_schema_update(new WP_REST_Request(['recipient' => 'info@example.com']));
+check($err instanceof WP_Error && ($err->data['status'] ?? 0) === 500 && ($err->data['recipient'] ?? '') === 'sales@example.com', 'failed recipient write reports an error');
+$GLOBALS['springapex_test_db_fail'] = false;
+// 值没变时 WordPress 的 set_theme_mod 也可能回 false：读回一致就算成功。
+$res = springapex_rest_form_schema_update(new WP_REST_Request(['recipient' => 'sales@example.com']));
+check($res instanceof WP_REST_Response && $res->data['recipient'] === 'sales@example.com', 'unchanged recipient still reports saved');
 $err = springapex_rest_form_schema_update(new WP_REST_Request([]));
 check($err instanceof WP_Error && ($err->data['status'] ?? 0) === 400, 'rejects a request with neither forms nor recipient');
 
