@@ -15,6 +15,7 @@ $GLOBALS['springapex_test_updates'] = 0;
 $GLOBALS['springapex_test_can'] = true;
 $GLOBALS['springapex_test_before_write'] = null;
 $GLOBALS['springapex_test_db_fail'] = false;
+$GLOBALS['springapex_test_theme_mods'] = [];
 
 function add_action(string $hook, callable|string $callback, int $priority = 10, int $args = 1): void
 {
@@ -78,6 +79,28 @@ function springapex_update_option_if_unchanged(string $name, mixed $expected, mi
     $GLOBALS['springapex_test_options'][$name] = $value;
     $GLOBALS['springapex_test_updates']++;
     return true;
+}
+
+function get_theme_mod(string $name, mixed $default = false): mixed
+{
+    return $GLOBALS['springapex_test_theme_mods'][$name] ?? $default;
+}
+function set_theme_mod(string $name, mixed $value): bool
+{
+    if ($GLOBALS['springapex_test_db_fail']) {
+        return false;
+    }
+    $GLOBALS['springapex_test_theme_mods'][$name] = $value;
+    return true;
+}
+// 与 WordPress 一样：删掉不允许的字符，不判断格式。
+function sanitize_email(string $email): string
+{
+    return (string) preg_replace('/[^a-z0-9+_.@-]/i', '', $email);
+}
+function is_email(string $email): string|false
+{
+    return filter_var($email, FILTER_VALIDATE_EMAIL) !== false ? $email : false;
 }
 
 final class WP_REST_Server
@@ -244,5 +267,41 @@ foreach ([
     check($err instanceof WP_Error && ($err->data['status'] ?? 0) === 400, "rejects {$case}");
     check($GLOBALS['springapex_test_options'] === $before, "{$case} writes nothing");
 }
+
+// 询盘收件邮箱：没设过时 GET 显示管理员邮箱，单独 POST recipient 只改收件人。
+$GLOBALS['springapex_test_options']['admin_email'] = 'admin@example.com';
+check(springapex_rest_form_schema_get()->data['recipient'] === 'admin@example.com', 'GET falls back to the admin email');
+$schema_before = $GLOBALS['springapex_test_options']['springapex_form_schema'];
+$res = springapex_rest_form_schema_update(new WP_REST_Request(['recipient' => ' info@example.com ']));
+check($res instanceof WP_REST_Response && $res->data === ['saved' => true, 'recipient' => 'info@example.com'], 'recipient-only update: ' . json_encode($res->data ?? null));
+check($GLOBALS['springapex_test_theme_mods']['springapex_inquiry_email'] === 'info@example.com', 'recipient stored in the theme mod the mailer reads');
+check($GLOBALS['springapex_test_options']['springapex_form_schema'] === $schema_before, 'recipient-only update leaves the forms alone');
+check(springapex_rest_form_schema_get()->data['recipient'] === 'info@example.com', 'GET shows the new recipient');
+
+foreach (['not an email' => 'info', 'stripped chars' => 'in fo@example.com', 'not a string' => ['info@example.com'], 'empty' => ''] as $case => $value) {
+    $err = springapex_rest_form_schema_update(new WP_REST_Request(['recipient' => $value]));
+    check($err instanceof WP_Error && ($err->data['status'] ?? 0) === 400, "rejects recipient {$case}");
+    check($GLOBALS['springapex_test_theme_mods']['springapex_inquiry_email'] === 'info@example.com', "recipient {$case} writes nothing");
+}
+
+// 一起传：表单不合法时收件人也不改；表单存失败（409）时收件人也不改。
+$err = springapex_rest_form_schema_update(new WP_REST_Request(['forms' => ['nope' => ['turnstile' => true]], 'recipient' => 'sales@example.com']));
+check($err instanceof WP_Error && $GLOBALS['springapex_test_theme_mods']['springapex_inquiry_email'] === 'info@example.com', 'bad forms block the recipient change');
+$GLOBALS['springapex_test_db_fail'] = true;
+$err = springapex_rest_form_schema_update(new WP_REST_Request(['forms' => ['contact' => ['turnstile' => true]], 'recipient' => 'sales@example.com']));
+check($err instanceof WP_Error && ($err->data['status'] ?? 0) === 409 && $GLOBALS['springapex_test_theme_mods']['springapex_inquiry_email'] === 'info@example.com', 'failed form write blocks the recipient change');
+$GLOBALS['springapex_test_db_fail'] = false;
+$res = springapex_rest_form_schema_update(new WP_REST_Request(['forms' => ['contact' => ['turnstile' => true]], 'recipient' => 'sales@example.com']));
+check($res instanceof WP_REST_Response && array_keys($res->data) === ['saved', 'forms', 'recipient'] && $res->data['recipient'] === 'sales@example.com', 'forms and recipient together');
+// 收件人写库失败：不能回 saved: true，要报出现在实际生效的旧地址。
+$GLOBALS['springapex_test_db_fail'] = true;
+$err = springapex_rest_form_schema_update(new WP_REST_Request(['recipient' => 'info@example.com']));
+check($err instanceof WP_Error && ($err->data['status'] ?? 0) === 500 && ($err->data['recipient'] ?? '') === 'sales@example.com', 'failed recipient write reports an error');
+$GLOBALS['springapex_test_db_fail'] = false;
+// 值没变时 WordPress 的 set_theme_mod 也可能回 false：读回一致就算成功。
+$res = springapex_rest_form_schema_update(new WP_REST_Request(['recipient' => 'sales@example.com']));
+check($res instanceof WP_REST_Response && $res->data['recipient'] === 'sales@example.com', 'unchanged recipient still reports saved');
+$err = springapex_rest_form_schema_update(new WP_REST_Request([]));
+check($err instanceof WP_Error && ($err->data['status'] ?? 0) === 400, 'rejects a request with neither forms nor recipient');
 
 echo "rest-form-schema: ok\n";
